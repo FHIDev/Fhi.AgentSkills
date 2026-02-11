@@ -1,27 +1,25 @@
 ---
 name: skybert
-description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bruk ved arbeid med Skybert GitOps, SkybertApp CRD, Azure Workload Identity, Linkerd, Flux, eller Skybert-relaterte oppgaver. Hjelper med onboarding, konfigurasjon, deployment og feilsøking.
+description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bruk ved arbeid med Skybert GitOps, SkybertApp CRD, Azure Workload Identity, Flux, eller Skybert-relaterte oppgaver. Hjelper med onboarding, konfigurasjon, deployment og feilsøking.
 ---
 
 # Skybert Platform Skill
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
+> **Sist verifisert mot offisiell docs:** 2026-02-11
 > **Offisiell dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
 
 **KRITISK**: Alle endringer må gå gjennom Git -> GitHub Actions -> FluxCD. Bruk aldri `kubectl apply` for permanente endringer.
 
-**KRITISK**: Du har kun tilgang til ditt eget namespace (`tn-<team>-<app>`). Du kan ikke aksessere andre namespaces eller kluster-ressurser.
+**KRITISK**: Du har kun tilgang til ditt eget namespace (`tn-<tenant>`). Du kan ikke aksessere andre namespaces eller kluster-ressurser.
 
 **KRITISK**: Bruk det oppgitte service account-navnet nøyaktig for workload identity. Dette er forhåndskonfigurert av plattformteamet.
 
 **VIKTIG**: Bruk `SkybertApp` CRD for deployments. `WebApp` CRD er utdatert og skal ikke brukes.
 
-**VIKTIG**: Flux rekonsilerer hvert 2. minutt. For å tvinge umiddelbar rekonsiliering, annoter kustomization:
-```bash
-kubectl annotate kustomization <name> -n tn-<team>-<app> reconcile.fluxcd.io/requestedAt="$(date +%s)" --overwrite
-```
+**VIKTIG**: Flux rekonsilerer automatisk hvert 2. minutt. Vent opptil 2 minutter etter at GitHub workflow lykkes for at endringer skal vises i klusteret.
 
 ---
 
@@ -31,15 +29,21 @@ Skybert er en Kubernetes-basert applikasjonsplattform hos FHI, bygget på:
 - **Kubernetes** via Azure Arc-connected Kubernetes (IKKE vanlig AKS)
 - **GitOps** med Flux for deklarativ konfigurasjon
 - **Azure-integrasjon** (Workload Identity, Key Vault, ACR)
-- **Service Mesh** (Linkerd med automatisk mTLS)
-- **Observability** (Loki for logging, Mimir for metrics, Grafana for visualisering)
+- **Observability** (Loki for logging, Mimir for metrics, Tempo for tracing, Grafana for visualisering)
 
 **Viktig:** Skybert bruker Azure Arc-connected Kubernetes, ikke vanlig Azure Kubernetes Service (AKS). Dette betyr at `az aks get-credentials` IKKE fungerer - du må bruke `az connectedk8s proxy` for kubectl-tilgang.
 
 ## Nøkkelkonsepter
 
 ### Tenant
-En **Tenant** er et Kubernetes namespace (mønster: `tn-<team>-<app>`) som inneholder alle ressurser for én applikasjon. Hver tenant er isolert og administreres via GitOps.
+En **Tenant** er den grunnleggende organisasjonsenheten i Skybert - et mellomnivå mellom team og applikasjon. Hver tenant har sitt eget Kubernetes namespace (`tn-<tenant>`) med isolerte ressurser og administreres via GitOps. Tenant-navnet tildeles av plattformteamet.
+
+**Organisasjonsmodeller:**
+1. **Standard** (vanligst): Ett team, én tenant, én applikasjon
+2. **Multi-app**: Ett team med flere tenants, hver med separate applikasjoner
+3. **Integrert**: Én tenant med flere sammenkoblede applikasjoner
+
+**Anbefaling:** Opprett separate tenants for applikasjoner med ulik sikkerhetsklassifisering.
 
 ### GitOps-flyt
 1. Utvikler pusher endringer til `main`-branch
@@ -54,9 +58,9 @@ En **Tenant** er et Kubernetes namespace (mønster: `tn-<team>-<app>`) som inneh
 Hvert miljø er en toppnivå-mappe med egne manifester/verdier.
 
 ### Sikkerhetssoner
-- **Grønn sone**: Internett-eksponerte tjenester
-- **Gul sone**: Interne tjenester uten persondata
-- **Rød sone**: Sensitive data, strenge nettverkspolicyer
+- **Grønn sone**: Åpne data og lavere sensitivitet
+- **Gul sone**: Interne data med moderat sikkerhet (persondata)
+- **Rød sone**: Svært sensitive data med strenge krav (identifiserbar helseinformasjon)
 
 ### Blåløypa (Golden Path)
 
@@ -65,16 +69,26 @@ Blåløypa er den anbefalte veien for å komme i gang på Skybert.
 **Forutsetninger:**
 
 *Organisatorisk:*
+- Utpekt tenant owner (typisk produkteier/domeneeier) med ansvar for: brukeradministrasjon, kostnader, sikkerhet, tilgjengelighet, dataklassifisering
 - Avklaring om hvilken sikkerhetssone
 - ROS (risikovurdering) for applikasjonen
 - Tilgang til NHN Slack (#ext-fhi-skybert)
 
+*Applikasjonskrav:*
+- Applikasjon som kan kjøre på Linux (.NET er standard)
+- Azure subscription for Key Vault eller andre Azure-integrasjoner
+- Ekstern database (anbefalt), enten fra NHN Moderne Etatsplattform eller Azure
+- For rød data: Kontroll av utgående trafikk + risikovurderingsdokumentasjon
+
 *Teknisk:*
 - GitHub-organisasjon: FHIDev
 - Azure-tilganger fra plattformteamet
+- Tilgangspakke via MyAccess-portalen (myaccess.microsoft.com)
+- For produksjonstilgang: PIM elevation
+- Kjør `az logout && az login` etter tilgangsendringer
 
 **Steg-for-steg:**
-1. **GitOps-repo**: Opprettes av plattformteamet (`Fhi.<Team>.<App>.GitOps`)
+1. **GitOps-repo**: Opprettes av plattformteamet (f.eks. `Fhi.<Tenant>.GitOps`)
 2. **Konfigurer secrets**: Sett `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`
 3. **Opprett SkybertApp**: Lag `test/skybertapp.yaml` med din konfigurasjon
 4. **Deploy**: Commit og push til main - Flux synkroniserer automatisk (hvert 2 min)
@@ -86,26 +100,36 @@ Nye tenants starter fra en mal som inneholder:
 - `.github/workflows/update-tag.yaml` - Webhook for image tag-oppdateringer
 - `test/` - Initialt testmiljø
 
-### Påkrevde GitHub Repository-variabler
+### Påkrevde GitHub Repository-variabler og secrets
 
-Før workflows kan kjøre, må disse secrets konfigureres:
+Før workflows kan kjøre, må disse **variablene** konfigureres (brukes med `vars.*` i workflows):
 
-| Secret | Beskrivelse |
-|--------|-------------|
+| Variabel | Beskrivelse |
+|----------|-------------|
 | `AZURE_CLIENT_ID` | Managed Identity client ID for ACR push |
 | `AZURE_TENANT_ID` | Azure AD tenant ID |
 | `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
+| `GITOPS_REPO` | GitOps-repository (f.eks. `FHIDev/Fhi.Exempl.Gitops`) |
 
-**For å verifisere at secrets eksisterer:**
+I tillegg trengs disse **secrets** (brukes med `secrets.*`):
+
+| Secret | Beskrivelse |
+|--------|-------------|
+| `GH_PAT` | Personal Access Token for workflow chaining i GitOps-repo |
+| `GITOPS_PAT` | Personal Access Token for repository_dispatch på tvers av repoer |
+
+**For å verifisere variabler og secrets:**
 ```bash
+gh variable list --repo <owner>/<repo>
 gh secret list --repo <owner>/<repo>
 ```
 
-**For å sette secrets** (krever admin-tilgang til repoet):
+**For å sette variabler** (krever admin-tilgang til repoet):
 ```bash
-gh secret set AZURE_CLIENT_ID --body "<verdi>"
-gh secret set AZURE_TENANT_ID --body "<verdi>"
-gh secret set AZURE_SUBSCRIPTION_ID --body "<verdi>"
+gh variable set AZURE_CLIENT_ID --body "<verdi>"
+gh variable set AZURE_TENANT_ID --body "<verdi>"
+gh variable set AZURE_SUBSCRIPTION_ID --body "<verdi>"
+gh variable set GITOPS_REPO --body "FHIDev/Fhi.<Tenant>.GitOps"
 ```
 
 ## SkybertApp CRD
@@ -116,15 +140,15 @@ Bruk `SkybertApp` for alle applikasjoner. Den håndterer secrets, ingress, autos
 apiVersion: skybert.fhi.no/v1alpha1
 kind: SkybertApp
 metadata:
-  name: my-app
-  namespace: tn-myteam-myapp
+  name: myapp
+  namespace: tn-mytenant
 spec:
   image:
-    repository: crfhiskybert.azurecr.io/myteam/myapp
+    repository: crfhiskybert.azurecr.io/mytenant/myapp
     tag: "1.0.0"
   hostname: myapp.skytest.fhi.no
   secrets:
-    - vault: kv-myteam-test
+    - vault: my-keyvault
       keys:
         - remote: database-password
           local: DB_PASSWORD
@@ -159,20 +183,19 @@ Bruk `base/` + miljø-mønsteret med Helm charts.
 
 ## Navnekonvensjoner
 
-Når du oppretter ressurser, bruk disse mønstrene:
+Tenant-navnet tildeles av plattformteamet. Bruk disse mønstrene:
 
 | Ressurs | Mønster | Eksempel |
 |---------|---------|----------|
-| Namespace | `tn-<team>-<app>` | `tn-fida-airflow` |
-| Key Vault | `kv-<team>-<app>-<env>` | `kv-fida-airflow-test` |
-| Service Account | `<team>-<app>-azure` | `fida-airflow-azure` |
-| Managed Identity | `<team>-<app>-skybert-sa-<env>` | `fida-airflow-skybert-sa-test` |
+| Namespace | `tn-<tenant>` | `tn-exempl` |
+| Key Vault | `<vault-navn>` (oppgitt av plattformteamet) | `kv-exempl-test` |
+| Service Account | `<tenant>-azure` | `exempl-azure` |
+| Managed Identity | `<tenant>-skybert-sa-<env>` | `exempl-skybert-sa-test` |
 
-**Utlede navn fra repository:**
+**Utlede tenant-navn fra repository** (ett eksempel):
 - Repository: `Fhi.Fida.MyApp.GitOps`
-- Team: `fida` (andre segment, lowercase)
-- App: `myapp` (tredje segment, lowercase)
-- Namespace: `tn-fida-myapp`
+- Tenant-navn kan f.eks. være: `fida-myapp`, `fida`, eller annet format tildelt av plattformteamet
+- Namespace: `tn-<tenant>`
 
 ## Vanlige ressurser
 
@@ -185,14 +208,14 @@ apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
   name: myapp-secret-store
-  namespace: tn-myteam-myapp
+  namespace: tn-<tenant>
 spec:
   provider:
     azurekv:
       authType: WorkloadIdentity
-      vaultUrl: "https://kv-myteam-test.vault.azure.net"
+      vaultUrl: "https://<vault-navn>.vault.azure.net"
       serviceAccountRef:
-        name: myteam-azure
+        name: <tenant>-azure
 ```
 
 ### ExternalSecret
@@ -204,7 +227,7 @@ apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: myapp-db-secret
-  namespace: tn-myteam-myapp
+  namespace: tn-<tenant>
 spec:
   refreshInterval: 1h
   secretStoreRef:
@@ -227,8 +250,8 @@ Gi brukere/grupper tilgang til namespace:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: rb-myteam-admins
-  namespace: tn-myteam-myapp
+  name: rb-<tenant>-admins
+  namespace: tn-<tenant>
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -253,6 +276,14 @@ Støttede domener per miljø:
 
 TLS-sertifikater provisjoneres automatisk via cert-manager.
 
+## Persistence / Data lagring
+
+**Anbefaling:** Hold persistent data utenfor Kubernetes. Avhengig av sikkerhetsklassifisering, lagre data i:
+- **Azure public cloud** (for grønn/gul data)
+- **NHN Datacenter** (for rød data eller strengere krav)
+
+Plattformen planlegger å tilby tre StorageClass-nivåer med ulike nivåer av redundans, snapshot-retensjon og backup. Nåværende planlagte løsning er **ikke egnet for IO-intensive workloads** som aktive databaser.
+
 ## Azure Workload Identity
 
 Skybert bruker Azure Workload Identity for passordløs autentisering mot Azure-tjenester (Key Vault, Blob Storage, etc.).
@@ -260,7 +291,7 @@ Skybert bruker Azure Workload Identity for passordløs autentisering mot Azure-t
 ### Forhåndskonfigurert identitet
 
 Når en ny tenant opprettes, gir plattformteamet en **forhåndskonfigurert workload identity** med:
-- Et spesifikt service account-navn (typisk `<team>-azure` eller lignende)
+- Et spesifikt service account-navn (`<tenant>-azure`)
 - Federated credentials allerede satt opp
 - Tilgang til Azure Key Vault for tenanten
 
@@ -277,7 +308,7 @@ Når en ny tenant opprettes, gir plattformteamet en **forhåndskonfigurert workl
 
 Etter push til `main`, følg disse stegene for å verifisere deployment.
 
-**Viktig:** Du har kun tilgang til ressurser i ditt eget namespace (`tn-<team>-<app>`). Du kan ikke aksessere Flux system-ressurser eller tvinge rekonsiliering.
+**Viktig:** Du har kun tilgang til ressurser i ditt eget namespace (`tn-<tenant>`). Flux system-ressurser og rekonsiliering krever plattformteam-tilgang.
 
 ### 1. Sjekk GitHub Workflow
 
@@ -300,30 +331,30 @@ Flux rekonsilerer automatisk hvert 2. minutt. Etter at GitHub workflow lykkes, v
 
 ```bash
 # List alle ressurser i namespace
-kubectl get all -n tn-<team>-<app>
+kubectl get all -n tn-<tenant>
 
 # Sjekk pod-status
-kubectl get pods -n tn-<team>-<app>
+kubectl get pods -n tn-<tenant>
 
 # Se pod-logger
-kubectl logs -n tn-<team>-<app> <pod-name>
+kubectl logs -n tn-<tenant> <pod-name>
 
 # Beskriv en feilende pod
-kubectl describe pod <pod-name> -n tn-<team>-<app>
+kubectl describe pod <pod-name> -n tn-<tenant>
 
 # Sjekk events (nyttig for å se nylige problemer)
-kubectl get events -n tn-<team>-<app> --sort-by='.lastTimestamp'
+kubectl get events -n tn-<tenant> --sort-by='.lastTimestamp'
 ```
 
 ### 4. Sjekk External Secrets
 
 ```bash
 # Verifiser ExternalSecret-status
-kubectl get externalsecrets -n tn-<team>-<app>
-kubectl describe externalsecret <name> -n tn-<team>-<app>
+kubectl get externalsecrets -n tn-<tenant>
+kubectl describe externalsecret <name> -n tn-<tenant>
 
 # Sjekk om den faktiske Secret ble opprettet
-kubectl get secrets -n tn-<team>-<app>
+kubectl get secrets -n tn-<tenant>
 ```
 
 ## Filstruktur
@@ -360,6 +391,13 @@ test/
 README.md
 ```
 
+## Legal og compliance
+
+- **ROS (risikovurdering):** Alle applikasjoner skal ha en applikasjons-ROS
+- **DPIA:** Data Protection Impact Assessment for applikasjoner med persondata
+- **Ansvarsfordeling:** Basert på HUKI-modellen - se offisiell docs for detaljer
+- Se offisiell dokumentasjon på https://skybert.fhi.no/ for fullstendige krav
+
 ## Referanser
 
 | Dokument | Innhold |
@@ -372,7 +410,6 @@ README.md
 | [Sikkerhet](references/security.md) | Workload Identity, sikkerhet, nettverkspolicyer |
 | [Observability](references/observability.md) | Logging, metrics, Grafana |
 | [Feilsøking](references/troubleshooting.md) | Feilsøking og debug-kommandoer |
-| [Eksempler](examples/) | YAML eksempel-filer |
 
 ## Support
 
@@ -381,7 +418,7 @@ Kontakt Skybert plattformteam:
 
 ## Ansvarsfordeling
 
-**Skybert (plattformteamet):** Kubernetes-infrastruktur, Flux, Linkerd, Observability, Azure-integrasjoner, plattform-sikkerhet
+**Skybert (plattformteamet):** Kubernetes-infrastruktur, Flux, Crossplane, Observability, Azure-integrasjoner, plattform-sikkerhet
 
 **Tenant (applikasjonsteam):** Applikasjonskode, GitOps-konfigurasjon, secrets management, applikasjons-ROS, monitorering
 
@@ -405,7 +442,6 @@ Når du hjelper brukere med Skybert:
 5. **Vær oppmerksom på**:
    - Sikkerhetssone-forskjeller (spesielt nettverkspolicyer i rød)
    - Azure Workload Identity-oppsett
-   - Linkerd er obligatorisk
    - GitOps-prinsippet (alt i Git)
 
 6. **Ved usikkerhet**: Referer til plattformteamet (#ext-fhi-skybert)

@@ -1,6 +1,8 @@
 # Konfigurasjonseksempler
 
-## WebApp med Workload Identity
+## **Legacy** - WebApp med Workload Identity
+
+> **Merk:** WebApp CRD er utdatert. Bruk [SkybertApp](skybertapp-crd.md) for nye deployments.
 
 ```yaml
 apiVersion: skybert.fhi.no/v1
@@ -40,7 +42,9 @@ spec:
 - Legg til felter gradvis etter behov
 - Sjekk med Skybert-teamet før du legger til felter som ikke er dokumentert
 
-## Deployment med Azure Key Vault Secrets
+## **Legacy** - Deployment med Azure Key Vault Secrets (CSI driver)
+
+> **Merk:** CSI driver er legacy. Bruk SkybertApp inline secrets eller External Secrets Operator (ESO) i stedet.
 
 ```yaml
 apiVersion: apps/v1
@@ -86,7 +90,9 @@ spec:
             secretProviderClass: <tenant>-secrets
 ```
 
-## SecretProviderClass for Key Vault
+## **Legacy** - SecretProviderClass for Key Vault (CSI driver)
+
+> **Merk:** SecretProviderClass (CSI driver) er legacy. Bruk SkybertApp inline secrets eller ESO (SecretStore + ExternalSecret).
 
 ```yaml
 apiVersion: secrets-store.csi.x-k8s.io/v1
@@ -161,7 +167,9 @@ images:
     newTag: latest
 ```
 
-## Minimal WebApp for rask start
+## **Legacy** - Minimal WebApp for rask start
+
+> **Merk:** WebApp CRD er utdatert. Bruk [SkybertApp](skybertapp-crd.md) for nye deployments.
 
 ```yaml
 apiVersion: skybert.fhi.no/v1

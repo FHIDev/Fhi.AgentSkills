@@ -52,6 +52,12 @@ metadata:
 - `http_requests_in_flight` - Pågående requests
 - Applikasjonsspesifikke business metrics
 
+## Tracing med Tempo
+
+Skybert tilbyr distribuert tracing via **Tempo**. Tracing gir innsikt i hvordan forespørsler flyter gjennom distribuerte systemer.
+
+> **Merk:** Tracing-funksjonaliteten er under utvikling og vil bli utvidet. Kontakt plattformteamet for status og oppsett.
+
 ## Grafana Dashboards
 
 Tilgang dashboards for:

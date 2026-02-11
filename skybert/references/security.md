@@ -102,30 +102,24 @@ spec:
       port: 53
 ```
 
-## mTLS med Linkerd
-
-Linkerd er påkrevet og automatisk aktivert for alle `tn-*` namespaces.
-
-**Viktig**: Kyverno-policyer forhindrer:
-- Deaktivering av Linkerd
-- Bypassing av mesh
-- Endring av mesh-konfigurasjon
-
-Verifiser mesh-status:
-```bash
-linkerd check --proxy -n tn-<tenant>
-```
-
 ## Secrets Management
 
 **Aldri** commit secrets til Git. Bruk:
-- Azure Key Vault via CSI driver
-- Kubernetes Secrets (kun for non-sensitive config)
+- **External Secrets Operator (ESO)** (anbefalt) - SecretStore + ExternalSecret
+- **SkybertApp inline secrets** (enklest) - spesifiser vault-navn og nøkler direkte i CRD
 
-**Oppsett av Key Vault:**
-1. Opprett egen Azure Key Vault
-2. Gi tilgang til managed identity som er knyttet til `<tenant>-azure` service account
-3. Monter secrets direkte i container fra Key Vault
+**Oppsett av secrets:**
+1. Plattformteamet oppretter Azure Key Vault og gir tilgang til managed identity
+2. Bruk SkybertApp inline secrets eller manuell SecretStore + ExternalSecret
+3. Se [Secrets-mønstre](secrets.md) for detaljer
+
+## Public CA / Trust Bundle
+
+CA-sertifikater lagres i `/etc/ssl/certs/` i containere. Du er ansvarlig for å holde `ca-certificates`-pakken oppdatert i build-prosessen.
+
+**Interne CA-er:** FHI vedlikeholder interne CA-er (`fhi.no` og `red.fhi.sec`) som automatisk inkluderes i en `trust-bundle.pem`-fil. Du trenger ikke legge disse til manuelt.
+
+**Bruk trust-bundle:** Sett miljøvariabelen `SSL_CERT_FILE` til å peke på `trust-bundle.pem` for å bruke den kuraterte listen av public CAs istedenfor image-standarder.
 
 ## Azure Subscriptions per Sikkerhetssone
 

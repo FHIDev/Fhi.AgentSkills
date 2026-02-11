@@ -8,14 +8,14 @@ SkybertApp håndterer SecretStore og ExternalSecret automatisk:
 apiVersion: skybert.fhi.no/v1alpha1
 kind: SkybertApp
 metadata:
-  name: my-app
-  namespace: tn-myteam-myapp
+  name: myapp
+  namespace: tn-mytenant
 spec:
   image:
-    repository: crfhiskybert.azurecr.io/myteam/myapp
+    repository: crfhiskybert.azurecr.io/mytenant/myapp
     tag: "1.0.0"
   secrets:
-    - vault: kv-myteam-myapp-test
+    - vault: my-keyvault
       keys:
         - remote: database-password
           local: DB_PASSWORD
@@ -24,9 +24,9 @@ spec:
       mountAsEnv: true
 ```
 
-## Manuell: SecretStore + ExternalSecret
+## Manuell: SecretStore + ExternalSecret (ESO)
 
-Påkrevet for raw Kubernetes deployments eller spesielle behov.
+External Secrets Operator (ESO) er standard mekanisme for secrets-håndtering utenfor SkybertApp. Påkrevet for raw Kubernetes deployments eller spesielle behov.
 
 ### SecretStore
 
@@ -35,14 +35,14 @@ apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
   name: myapp-secret-store
-  namespace: tn-myteam-myapp
+  namespace: tn-<tenant>
 spec:
   provider:
     azurekv:
       authType: WorkloadIdentity
-      vaultUrl: "https://kv-myteam-myapp-test.vault.azure.net"
+      vaultUrl: "https://<vault-navn>.vault.azure.net"
       serviceAccountRef:
-        name: myteam-myapp-azure
+        name: <tenant>-azure
 ```
 
 ### ExternalSecret
@@ -52,7 +52,7 @@ apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: myapp-db-secret
-  namespace: tn-myteam-myapp
+  namespace: tn-<tenant>
 spec:
   refreshInterval: 1h
   secretStoreRef:
@@ -67,14 +67,9 @@ spec:
         key: "database-password"
 ```
 
-## Key Vault navnekonvensjon
+## Key Vault
 
-Mønster: `kv-<team>-<app>-<env>`
-
-| Miljø | Eksempel |
-|-------|----------|
-| Test | `kv-myteam-myapp-test` |
-| Prod | `kv-myteam-myapp-prod` |
+Key Vault-navnet oppgis av plattformteamet ved onboarding. Det finnes ingen fast navnekonvensjon - bruk det faktiske vault-navnet du har fått tildelt.
 
 ## Regler
 
@@ -82,3 +77,5 @@ Mønster: `kv-<team>-<app>-<env>`
 - **Aldri** legg secrets i container images
 - Bruk Azure Key Vault som eneste kilde for secrets
 - SkybertApp inline secrets er foretrukket fremfor manuell SecretStore/ExternalSecret
+- ESO (SecretStore + ExternalSecret) er **standard** mekanisme
+- CSI driver (SecretProviderClass) er **legacy** - unngå for nye deployments
