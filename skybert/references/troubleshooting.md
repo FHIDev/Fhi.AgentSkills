@@ -23,21 +23,25 @@ nslookup <tenant>.skytest.fhi.no
 
 ### 3. Azure Key Vault secrets ikke tilgjengelig
 ```bash
-# Sjekk SecretProviderClass
-kubectl describe secretproviderclass <tenant>-secrets -n tn-<tenant>
+# Sjekk ExternalSecret-status
+kubectl get externalsecrets -n tn-<tenant>
+kubectl describe externalsecret <name> -n tn-<tenant>
+
+# Sjekk om Secret ble opprettet
+kubectl get secrets -n tn-<tenant>
 
 # Sjekk pod events
 kubectl describe pod <pod-name> -n tn-<tenant>
 ```
 
 ### 4. Flux synkroniserer ikke
-```bash
-# Sjekk Flux-status (krever tilgang)
-flux get kustomizations -n flux-system
 
-# Force reconciliation
-flux reconcile kustomization <tenant> -n flux-system
-```
+Flux rekonsilerer automatisk hvert 2. minutt. Vent opptil 2 minutter etter at GitHub workflow lykkes.
+
+Hvis endringer fortsatt ikke vises etter 5 minutter:
+1. Verifiser at `oci-push.yaml` workflow fullførte uten feil
+2. Sjekk at OCI-artifaktet ble pushet til ACR
+3. Kontakt plattformteamet (#ext-fhi-skybert) - de kan sjekke Flux-status og tvinge rekonsiliering
 
 ### 5. Nettverkstilkobling feiler (rød sone)
 ```bash
@@ -74,7 +78,7 @@ kubectl describe ingress -n tn-<tenant>
 ### 7. oci-push.yaml trigges ikke automatisk
 
 **Symptomer:**
-- `update-tag.yaml` kjører OK og oppdaterer webapp.yaml
+- `update-tag.yaml` kjører OK og oppdaterer skybertapp.yaml
 - `oci-push.yaml` kjører IKKE etterpå (selv om den har `on: push: branches: [main]`)
 
 **Årsak:**

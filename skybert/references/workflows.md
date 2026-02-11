@@ -6,7 +6,7 @@
 App-repo push → build-and-push.yaml → Docker image til ACR
                                      → webhook til GitOps-repo
                                      ↓
-GitOps-repo   → update-tag.yaml     → oppdater webapp.yaml (med PAT!)
+GitOps-repo   → update-tag.yaml     → oppdater skybertapp.yaml (med PAT!)
               → oci-push.yaml       → OCI artifact til ACR
                                      ↓
 Skybert       → Flux (hvert 2 min)  → deployer til Kubernetes
@@ -136,19 +136,12 @@ jobs:
 
       - name: Trigger GitOps update
         if: steps.check_tag.outputs.exists != 'true'
-        run: |
-          HTTP_CODE=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
-            -X POST https://api.github.com/repos/FHIDev/Fhi.<Tenant>.GitOps/dispatches \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token ${{ secrets.GH_PAT }}" \
-            -d '{"event_type":"update-tag","client_payload":{"tag":"${{ steps.version.outputs.version }}"}}')
-
-          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
-            echo "GitOps trigger feilet med HTTP $HTTP_CODE"
-            cat /tmp/response.txt
-            exit 1
-          fi
-          echo "GitOps trigger OK (HTTP $HTTP_CODE)"
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITOPS_PAT }}
+          repository: ${{ vars.GITOPS_REPO }}
+          event-type: update_tag
+          client-payload: '{"env": "test", "updates": [{"repository": "${{ github.event.repository.name }}", "tag": "${{ steps.version.outputs.version }}"}]}'
 ```
 
 ## Viktige robusthetsforbedringer
@@ -215,13 +208,16 @@ Eksempel: `crfhiskybert.azurecr.io/grossiststatistikken/gitops_test:latest`
 
 ## update-tag.yaml - Automatisk tag-oppdatering
 
-Trigger denne via webhook når nye app-images bygges:
+Trigger denne via `repository_dispatch` med event-type `update_tag`. Payload-format:
+```json
+{"env": "<miljø>", "updates": [{"repository": "<repo-navn>", "tag": "<versjon>"}]}
+```
 
 ```yaml
 name: Update Image Tag
 on:
   repository_dispatch:
-    types: [update-tag]
+    types: [update_tag]
 
 jobs:
   update:
@@ -234,17 +230,20 @@ jobs:
           token: ${{ secrets.GH_PAT }}  # KRITISK: Må bruke PAT for workflow chaining!
       - name: Update tag
         run: |
-          NEW_TAG="${{ github.event.client_payload.tag }}"
-          sed -i "s/tag: .*/tag: \"$NEW_TAG\"/" test/webapp.yaml
+          ENV="${{ github.event.client_payload.env }}"
+          NEW_TAG=$(echo '${{ toJson(github.event.client_payload.updates) }}' | jq -r '.[0].tag')
+          sed -i "s/tag: .*/tag: \"$NEW_TAG\"/" "${ENV}/skybertapp.yaml"
       - name: Commit
         run: |
+          ENV="${{ github.event.client_payload.env }}"
+          NEW_TAG=$(echo '${{ toJson(github.event.client_payload.updates) }}' | jq -r '.[0].tag')
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add test/webapp.yaml
+          git add "${ENV}/skybertapp.yaml"
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update image tag to $NEW_TAG"
+            git commit -m "Update image tag to $NEW_TAG in $ENV"
             git push
           fi
 ```
@@ -253,7 +252,7 @@ jobs:
 
 Checkout-steget MÅ bruke `token: ${{ secrets.GH_PAT }}` fordi:
 - GitHub Actions sikkerhet: Commits gjort med standard `GITHUB_TOKEN` kan IKKE trigge andre workflows
-- Uten PAT vil `oci-push.yaml` ALDRI trigges automatisk etter at `update-tag.yaml` oppdaterer webapp.yaml
+- Uten PAT vil `oci-push.yaml` ALDRI trigges automatisk etter at `update-tag.yaml` oppdaterer skybertapp.yaml
 - PAT må ha både `repo` og `workflow` scopes
 
 ## Signerte commits med actions--create-commit
@@ -264,7 +263,7 @@ For commits som krever GPG-signering:
 - uses: FHISkybert/actions--create-commit@v1
   with:
     message: "Deploy version ${{ env.VERSION }}"
-    add: "test/webapp.yaml"
+    add: "test/skybertapp.yaml"
 ```
 
 ## PAT for repository_dispatch på tvers av repoer
@@ -275,15 +274,15 @@ For commits som krever GPG-signering:
 2. Legg til PAT som repository secret i app-repoet (f.eks. `GITOPS_PAT`)
 3. Bruk denne i workflowen som trigger GitOps-repoet
 
-Eksempel trigger fra app-repo:
+Eksempel trigger fra app-repo (anbefalt med `peter-evans/repository-dispatch@v3`):
 ```yaml
 - name: Trigger GitOps update
-  run: |
-    curl -X POST \
-      -H "Authorization: token ${{ secrets.GITOPS_PAT }}" \
-      -H "Accept: application/vnd.github.v3+json" \
-      https://api.github.com/repos/FHIDev/Fhi.<Tenant>.GitOps/dispatches \
-      -d '{"event_type":"update-tag","client_payload":{"tag":"${{ github.sha }}"}}'
+  uses: peter-evans/repository-dispatch@v3
+  with:
+    token: ${{ secrets.GITOPS_PAT }}
+    repository: ${{ vars.GITOPS_REPO }}
+    event-type: update_tag
+    client-payload: '{"env": "test", "updates": [{"repository": "${{ github.event.repository.name }}", "tag": "${{ steps.version.outputs.version }}"}]}'
 ```
 
 *Merk: GitHub har dessverre ikke støtte for service accounts, så PAT er eneste løsning.*

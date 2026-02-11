@@ -1,21 +1,22 @@
 # Kubectl-tilgang til Skybert
 
 ## Forutsetninger
-1. Azure CLI installert
-2. Tilgangspakke via myaccess.microsoft.com (f.eks. `FHI - Skybert - <Tenant>-Test-Yellow`)
-3. Innlogget med `az login`
+1. Azure CLI installert (Windows: via "Firmaportal", Linux/WSL: [Microsofts guide](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux))
+2. kubectl installert (`winget install kubectl` på Windows)
+3. Tilgangspakke via myaccess.microsoft.com (f.eks. `FHI - Skybert - <Tenant>-Test-Yellow`)
+4. Innlogget med `az login`
+5. For produksjon: PIM elevation må fullføres først
+
+> **Viktig:** Kjør `az logout && az login` etter at tilgang er innvilget, for å oppdatere token.
 
 ## Koble til klusteret
 
 **Viktig:** Du kan IKKE bruke `az aks get-credentials` - Skybert bruker Azure Arc-connected Kubernetes.
 
 **Steg 1: Start proxy (hold denne terminalen åpen)**
-```powershell
-# Gul sone test
-az connectedk8s proxy --resource-group rg-fhi-aks-yellow-test-weu-01 --name aks-yellow-test-01 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
 
-# Gul sone prod
-az connectedk8s proxy --resource-group rg-fhi-aks-yellow-prod-weu-01 --name aks-yellow-prod-01 --subscription c0b8ff18-a1bc-4390-ba6d-a9c252e86252
+```powershell
+az connectedk8s proxy --resource-group rg-fhi-aks-<sone>-<env>-weu-01 --name <kluster-navn> --subscription <subscription-id>
 ```
 
 Proxyen kjører på port 47011 og MÅ holdes åpen mens du bruker kubectl.
@@ -27,6 +28,59 @@ kubectl config set-context --current --namespace=tn-<tenant>
 
 # Eller bruk -n flagget på hver kommando
 kubectl get pods -n tn-<tenant>
+```
+
+## Tilgjengelige klustere
+
+> **Per februar 2026.** Se offisiell docs for oppdaterte verdier: https://skybert.fhi.no/
+
+### Test
+
+| Kluster | Subscription ID |
+|---------|----------------|
+| aks-green-test-01 | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-yellow-test-01 | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-red-test-01 | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
+| aks-sandbox-01 | TBD |
+
+### Produksjon
+
+| Kluster | Subscription ID |
+|---------|----------------|
+| aks-green-prod-02 | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
+| aks-yellow-prod-01 | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
+| aks-red-prod-01 | `88fde73a-d4a6-4aab-b8be-31810fcd7116` |
+
+### Proxy-eksempler per sone
+
+**Grønn test:**
+```powershell
+az connectedk8s proxy --resource-group rg-fhi-aks-green-test-weu-01 --name aks-green-test-01 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
+```
+
+**Gul test:**
+```powershell
+az connectedk8s proxy --resource-group rg-fhi-aks-yellow-test-weu-01 --name aks-yellow-test-01 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
+```
+
+**Rød test:**
+```powershell
+az connectedk8s proxy --resource-group rg-fhi-aks-red-test-weu-01 --name aks-red-test-01 --subscription 247deb95-d7de-4d1b-9fab-1f50a24715ed
+```
+
+**Grønn prod:**
+```powershell
+az connectedk8s proxy --resource-group rg-fhi-aks-green-prod-weu-01 --name aks-green-prod-02 --subscription c0b8ff18-a1bc-4390-ba6d-a9c252e86252
+```
+
+**Gul prod:**
+```powershell
+az connectedk8s proxy --resource-group rg-fhi-aks-yellow-prod-weu-01 --name aks-yellow-prod-01 --subscription c0b8ff18-a1bc-4390-ba6d-a9c252e86252
+```
+
+**Rød prod:**
+```powershell
+az connectedk8s proxy --resource-group rg-fhi-aks-red-prod-weu-01 --name aks-red-prod-01 --subscription 88fde73a-d4a6-4aab-b8be-31810fcd7116
 ```
 
 ## Nyttige kubectl-kommandoer
