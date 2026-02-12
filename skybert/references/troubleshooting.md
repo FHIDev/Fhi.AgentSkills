@@ -172,6 +172,64 @@ az acr login --name crfhiskybert
 docker pull crfhiskybert.azurecr.io/<tenant>/<tenant>_test:<tag>
 ```
 
+### 11. Workload Identity fungerer ikke (autentiseringsfeil)
+
+**Symptomer:**
+- `AADSTS700016: Application with identifier '...' was not found`
+- `ClientAssertionCredential authentication failed`
+- `unauthorized_client`
+- Appen krasjer ved oppstart med autentiseringsfeil mot Azure-tjenester (Key Vault, SQL, etc.)
+
+**Feilsøking:**
+```bash
+# 1. Sjekk at ServiceAccount har riktig client ID
+kubectl get serviceaccount <tenant>-azure -n tn-<tenant> -o jsonpath='{.metadata.annotations.azure\.workload\.identity/client-id}'
+
+# 2. Sjekk at pod har Workload Identity-label
+kubectl get pod <pod-name> -n tn-<tenant> -o jsonpath='{.metadata.labels.azure\.workload\.identity/use}'
+# Skal returnere "true"
+
+# 3. Sjekk at pod har fått WI-miljøvariabler injisert
+kubectl exec <pod-name> -n tn-<tenant> -- env | grep AZURE
+# Skal vise AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_FEDERATED_TOKEN_FILE
+
+# 4. Sjekk pod-logger for autentiseringsfeil
+kubectl logs <pod-name> -n tn-<tenant> | head -50
+```
+
+**Vanlige årsaker:**
+- **Manglende label:** SkybertApp CRD stripper ukjente felter (se #12). Workload Identity-label må settes via CRD-ens støttede felter, ikke direkte i pod-spec.
+- **Feil client ID:** ServiceAccount-en ble opprettet på nytt av plattformteamet med en ny managed identity og ny client ID. Sjekk at client ID matcher det som er konfigurert i Entra ID / federated credentials.
+- **Managed identity finnes ikke:** Identiteten kan ha blitt slettet eller gjenskapt. Verifiser med teamet som administrerer Entra ID.
+
+**Tips:**
+Client ID på ServiceAccount kan endres uten varsel hvis plattformteamet gjenskaper managed identity. Hent alltid gjeldende client ID med kubectl og gi denne til DBA/team som konfigurerer tilgang.
+
+### 12. SkybertApp CRD stripper ukjente felter stille
+
+**Symptomer:**
+- Du legger til felter i SkybertApp YAML (f.eks. ekstra labels, annotations, eller pod-spec-felter)
+- Etter deploy dukker ikke feltene opp i klusteret
+- Ingen feilmelding i Flux eller kubectl apply
+
+**Årsak:**
+SkybertApp CRD bruker et strengt skjema som kun godtar kjente felter. Ukjente felter strippes automatisk uten feil eller advarsel. Dette er standard Kubernetes-oppførsel for CRD-er med `x-kubernetes-preserve-unknown-fields: false` (default).
+
+**Løsning:**
+```bash
+# 1. Sjekk hva som faktisk er deployet i klusteret
+kubectl get skybertapp <tenant> -n tn-<tenant> -o yaml
+
+# 2. Sammenlign med din YAML-fil — manglende felter ble strippet
+
+# 3. Sjekk dokumentert spec for SkybertApp CRD
+kubectl explain skybertapp.spec
+```
+
+**Tips:**
+- Etter deploy, alltid verifiser med `kubectl get skybertapp -o yaml` at feltene dine faktisk er med
+- Hvis du trenger funksjonalitet som CRD-en ikke støtter, kontakt Skybert-teamet på #ext-fhi-skybert
+
 ## Debug-kommandoer
 
 **Viktig:** Husk ALLTID `-n tn-<tenant>` eller sett default namespace først.
