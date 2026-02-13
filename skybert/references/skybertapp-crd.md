@@ -1,5 +1,7 @@
 # SkybertApp CRD-spesifikasjon
 
+**Kilde:** https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/
+
 ## API
 
 ```yaml
@@ -86,9 +88,9 @@ config:
 
 | Felt | Type | Standard | Beskrivelse |
 |------|------|----------|-------------|
-| `useWorkloadIdentity` | boolean | `false` | Aktiver Azure Workload Identity |
+| `useWorkloadIdentity` | boolean | `true` | Azure Workload Identity (på som default) |
 
-Når satt til `true`, knyttes podden automatisk til `<tenant>-azure` service account med federated credentials.
+Podden knyttes automatisk til `<tenant>-azure` service account med federated credentials. Feltet er ikke nevnt i offisiell docs fordi det er slått på som default.
 
 ### Secrets
 
