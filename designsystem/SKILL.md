@@ -7,7 +7,7 @@ description: Ekspert på FHI Designsystem (@folkehelseinstituttet/designsystem).
 
 Bruk FHI Designsystem i egne prosjekter. Designsystemet er basert på standard web components og fungerer i alle rammeverk.
 
-> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.30.0)
+> **Pakke:** `@folkehelseinstituttet/designsystem`
 > **Dokumentasjon:** https://designsystem.fhi.no/
 > **GitHub:** https://github.com/FHIDev/Fhi.Designsystem
 
@@ -86,7 +86,7 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 | Typografi | [`fhi-body`](references/components/fhi-body.md) | Brødtekst |
 | Layout | [`fhi-flex`](references/components/fhi-flex.md) | Flexbox-container |
 | Layout | [`fhi-grid`](references/components/fhi-grid.md) | CSS Grid-container |
-| Ikoner | [`fhi-icon-{navn}`](references/icon-usage.md) | 100 ikoner basert på Lucide Icons |
+| Ikoner | [`fhi-icon-{navn}`](references/icon-usage.md) | Ikoner basert på Lucide Icons (se [ikonlisten](references/icon-usage.md)) |
 
 ### Øvrige referanser
 
@@ -104,3 +104,12 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 2. **Forms**: Les [Form-bruk](references/form-usage.md) for FormData-integrasjon.
 3. **Design tokens**: Les [Design tokens](references/design-tokens.md) for riktige token-navn.
 4. **Ikoner**: Les [Ikonbruk](references/icon-usage.md) for import-mønster og tilgjengelige ikoner.
+
+---
+
+## Vedlikehold av denne skillen
+
+Før merge av endringer, kjør følgende sjekker:
+- `npm view @folkehelseinstituttet/designsystem version` — sjekk siste publiserte versjon
+- `rg "<fhi-" designsystem/references -g "*.md"` — finn alle brukte komponenter og verifiser at de har tilhørende import
+- Sjekk at relative markdown-lenker peker til eksisterende filer

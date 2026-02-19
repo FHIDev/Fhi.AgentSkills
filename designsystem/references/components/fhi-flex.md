@@ -16,6 +16,14 @@ import '@folkehelseinstituttet/designsystem/fhi-flex';
 | `justify` | `justify` | `'start' \| 'center' \| 'end'` | `'start'` | Justering langs hovedaksen |
 | `align` | `align` | `'stretch' \| 'start' \| 'center' \| 'end' \| 'baseline'` | `'stretch'` | Justering langs kryssaksen |
 
+### Nødvendige importer for eksemplene
+
+```typescript
+// Komponenter brukt i eksemplene under:
+import '@folkehelseinstituttet/designsystem/fhi-button';
+import '@folkehelseinstituttet/designsystem/fhi-text-input';
+```
+
 ## Eksempler
 
 ```html

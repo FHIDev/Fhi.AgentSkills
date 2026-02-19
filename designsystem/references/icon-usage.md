@@ -49,6 +49,11 @@ import '@folkehelseinstituttet/designsystem/fhi-icon-trash';
 
 ### I fhi-button
 
+```typescript
+// Husk å importere komponenten:
+import '@folkehelseinstituttet/designsystem/fhi-button';
+```
+
 Ikoner inne i `fhi-button` dimensjoneres automatisk:
 
 ```html
@@ -61,6 +66,11 @@ Ikoner inne i `fhi-button` dimensjoneres automatisk:
 
 ### I fhi-tag
 
+```typescript
+// Husk å importere komponenten:
+import '@folkehelseinstituttet/designsystem/fhi-tag';
+```
+
 ```html
 <fhi-tag color="success">
   <fhi-icon-check></fhi-icon-check>
@@ -70,7 +80,7 @@ Ikoner inne i `fhi-button` dimensjoneres automatisk:
 
 ---
 
-## Tilgjengelige ikoner (100 stk)
+## Tilgjengelige ikoner
 
 Alle importeres som `@folkehelseinstituttet/designsystem/fhi-icon-{navn}` og brukes som `<fhi-icon-{navn}>`.
 

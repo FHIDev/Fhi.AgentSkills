@@ -27,6 +27,14 @@ import '@folkehelseinstituttet/designsystem/fhi-button';
 
 Default slot — tekst, ikon, eller tekst + ikon. Ikoner auto-dimensjoneres.
 
+### Nødvendige importer for eksemplene
+
+```typescript
+// Ikoner brukt i eksemplene under:
+import '@folkehelseinstituttet/designsystem/fhi-icon-plus';
+import '@folkehelseinstituttet/designsystem/fhi-icon-search';
+```
+
 ## Eksempler
 
 ```html
