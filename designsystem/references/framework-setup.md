@@ -67,11 +67,23 @@ import '@folkehelseinstituttet/designsystem/fhi-button';
 
 ## Blazor
 
-Kopier designsystem-filene fra `node_modules` til `wwwroot` (f.eks. via MSBuild-target eller manuelt), og legg til CSS og script i `index.html` eller `_Host.cshtml`:
+Kopier designsystem-filene fra `node_modules` til `wwwroot` (f.eks. via MSBuild-target eller manuelt), og legg til CSS og script i `index.html` eller `_Host.cshtml`.
+
+**Velg én av to strategier — ikke begge:**
+
+**Alternativ A: Last alle komponenter (enkelt, større bundle)**
 
 ```html
 <link rel="stylesheet" href="designsystem/theme/default.css">
-<script type="module" src="designsystem/fhi-designsystem.js"></script>
+<script type="module" src="designsystem/index.js"></script>
+```
+
+**Alternativ B: Last kun komponentene du bruker (mindre bundle)**
+
+```html
+<link rel="stylesheet" href="designsystem/theme/default.css">
+<script type="module" src="designsystem/fhi-button.js"></script>
+<script type="module" src="designsystem/fhi-text-input.js"></script>
 ```
 
 **Merk:** Bruk `@onfocusin`/`@onfocusout` i stedet for `@onfocus`/`@onblur` for korrekt event-bubbling.
