@@ -159,7 +159,7 @@ Kontakt Skybert-teamet på #ext-fhi-skybert:
 ```
 Hei! Kan jeg få tilgang til å pulle images fra crfhiskybert.azurecr.io?
 Bruker: <din-epost>
-Image: <tenant>/<tenant>_test
+Image: <tenant>/<tenant>
 ```
 
 **Verifisering etter tilgang er gitt:**
@@ -169,7 +169,7 @@ az login
 az acr login --name crfhiskybert
 
 # Test pull
-docker pull crfhiskybert.azurecr.io/<tenant>/<tenant>_test:<tag>
+docker pull crfhiskybert.azurecr.io/<tenant>/<tenant>:<tag>
 ```
 
 ### 11. Workload Identity fungerer ikke (autentiseringsfeil)

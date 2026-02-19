@@ -200,10 +200,10 @@ az login
 az acr login --name crfhiskybert
 
 # 3. Pull imaget
-docker pull crfhiskybert.azurecr.io/<tenant>/<tenant>_test:<tag>
+docker pull crfhiskybert.azurecr.io/<tenant>/<tenant>:<tag>
 
 # 4. Kjør containeren
-docker run -p 8080:8080 crfhiskybert.azurecr.io/<tenant>/<tenant>_test:<tag>
+docker run -p 8080:8080 crfhiskybert.azurecr.io/<tenant>/<tenant>:<tag>
 ```
 
 Appen er da tilgjengelig på **http://localhost:8080**

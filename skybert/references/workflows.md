@@ -33,7 +33,7 @@ concurrency:
 
 env:
   REGISTRY: crfhiskybert.azurecr.io
-  IMAGE_NAME: <tenant>/<tenant>_test
+  IMAGE_NAME: <tenant>/<tenant>
 
 jobs:
   build-and-push:
@@ -246,6 +246,81 @@ jobs:
             git commit -m "Update image tag to $NEW_TAG in $ENV"
             git push
           fi
+```
+
+## Promotion fra test til prod
+
+For å promotere til prod, bruk en manuell `workflow_dispatch`-workflow i app-repoet:
+
+```yaml
+name: Promote to Prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versjon å promotere til prod (f.eks. 0.0.20)"
+        required: true
+        type: string
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment: prod  # Krever GitHub Environment med required reviewers
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Validate version format
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Ugyldig versjon — må matche semver-format (x.y.z)"
+            exit 1
+          fi
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify image exists in ACR
+        run: |
+          az acr manifest show-metadata \
+            --registry crfhiskybert \
+            --name "<tenant>/<tenant>" \
+            --tag "${{ inputs.version }}" || exit 1
+
+      - name: Trigger GitOps update for prod
+        run: |
+          curl -s -X POST \
+            https://api.github.com/repos/<org>/<gitops-repo>/dispatches \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            -d '{"event_type":"update-tag","client_payload":{"env":"prod","tag":"${{ inputs.version }}"}}'
+```
+
+`update-tag.yaml` i GitOps-repoet håndterer `env: "prod"` ved å opprette en PR (i stedet for direkte push som for test).
+
+## Input-validering i update-tag.yaml
+
+Workflowen bør validere input:
+- **env**: Kun `test` eller `prod` (allowlist)
+- **tag**: Må matche semver-format (`^\d+\.\d+\.\d+$`)
+
+```yaml
+- name: Validate inputs
+  run: |
+    ENV="${{ github.event.client_payload.env }}"
+    TAG="${{ github.event.client_payload.tag }}"
+    if [[ "$ENV" != "test" && "$ENV" != "prod" ]]; then
+      echo "::error::Ugyldig env" && exit 1
+    fi
+    if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      echo "::error::Ugyldig tag" && exit 1
+    fi
 ```
 
 ## VIKTIG: Workflow Chaining med PAT

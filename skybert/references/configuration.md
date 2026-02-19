@@ -13,7 +13,7 @@ metadata:
 spec:
   container:
     image:
-      repository: crfhiskybert.azurecr.io/<tenant>_test
+      repository: crfhiskybert.azurecr.io/<tenant>
       tag: "v1.0.0"
     env:
       - name: AZURE_CLIENT_ID
@@ -70,7 +70,7 @@ spec:
         fsGroup: 1000
       containers:
       - name: app
-        image: crfhiskybert.azurecr.io/<tenant>_test:latest
+        image: crfhiskybert.azurecr.io/<tenant>:latest
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
@@ -139,7 +139,7 @@ appVersion: "1.0.0"
 `test/values.yaml`:
 ```yaml
 image:
-  repository: crfhiskybert.azurecr.io/<tenant>_test
+  repository: crfhiskybert.azurecr.io/<tenant>
   tag: latest
 
 ingress:
@@ -163,7 +163,7 @@ resources:
 
 images:
   - name: app
-    newName: crfhiskybert.azurecr.io/<tenant>_test
+    newName: crfhiskybert.azurecr.io/<tenant>
     newTag: latest
 ```
 
@@ -180,7 +180,7 @@ metadata:
 spec:
   container:
     image:
-      repository: crfhiskybert.azurecr.io/<tenant>_test
+      repository: crfhiskybert.azurecr.io/<tenant>
       tag: "latest"
 
   ingress:
@@ -189,3 +189,23 @@ spec:
 ```
 
 **Merk**: DNS-oppføring og TLS-sertifikat opprettes automatisk basert på hostname.
+
+## Prod-konfigurasjon
+
+For produksjon brukes `pn-` namespace-prefiks og `*.sky.fhi.no` hostname:
+
+```yaml
+apiVersion: skybert.fhi.no/v1alpha1
+kind: SkybertApp
+metadata:
+  name: <tenant>-web
+  namespace: pn-<tenant>
+spec:
+  image:
+    repository: crfhiskybert.azurecr.io/<tenant>/<tenant>
+    tag: "1.0.0"
+  hostname: <tenant>.sky.fhi.no
+  useWorkloadIdentity: true
+```
+
+**Viktig:** Samme image brukes i test og prod. Promotion skjer via manuell workflow, ikke egen build.
