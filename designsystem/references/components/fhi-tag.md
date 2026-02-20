@@ -16,6 +16,13 @@ import '@folkehelseinstituttet/designsystem/fhi-tag';
 
 Default slot — tekst, eventuelt med et ledende ikon.
 
+### Nødvendige importer for eksemplene
+
+```typescript
+// Ikoner brukt i eksemplene under:
+import '@folkehelseinstituttet/designsystem/fhi-icon-check';
+```
+
 ## Eksempler
 
 ```html

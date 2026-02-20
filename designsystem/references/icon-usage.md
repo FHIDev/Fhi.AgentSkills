@@ -49,17 +49,28 @@ import '@folkehelseinstituttet/designsystem/fhi-icon-trash';
 
 ### I fhi-button
 
+```typescript
+// Husk å importere komponenten:
+import '@folkehelseinstituttet/designsystem/fhi-button';
+```
+
 Ikoner inne i `fhi-button` dimensjoneres automatisk:
 
 ```html
 <fhi-button><fhi-icon-plus></fhi-icon-plus> Legg til</fhi-button>
 
-<fhi-button icon-only variant="subtle" color="neutral">
+<!-- Kun ikon — knappen oppdager automatisk at den kun inneholder et ikon (siden v0.31.0) -->
+<fhi-button variant="subtle" color="neutral">
   <fhi-icon-search></fhi-icon-search>
 </fhi-button>
 ```
 
 ### I fhi-tag
+
+```typescript
+// Husk å importere komponenten:
+import '@folkehelseinstituttet/designsystem/fhi-tag';
+```
 
 ```html
 <fhi-tag color="success">
@@ -70,7 +81,17 @@ Ikoner inne i `fhi-button` dimensjoneres automatisk:
 
 ---
 
-## Tilgjengelige ikoner (100 stk)
+## Tilgjengelige ikoner
+
+> **Vedlikeholdsnote:** Ikonlisten nedenfor er basert på `@folkehelseinstituttet/designsystem@0.31.0`.
+> For å oppdatere listen ved ny release:
+> ```bash
+> # List alle ikon-entrypoints i publisert pakke
+> npm pack @folkehelseinstituttet/designsystem --dry-run --json \
+>   | jq -r '.[0].files[].path' \
+>   | grep 'fhi-icon-' | sed 's/fhi-icon-//;s/\.js//' | sort
+> # Sammenlign output mot kategoriene nedenfor og oppdater ved diff
+> ```
 
 Alle importeres som `@folkehelseinstituttet/designsystem/fhi-icon-{navn}` og brukes som `<fhi-icon-{navn}>`.
 

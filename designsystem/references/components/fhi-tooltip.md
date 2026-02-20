@@ -20,6 +20,14 @@ import '@folkehelseinstituttet/designsystem/fhi-tooltip';
 
 Default slot — elementet som tooltipet er knyttet til.
 
+### Nødvendige importer for eksemplene
+
+```typescript
+// Komponenter og ikoner brukt i eksemplene under:
+import '@folkehelseinstituttet/designsystem/fhi-button';
+import '@folkehelseinstituttet/designsystem/fhi-icon-circle-info';
+```
+
 ## Eksempler
 
 ```html

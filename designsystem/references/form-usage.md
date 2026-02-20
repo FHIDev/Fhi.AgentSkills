@@ -4,6 +4,14 @@ Alle form-komponenter (fhi-button, fhi-text-input, fhi-date-input, fhi-checkbox,
 
 ## FormData
 
+```typescript
+import '@folkehelseinstituttet/designsystem/fhi-text-input';
+import '@folkehelseinstituttet/designsystem/fhi-date-input';
+import '@folkehelseinstituttet/designsystem/fhi-checkbox';
+import '@folkehelseinstituttet/designsystem/fhi-radio';
+import '@folkehelseinstituttet/designsystem/fhi-button';
+```
+
 ```html
 <form id="myForm">
   <fhi-text-input label="Navn" name="name" value="Ola Nordmann"></fhi-text-input>

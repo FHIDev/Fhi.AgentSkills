@@ -38,6 +38,13 @@ import '@folkehelseinstituttet/designsystem/fhi-modal-dialog';
 | `body` | Hovedinnhold |
 | `footer` | Handlingsknapper (skjules automatisk om tom) |
 
+### Nødvendige importer for eksemplene
+
+```typescript
+// Komponenter brukt i eksemplene under:
+import '@folkehelseinstituttet/designsystem/fhi-button';
+```
+
 ## Eksempler
 
 ```html
