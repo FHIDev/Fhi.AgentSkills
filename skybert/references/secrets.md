@@ -71,6 +71,14 @@ spec:
 
 Key Vault-navnet oppgis av plattformteamet ved onboarding. Det finnes ingen fast navnekonvensjon - bruk det faktiske vault-navnet du har fått tildelt.
 
+## Rotasjon og oppdatering
+
+Når en secret endres i Azure Key Vault, oppdateres mountede secret-filer automatisk i containeren.
+Hvis applikasjonen ikke leser filendringer fortløpende, vurder reloader-mønster som restarter
+pod ved secret-endring.
+
+> Kilde: https://docs.sky.fhi.no/miscellaneous/vault_secrets/
+
 ## Regler
 
 - **Aldri** commit secrets til Git

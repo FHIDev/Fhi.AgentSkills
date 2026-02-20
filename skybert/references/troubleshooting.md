@@ -230,6 +230,21 @@ kubectl explain skybertapp.spec
 - Etter deploy, alltid verifiser med `kubectl get skybertapp -o yaml` at feltene dine faktisk er med
 - Hvis du trenger funksjonalitet som CRD-en ikke støtter, kontakt Skybert-teamet på #ext-fhi-skybert
 
+### 13. Container feiler fordi den kjører som root
+
+**Symptomer:**
+- Deployment feiler med permission-feil relatert til filsystem
+- Sikkerhetspolicyer avviser pod med `runAsNonRoot`-validering
+
+**Løsning (i denne rekkefølgen):**
+1. Sett `USER 1000` i Dockerfile
+2. Sett `runAsUser: 1000` i pod-spec
+3. Sett `runAsNonRoot: true` for håndheving
+
+> **Prinsipp:** Hvis deploy feiler — rett imaget/Dockerfile først, ikke omgå policy i YAML.
+
+> Kilde: https://docs.sky.fhi.no/troubleshooting/non-root/
+
 ## Debug-kommandoer
 
 **Viktig:** Husk ALLTID `-n tn-<tenant>` eller sett default namespace først.

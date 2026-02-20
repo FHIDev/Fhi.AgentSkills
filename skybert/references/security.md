@@ -4,32 +4,34 @@
 
 ### Oppsett i applikasjon
 
-1. **Service Account** må annoteres:
+Skybert leverer ferdig service account per tenant: `<tenant>-azure`, knyttet til managed
+identity `<tenant>-skybert-sa-<env>`. Manuell opprettelse eller annotering av service account
+er ikke nødvendig.
+
+**For SkybertApp:**
+Sett `useWorkloadIdentity: true` eksplisitt på SkybertApp-ressursen.
+
+**For raw Deployment:**
 ```yaml
-apiVersion: v1
-kind: ServiceAccount
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: <tenant>-azure
+  name: <app-navn>
   namespace: tn-<tenant>
-  annotations:
-    azure.workload.identity/client-id: "<client-id>"
-```
-
-2. **Pod** må ha riktig label:
-```yaml
-metadata:
-  labels:
-    azure.workload.identity/use: "true"
 spec:
-  serviceAccountName: <tenant>-azure
+  template:
+    metadata:
+      labels:
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: <tenant>-azure
 ```
 
-3. **Miljøvariabel** for Azure SDK:
-```yaml
-env:
-- name: AZURE_CLIENT_ID
-  value: "<client-id>"
-```
+**SDK-kompatibilitet:** Azure Workload Identity fungerer uten ekstra konfigurasjon med:
+- .NET: `DefaultAzureCredential` og `WorkloadIdentityCredential`
+- Azure CLI
+
+> Kilde: https://docs.sky.fhi.no/auth/workload-identity/
 
 ### Tilgang til Azure-ressurser
 
@@ -129,3 +131,4 @@ Hver sikkerhetssone har egne Azure subscriptions:
 - (tilsvarende for Grønn og Rød sone)
 
 Workflows må bruke riktig `AZURE_SUBSCRIPTION_ID` for miljøet.
+
