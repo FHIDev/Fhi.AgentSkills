@@ -1,2 +1,5 @@
 # Lokale innstillinger
 .claude/settings.local.json
+
+# Arbeidsartefakter
+.tmp/
