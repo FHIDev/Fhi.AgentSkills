@@ -72,3 +72,13 @@ import '@folkehelseinstituttet/designsystem/fhi-button';
   document.getElementById('cancel').addEventListener('click', () => dialog.close());
 </script>
 ```
+
+## Kjente problemer
+
+**Safari: tekst fjernes ved dialoglukking**
+I Safari kan tekst i andre komponenter bli fjernet når dialogen lukkes. Workaround: wrap berørt tekst i `<span>` eller en annen HTML-tag.
+
+```html
+<!-- Workaround for Safari-bug -->
+<p><span>Tekst som kan forsvinne</span></p>
+```

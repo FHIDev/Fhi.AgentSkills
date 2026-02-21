@@ -24,13 +24,22 @@ Kilde:
 
 Les alle filer i `designsystem/`-mappen i dette repoet. Disse filene er det nåværende grunnlaget – du trenger dem for å identifisere hva som mangler, er feil, eller kan forbedres.
 
-Les `designsystem/SKILL.md` og finn versjons- og pakkenavn-informasjonen. Søk i denne rekkefølgen:
+Les `designsystem/SKILL.md` og finn versjons- og pakkenavn-informasjonen.
+
+> Merk: Stien `designsystem/SKILL.md` er relativ til **repo-roten** (`Fhi.AgentSkills/`), ikke til skill-mappen.
+
+Søk i denne rekkefølgen:
 
 1. **Toppkommentar (kanonisk format):** Se etter en linje **rett etter frontmatter** (etter closing `---`) på formen:
    `<!-- Basert på @{pakkenavn} v{versjon} -->`
 2. **Fallback:** Hvis kommentaren mangler, søk etter en linje som inneholder `Verifisert mot:` og parse pakkenavn og versjon derfra.
 
 Notér pakkenavnet og versjonen – begge brukes i steg 2.
+
+Notér også hvilke komponenter som er dokumentert i `designsystem/references/components/`
+(filnavnene uten `.md`-ending, f.eks. `fhi-button`, `fhi-text-input`).
+Denne listen brukes i Steg 3 til å finne alle TypeScript- og `.docs.mdx`-filer som
+skal leses.
 
 ---
 
@@ -43,6 +52,8 @@ Hent rot-`package.json` fra:
 https://raw.githubusercontent.com/FHIDev/Fhi.Designsystem/main/package.json
 ```
 
+> ⚠️ Hent alltid denne filen fra `main`-branchen, **ikke** fra taggen. Rot-`package.json` finnes ikke nødvendigvis på alle git-tagger.
+
 Les feltet `"name"`. Verifiser at dette er den faktiske, publiserte npm-pakken ved å sjekke:
 - Matcher det pakkenavnet fra `designsystem/SKILL.md` (steg 1)?
 - Ser det ut som en publisert pakke (f.eks. scopet med `@`, eller kjent pakkenavn)?
@@ -53,9 +64,11 @@ Les feltet `"name"`. Verifiser at dette er den faktiske, publiserte npm-pakken v
    ```
    https://raw.githubusercontent.com/FHIDev/Fhi.Designsystem/main/pnpm-workspace.yaml
    ```
-2. Les `package.json` i aktuelle undermapper (typisk `packages/*/package.json`) for å finne pakken med:
-   - Et scopet `"name"` (starter med `@`)
-   - Og/eller et `"publishConfig"`-felt som indikerer at den er publisert på npm
+2. Bla i mappestrukturen under `packages/` ved å hente GitHub tree-URL for taggen:
+   ```
+   https://github.com/FHIDev/Fhi.Designsystem/tree/v{versjon}/packages
+   ```
+   Identifiser faktisk mappenavn. Les deretter `package.json` fra den mappen (ikke gjett på mappenavn).
 
 Bruk pakkenavnet fra SKILL.md (steg 1) som hint for å identifisere riktig pakke raskt.
 
@@ -83,9 +96,14 @@ https://github.com/FHIDev/Fhi.Designsystem/releases/tag/v{versjon}
 
 Sammenlign versjonen fra npm (steg 2b) med versjonen i skillen (steg 1).
 
-> Hvis versjonene er **like** → skillen er allerede basert på siste publiserte versjon.
+> Hvis versjonene er **like** og brukeren **ikke** har bedt om full gjennomgang:
+> → skillen er allerede basert på siste publiserte versjon.
 > **Stopp her.** Informer bruker om at skillen er à jour og ikke trenger oppdatering.
 > Ikke les kildekode, ikke lag endringsplan, ikke gjør endringer.
+>
+> Hvis versjonene er **like** men brukeren **eksplisitt** ber om gjennomgang av innhold
+> (f.eks. "verifiser innholdet", "sjekk om alt er riktig", "gjennomgå kildekoden"):
+> → fortsett til Steg 3. Versjonsinfrastruktur (Steg 7) hoppes over siden versjon er uendret.
 
 Kun hvis versjonene er **forskjellige** → fortsett:
 
@@ -119,18 +137,43 @@ https://raw.githubusercontent.com/FHIDev/Fhi.Designsystem/v{versjon}/{filsti}
 
 ### Hvilke filer å lese
 
-Bruk skjønn basert på hva som finnes i repoet. Relevante kildefiltyper:
+#### Alltid les — obligatorisk
+
+Disse hentes alltid, for **alle** versjoner og scenarier:
+
+| Filtype | Formål | Sti (relativ til pakke-undermappen) |
+|---------|--------|--------------------------------------|
+| `package.json` | Pakkenavn, versjon, peerDependencies, exports | `package.json` |
+| `CHANGELOG.md` | Endringer mellom versjoner | `CHANGELOG.md` |
+| TypeScript-kildefil per komponent | Autoritativ kilde for `@property`-dekoratorer (hvilke HTML-attributter finnes, typer, defaults). Verifiser mot Properties-tabellen i skillen. | `src/components/{komponent}/{komponent}.component.ts` |
+| `.docs.mdx` per komponent | Variant-semantikk, bruksscenarier, kjente begrensninger og bugs — finnes ikke i TypeScript-koden | `src/components/{komponent}/{komponent}.docs.mdx` |
+| `src/storybook/get_started/*.mdx` | Rammeverk-integrasjonsguider (React, Angular, Blazor, osv.) | `src/storybook/get_started/` |
+
+**Komponent-listen** fra Steg 1 (`references/components/*.md` uten filending) brukes til å
+finne riktige TypeScript- og `.docs.mdx`-filer. Hent én fil per komponent.
+
+> **Merk:** TypeScript-kildefiler og `.docs.mdx`-filer utfyller hverandre.
+> TypeScript gir deg det autoritative API-et; `.docs.mdx` gir deg semantikken og kjente
+> fallgruver. Begge er nødvendige — ingen av dem kan erstattes av den andre.
+
+> **Merk:** Filstier i FHI Designsystem-repoet følger mønsteret over, men kan avvike
+> hvis repostrukturen endres. Finn riktig sti ved å se på mappestrukturen i pakke-undermappen
+> (hent GitHub tree-URL for taggen om nødvendig).
+
+#### Les om innholdet finnes — skjønnsbasert
 
 | Filtype | Formål |
-|---|---|
+|---------|--------|
 | `README.md` og andre `.md`-filer | Installasjon, oppsett, overordnet dokumentasjon |
-| `package.json` | Pakkenavn, versjon, peerDependencies, exports |
-| TypeScript/JavaScript-kildefiler | Komponentdefinisjon, props, events, eksporterte typer |
-| Storybook-stories (`.stories.ts` / `.stories.js`) | Brukseksempler og komponentvarianter |
-| CSS / SCSS-filer | CSS-variabler, design tokens, theming |
-| Changelog (`CHANGELOG.md`) | Hva som er endret mellom versjoner |
+| Storybook-stories (`.stories.ts` / `.stories.js`) | Brukseksempler og komponentvarianter — nyttig for å oppdage nye story-scenarier som bør dokumenteres |
+| CSS / SCSS / token-filer | CSS-variabler, design tokens, theming — les ved mistanke om endringer i tokens |
+| Andre `.mdx`-filer i `src/storybook/` | Tilgjengelighets-guider, FAQ, typografi-guider — les hvis disse endres mellom versjoner |
 
-Start med et overblikk over mappestrukturen i repoet for å forstå hvor de ulike filene ligger.
+Start med å hente GitHub tree-URL for taggen for å se mappestrukturen, slik at du
+finner riktige filstier:
+```
+https://github.com/FHIDev/Fhi.Designsystem/tree/v{versjon}/packages/{pakke-mappenavn}/src
+```
 
 ---
 
@@ -351,14 +394,7 @@ Kjør følgende sjekker for å verifisere at SKILL.md er korrekt for ny versjon:
 
 ### Synkronisering av `.claude`- og `.codex`-versjonene
 
-Kjør følgende for å verifisere at begge versjoner av skillen er identiske:
-
-```
-git diff --no-index .claude/skills/oppdater-designsystem/SKILL.md \
-                    .codex/skills/oppdater-designsystem/SKILL.md
-```
-
-Tom diff = OK. Diff = oppdater `.codex` til å matche `.claude` (`.claude` er kanonisk).
+`.codex/skills` er en symlink til `.claude/skills` — de er fysisk samme mappe. Ingen manuell synkronisering er nødvendig. Endringer i `.claude/skills/` reflekteres automatisk i `.codex/skills/`.
 
 ---
 
