@@ -15,8 +15,9 @@ Bruk FHI Designsystem i egne prosjekter. Designsystemet er basert på standard w
 > **Støttepolicy:** Latest + 9 tidligere minor (totalt 10 minor). Se [`versions/INDEX.md`](versions/INDEX.md) for støttede versjoner.
 >
 > **Versjonsbehandling:**
-> - Ingen versjon oppgitt → svar for latest (dette dokumentet).
-> - Bruker sier "eksisterende app" men versjon ukjent → be om versjon før detaljert API-råd.
+> - **Sjekk alltid prosjektets `package.json` for `@folkehelseinstituttet/designsystem` FØR du svarer.** Gi ikke detaljert API-råd før versjon er fastslått.
+> - Versjon funnet i `package.json` → les [`versions/INDEX.md`](versions/INDEX.md), finn tilhørende delta-fil og les den. Delta-fil overstyrer motstridende informasjon i dette dokumentet.
+> - Kun hvis `package.json` ikke er tilgjengelig → be brukeren oppgi versjon.
 > - Versjon oppgitt → les [`versions/INDEX.md`](versions/INDEX.md), finn tilhørende delta-fil og les den. Delta-fil overstyrer motstridende informasjon i dette dokumentet.
 > - Versjon utenfor support window → best effort, anbefal oppgradering.
 > - Se [`versions/GUIDE.md`](versions/GUIDE.md) for fullstendig beslutningsflyt og svarformat.
