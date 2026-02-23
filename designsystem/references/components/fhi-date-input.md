@@ -17,7 +17,6 @@ import '@folkehelseinstituttet/designsystem/fhi-date-input';
 | `max` | `max` | `string \| undefined` | `undefined` | Seneste dato (`YYYY-MM-DD`) |
 | `message` | `message` | `string \| undefined` | `undefined` | Melding under feltet |
 | `helpText` | `help-text` | `string \| undefined` | `undefined` | Hjelpetekst |
-| `description` | `description` | `string \| undefined` | `undefined` | Beskrivelse under label |
 | `status` | `status` | `'error' \| undefined` | `undefined` | Feilstatus |
 | `readonly` | `readonly` | `boolean` | `false` | Skrivebeskyttet |
 | `disabled` | `disabled` | `boolean` | `false` | Deaktivert |
@@ -28,8 +27,12 @@ import '@folkehelseinstituttet/designsystem/fhi-date-input';
 |-------|-------------|
 | `input` | Utløses når datoen endres |
 | `change` | Utløses ved verdiendring |
-| `focus` | Utløses når feltet får fokus |
-| `blur` | Utløses når feltet mister fokus |
+
+> Fokusrelaterte hendelser håndteres som native DOM-events og kan variere mellom rammeverk. I Blazor: bruk `@onfocusin`/`@onfocusout`.
+
+## Nettleser- og OS-variasjon
+
+Komponenten bygger på native `<input type="date">`. Atferd og utseende — inkludert kalendervelgerens design og tastaturnavigasjon — varierer mellom nettlesere og operativsystemer.
 
 ## Eksempler
 

@@ -24,9 +24,11 @@ function App() {
 
 ```typescript
 // global.d.ts
-declare namespace JSX {
-  interface IntrinsicElements {
-    [elemName: `fhi-${string}`]: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+declare module "react" {
+  namespace JSX {
+    interface IntrinsicElements {
+      [key: `fhi-${string}`]: { [attribute: string]: unknown; };
+    }
   }
 }
 ```

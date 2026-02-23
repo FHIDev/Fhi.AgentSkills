@@ -16,7 +16,6 @@ import '@folkehelseinstituttet/designsystem/fhi-text-input';
 | `placeholder` | `placeholder` | `string \| undefined` | `undefined` | Plassholdertekst |
 | `message` | `message` | `string \| undefined` | `undefined` | Melding under feltet (f.eks. feilmelding) |
 | `helpText` | `help-text` | `string \| undefined` | `undefined` | Hjelpetekst mellom label og felt |
-| `description` | `description` | `string \| undefined` | `undefined` | Beskrivelse under label |
 | `status` | `status` | `'error' \| undefined` | `undefined` | Feilstatus — farger label, border og melding rødt |
 | `readonly` | `readonly` | `boolean` | `false` | Skrivebeskyttet (sendes med i FormData) |
 | `disabled` | `disabled` | `boolean` | `false` | Deaktivert (ekskluderes fra FormData) |
@@ -27,8 +26,8 @@ import '@folkehelseinstituttet/designsystem/fhi-text-input';
 |-------|-------------|
 | `input` | Utløses ved hvert tastetrykk |
 | `change` | Utløses når feltet mister fokus etter verdiendring |
-| `focus` | Utløses når feltet får fokus |
-| `blur` | Utløses når feltet mister fokus |
+
+> Fokusrelaterte hendelser håndteres som native DOM-events og kan variere mellom rammeverk. I Blazor: bruk `@onfocusin`/`@onfocusout`.
 
 ## Eksempler
 

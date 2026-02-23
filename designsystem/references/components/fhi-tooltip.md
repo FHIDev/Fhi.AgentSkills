@@ -2,6 +2,8 @@
 
 Tooltip med auto-posisjonering (Floating UI). Vises ved hover/fokus eller klikk.
 
+**Bruksregel:** Tooltip skal ikke brukes til kritisk informasjon brukeren er avhengig av. Bruk tooltip kun til supplerende, ikke-essensiell hjelp.
+
 ```typescript
 import '@folkehelseinstituttet/designsystem/fhi-tooltip';
 ```
