@@ -132,7 +132,7 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 
 ## Instruksjoner for Claude
 
-1. **Versjon**: Sjekk alltid hvilken versjon brukeren har. Ingen versjon oppgitt = svar for latest. Versjon oppgitt = les [`versions/INDEX.md`](versions/INDEX.md) og tilhørende delta-fil. Se [`versions/GUIDE.md`](versions/GUIDE.md) for fullstendig beslutningsflyt.
+1. **Versjon**: Sjekk alltid prosjektets `package.json` for `@folkehelseinstituttet/designsystem` FØR du svarer. Finn versjon → les [`versions/INDEX.md`](versions/INDEX.md) og tilhørende delta-fil. Kun hvis `package.json` ikke er tilgjengelig → be brukeren oppgi versjon. Gi IKKE detaljert API-råd før versjon er fastslått. Se [`versions/GUIDE.md`](versions/GUIDE.md) for fullstendig beslutningsflyt.
 2. **Komponent**: Les referansefilen under `references/components/` for den aktuelle komponenten.
 3. **Forms**: Les [Form-bruk](references/form-usage.md) for FormData-integrasjon.
 4. **Design tokens**: Les [Design tokens](references/design-tokens.md) for riktige token-navn.
