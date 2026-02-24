@@ -2,6 +2,7 @@
 
 ## Forutsetninger
 1. Azure CLI installert (Windows: via "Firmaportal", Linux/WSL: [Microsofts guide](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux))
+   - I WSL: verifiser riktig binær med `which az` for å unngå at Windows PATH brukes feilaktig
 2. kubectl installert (`winget install kubectl` på Windows)
 3. Tilgangspakke via myaccess.microsoft.com (f.eks. `FHI - Skybert - <Tenant>-Test-Yellow`)
 4. Innlogget med `az login`
@@ -10,6 +11,10 @@
 > **Viktig:** Kjør `az logout && az login` etter at tilgang er innvilget, for å oppdatere token.
 
 ## Koble til klusteret
+
+> **Viktig (produksjon):** I normal drift bør du ikke trenge å koble til produksjonsklusteret — bruk logger/metrics/Grafana i stedet. Direkte shell/`kubectl exec` i pods i produksjon kan utløse sikkerhetsvarsler. Bruk kun ved nødvendig feilsøking.
+
+> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/
 
 **Viktig:** Du kan IKKE bruke `az aks get-credentials` - Skybert bruker Azure Arc-connected Kubernetes.
 
@@ -32,7 +37,7 @@ kubectl get pods -n tn-<tenant>
 
 ## Tilgjengelige klustere
 
-> **Per februar 2026.** Se offisiell docs for oppdaterte verdier: https://skybert.fhi.no/
+> **Per februar 2026.** Se offisiell docs for oppdaterte verdier: https://docs.sky.fhi.no/get-started/connectedk8s/
 
 ### Test
 

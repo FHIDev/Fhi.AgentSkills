@@ -1,5 +1,17 @@
 # GitHub Workflows
 
+## Premade baseline i GitOps-repo
+
+GitOps-repoet (`Fhi.<Tenant>.GitOps`) leveres med `.github/workflows/oci-push.yaml` og
+`.github/workflows/update-tag.yaml` ferdig satt opp. Normaltilfellet er å bruke dem som de er.
+
+**OCI-artifact navngivning:** Miljømapper på repo-roten (`test/`, `prod/`) pakkes til
+OCI-artifacts med navn `gitops_<env>`. Mappenavn styrer artifact-navn, så ikke endre dem.
+
+> Kilde: https://docs.sky.fhi.no/get-started/kubernetes-yaml/
+
+---
+
 ## Komplett CI/CD Flyt
 
 ```
@@ -210,8 +222,38 @@ Eksempel: `crfhiskybert.azurecr.io/grossiststatistikken/gitops_test:latest`
 
 Trigger denne via `repository_dispatch` med event-type `update_tag`. Payload-format:
 ```json
-{"env": "<miljø>", "updates": [{"repository": "<repo-navn>", "tag": "<versjon>"}]}
+{
+  "env": "<miljø>",
+  "updates": [
+    { "repository": "<repo-navn>", "tag": "<versjon>" }
+  ]
+}
 ```
+
+**Regler:**
+- Ett `env` per kall (ett miljø av gangen)
+- Flere repositories kan oppdateres i samme kall via `updates[]`
+
+**Eksempel: trigger prod-oppdatering fra app-repo:**
+```yaml
+- name: Trigger GitOps promotion - prod
+  uses: peter-evans/repository-dispatch@v3
+  with:
+    token: ${{ secrets.GITOPS_PAT }}
+    repository: ${{ vars.GITOPS_REPO }}
+    event-type: update_tag
+    client-payload: |
+      {
+        "env": "prod",
+        "updates": [
+          { "repository": "${{ github.event.repository.name }}", "tag": "${{ steps.version.outputs.version }}" }
+        ]
+      }
+```
+
+> **Merk:** PAT bør ha utløpstid på ca. 1 år (ikke "no expiry" og ikke 30 dager).
+
+> Kilde: https://docs.sky.fhi.no/build/how-to/trigger-gitops-promotion/
 
 ```yaml
 name: Update Image Tag

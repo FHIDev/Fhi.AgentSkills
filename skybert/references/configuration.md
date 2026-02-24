@@ -1,5 +1,27 @@
 # Konfigurasjonseksempler
 
+## Anbefalt startpunkt: Minimal SkybertApp
+
+Start alltid med minimal SkybertApp i `test/`-mappen. Bruk Helm/Kustomize/raw manifests
+kun når behovet tilsier det (komplekse apps, upstream Helm charts, etc.).
+
+```yaml
+apiVersion: skybert.fhi.no/v1alpha1
+kind: SkybertApp
+metadata:
+  name: <app-navn>
+  namespace: tn-<tenant>
+spec:
+  image:
+    repository: crfhiskybert.azurecr.io/<tenant>/<app-navn>
+    tag: "<tag>"
+  hostname: <app-navn>.skytest.fhi.no
+```
+
+> Kilde: https://docs.sky.fhi.no/get-started/kubernetes-yaml/
+
+## Legacy-eksempler (for eksisterende workloads)
+
 ## **Legacy** - WebApp med Workload Identity
 
 > **Merk:** WebApp CRD er utdatert. Bruk [SkybertApp](skybertapp-crd.md) for nye deployments.
