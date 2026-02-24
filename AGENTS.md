@@ -20,3 +20,8 @@ Fhi.AgentSkills/
 - Rediger alltid filer under `.claude/skills/` – endringer reflekteres automatisk i `.codex/skills/`
 - Kjør aldri diff eller synkronisering mellom `.claude/skills/` og `.codex/skills/` – det er unødvendig
 - Opprett aldri nye filer direkte under `.codex/skills/` – bruk `.claude/skills/`
+
+## Bidrag og PR-tilgang
+
+- For å opprette PR-er i dette repoet må du ha riktig tilgang
+- Kontakt `team-a@fhi.no` for å få tilgang til å lage PR
