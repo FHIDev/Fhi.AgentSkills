@@ -88,16 +88,9 @@ config:
 
 | Felt | Type | Standard | Beskrivelse |
 |------|------|----------|-------------|
-| `useWorkloadIdentity` | boolean | `true` | Azure Workload Identity (på som default) |
+| `useWorkloadIdentity` | boolean | — | Aktiver Azure Workload Identity for SkybertApp. Sett feltet eksplisitt til `true`. |
 
-Podden knyttes automatisk til `<tenant>-azure` service account med federated credentials.
-
-> **VURDER:** `auth/workload-identity/`-dokumentasjonen sier at flagget skal settes eksplisitt,
-> mens det her er dokumentert som default-på. Verifiser faktisk standardverdi mot gjeldende CRD:
-> ```bash
-> kubectl explain skybertapp.spec.useWorkloadIdentity
-> ```
-> Juster beskrivelse etter verifisering.
+Podden knyttes til `<tenant>-azure` service account med federated credentials når Workload Identity er aktivert.
 
 > Kilde: https://docs.sky.fhi.no/auth/workload-identity/
 

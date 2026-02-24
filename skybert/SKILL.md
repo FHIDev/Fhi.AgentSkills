@@ -2,12 +2,13 @@
 name: skybert
 description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bruk ved arbeid med Skybert GitOps, SkybertApp CRD, Azure Workload Identity, Flux, eller Skybert-relaterte oppgaver. Hjelper med onboarding, konfigurasjon, deployment og feilsøking.
 ---
+<!-- Kilde-hash: a125818334d5aff092e0b6697f163abe26b4a59421458243068dda2dafcfed9d -->
 
 # Skybert Platform Skill
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-02-20
+> **Sist verifisert mot offisiell docs:** 2026-02-24
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -91,6 +92,12 @@ Blåløypa er den anbefalte veien for å komme i gang på Skybert.
 **Steg-for-steg (Blåløypa):**
 1. **Onboarding med plattformteamet**: Tenant, namespace og tilganger etableres
 2. **Søk tilgang via MyAccess**: Teammedlemmer søker riktig access package (f.eks. `FHI - Skybert - <Tenant>-Test-Yellow`)
+   - Access package-tilgang er tidsbegrenset (typisk 1 år) og må fornyes
+   - Én av tenantens approvere må godkjenne søknader i access package-flyten
+   - Tenant owner/approvere må følge opp access reviews (kvartalsvis) innen frist for å unngå at medlemmer mister tilgang
+
+> Kilde: https://docs.sky.fhi.no/get-started/explanations/access-packages/
+
 3. **Verifiser GitOps-repo** (`Fhi.<Tenant>.GitOps`): oci-push og update-tag workflows er allerede satt opp
 4. **Deploy med minimal SkybertApp**: Lag `test/skybertapp.yaml` og push til main
 5. **Verifiser i klusteret**: Vent på Flux-rekonsiliering (hvert 2 min), sjekk pods og ingress
@@ -288,6 +295,8 @@ TLS-sertifikater provisjoneres automatisk via cert-manager.
 
 Plattformen planlegger å tilby tre StorageClass-nivåer med ulike nivåer av redundans, snapshot-retensjon og backup. Nåværende planlagte løsning er **ikke egnet for IO-intensive workloads** som aktive databaser.
 
+> Kilde: https://docs.sky.fhi.no/persistence/
+
 ## Azure Workload Identity
 
 Skybert bruker Azure Workload Identity for passordløs autentisering mot Azure-tjenester (Key Vault, Blob Storage, etc.).
@@ -307,6 +316,12 @@ Når en ny tenant opprettes, gir plattformteamet en **forhåndskonfigurert workl
 2. Pod bruker ServiceAccount
 3. Azure AD utsteder tokens via OIDC federation
 4. Applikasjon autentiserer mot Azure-tjenester uten secrets
+
+## Brukervendt autentisering
+
+Skybert har per nå ingen innebygd funksjonalitet for brukervendt autentisering eller maskin-til-maskin-autentisering for tenants. Bruk standard IAM-prosedyrer med OIDC via EntraID, IDPorten eller HelseID. Unngå legacy AD-autentisering.
+
+> Kilde: https://docs.sky.fhi.no/auth/
 
 ## Feilsøking av deployments
 

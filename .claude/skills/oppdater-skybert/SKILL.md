@@ -24,11 +24,9 @@ skybert/
     ├── workflows.md           ← GitHub Actions CI/CD
     └── <nye filer kan legges til ved behov>
 
-Runtime-state (opprettes, ikke committet):
+Runtime-cache (opprettes, ikke committet):
 .tmp/oppdater-skybert/
 ├── state.json
-├── last-seen.hash
-├── last-applied.hash
 ├── search_index.json
 ├── pages/*.html
 └── UPDATE-PLAN.md
@@ -93,10 +91,15 @@ Noter i planen at fallback-kilde ble brukt.
 
 ## Steg 2 – Beregn global hash og les forrige state
 
-### 2a. Les forrige state
+### 2a. Les committet hash
 
-Les `.tmp/oppdater-skybert/state.json` (hvis den eksisterer) og lagre verdiene i minnet
-som `previousState`. Disse brukes i steg 3 til no-op-sjekk og i no-op-rapporten.
+Les `<!-- Kilde-hash: ... -->`-kommentaren fra `skybert/SKILL.md`. Denne inneholder `globalHash` fra forrige godkjente kjøring og er committet i repoet.
+
+- Hvis kommentaren finnes → lagre verdien som `previousGlobalHash`
+- Hvis kommentaren mangler → behandle som første kjøring (ingen no-op-sjekk)
+
+Les også `.tmp/oppdater-skybert/state.json` (hvis den eksisterer) og lagre verdiene i minnet
+som `previousState`. Disse brukes i steg 4a for per-side sammenligning.
 
 ### 2b. Beregn global hash
 
@@ -124,15 +127,13 @@ Skriv `.tmp/oppdater-skybert/state.json`:
 }
 ```
 
-Oppdater `.tmp/oppdater-skybert/last-seen.hash` med `globalHash`.
-
 ---
 
 ## Steg 3 – Sammenlign hashes
 
-Les `last-applied.hash` og sammenlign med `globalHash` fra steg 2.
+Sammenlign `globalHash` (beregnet i steg 2b) med `previousGlobalHash` (lest fra `skybert/SKILL.md` i steg 2a).
 
-**No-op-regel:** Hvis `globalHash == last-applied.hash` — skriv følgende rapport og stopp:
+**No-op-regel:** Hvis `globalHash == previousGlobalHash` — skriv følgende rapport og stopp:
 
 ```
 Ingen oppdatering nødvendig.
@@ -141,7 +142,7 @@ Global hash: <globalHash>
 Sist hentet: <previousState.fetchedAt, eller "ukjent" hvis state ikke fantes>
 ```
 
-Kun hvis hashene er **forskjellige** (eller `last-applied.hash` ikke eksisterer) → fortsett til steg 4.
+Kun hvis hashene er **forskjellige** (eller `previousGlobalHash` ikke finnes) → fortsett til steg 4.
 
 ---
 
@@ -327,16 +328,17 @@ Oppdater feltet `Sist verifisert mot offisiell docs:` i `skybert/SKILL.md` med d
 
 ---
 
-## Steg 10 – Oppdater last-applied.hash
+## Steg 10 – Oppdater kilde-hash i skybert/SKILL.md
 
-> **Kontrakt:** `last-applied.hash` oppdateres **kun** etter at:
+> **Kontrakt:** Kilde-hash-kommentaren oppdateres **kun** etter at:
 > 1. Brukeren har godkjent planen (helt eller delvis)
 > 2. Endringene faktisk er skrevet til `skybert/`-filene uten feil
 >
 > Avvisning av planen, delvis godkjenning uten implementering, eller teknisk feil
-> under skriving → `last-applied.hash` forblir uendret.
+> under skriving → kilde-hash forblir uendret.
 
-Skriv `globalHash` til `.tmp/oppdater-skybert/last-applied.hash`.
+Oppdater `<!-- Kilde-hash: ... -->`-kommentaren i `skybert/SKILL.md` med ny `globalHash`.
+Kommentaren plasseres rett etter frontmatter-blokken (etter `---`).
 
 ---
 
@@ -349,5 +351,5 @@ Skriv `globalHash` til `.tmp/oppdater-skybert/last-applied.hash`.
 | `search_index.json` ikke funnet | Forsøk å hente `/sitemap.xml` eller `/sitemap_index.xml` som alternativ |
 | Side ikke funnet (404) | Hopp over siden; logg den som manglende i planen |
 | HTML uten meningsfullt innhold | Ekstraher fra `<article>` eller `<main>`; hopp over siden hvis disse mangler |
-| `last-applied.hash` mangler | Behandle som første kjøring; fortsett uten no-op-sjekk |
+| Kilde-hash-kommentar mangler i `skybert/SKILL.md` | Behandle som første kjøring; fortsett uten no-op-sjekk |
 | Mapping uklar for en side | Bruk `VURDER`-kategori med begrunnelse |

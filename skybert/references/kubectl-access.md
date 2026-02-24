@@ -12,6 +12,10 @@
 
 ## Koble til klusteret
 
+> **Viktig (produksjon):** I normal drift bør du ikke trenge å koble til produksjonsklusteret — bruk logger/metrics/Grafana i stedet. Direkte shell/`kubectl exec` i pods i produksjon kan utløse sikkerhetsvarsler. Bruk kun ved nødvendig feilsøking.
+
+> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/
+
 **Viktig:** Du kan IKKE bruke `az aks get-credentials` - Skybert bruker Azure Arc-connected Kubernetes.
 
 **Steg 1: Start proxy (hold denne terminalen åpen)**
