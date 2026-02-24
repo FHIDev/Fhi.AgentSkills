@@ -25,10 +25,10 @@ Disse skillene brukes til å holde domenekunnskap-skillene i dette repoet oppdat
 
 | Skill | Beskrivelse |
 |-------|-------------|
-| [.claude/skills/oppdater-skybert](.claude/skills/oppdater-skybert/SKILL.md) | Synkroniserer skybert-skillen med siste versjon av `docs.sky.fhi.no`. |
-| [.claude/skills/oppdater-designsystem](.claude/skills/oppdater-designsystem/SKILL.md) | Synkroniserer designsystem-skillen med siste publiserte npm-versjon. |
+| [oppdater-skybert](.claude/skills/oppdater-skybert/SKILL.md) | Synkroniserer skybert-skillen med siste versjon av `docs.sky.fhi.no`. |
+| [oppdater-designsystem](.claude/skills/oppdater-designsystem/SKILL.md) | Synkroniserer designsystem-skillen med siste publiserte npm-versjon. |
 
-> **Merk:** Disse ligger under `.claude/skills/` og skal ikke symlinkes til andre prosjekter.
+> **Merk:** Disse ligger kanonisk under `.claude/skills/` og skal ikke symlinkes til andre prosjekter.
 
 ## Installasjon
 
@@ -108,6 +108,8 @@ Se [skybert skill](~/.codex/skills/skybert/SKILL.md) for Skybert-plattformen.
 Se [designsystem skill](~/.codex/skills/designsystem/SKILL.md) for FHI Designsystem.
 ```
 
+> **Merk:** `~` er kun et eksempel (hjemmekatalog). Tilpass stien til din faktiske plassering og operativsystem.
+
 #### Cursor
 
 Cursor bruker `.cursor/rules/` for prosjektspesifikke regler.
@@ -132,7 +134,8 @@ New-Item -ItemType SymbolicLink -Path ".cursor\rules\designsystem" -Target "C:\r
 ## Repostruktur for vedlikeholdere
 
 - `.claude/skills/` – kanonisk plassering for interne vedlikeholds-skills (`oppdater-*`)
-- `.codex/skills/` – symlink som peker til `.claude/skills/` (rediger alltid under `.claude/skills/`)
+- `.codex/skills/` – kompatibilitetskopi av `.claude/skills/` for Codex/oppsett uten symlink-støtte
+- Rediger alltid interne vedlikeholds-skills under `.claude/skills/`, og speil endringene til `.codex/skills/`
 - `AGENTS.md` – repo-informasjon for OpenAI Codex-agenter
 - `CLAUDE.md` – repo-informasjon for Claude Code
 
@@ -218,7 +221,7 @@ For å kunne opprette PR-er i dette repoet må du ha riktig tilgang.
    - legg til skillen i tabellen under `Tilgjengelige Skills`
    - legg til installasjonseksempel hvis det er en skill som skal brukes i prosjekter
 
-5. **Opprett PR** med endringene (etter at tilgang er gitt av `team-a@fhi.no`)
+5. **Opprett PR** med endringene
 
 ### Tips for god skill-struktur
 
