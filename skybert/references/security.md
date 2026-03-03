@@ -27,6 +27,20 @@ spec:
       serviceAccountName: <tenant>-azure
 ```
 
+**Hva skjer under panseret:**
+AKS-clusteret kjører en mutating webhook (`azure-wi-webhook`) som del av kontrollplanet.
+Når en pod har labelen `azure.workload.identity/use: "true"`, injiserer webhooken automatisk:
+
+| Ressurs | Verdi |
+|---|---|
+| Projected token volume | `/var/run/secrets/azure/tokens/azure-identity-token` |
+| `AZURE_CLIENT_ID` | Fra service account annotation |
+| `AZURE_TENANT_ID` | Fra service account annotation |
+| `AZURE_FEDERATED_TOKEN_FILE` | `/var/run/secrets/azure/tokens/azure-identity-token` |
+| `AZURE_AUTHORITY_HOST` | `https://login.microsoftonline.com/` |
+
+Du trenger ikke sette disse manuelt — webhooken gjør det for deg.
+
 **SDK-kompatibilitet:** Azure Workload Identity fungerer uten ekstra konfigurasjon med:
 - .NET: `DefaultAzureCredential` og `WorkloadIdentityCredential`
 - Azure CLI
