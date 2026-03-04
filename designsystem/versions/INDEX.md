@@ -1,11 +1,12 @@
 # Versjonsindeks
 
-Baseline er alltid SKILL.md (latest v0.31.0).
+Baseline er alltid SKILL.md (latest v0.32.0).
 Støttepolicy: Latest + 9 tidligere minor (totalt 10 minor).
 
 | Versjon | Status      | Nøkkelavvik vs latest                             | Delta-fil       |
 |---------|-------------|---------------------------------------------------|-----------------|
-| 0.31.x  | Latest      | —                                                 | —               |
+| 0.32.x  | Latest      | —                                                 | —               |
+| 0.31.x  | Supported   | Latest har robustere håndtering av null-/ugyldige verdier | [v0.31.x.md](v0.31.x.md) |
 | 0.30.x  | Supported   | `icon-only` støttet (ikke deprecated)             | [v0.30.x.md](v0.30.x.md) |
 | 0.29.x  | Supported   | `icon-only` støttet                               | [v0.29.x.md](v0.29.x.md) |
 | 0.28.x  | Supported   | `fhi-modal-dialog` mangler; input event i 0.28.4  | [v0.28.x.md](v0.28.x.md) |
@@ -13,9 +14,8 @@ Støttepolicy: Latest + 9 tidligere minor (totalt 10 minor).
 | 0.26.x  | Supported   | `fhi-modal-dialog` mangler; verifisering kreves   | [v0.26.x.md](v0.26.x.md) |
 | 0.25.x  | Supported   | Verifisering kreves                               | [v0.25.x.md](v0.25.x.md) |
 | 0.24.x  | Supported   | Verifisering kreves                               | [v0.24.x.md](v0.24.x.md) |
-| 0.23.x  | Supported   | Verifisering kreves                               | [v0.23.x.md](v0.23.x.md) |
-| 0.22.x  | Supported   | Verifisering kreves; eldste støttede versjon      | [v0.22.x.md](v0.22.x.md) |
-| < 0.22  | Ikke støttet | Best effort, anbefal oppgradering                | —               |
+| 0.23.x  | Supported   | Verifisering kreves; eldste støttede versjon      | [v0.23.x.md](v0.23.x.md) |
+| < 0.23  | Ikke støttet | Best effort, anbefal oppgradering                | —               |
 
 ## Matching-regler
 

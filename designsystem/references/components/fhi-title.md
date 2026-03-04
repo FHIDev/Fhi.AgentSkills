@@ -12,7 +12,7 @@ import '@folkehelseinstituttet/designsystem/fhi-title';
 |----------|-----------|------|---------|-------------|
 | `level` | `level` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | (påkrevd) | Semantisk overskriftsnivå |
 | `size` | `size` | `'large' \| 'medium' \| 'small'` | `'medium'` | Visuell størrelse |
-| `color` | `color` | `string` | arvet | CSS-farge (bruk design tokens) |
+| `color` | `color` | `string` | `var(--fhi-color-neutral-text-default)` | CSS-farge (bruk design tokens) |
 
 ## Eksempler
 
