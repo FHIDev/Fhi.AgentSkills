@@ -186,6 +186,15 @@ git pull
 
 Symlinks oppdateres automatisk siden de peker til repoet.
 
+### Automatisk oppdatering via oppdateringsskills
+
+Noen skills har tilhørende oppdateringsskills (f.eks. `oppdater-skybert`) som kan hente og sammenligne med kildedata automatisk. Disse krever:
+
+- **`gh` CLI** installert og autentisert (`gh auth login`)
+- **Lesetilgang** til kilderepoene (f.eks. `FHISkybert/Fhi.Skybert.Docs` og `FHISkybert/Fhi.Skybert.Infra`)
+
+Uten repo-tilgang faller oppdateringsskillene tilbake til web-scraping av offentlig dokumentasjon der dette er tilgjengelig.
+
 ## Lisens og eierskap
 
 Dette repoet eies og vedlikeholdes av Folkehelseinstituttet (FHI).
