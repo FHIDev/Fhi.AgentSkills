@@ -9,7 +9,7 @@ identity `<tenant>-skybert-sa-<env>`. Manuell opprettelse eller annotering av se
 er ikke nødvendig.
 
 **For SkybertApp:**
-Sett `useWorkloadIdentity: true` eksplisitt på SkybertApp-ressursen.
+Workload Identity er alltid aktivert. Composition setter automatisk `azure.workload.identity/use: "true"` og `serviceAccountName: <tenant>-azure` på alle pods. Du trenger ikke gjøre noe ekstra.
 
 **For raw Deployment:**
 ```yaml
@@ -82,41 +82,19 @@ securityContext:
       - ALL
 ```
 
-## Nettverkspolicyer (spesielt rød sone)
+> **Merk:** Kyverno setter automatisk `runAsNonRoot: true`, `runAsUser: 1000` (hvis ikke satt),
+> og `seccompProfile.type: RuntimeDefault` (hvis ikke satt) for pods i `tn-*` namespaces.
+> Du trenger vanligvis ikke sette disse eksplisitt. Se [Kyverno-policier](kyverno-policies.md) for detaljer.
 
-I rød sone er default DENY - alle tilkoblinger må eksplisitt tillates:
+## Nettverkspolicyer (rød sone)
 
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: <tenant>-allow-ingress
-  namespace: tn-<tenant>
-spec:
-  podSelector:
-    matchLabels:
-      app: <tenant>-app
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: ingress-nginx
-  egress:
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: tn-<tenant>
-  - to:  # DNS
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kube-system
-    ports:
-    - protocol: UDP
-      port: 53
-```
+I rød sone er default DENY — all trafikk blokkert som utgangspunkt.
+
+**Viktig:** Tenanter kan IKKE opprette egne `NetworkPolicy`-ressurser i rød sone — dette blokkeres av Kyverno (`deny-netpol`-policy). Be plattformteamet om GlobalNetworkPolicy-unntak for egress til spesifikke IP-ranges/porter.
+
+Se [Hostnavn og nettverkskonfigurasjon](hostnames-and-networking.md#rød-sone) for detaljer om tillatt trafikk og nettverkspolicyer.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8e32c0f/infra/kyverno-policies/base/policies-red/
 
 ## Secrets Management
 
