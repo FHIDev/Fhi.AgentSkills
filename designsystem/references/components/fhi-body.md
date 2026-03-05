@@ -11,7 +11,7 @@ import '@folkehelseinstituttet/designsystem/fhi-body';
 | Property | Attributt | Type | Default | Beskrivelse |
 |----------|-----------|------|---------|-------------|
 | `size` | `size` | `'large' \| 'medium' \| 'small'` | `'medium'` | Skriftstørrelse |
-| `color` | `color` | `string` | arvet | CSS-farge |
+| `color` | `color` | `string` | `var(--fhi-color-neutral-text-default)` | CSS-farge |
 
 ## Eksempler
 
