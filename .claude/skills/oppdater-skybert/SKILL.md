@@ -1,513 +1,355 @@
 ---
 name: oppdater-skybert
-description: Oppdaterer skybert-skillen basert på kilderepoene FHISkybert/Fhi.Skybert.Docs og FHISkybert/Fhi.Skybert.Infra. Leser dokumentasjon og infra-definisjoner via gh api, sammenligner med alle eksisterende filer i skybert/, og lager en endringsplan til gjennomgang. Bruk denne skillen når skybert-skillen skal synkroniseres med nye kilder, eller når du mistenker at skillen er utdatert eller mangelfull.
+description: Oppdaterer skybert-skillen basert på siste versjon av docs.sky.fhi.no. Henter dokumentasjon, sammenligner med alle eksisterende filer i skybert/, og lager en endringsplan til gjennomgang. Bruk denne skillen når skybert-skillen skal synkroniseres med ny dokumentasjon, eller når du mistenker at skillen er utdatert eller mangelfull.
 ---
 
 # Oppdater Skybert-skillen
 
-Denne skillen beskriver arbeidsflyten for å holde `skybert/`-skillen i dette repoet oppdatert og korrekt basert på kilderepoene:
-
-- **FHISkybert/Fhi.Skybert.Docs** — MkDocs-basert dokumentasjon (markdown under `docs/`)
-- **FHISkybert/Fhi.Skybert.Infra** — Flux GitOps infra-repo med CRD-definisjoner, Kyverno-policier, tenant-bootstrap
+Denne skillen beskriver arbeidsflyten for å holde `skybert/`-skillen i dette repoet oppdatert og korrekt i henhold til siste versjon av offisiell Skybert-dokumentasjon.
 
 ## Forutsetninger
 
 ```
 Skybert-skill (oppdateres):
 skybert/
-├── SKILL.md                                 (onboarding, konsepter, Blåløypa, navnekonvensjoner)
+├── SKILL.md
 └── references/
-    ├── skybertapp-crd.md                    (SkybertApp XRD-spec)
-    ├── webapp-crd.md                        (legacy WebApp XRD, migreringsguide)
-    ├── configuration.md                     (deployment-metoder)
-    ├── secrets.md                           (secrets-mønstre)
-    ├── security.md                          (Workload Identity, sikkerhet)
-    ├── workflows.md                         (CI/CD)
-    ├── kubectl-access.md                    (kubectl, klusterliste)
-    ├── observability.md                     (logging, metrics, tracing)
-    ├── platform-architecture.md             (Flux, Crossplane, OCI-flyt, tenant-bootstrap)
-    ├── kyverno-policies.md                  (policier som påvirker tenanter)
-    ├── troubleshooting.md                   (feilsøking)
-    └── hostnames-and-networking.md          (domener, TLS, ingress-regler)
+    ├── configuration.md       ← Helm, WebApp, raw manifests
+    ├── kubectl-access.md      ← kubectl, k9s, proxy
+    ├── observability.md       ← Logging, metrics, Grafana
+    ├── secrets.md             ← SecretStore, ExternalSecret
+    ├── security.md            ← Workload Identity, nettverkspolicyer
+    ├── skybertapp-crd.md      ← SkybertApp CRD-spec
+    ├── troubleshooting.md     ← Feilsøking
+    ├── workflows.md           ← GitHub Actions CI/CD
+    └── <nye filer kan legges til ved behov>
 
 Runtime-cache (opprettes, ikke committet):
 .tmp/oppdater-skybert/
-├── changed-files.json
 ├── state.json
+├── search_index.json
+├── pages/*.html
 └── UPDATE-PLAN.md
 ```
 
 ---
 
-## Metadata-kontrakt
+## Domene-strategi
 
-Metadata lagres som HTML-kommentar i `skybert/SKILL.md`, rett etter frontmatter:
-
-```html
-<!-- Oppdater-skybert-state:
-schema_version=2
-docs_repo=FHISkybert/Fhi.Skybert.Docs
-docs_branch=main
-docs_commit=<sha>
-docs_commit_date=<YYYY-MM-DD>
-infra_repo=FHISkybert/Fhi.Skybert.Infra
-infra_branch=main
-infra_commit=<sha>
-infra_commit_date=<YYYY-MM-DD>
-last_fullscan_date=<YYYY-MM-DD>
--->
+```
+Primærkilde:  https://docs.sky.fhi.no
+Fallback:     https://skybert.fhi.no
 ```
 
-Regler:
-- Oppdateres kun etter vellykket Apply (steg 9)
-- `last_fullscan_date` oppdateres kun ved FULL-modus
-- `schema_version` muliggjør fremtidig migrering av metadata-formatet
-
-**Migrering fra gammelt format:** Hvis `skybert/SKILL.md` inneholder `<!-- Kilde-hash: ... -->` i stedet for det nye formatet, behandles det som FULL modus. Det gamle formatet fjernes og erstattes med det nye etter vellykket Apply.
+Bruk `docs.sky.fhi.no` som autoritativ kilde. Hvis `docs.sky.fhi.no` er utilgjengelig,
+forsøk `skybert.fhi.no` — men noter i planen at fallback-kilde ble brukt.
 
 ---
 
-## Kildetilgang
+## Routing-tabell
 
-Alle filer leses via `gh api` eller `raw.githubusercontent.com`. Ingen lokal clone.
+Tabellen brukes for å mappe dokumentasjonssider til riktig målfil i `skybert/`:
 
-**Hente commit SHA:**
-```bash
-gh api repos/FHISkybert/Fhi.Skybert.Docs/commits/main --jq '.sha'
-gh api repos/FHISkybert/Fhi.Skybert.Infra/commits/main --jq '.sha'
-```
+| Emne i docs | Målfil i skybert/ |
+|-------------|-------------------|
+| SkybertApp CRD, felt-spec | `skybert/references/skybertapp-crd.md` |
+| Secrets, Key Vault, ExternalSecret, SecretStore | `skybert/references/secrets.md` |
+| Workload Identity, nettverkspolicyer, sikkerhet | `skybert/references/security.md` |
+| GitHub Actions, CI/CD, oci-push, update-tag | `skybert/references/workflows.md` |
+| kubectl, k9s, az connectedk8s proxy | `skybert/references/kubectl-access.md` |
+| Logging, metrics, Grafana, Loki, Mimir, Tempo | `skybert/references/observability.md` |
+| Helm, Kustomize, WebApp, Deployment, raw manifests | `skybert/references/configuration.md` |
+| Feilsøking, diagnostikk | `skybert/references/troubleshooting.md` |
+| Onboarding, Blåløypa, tenant-konsept, navnekonvensjoner, ingress, miljøer | `skybert/SKILL.md` |
 
-**Hente commit-dato:**
-```bash
-gh api repos/FHISkybert/Fhi.Skybert.Docs/commits/main --jq '.commit.committer.date'
-gh api repos/FHISkybert/Fhi.Skybert.Infra/commits/main --jq '.commit.committer.date'
-```
-
-**Hente filtree:**
-```bash
-gh api repos/FHISkybert/Fhi.Skybert.Docs/git/trees/main?recursive=1 --jq '.tree[].path'
-gh api repos/FHISkybert/Fhi.Skybert.Infra/git/trees/main?recursive=1 --jq '.tree[].path'
-```
-
-**Sammenligne commits (inkrementell):**
-```bash
-gh api repos/FHISkybert/Fhi.Skybert.Docs/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
-gh api repos/FHISkybert/Fhi.Skybert.Infra/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
-```
-
-**Lese enkeltfil:**
-```bash
-curl -sH "Authorization: token $(gh auth token)" \
-  "https://raw.githubusercontent.com/FHISkybert/Fhi.Skybert.Docs/main/<filsti>"
-```
-
-**Retry-policy:** 3 forsøk med eksponentiell backoff (1s, 3s, 9s). Ved vedvarende feil på normativ fil (XRD, compositions): stopp kjøring med feilrapport. Ved feil på ikke-kritisk fil: logg som manglende og fortsett.
+**Regler:**
+- Hvis en docs-side berører emner fra flere rader, kan den peke til flere målfiler.
+- Hvis mapping er uklar → bruk `VURDER`-kategori i endringsplanen.
+- Hvis docs inneholder et nytt emneområde som ikke passer inn i eksisterende referansefiler, skal agenten foreslå å opprette en ny fil under `skybert/references/` som en `NY`-kategori-oppføring i endringsplanen (med foreslått filnavn og innhold).
 
 ---
 
-## Steg 1 — Hent commit SHAs og bestem modus
+## Steg 1 – Hent search_index.json
 
-### 1a. Les metadata fra skybert/SKILL.md
+Hent søkeindeksen fra primærkilden:
 
-Parse `<!-- Oppdater-skybert-state: ... -->`-kommentaren fra `skybert/SKILL.md`. Ekstraher alle felter.
-
-Hvis kommentaren har gammelt format (`<!-- Kilde-hash: ... -->`) eller mangler helt → marker som "metadata mangler".
-
-### 1b. Hent nåværende commit SHAs
-
-```bash
-gh api repos/FHISkybert/Fhi.Skybert.Docs/commits/main --jq '.sha'
-gh api repos/FHISkybert/Fhi.Skybert.Infra/commits/main --jq '.sha'
+```
+https://docs.sky.fhi.no/search/search_index.json
 ```
 
-Hent også commit-datoer for begge.
+Lagre responsen til `.tmp/oppdater-skybert/search_index.json`.
 
-### 1c. Bestem modus
+Søkeindeksen inneholder metadata om alle sider i dokumentasjonen — titler, URL-er og tekstutdrag. Denne brukes i steg 3 til å identifisere hvilke sider som finnes og oppdage endringer.
 
-| Betingelse | Modus |
-|-----------|-------|
-| Begge SHAs er like som lagret metadata | **NO-OP** — rapporter "ingen endringer" og stopp |
-| Metadata mangler / ugyldig / gammelt format | **FULL** |
-| `last_fullscan_date` er > 30 dager gammel | **FULL** |
-| SHA endret, < 30 dager siden fullscan | **INKREMENTELL** |
-
-**Første kjøring (migrering fra gammelt format):**
-- ALL eksisterende informasjon i skybert/-filene bevares
-- Manuelt lagt inn informasjon (uten `> Kilde:`-referanse) bevares alltid med mindre den er beviselig feil
-- Nye filer (`webapp-crd.md`, `platform-architecture.md`, etc.) foreslås som `NY`/`ny-fil`-poster i planen — de erstatter ikke eksisterende innhold
-- Metadata-kommentaren konverteres til nytt format etter vellykket Apply
+Hvis `docs.sky.fhi.no` ikke svarer, forsøk:
+```
+https://skybert.fhi.no/search/search_index.json
+```
+Noter i planen at fallback-kilde ble brukt.
 
 ---
 
-## Steg 2 — Hent filtree og identifiser endrede filer
+## Steg 2 – Beregn global hash og les forrige state
 
-### FULL modus
+### 2a. Les committet hash
 
-Hent komplett filtree fra begge repoer:
-```bash
-gh api repos/FHISkybert/Fhi.Skybert.Docs/git/trees/main?recursive=1 --jq '.tree[] | select(.type=="blob") | .path'
-gh api repos/FHISkybert/Fhi.Skybert.Infra/git/trees/main?recursive=1 --jq '.tree[] | select(.type=="blob") | .path'
-```
+Les `<!-- Kilde-hash: ... -->`-kommentaren fra `skybert/SKILL.md`. Denne inneholder `globalHash` fra forrige godkjente kjøring og er committet i repoet.
 
-Filtrer mot seleksjonsreglene (se nedenfor). Alle filer i scope behandles som "endrede".
+- Hvis kommentaren finnes → lagre verdien som `previousGlobalHash`
+- Hvis kommentaren mangler → behandle som første kjøring (ingen no-op-sjekk)
 
-### INKREMENTELL modus
+Les også `.tmp/oppdater-skybert/state.json` (hvis den eksisterer) og lagre verdiene i minnet
+som `previousState`. Disse brukes i steg 4a for per-side sammenligning.
 
-```bash
-gh api repos/FHISkybert/Fhi.Skybert.Docs/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
-gh api repos/FHISkybert/Fhi.Skybert.Infra/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
-```
+### 2b. Beregn global hash
 
-Hvis compare feiler (force-push, rebase) → fall tilbake til FULL modus og informer bruker.
+For hvert dokument i `search_index.json`:
+- Normaliser teksten: trim whitespace, kollapser mellomrom, konverter til lowercase
+- Bygg objekt: `{ location, title, text_normalized }`
 
-### Output
+Sorter listen etter `location` (alfabetisk). Serialiser til JSON (stable key-order).
+Beregn SHA-256 av den serialiserte strengen. Dette er `globalHash`.
 
-Skriv `.tmp/oppdater-skybert/changed-files.json`:
+Bygg i tillegg en per-side map: `{ [location]: { title, hash: sha256(location+title+text_normalized) } }`.
+
+### 2c. Skriv ny state
+
+Skriv `.tmp/oppdater-skybert/state.json`:
+
 ```json
 {
-  "docs": { "added": [], "modified": [], "removed": [] },
-  "infra": { "added": [], "modified": [], "removed": [] }
+  "globalHash": "<sha256 av kanonisk innhold>",
+  "fetchedAt": "<ISO-8601 tidspunkt>",
+  "source": "docs.sky.fhi.no",
+  "pages": [
+    { "location": "<location>", "title": "<title>", "hash": "<per-side hash>" }
+  ]
 }
 ```
 
 ---
 
-## Steg 3 — Les kildefiler
+## Steg 3 – Sammenlign hashes
 
-Les alle endrede filer i scope via `curl` med `gh auth token`.
+Sammenlign `globalHash` (beregnet i steg 2b) med `previousGlobalHash` (lest fra `skybert/SKILL.md` i steg 2a).
 
-### Docs-repo — Seleksjonsregler
-
-**Alltid i scope:** `docs/**/*.md` (unntatt `docs/internal/`)
-
-**`docs/internal/**` — selektiv inkludering:**
-Inkluder filer med utvikler-impact (tenant/runtime/policy/CI-CD/feilsøking). Ekskluder drift/runbooks uten tenant-impact.
-
-Eksempler:
-- Inkluder: `docs/internal/flux.md` (rekonsiliering påvirker utviklere), `docs/internal/service-mesh.md` (nettverkstopologi)
-- Ekskluder: `docs/internal/upgrade-component.md` (plattformdrift), `docs/internal/managing-tenants.md` (admin-operasjon)
-
-### Infra-repo — Sti-baserte filtermønstre
+**No-op-regel:** Hvis `globalHash == previousGlobalHash` — skriv følgende rapport og stopp:
 
 ```
-# XRD-spesifikasjoner (SkybertApp + WebApp)
-infra/crossplane/base/xrds/skybertapp.yaml
-infra/crossplane/base/xrds/webapp.yaml
-
-# Crossplane compositions
-infra/crossplane/base/compositions/skybertapp.yaml
-infra/crossplane/base/compositions/webapp.yaml
-
-# Kyverno-policier som påvirker tenanter
-infra/kyverno-policies/base/policies-*/**/*.yaml
-# + relevante overlays per kluster der de avviker fra base
-
-# GlobalNetworkPolicies (rød sone tenant-regler)
-infra/globalnetworkpolicies/base/policies-red/*.yaml
-
-# Tenant-bootstrap (normativ struktur)
-tenants/*/base/{namespace,rolebinding,serviceaccount*,flux-kustomization}.yaml
-
-# Tenant-scripts (normativ bootstrap-logikk)
-scripts/tenant--*.sh
+Ingen oppdatering nødvendig.
+Dokumentasjonen er uendret siden siste godkjente oppdatering.
+Global hash: <globalHash>
+Sist hentet: <previousState.fetchedAt, eller "ukjent" hvis state ikke fantes>
 ```
 
-**Ekskludert fra infra:** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, øvrige drifts-scripts.
+Kun hvis hashene er **forskjellige** (eller `previousGlobalHash` ikke finnes) → fortsett til steg 4.
 
 ---
 
-## Routing-tabell: Kildefiler → Skybert-målfiler
+## Steg 4 – Hent og analyser dokumentasjonssider
 
-### Docs-repo
+### 4a. Identifiser endrede sider
 
-| Kildesti | Primær målfil |
-|----------|--------------|
-| `docs/index.md` | `SKILL.md` |
-| `docs/explanations/what-is-skybert.md` | `SKILL.md` |
-| `docs/explanations/what-is-a-tenant.md` | `SKILL.md` |
-| `docs/explanations/under-the-hood.md` | `references/platform-architecture.md` |
-| `docs/explanations/blaloypa.md` | `SKILL.md` |
-| `docs/get-started/blaloypa.md` | `SKILL.md` |
-| `docs/get-started/connectedk8s.md` | `references/kubectl-access.md` |
-| `docs/get-started/kubernetes-yaml.md` | `references/configuration.md` |
-| `docs/get-started/prerequisites/*.md` | `SKILL.md` |
-| `docs/get-started/explanations/access-packages.md` | `SKILL.md` |
-| `docs/get-started/explanations/PIM.md` | `references/kubectl-access.md` |
-| `docs/workloads/skybertapp/index.md` | `references/skybertapp-crd.md` |
-| `docs/workloads/skybertapp/references/skybertapp.md` | `references/skybertapp-crd.md` |
-| `docs/workloads/jobs.md` | `references/configuration.md` |
-| `docs/build/explanations/gitops.md` | `references/workflows.md` |
-| `docs/build/how-to/trigger-gitops-promotion.md` | `references/workflows.md` |
-| `docs/auth/index.md` | `references/security.md` |
-| `docs/auth/workload-identity.md` | `references/security.md` |
-| `docs/persistence/*.md` | `SKILL.md` |
-| `docs/observability/**/*.md` | `references/observability.md` |
-| `docs/miscellaneous/vault_secrets.md` | `references/secrets.md` |
-| `docs/miscellaneous/publicCA.md` | `references/security.md` |
-| `docs/legal/*.md` | `SKILL.md` (kort omtale) |
-| `docs/internal/flux.md` | `references/platform-architecture.md` |
-| `docs/internal/service-mesh.md` | `references/hostnames-and-networking.md` |
-| `docs/internal/global-network-policies.md` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
+Analyser `search_index.json` for å finne alle unike docs-sider. Grupper dem etter routing-tabellen.
 
-### Infra-repo
+Sammenlign per-side hashes fra ny state (steg 2b) med `previousState.pages[]`:
+- **Ny side:** `location` finnes ikke i `previousState.pages`
+- **Endret side:** `location` finnes, men `hash` er ulik
+- **Fjernet side:** `location` finnes i `previousState.pages`, men ikke i ny state
+- **Uendret side:** `location` og `hash` er like → kan deprioriteres i analyse
 
-| Kildesti | Primær målfil |
-|----------|--------------|
-| `infra/crossplane/base/xrds/skybertapp.yaml` | `references/skybertapp-crd.md` |
-| `infra/crossplane/base/xrds/webapp.yaml` | `references/webapp-crd.md` |
-| `infra/crossplane/base/compositions/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/platform-architecture.md` |
-| `infra/crossplane/base/compositions/webapp.yaml` | `references/webapp-crd.md` |
-| `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
-| `tenants/*/base/*.yaml` | `references/platform-architecture.md`, `SKILL.md` |
-| `scripts/tenant--*.sh` | `references/platform-architecture.md` |
-| `infra/globalnetworkpolicies/base/policies-red/*.yaml` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
+Merk endringsstatus for hver side. Prioriter ny/endret/fjernet i analysen.
+Uendrede sider trenger kun overfladisk sjekk (verifiser at skybert-innholdet fortsatt stemmer).
 
-### Routing-regler
+### 4b. Hent HTML-sider
 
-- Én kildefil kan mappe til flere målfiler
-- Uklar mapping → `VURDER`-kategori i endringsplanen
-- Nye emner som ikke passer eksisterende filer → foreslå ny fil med `ny-fil`-flagg
-- Filer i docs-repo som ikke matcher noen rad ovenfor → vurder om emnet passer en eksisterende målfil eller trenger ny fil
+Hent innholdet for relevante sider fra primærkilden. Lagre HTML til
+`.tmp/oppdater-skybert/pages/<sidenavn>.html`.
+
+URL-format: `https://docs.sky.fhi.no/<sti>/`
+
+**Ekstraksjonsregler:** Trekk ut innhold fra `<article>`, `<main>` eller `.content`-element.
+Behold: overskrifter (h1–h4), avsnitt, lister, tabeller, kodeblokker.
+Fjern: `<nav>`, sidebars, footers, edit-lenker, breadcrumbs, søkefelt.
+
+Eksempel: for siden `skybertapp/` → hent `https://docs.sky.fhi.no/skybertapp/`.
+
+### 4c. Scope-regler
+
+Inkluder sider som omhandler:
+- Plattform-konsepter (onboarding, tenants, miljøer)
+- SkybertApp CRD og konfigurasjon
+- Deployment-metoder (Helm, Kustomize, raw manifests)
+- Secrets og Key Vault-integrasjon
+- Workload Identity og nettverkssikkerhet
+- CI/CD og GitHub Actions-workflows
+- kubectl-tilgang og verktøy
+- Observabilitet (logging, metrics, tracing)
+- Feilsøking og diagnostikk
+
+Ekskluder sider som omhandler:
+- Intern plattform-administrasjon som ikke er relevant for utviklere
+- Utenfor-scope tjenester som ikke er Skybert-spesifikke
 
 ---
 
-## Steg 4 — Les alle eksisterende skybert/-filer
+## Steg 5 – Les alle eksisterende skillfiler
 
-Les `skybert/SKILL.md` og alle `skybert/references/*.md`.
+Les alle filer i `skybert/`. Dette inkluderer `skybert/SKILL.md` og alle filer under `skybert/references/`. Forstå hvilke emner som er dokumentert i hvilke filer — dette er nødvendig for å kunne angi riktig målfil i endringsplanen.
 
-For hvert avsnitt:
-- Noter innhold og struktur
-- Identifiser kildereferanser (`> Kilde:`)
-- Identifiser manuelt kuratert innhold (avsnitt uten `> Kilde:`-referanse)
+For hvert dokument: noter nåværende innhold, struktur og eventuelle foreldede referanser.
 
 ---
 
-## Steg 5 — Analyser endringer
+## Steg 6 – Analyser endringer
+
+Sammenlign innholdet fra docs-sidene (steg 4) med innholdet i skybert/-filene (steg 5).
 
 ### Endringskategorier
 
 | Kategori | Definisjon |
 |----------|-----------|
-| `NY` | Innhold i kilderepoer som ikke er dokumentert i noen skybert-fil. Flagg `ny-fil` hvis en helt ny referansefil foreslås. |
-| `UTDATERT` | Innhold i skybert-fil som ikke stemmer med kilderepoene. Flagg `crd-versjon` hvis API-versjon endres. |
-| `FORBEDRING` | Innhold som er riktig men kan gjøres mer presist/komplett basert på kildene |
-| `FJERN` | Innhold der kilder positivt viser at det er feil/deprecated/erstattet |
-| `VURDER` | Mulig endring som krever menneskelig vurdering |
-| `OK` | Korrekt og komplett — inkluderes ikke i planen |
-
-### Flagg
-
-- `crd-versjon` — CRD API-versjon har endret seg (tillegg til UTDATERT)
-- `ny-fil` — En helt ny referansefil foreslås (tillegg til NY)
+| `NY` | Innhold i docs som ikke er dokumentert i noen skybert-fil |
+| `UTDATERT` | Innhold i skybert-fil som ikke lenger stemmer med docs |
+| `FORBEDRING` | Innhold i skybert-fil som er riktig men kan gjøres mer presist eller komplett |
+| `FJERN` | Innhold i skybert-fil der docs positivt angir at det er utdatert, fjernet eller feil (f.eks. via «deprecated»-notat, erstattet av annen funksjon, eller eksplisitt fjerning) |
+| `VURDER` | Mulig endring som krever menneskelig vurdering (mapping uklar, tolkning usikker) |
+| `OK` | Innhold som er korrekt og komplett — ingen endring nødvendig |
 
 ### Terskler
 
-- `FORBEDRING` kun ved vesentlig bedre/mer korrekt formulering — ikke stilistiske preferanser
-- `FJERN` KUN med positiv evidens: eksplisitt "deprecated", "fjernet", "bruk X i stedet", fjernet fra XRD-spec
-- Fravær i kildene er ALDRI grunn til FJERN — bruk `VURDER`
-- WIP/placeholder-sider → `VURDER` med begrunnelse, aldri brukt til å fjerne eksisterende innhold
-- Innhold uten `> Kilde:`-referanse antas manuelt kuratert — ekstra forsiktighet
+- **FORBEDRING** brukes kun når docs gir vesentlig bedre eller mer korrekt formulering — ikke for stilistiske preferanser.
+- **FJERN** brukes kun ved positiv evidens fra docs: eksplisitt «deprecated», «fjernet», «bruk X i stedet», eller tilsvarende. Fravær i docs alene er ikke tilstrekkelig — bruk `VURDER` hvis du er usikker.
+- **WIP/TBA/skeleton-innhold:** Dokumentasjon eksplisitt markert som «under arbeid», «coming
+  soon», «not yet ready», «TBD», «placeholder» eller lignende er **ikke normativ**. Slike sider
+  skal:
+  - Klassifiseres som `VURDER`, ikke `NY` eller `FORBEDRING`
+  - Ha en begrunnelse som eksplisitt nevner at kildesiden er ufullstendig
+  - Ikke brukes som grunnlag for å fjerne eksisterende skill-innhold
 
-### Konfliktløsning (Docs vs Infra)
+### Hva hører hjemme i SKILL.md vs. references/
 
-- **Normative tekniske forhold** (CRD-felter, defaults, security contexts, policier): Infra vinner
-- **Konsept/veiledning/onboarding**: Docs supplerer
-- **Uoppløselig konflikt**: `VURDER` med begge kilder sitert
-
-### CRD-versjonssporing
-
-I `infra/crossplane/base/xrds/skybertapp.yaml`, les:
-```yaml
-spec:
-  versions:
-    - name: v1alpha1    # ← dette er SkybertApp API-versjonen
-      served: true
-      referenceable: true
-```
-
-Parse `spec.versions[].name` der `served: true` og `referenceable: true`. Sammenlign med metadata i `skybert/SKILL.md`.
-
-Ved endring (f.eks. v1alpha1 → v1beta1):
-- Opprett endringspost med `crd-versjon`-flagg
-- Inkluder: gammel versjon, ny versjon, alle feltendringer, migreringsveiledning
-- Oppdater alle eksempler i `skybertapp-crd.md` og `SKILL.md`
-
-### Anonymisering
-
-Azure Subscription IDs og kluster-IP-ranges anonymiseres med plassholdere (`<subscription-id>`, `<ip-range>`) med mindre de allerede er i eksisterende skillfiler. Tenant-navn fra `tenants/`-mappen brukes som eksempler.
+- `SKILL.md` skal dekke: onboarding-konsepter, tenant-modell, overordnede prinsipper, kritiske regler, miljøoversikt, Blåløypa.
+- `references/`-filene skal dekke: tekniske detaljer, CRD-spec, kommandoeksempler, konfigurasjonssyntaks.
 
 ---
 
-## Steg 6 — Skriv endringsplan
+## Steg 7 – Skriv UPDATE-PLAN.md
 
-Skriv `.tmp/oppdater-skybert/UPDATE-PLAN.md`:
+Skriv endringsplanen til `.tmp/oppdater-skybert/UPDATE-PLAN.md`.
+
+### Format
+
+Start planen med en tabell over påvirkede filer:
 
 ```markdown
-# UPDATE-PLAN — Skybert-skill
+# UPDATE-PLAN – Skybert-skill
 
 Generert: <ISO-8601 dato>
-Modus: FULL | INKREMENTELL
-Kilder:
-  - FHISkybert/Fhi.Skybert.Docs @ <sha kort> (<dato>)
-  - FHISkybert/Fhi.Skybert.Infra @ <sha kort> (<dato>)
-CRD API-versjon: <nåværende> (forrige: <forrige>)
+Kilde: <docs.sky.fhi.no eller skybert.fhi.no>
+Global hash: <globalHash>
 
 ## Påvirkede filer
 
-| Fil | Antall endringer | Kategorier |
-|-----|-----------------|------------|
-| skybert/SKILL.md | 3 | NY, UTDATERT |
-| ... | ... | ... |
+| Fil | Antall endringer |
+|-----|-----------------|
+| skybert/SKILL.md | 2 |
+| skybert/references/skybertapp-crd.md | 1 |
+```
 
-## Endringer
+Deretter én oppføring per foreslått endring:
 
-#### 1. <Kort tittel> [flagg: crd-versjon|ny-fil]
+```markdown
+#### N. <Kort tittel>
 
 - **Fil:** skybert/references/skybertapp-crd.md
 - **Kategori:** NY | UTDATERT | FORBEDRING | FJERN | VURDER
-- **Kilde:** <docs-URL> + <GitHub blob-URL>
+- **Kilde-side:** <docs location, f.eks. skybertapp/>
 - **Nåværende tekst (linje ~N):** <sitat eller "–" hvis NY>
 - **Foreslått tekst:**
-  <Komplett tekst klar til implementering>
-- **Begrunnelse:** <konkret observasjon fra kildefil>
+
+  <Ny tekst eller utkast>
+
+- **Begrunnelse:** <konkret observasjon fra docs>
 ```
 
-Skriv også `.tmp/oppdater-skybert/state.json`:
-```json
-{
-  "schemaVersion": 2,
-  "fetchedAt": "<ISO-8601>",
-  "mode": "incremental|fullscan",
-  "reason": "missing_state|age_gt_30d|structure_changed|normal_incremental",
-  "docs": { "repo": "FHISkybert/Fhi.Skybert.Docs", "branch": "main", "commit": "<sha>", "date": "<YYYY-MM-DD>" },
-  "infra": { "repo": "FHISkybert/Fhi.Skybert.Infra", "branch": "main", "commit": "<sha>", "date": "<YYYY-MM-DD>" }
-}
-```
+**Regler for planen:**
+- Alle felter er obligatoriske.
+- `Nåværende tekst` skal inneholde et sitat fra filen (med omtrentlig linjenummer) eller `–` hvis det er nytt innhold.
+- `Foreslått tekst` skal være komplett og klar til å implementere.
+- `Begrunnelse` skal referere konkret til hva i docs som begrunner endringen.
+- Oppføringer med kategori `OK` inkluderes ikke i planen.
 
 ---
 
-## Steg 7 — Presenter og vent på godkjenning
+## Steg 8 – Presenter planen og vent på godkjenning
 
-Presenter:
-1. Sammendrag: antall endringer per kategori og per fil
-2. CRD-versjonsstatus (endret/uendret)
-3. Fullstendig endringsplan
-4. Advarsel om `VURDER`-poster
+Presenter innholdet i `.tmp/oppdater-skybert/UPDATE-PLAN.md` for brukeren. Inkluder:
 
-Brukeren kan: godkjenne alle, godkjenne delvis, eller avvise alle.
-**Ingen endringer i skybert/-filer uten eksplisitt godkjenning.**
+1. Sammendrag: antall foreslåtte endringer per kategori og per fil
+2. Fullstendig UPDATE-PLAN.md
 
----
+Vent på eksplisitt godkjenning fra brukeren. Brukeren kan:
+- **Godkjenne alle** endringer → gå til steg 9
+- **Godkjenne delvis** → noter hvilke endringer som er godkjent, gå til steg 9 med kun disse
+- **Avvise alle** → stopp, ikke endre noen filer, ikke oppdatere `last-applied.hash`
 
-## Steg 8 — Implementer godkjente endringer
-
-### Prinsipper
-
-- Seksjonsbasert patching — oppdater kun seksjoner med evidensbasert grunnlag, behold øvrige uendret
-- Behold eksisterende tekst som er korrekt — selv om du ville formulert det annerledes
-- Ikke omformuler/omstruktur avsnitt som er faktariktige
-- Skill-innhold skrives for AI-agent — presis, unngå tvetydighet
-- Foretrekk konkrete kodeeksempler fremfor prose
-
-### Kildereferanser
-
-- Docs-repo: `> Kilde: https://docs.sky.fhi.no/<sti>/`
-- Infra-repo: `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/<commit>/<filsti>`
-- Inkluder begge der relevant (docs-URL for lesbarhet + blob-URL for sporbarhet)
-
-### MkDocs-syntakskonvertering
-
-- `!!! note "Tittel"` → `> **Tittel:** ...`
-- `!!! warning` → `> **Advarsel:** ...`
-- `=== "Tab 1"` → Separate kodeblokker med overskrifter
-- Mermaid-diagrammer → Behold som mermaid-kodeblokker
-
-### Nye filer
-
-Opprettes kun ved godkjente `ny-fil`-poster. Standard overskrift + kildereferanser.
-
-### Skybert-verdier i CLAUDE.md / AGENTS.md
-
-Skybert-skillen (`skybert/SKILL.md`) skal inneholde en seksjon som anbefaler brukere å legge inn prosjektspesifikke Skybert-verdier i sin `CLAUDE.md` eller `AGENTS.md`. Anbefalt tabell-format:
-
-```markdown
-## Skybert-verdier
-
-| Nøkkel | Verdi |
-|--------|-------|
-| Tenant | `<tenant-navn>` |
-| Sikkerhetssone | Grønn / Gul / Rød |
-| Test namespace | `tn-<tenant>` |
-| Prod namespace | `tn-<tenant>` |
-| Test hostname | `<app>.skytest.fhi.no` |
-| Prod hostname | `<app>.sky.fhi.no` |
-| ACR image | `crfhiskybert.azurecr.io/<tenant>/<app>` |
-| Deployment | `<app>-deployment` |
-| Azure tenant ID | `<azure-tenant-id>` |
-```
-
-Ved fullscan: sjekk om `skybert/SKILL.md` inneholder en "Skybert-verdier i CLAUDE.md"-seksjon. Hvis den mangler → opprett som `NY`-post i planen. Hvis den finnes → sjekk at alle nøkler er med.
+**Ikke gjør endringer i skybert/-filer uten eksplisitt godkjenning.**
 
 ---
 
-## Steg 9 — Oppdater metadata i skybert/SKILL.md
+## Steg 9 – Implementer godkjente endringer
 
-Oppdater metadata-kommentaren med nye SHAs og datoer. Ved FULL modus: oppdater også `last_fullscan_date`. Oppdater `Sist verifisert mot offisiell docs:` med dagens dato.
+Implementer de godkjente endringene i skybert/-filene.
 
-**Kontrakt:** Metadata oppdateres KUN etter vellykket Apply.
+### Prinsipper for implementering
 
----
+- Endre kun innhold som er eksplisitt godkjent.
+- Behold eksisterende tekst uendret hvis den fortsatt er korrekt — selv om du ville formulert det annerledes.
+- Ikke omformuler eller omstruktur avsnitt som er faktariktige.
+- Alle endringer skal begrunnes med en konkret observasjon fra docs.
+- Skill-innhold skrives for en AI-agent, ikke for en menneskelig leser. Vær presis og unngå tvetydighet.
+- Foretrekk konkrete kodeeksempler fremfor lange prosatekster.
 
-## Selvoppdatering av oppdater-skybert
+### Kilde-referanser
 
-Ved **FULL** modus skal oppdater-skybert også vurdere om selve oppdateringsskillen (`.claude/skills/oppdater-skybert/SKILL.md`) trenger endringer.
+Når nytt innhold legges til eller eksisterende innhold oppdateres i en skybert/-fil,
+skal det alltid legges inn en kilde-referanse til den aktuelle docs-siden.
 
-### Hva sjekkes
+Format:
+> Kilde: https://docs.sky.fhi.no/<sti>/
 
-1. **Routing-tabellen** — Finnes det nye docs-filer i kilderepoene som ikke er mappet? Finnes det nye mapper/filer i infra-repoet som matcher sti-filtrene men ikke er i tabellen?
-2. **Sti-baserte filtermønstre** — Har mappestrukturen i kilderepoene endret seg slik at eksisterende globs ikke treffer?
-3. **Metadata-format** — Er `schema_version` i skillen konsistent med metadata i `skybert/SKILL.md`?
-4. **Nye emner** — Finnes det nye dokumentasjonsområder i kilderepoene som verken routing-tabellen eller filstrukturen dekker?
+Referansen plasseres direkte etter avsnittet/seksjonen den gjelder.
+Hvis et avsnitt allerede har en kilde-referanse, oppdater URL-en hvis den har endret seg.
 
-### Output
+### Oppdater dato i SKILL.md
 
-Rapporteres som egen seksjon i UPDATE-PLAN.md:
-
-```markdown
-## Foreslåtte endringer i oppdater-skybert-skillen
-
-#### S1. <Kort tittel>
-- **Fil:** .claude/skills/oppdater-skybert/SKILL.md
-- **Type:** routing | filter | metadata | scope
-- **Observasjon:** <hva som er funnet>
-- **Foreslått endring:** <konkret forslag>
-```
-
-Disse endringene krever også eksplisitt godkjenning.
+Oppdater feltet `Sist verifisert mot offisiell docs:` i `skybert/SKILL.md` med dagens dato.
 
 ---
 
-## Beskyttelse av manuelt redigert innhold
+## Steg 10 – Oppdater kilde-hash i skybert/SKILL.md
 
-1. **Fravær er ikke evidens** — innhold som ikke finnes i kilderepoene er IKKE feil; det kan være manuelt lagt til
-2. **FJERN krever positiv evidens** — eksplisitt deprecated, erstattet, eller fjernet fra XRD
-3. **Innhold uten kildereferanse** antas manuelt kuratert — ekstra forsiktighet
-4. **Ved tvil** → `VURDER`, la brukeren avgjøre
-5. **Sammenslåing, ikke overskrivning** — ny info integreres med eksisterende, erstatter det ikke
-6. **Seksjonsbasert patching** — aldri rewrite hele filer; oppdater kun seksjoner med endringsgrunnlag
+> **Kontrakt:** Kilde-hash-kommentaren oppdateres **kun** etter at:
+> 1. Brukeren har godkjent planen (helt eller delvis)
+> 2. Endringene faktisk er skrevet til `skybert/`-filene uten feil
+>
+> Avvisning av planen, delvis godkjenning uten implementering, eller teknisk feil
+> under skriving → kilde-hash forblir uendret.
+
+Oppdater `<!-- Kilde-hash: ... -->`-kommentaren i `skybert/SKILL.md` med ny `globalHash`.
+Kommentaren plasseres rett etter frontmatter-blokken (etter `---`).
 
 ---
 
 ## Feilhåndtering
 
 | Problem | Håndtering |
-|---------|-----------|
-| `gh api` nettverksfeil / rate limit | Retry: 3 forsøk med eksponentiell backoff (1s, 3s, 9s). Ved vedvarende feil: stopp, rapporter, foreslå `gh auth refresh` |
-| Repo 404 | Stopp, rapporter manglende tilgang |
-| Enkeltfil 404 (ikke-kritisk) | Logg som manglende i plan, fortsett |
-| Enkeltfil 404 (kritisk: XRD, compositions) | Stopp, rapporter |
-| SHA-compare feiler (force-push, rebase) | Fall tilbake til FULL modus, informer bruker |
-| Metadata ugyldig/ukjent format | Behandle som første kjøring (FULL modus) |
-| Ugyldig YAML i infra-fil | Rapporter parsing-feil, vis råinnhold |
-| WIP/placeholder docs-side | `VURDER`-kategori, aldri bruk til å fjerne |
-| Strukturendring i kilderepo | Trigger FULL modus, rapporter ny struktur |
+|---------|------------|
+| `docs.sky.fhi.no` utilgjengelig | Forsøk `skybert.fhi.no` som fallback; noter i planen at fallback ble brukt |
+| `skybert.fhi.no` også utilgjengelig | Stopp og informer bruker; ikke gjør endringer |
+| `search_index.json` ikke funnet | Forsøk å hente `/sitemap.xml` eller `/sitemap_index.xml` som alternativ |
+| Side ikke funnet (404) | Hopp over siden; logg den som manglende i planen |
+| HTML uten meningsfullt innhold | Ekstraher fra `<article>` eller `<main>`; hopp over siden hvis disse mangler |
+| Kilde-hash-kommentar mangler i `skybert/SKILL.md` | Behandle som første kjøring; fortsett uten no-op-sjekk |
+| Mapping uklar for en side | Bruk `VURDER`-kategori med begrunnelse |
