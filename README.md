@@ -190,8 +190,26 @@ Symlinks oppdateres automatisk siden de peker til repoet.
 
 Noen skills har tilhørende oppdateringsskills (f.eks. `oppdater-skybert`) som kan hente og sammenligne med kildedata automatisk. Disse krever:
 
-- **`gh` CLI** installert og autentisert (`gh auth login`)
+- **`gh` CLI** installert og autentisert
 - **Lesetilgang** til kilderepoene (f.eks. `FHISkybert/Fhi.Skybert.Docs` og `FHISkybert/Fhi.Skybert.Infra`)
+
+**Installere `gh` CLI:**
+
+```bash
+# macOS
+brew install gh
+
+# Windows
+winget install GitHub.cli
+
+# Ubuntu/Debian
+sudo apt install gh
+```
+
+**Autentisere:**
+```bash
+gh auth login
+```
 
 Uten repo-tilgang faller oppdateringsskillene tilbake til web-scraping av offentlig dokumentasjon der dette er tilgjengelig.
 
