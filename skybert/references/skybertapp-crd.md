@@ -86,13 +86,14 @@ config:
 
 ### Workload Identity
 
-| Felt | Type | Standard | Beskrivelse |
-|------|------|----------|-------------|
-| `useWorkloadIdentity` | boolean | — | Aktiver Azure Workload Identity for SkybertApp. Sett feltet eksplisitt til `true`. |
+Workload Identity er **alltid aktivert** for SkybertApp. Composition setter automatisk
+`azure.workload.identity/use: "true"` på alle pods og kobler dem til `<tenant>-azure` service account
+(utledet fra namespace `tn-<tenant>`).
 
-Podden knyttes til `<tenant>-azure` service account med federated credentials når Workload Identity er aktivert.
+Du trenger ikke sette noe felt for dette — det skjer automatisk.
 
 > Kilde: https://docs.sky.fhi.no/auth/workload-identity/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8e32c0f/infra/crossplane/base/compositions/skybertapp.yaml
 
 ### Secrets
 
@@ -189,8 +190,6 @@ spec:
 
   hostname: "myapp.skytest.fhi.no"
 
-  useWorkloadIdentity: true
-
   config:
     MY_ENV_VAR: "some-value"
     ANOTHER_VAR: "another-value"
@@ -262,13 +261,25 @@ SkybertApp oppretter følgende Kubernetes-ressurser:
 - **SecretStore** — External Secrets store per vault
 - **ExternalSecret** — Synkroniserer secrets fra Azure Key Vault
 
+### Navnekonvensjoner for genererte ressurser
+
+| Ressurs | Navnemønster |
+|---------|-------------|
+| Deployment | `<name>-deployment` |
+| Hoved-container | `<name>-main` |
+| Service Account | `<tenant>-azure` (utledet fra namespace `tn-<tenant>`) |
+| ConfigMap | `<name>-config` |
+| Secret | `<vault-lowercase>-secret-<index>` (hvis ikke spesifisert med `name`) |
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8e32c0f/infra/crossplane/base/compositions/skybertapp.yaml
+
 ## SkybertApp vs WebApp
 
 | | SkybertApp (v1alpha1) | WebApp (v1) |
 |---|---|---|
 | **Status** | Aktiv, anbefalt | **Utdatert** |
 | **Secrets** | Inline i spec | Manuell SecretStore + ExternalSecret |
-| **Workload Identity** | `useWorkloadIdentity: true` | Manuell service account + annotations |
+| **Workload Identity** | Automatisk (alltid aktivert) | Manuell service account + annotations |
 | **Sikkerhet** | Automatisk hardening | Manuell securityContext |
 | **Config** | `config`-felt (filer + env vars) | Manuell ConfigMap |
 | **Init/Sidecar** | Innebygd støtte | Manuell |

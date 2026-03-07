@@ -2,13 +2,24 @@
 name: skybert
 description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bruk ved arbeid med Skybert GitOps, SkybertApp CRD, Azure Workload Identity, Flux, eller Skybert-relaterte oppgaver. Hjelper med onboarding, konfigurasjon, deployment og feilsøking.
 ---
-<!-- Kilde-hash: a125818334d5aff092e0b6697f163abe26b4a59421458243068dda2dafcfed9d -->
+<!-- Oppdater-skybert-state:
+schema_version=2
+docs_repo=FHISkybert/Fhi.Skybert.Docs
+docs_branch=main
+docs_commit=a0fd7ec53c7eb2125bea3513db595400a4076f52
+docs_commit_date=2026-02-13
+infra_repo=FHISkybert/Fhi.Skybert.Infra
+infra_branch=main
+infra_commit=8e32c0f792d4aac7e4985ba3b4ae6bbb5a85f6d8
+infra_commit_date=2026-03-04
+last_fullscan_date=2026-03-05
+-->
 
 # Skybert Platform Skill
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-02-24
+> **Sist verifisert mot offisiell docs:** 2026-03-05
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -17,7 +28,7 @@ Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din op
 
 **KRITISK**: Du har kun tilgang til ditt eget namespace (`tn-<tenant>`). Du kan ikke aksessere andre namespaces eller kluster-ressurser.
 
-**KRITISK**: Bruk det oppgitte service account-navnet nøyaktig for workload identity. Dette er forhåndskonfigurert av plattformteamet.
+**KRITISK**: Workload Identity er automatisk aktivert for SkybertApp. For raw Deployments må du sette label og serviceAccountName manuelt (se [Sikkerhet](references/security.md)).
 
 **VIKTIG**: Bruk `SkybertApp` CRD for deployments. `WebApp` CRD er utdatert og skal ikke brukes.
 
@@ -169,7 +180,7 @@ spec:
 **Funksjoner:**
 - Enhetlig secrets-håndtering - spesifiser bare vault-navn og nøkler
 - Automatisk SecretStore + ExternalSecret-opprettelse
-- Automatisk workload identity-kobling
+- Automatisk workload identity (alltid aktivert for alle SkybertApp-deployments)
 - `writableDirs`-støtte for sikkerhetshardening
 - Renere konfigurasjonssyntaks (objekt vs array)
 - HPA-støtte
@@ -301,14 +312,11 @@ Plattformen planlegger å tilby tre StorageClass-nivåer med ulike nivåer av re
 
 Skybert bruker Azure Workload Identity for passordløs autentisering mot Azure-tjenester (Key Vault, Blob Storage, etc.).
 
-### Forhåndskonfigurert identitet
+### Automatisk aktivering
 
-Når en ny tenant opprettes, gir plattformteamet en **forhåndskonfigurert workload identity** med:
-- Et spesifikt service account-navn (`<tenant>-azure`)
-- Federated credentials allerede satt opp
-- Tilgang til Azure Key Vault for tenanten
+**SkybertApp:** Workload Identity er alltid aktivert. Composition setter automatisk `azure.workload.identity/use: "true"` og `serviceAccountName: <tenant>-azure` på alle pods.
 
-**Du må bruke det oppgitte service account-navnet nøyaktig** - dette er påkrevet for at workload identity skal fungere.
+**Raw Deployment:** Du må sette label og serviceAccountName manuelt (se [Sikkerhet](references/security.md)).
 
 ### Hvordan det fungerer
 
@@ -417,6 +425,26 @@ README.md
 - **Ansvarsfordeling:** Basert på HUKI-modellen - se offisiell docs for detaljer
 - Se offisiell dokumentasjon på https://docs.sky.fhi.no/ for fullstendige krav (fallback: https://skybert.fhi.no/)
 
+## Skybert-verdier i CLAUDE.md / AGENTS.md
+
+> **Lokal repo-anbefaling** — denne seksjonen er ikke fra offisiell Skybert-docs, men en anbefaling for AI-agenter som jobber med Skybert-prosjekter.
+
+For prosjekter som bruker Skybert, anbefaler vi å legge inn følgende verdier i prosjektets `CLAUDE.md` eller `AGENTS.md`:
+
+| Nøkkel | Verdi |
+|--------|-------|
+| Tenant | `<tenant-navn>` |
+| Sikkerhetssone | Grønn / Gul / Rød |
+| Test namespace | `tn-<tenant>` |
+| Prod namespace | `tn-<tenant>` |
+| Test hostname | `<app>.skytest.fhi.no` |
+| Prod hostname | `<app>.sky.fhi.no` |
+| ACR image | `crfhiskybert.azurecr.io/<tenant>/<app>` |
+| Deployment | `<app>-deployment` |
+| Azure tenant ID | `<azure-tenant-id>` |
+
+Dette gir AI-agenten kontekst for å generere korrekte konfigurasjoner uten å gjette.
+
 ## Referanser
 
 | Dokument | Innhold |
@@ -429,6 +457,10 @@ README.md
 | [Sikkerhet](references/security.md) | Workload Identity, sikkerhet, nettverkspolicyer |
 | [Observability](references/observability.md) | Logging, metrics, Grafana |
 | [Feilsøking](references/troubleshooting.md) | Feilsøking og debug-kommandoer |
+| [WebApp CRD (utdatert)](references/webapp-crd.md) | Legacy WebApp-referanse og migreringsguide |
+| [Plattformarkitektur](references/platform-architecture.md) | Flux, Crossplane, OCI-flyt, tenant-bootstrap |
+| [Kyverno-policier](references/kyverno-policies.md) | Sikkerhetspolicier som påvirker tenanter |
+| [Hostnavn og nettverk](references/hostnames-and-networking.md) | Domener, TLS, ingress-regler, nettverkspolicyer |
 
 ## Support
 
