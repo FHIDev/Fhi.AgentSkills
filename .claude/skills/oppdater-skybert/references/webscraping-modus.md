@@ -73,11 +73,19 @@ Lagre til `.tmp/oppdater-skybert/pages/<sidenavn>.html`.
 
 ---
 
-## Alltid FULL modus
+## Inkrementell vs FULL modus
 
-Web-scraping-modus kjører alltid som FULL — ingen inkrementell sammenligning er mulig uten commit-SHAs.
+### FULL modus (uten eksisterende state)
 
-Per-side hashes fra `search_index.json` brukes til å identifisere endrede/nye/fjernede sider sammenlignet med forrige `state.json`.
+Hent `search_index.json`, beregn alle per-side hashes, hent HTML for alle sider i scope, analyser alt. Kjøres når `skybert/.oppdater-state.json` mangler eller ikke har `webscraping`-felt.
+
+### INKREMENTELL modus (med eksisterende state i skybert/.oppdater-state.json)
+
+1. Hent `search_index.json`, beregn nye per-side hashes
+2. Sammenlign med `webscraping.pages[]` fra state-filen
+3. Identifiser: nye sider (location finnes ikke i state), endrede sider (hash ulik), fjernede sider (location i state men ikke i ny index)
+4. Hent kun HTML for nye/endrede sider
+5. Analyser kun berørte skybert-filer basert på routing fra [routing-tabell.md](routing-tabell.md)
 
 ---
 
@@ -88,11 +96,13 @@ Per-side hashes fra `search_index.json` brukes til å identifisere endrede/nye/f
 | Ingen infra-repo-tilgang | Ingen CRD-versjonssporing, ingen infra signal inventory |
 | Ingen `docs/internal/`-tilgang | Kun publiserte sider er tilgjengelige |
 | Kun publisert docs | Ingen tilgang til mkdocs.yml, workflows eller README |
-| Ingen inkrementell modus | Alltid FULL — per-side hash brukes for endringsdeteksjon |
+| Inkrementell basert på per-side hash | Krever persistent state i `skybert/.oppdater-state.json` |
 
 ---
 
 ## Forenklet metadata-kontrakt
+
+### Rask NO-OP-sjekk (metadata-kommentar)
 
 I web-scraping-modus skrives en forenklet metadata-kommentar (uten infra-felter):
 
@@ -100,17 +110,26 @@ I web-scraping-modus skrives en forenklet metadata-kommentar (uten infra-felter)
 <!-- Kilde-hash: <globalHash> -->
 ```
 
-`state.json` i web-scraping-modus:
+### Persistent state for inkrementell (skybert/.oppdater-state.json)
+
+`skybert/.oppdater-state.json` lagrer per-side hashes for inkrementell sammenligning mellom kjøringer:
+
 ```json
 {
-  "globalHash": "<sha256>",
-  "fetchedAt": "<ISO-8601>",
-  "source": "docs.sky.fhi.no",
-  "pages": [
-    { "location": "<location>", "title": "<title>", "hash": "<per-side hash>" }
-  ]
+  "schemaVersion": 2,
+  "updatedAt": "<ISO-8601>",
+  "mode": "webscraping",
+  "webscraping": {
+    "source": "docs.sky.fhi.no",
+    "globalHash": "<sha256>",
+    "pages": [
+      { "location": "<location>", "title": "<title>", "hash": "<per-side sha256>" }
+    ]
+  }
 }
 ```
+
+Metadata-kommentaren brukes for rask NO-OP-sjekk (globalHash uendret → stopp). State-filen gir detaljert per-side info for å identifisere hvilke sider som faktisk endret seg ved INKREMENTELL modus.
 
 ---
 

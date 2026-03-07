@@ -29,6 +29,7 @@ Les ved behov — ikke les alt ved oppstart.
 Skybert-skill (oppdateres):
 skybert/
 ├── SKILL.md                                 (onboarding, konsepter, Blaloypa, navnekonvensjoner)
+├── .oppdater-state.json                     (persistent state for inkrementell oppdatering)
 └── references/
     ├── skybertapp-crd.md                    (SkybertApp XRD-spec)
     ├── webapp-crd.md                        (legacy WebApp XRD, migreringsguide)
@@ -46,7 +47,6 @@ skybert/
 Runtime-cache (opprettes, ikke committet):
 .tmp/oppdater-skybert/
 ├── changed-files.json
-├── state.json
 └── UPDATE-PLAN.md
 ```
 
@@ -54,13 +54,45 @@ Runtime-cache (opprettes, ikke committet):
 
 ## Metadata-kontrakt
 
+### Rask NO-OP-sjekk (metadata-kommentar i skybert/SKILL.md)
+
 Metadata lagres som HTML-kommentar i `skybert/SKILL.md`, rett etter frontmatter:
 
 **GitHub-modus:** `<!-- Oppdater-skybert-state: schema_version=2 docs_repo=... docs_commit=<sha> docs_commit_date=<dato> infra_repo=... infra_commit=<sha> infra_commit_date=<dato> last_fullscan_date=<dato> -->`
 
 **Web-scraping-modus:** `<!-- Kilde-hash: <globalHash> -->`
 
-Regler: Oppdateres kun etter vellykket Apply (steg 9). `last_fullscan_date` oppdateres kun ved FULL-modus. Gammelt `<!-- Kilde-hash: ... -->`-format → behandle som FULL modus.
+### Persistent state for inkrementell oppdatering (skybert/.oppdater-state.json)
+
+`skybert/.oppdater-state.json` committes sammen med skybert-filene og gir detaljert per-fil/per-side informasjon for inkrementell analyse i begge moduser.
+
+```json
+{
+  "schemaVersion": 2,
+  "updatedAt": "<ISO-8601>",
+  "mode": "github|webscraping",
+  "github": {
+    "docs": { "repo": "FHISkybert/Fhi.Skybert.Docs", "branch": "main", "commit": "<sha>" },
+    "infra": { "repo": "FHISkybert/Fhi.Skybert.Infra", "branch": "main", "commit": "<sha>" }
+  },
+  "webscraping": {
+    "source": "docs.sky.fhi.no",
+    "globalHash": "<sha256>",
+    "pages": [
+      { "location": "skybertapp/", "title": "SkybertApp", "hash": "<per-side sha256>" }
+    ]
+  }
+}
+```
+
+Kun ett av `github`/`webscraping`-feltene er populert per kjøring (avhengig av modus).
+
+### Regler
+
+- Metadata-kommentar og state-fil oppdateres kun etter vellykket Apply (steg 9)
+- `last_fullscan_date` oppdateres kun ved FULL-modus
+- Gammelt `<!-- Kilde-hash: ... -->`-format → behandle som FULL modus
+- State-fil mangler men metadata finnes → FULL modus (med migrasjonsmelding)
 
 ---
 
@@ -87,8 +119,8 @@ Hvis kommentaren har gammelt format eller mangler → marker som "metadata mangl
 | SHAs/hash uendret fra lagret metadata | **NO-OP** — rapporter "ingen endringer" og stopp |
 | Metadata mangler / ugyldig / gammelt format | **FULL** |
 | `last_fullscan_date` > 30 dager gammel | **FULL** |
-| SHA endret, < 30 dager siden fullscan | **INKREMENTELL** (kun GitHub-modus) |
-| Web-scraping-modus | Alltid **FULL** |
+| State-fil mangler men metadata finnes | **FULL** (med migrasjonsmelding) |
+| SHA/hash endret + state-fil finnes | **INKREMENTELL** (begge moduser) |
 
 **Les [hovedprinsipper.md](references/hovedprinsipper.md) for du fortsetter.**
 
@@ -146,7 +178,7 @@ Skriv `.tmp/oppdater-skybert/UPDATE-PLAN.md` med disse seksjonene:
 4. **Endringer:** Per endring: fil, kategori, kilde, informasjonstype (dokumentert fakta / utledet monster / operasjonell antakelse), naavarende tekst, foreslatt tekst, begrunnelse
 5. **Bevart innhold uten repo-kilde:** Se [implementeringsregler.md](references/implementeringsregler.md)
 
-Skriv ogsaa `.tmp/oppdater-skybert/state.json`.
+State-informasjon for inkrementell oppdatering skrives til `skybert/.oppdater-state.json` i steg 9.
 
 ---
 
@@ -173,11 +205,17 @@ Implementer kun eksplisitt godkjente endringer. Se [implementeringsregler.md](re
 
 ---
 
-## Steg 9 — Oppdater metadata
+## Steg 9 — Oppdater metadata og state-fil
 
 Oppdater metadata-kommentaren i `skybert/SKILL.md` med nye SHAs/hash og datoer. Ved FULL modus: oppdater også `last_fullscan_date`. Oppdater `Sist verifisert mot offisiell docs:` med dagens dato.
 
-**Kontrakt:** Metadata oppdateres KUN etter vellykket Apply.
+Skriv/oppdater `skybert/.oppdater-state.json` med detaljert state:
+- **GitHub-modus:** Lagre commit SHAs for begge repoer
+- **Web-scraping-modus:** Lagre `globalHash` og per-side hashes fra `search_index.json`
+
+Begge filer (`skybert/SKILL.md` og `skybert/.oppdater-state.json`) committes sammen.
+
+**Kontrakt:** Metadata og state-fil oppdateres KUN etter vellykket Apply.
 
 ---
 

@@ -166,20 +166,43 @@ Azure Subscription IDs og kluster-IP-ranges anonymiseres med plassholdere (`<sub
 Hent komplett filtree fra begge repoer. Alle filer i scope behandles som "endrede". Kjører discovery pass.
 
 ### INKREMENTELL modus
+
+Bruker commit SHAs fra `skybert/.oppdater-state.json` (persistent, committet) for å sammenligne:
+
 ```bash
 gh api repos/FHISkybert/Fhi.Skybert.Docs/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
 gh api repos/FHISkybert/Fhi.Skybert.Infra/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
 ```
 
-Hvis compare feiler (force-push, rebase) → fall tilbake til FULL modus og informer bruker.
+- Bare endrede filer (i scope) leses og analyseres
+- Discovery pass hoppes over ved INKREMENTELL
+- Hvis compare feiler (force-push, rebase) → fall tilbake til FULL modus og informer bruker
 
-**Output:** Skriv `.tmp/oppdater-skybert/changed-files.json`:
+**Runtime output:** Skriv `.tmp/oppdater-skybert/changed-files.json` (ephemeral):
 ```json
 {
   "docs": { "added": [], "modified": [], "removed": [] },
   "infra": { "added": [], "modified": [], "removed": [] }
 }
 ```
+
+### State-fil etter vellykket Apply
+
+Etter vellykket implementering (steg 9) oppdateres `skybert/.oppdater-state.json` med nye commit SHAs:
+
+```json
+{
+  "schemaVersion": 2,
+  "updatedAt": "<ISO-8601>",
+  "mode": "github",
+  "github": {
+    "docs": { "repo": "FHISkybert/Fhi.Skybert.Docs", "branch": "main", "commit": "<ny sha>" },
+    "infra": { "repo": "FHISkybert/Fhi.Skybert.Infra", "branch": "main", "commit": "<ny sha>" }
+  }
+}
+```
+
+Den varige staten er i `.oppdater-state.json` — `changed-files.json` i `.tmp/` er kun runtime-cache.
 
 ---
 
