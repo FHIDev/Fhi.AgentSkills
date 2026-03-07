@@ -11,7 +11,7 @@ import '@folkehelseinstituttet/designsystem/fhi-label';
 | Property | Attributt | Type | Default | Beskrivelse |
 |----------|-----------|------|---------|-------------|
 | `size` | `size` | `'large' \| 'medium' \| 'small'` | `'medium'` | Skriftstørrelse |
-| `color` | `color` | `string` | arvet | CSS-farge (bruk design tokens) |
+| `color` | `color` | `string` | `var(--fhi-color-neutral-text-default)` | CSS-farge (bruk design tokens) |
 
 ## Eksempler
 

@@ -15,8 +15,19 @@ Fhi.AgentSkills (dette repoet)
     └── SKILL.md
 
 Kilde:
-└── github.com/FHIDev/Fhi.Designsystem  (leses kun fra publisert git-tag)
+├── github.com/FHIDev/Fhi.Designsystem  (leses kun fra publisert git-tag)
+└── npm / publisert tarball for `@folkehelseinstituttet/designsystem`
 ```
+
+> **Viktig kildehierarki:**
+>
+> 1. **Publisert npm-pakke / tarball er fasit** for public API, entrypoints, `theme/`-filer,
+>    `custom-elements.json`, `web-types.json`, ikoner og andre eksporterte artefakter.
+> 2. **Git-taggen er fasit** for lesbar kildekode, changelog og Storybook-/MDX-dokumentasjon
+>    som forklarer semantikk, bruksscenarier og kjente begrensninger.
+> 3. **Intern repo-struktur er ikke public API.** Interne flyttinger eller omorganiseringer
+>    skal ikke dokumenteres som breaking changes med mindre den publiserte pakken faktisk
+>    endrer exports, entrypoints, token-navn eller annen brukerrettet kontrakt.
 
 ---
 
@@ -40,6 +51,11 @@ Notér også hvilke komponenter som er dokumentert i `designsystem/references/co
 (filnavnene uten `.md`-ending, f.eks. `fhi-button`, `fhi-text-input`).
 Denne listen brukes i Steg 3 til å finne alle TypeScript- og `.docs.mdx`-filer som
 skal leses.
+
+Notér også hvilke filer under `designsystem/` som inneholder eksplisitte latest-referanser
+(versjonsnumre, pakkenavn med versjon, eller vedlikeholdsnotater som sier "basert på latest").
+Disse brukes i steg 7d og steg 8 for å unngå at gamle versjonsstrenger blir stående igjen
+etter oppdatering.
 
 ---
 
@@ -82,6 +98,15 @@ https://registry.npmjs.org/<pakkenavn>/latest
 
 Feltet `"version"` i JSON-svaret er siste publiserte versjon.
 
+Hvis terminal er tilgjengelig, bruk også:
+
+```bash
+npm view <pakkenavn> version
+```
+
+Bruk npm CLI som kontrollsjekk dersom webfetch og registry-JSON ser ut til å være
+inkonsistente eller trunkerte.
+
 ### 2c. Finn tilhørende git-tag
 
 Versjonen fra npm tilsvarer en git-tag i repoet med formatet `v{versjon}`.
@@ -107,7 +132,13 @@ Sammenlign versjonen fra npm (steg 2b) med versjonen i skillen (steg 1).
 
 Kun hvis versjonene er **forskjellige** → fortsett:
 
-**Multi-hopp-deteksjon:** Hent fullstendig versjonsliste for pakken fra npm-registeret:
+**Multi-hopp-deteksjon:** Hent fullstendig versjonsliste for pakken. Foretrekk:
+
+```bash
+npm view <pakkenavn> versions --json
+```
+
+Fallback:
 
 ```
 https://registry.npmjs.org/<pakkenavn>
@@ -116,6 +147,9 @@ https://registry.npmjs.org/<pakkenavn>
 Les nøklene i `versions`-objektet. Filtrer bort pre-release-versjoner (alpha, beta, rc, osv.).
 Identifiser alle minor-versjoner mellom forrige latest (ekskl.) og ny latest (ekskl.).
 Notér denne listen — den brukes i steg 7b.
+
+> ⚠️ Store registry-svar kan bli trunkert i enkelte fetch-verktøy. Hvis responsen virker
+> ufullstendig, bruk npm CLI som fasit i stedet for å gjette.
 
 Eksempel: Forrige latest er `0.31.2`, ny latest er `0.34.1`.
 Faktisk publiserte minors fra npm: `0.32.0`, `0.32.1`, `0.33.0`.
@@ -135,6 +169,32 @@ Bruk følgende URL-format for å lese filer direkte fra taggen:
 https://raw.githubusercontent.com/FHIDev/Fhi.Designsystem/v{versjon}/{filsti}
 ```
 
+### 3a. Triager før du leser dypere
+
+Før du begynner å lese komponentfiler i detalj, bygg et **bredt men billig** bilde av hva som
+faktisk er endret:
+
+1. Les publisert `package.json`
+2. Les `CHANGELOG.md`
+3. List filene i publisert npm-pakke (`npm pack <pakkenavn>@<versjon> --dry-run --json`)
+4. Les `custom-elements.json` og/eller `web-types.json` hvis de finnes i den publiserte pakken
+5. Les GitHub compare mellom forrige latest og ny latest hvis forrige latest er kjent
+
+Bruk deretter denne regelen:
+
+- **Fast track:** Hvis changelog + compare + publiserte manifests viser at releasen er
+  intern/docs-drevet og det ikke er tydelige public API-endringer, kan du lese bare de
+  berørte komponentene i detalj i stedet for alle. Du må likevel verifisere hele public API-flaten
+  via publiserte manifests/tarball-filene først.
+- **Målrettet lesing:** Hvis diffen peker på bestemte komponenter, tokens, entrypoints eller
+  rammeverksguider, les disse i detalj.
+- **Full gjennomgang:** Hvis changelog er uklar, compare er støyete, manifests mangler, eller
+  repoet er omstrukturert på en måte som gjør triagen usikker, fall tilbake til full komponent-
+  gjennomgang.
+
+> **Viktig:** Changelog alene er ikke nok til å konkludere at ingenting brukerrettet er endret.
+> Bruk changelog som hint, ikke som eneste kilde.
+
 ### Hvilke filer å lese
 
 #### Alltid les — obligatorisk
@@ -145,20 +205,37 @@ Disse hentes alltid, for **alle** versjoner og scenarier:
 |---------|--------|--------------------------------------|
 | `package.json` | Pakkenavn, versjon, peerDependencies, exports | `package.json` |
 | `CHANGELOG.md` | Endringer mellom versjoner | `CHANGELOG.md` |
-| TypeScript-kildefil per komponent | Autoritativ kilde for `@property`-dekoratorer (hvilke HTML-attributter finnes, typer, defaults). Verifiser mot Properties-tabellen i skillen. | `src/components/{komponent}/{komponent}.component.ts` |
-| `.docs.mdx` per komponent | Variant-semantikk, bruksscenarier, kjente begrensninger og bugs — finnes ikke i TypeScript-koden | `src/components/{komponent}/{komponent}.docs.mdx` |
+| Publisert tarball-filiste | Fasit for eksporterte filer, entrypoints, `theme/default.css`, ikoner og manifests | `npm pack <pakkenavn>@<versjon> --dry-run --json` |
+| `custom-elements.json` og/eller `web-types.json` | Primærkilde for public komponenter, tag-navn, attributter, events, metoder og slots hvis filene finnes i pakken | `custom-elements.json`, `web-types.json` |
+| GitHub compare | Triager hvilke komponenter og docs-områder som faktisk er endret siden forrige latest | `compare/v{gammel}...v{ny}` |
 | `src/storybook/get_started/*.mdx` | Rammeverk-integrasjonsguider (React, Angular, Blazor, osv.) | `src/storybook/get_started/` |
 
 **Komponent-listen** fra Steg 1 (`references/components/*.md` uten filending) brukes til å
-finne riktige TypeScript- og `.docs.mdx`-filer. Hent én fil per komponent.
+slå opp hvilke public komponenter skillen allerede dokumenterer.
+
+For disse komponentene gjelder:
+
+- Les **TypeScript-kildefil** for alle **berørte** komponenter, eller for alle komponenter hvis
+  triagen er usikker. TypeScript er viktig for runtime-logikk som ikke alltid fremgår av
+  manifests alene, f.eks. effective defaults, normalisering av ugyldige verdier,
+  advarsler, validering i `update`/`updated`, og imperative metoder.
+- Les **`.docs.mdx` eller annen relevant docs-fil** for alle **berørte** komponenter, eller for
+  alle komponentgrupper hvis docs er konsolidert. Docs-filer er viktige for variant-semantikk,
+  bruksscenarier, retningslinjer, tilgjengelighetskrav og kjente begrensninger.
 
 > **Merk:** TypeScript-kildefiler og `.docs.mdx`-filer utfyller hverandre.
 > TypeScript gir deg det autoritative API-et; `.docs.mdx` gir deg semantikken og kjente
 > fallgruver. Begge er nødvendige — ingen av dem kan erstattes av den andre.
 
-> **Merk:** Filstier i FHI Designsystem-repoet følger mønsteret over, men kan avvike
-> hvis repostrukturen endres. Finn riktig sti ved å se på mappestrukturen i pakke-undermappen
-> (hent GitHub tree-URL for taggen om nødvendig).
+> **Merk:** Filstier i FHI Designsystem-repoet er **heuristikker, ikke kontrakter**.
+> Komponenter kan flyttes til undermapper (f.eks. `typography/`), og docs kan være
+> konsolidert i én fil for en hel komponentgruppe. Finn alltid faktisk sti ved å lese
+> mappestrukturen i taggen og ved å bruke manifests/tarballen som kompass.
+
+> **Merk:** Hvis den publiserte pakken inneholder nye maskinlesbare artefakter eller andre
+> docs-kilder som ikke er nevnt eksplisitt her (f.eks. nye manifests, schemas eller genererte
+> docs-filer), skal de vurderes som relevante kilder i stedet for å ignoreres fordi de ikke
+> passer dagens filnavnsmønster.
 
 #### Les om innholdet finnes — skjønnsbasert
 
@@ -181,12 +258,34 @@ https://github.com/FHIDev/Fhi.Designsystem/tree/v{versjon}/packages/{pakke-mappe
 
 Sammenlign kildekoden fra taggen med innholdet i `designsystem/`-skillen. Lag en strukturert endringsplan som dekker:
 
+Bruk denne sjekklisten systematisk før du skriver planen:
+
+1. **Public API:** Sammenlign `custom-elements.json` / `web-types.json` / publisert pakke med
+   `references/components/*.md` for komponenter, attributter, properties, events, metoder,
+   slots og tag-navn.
+2. **Runtime-atferd:** Les relevant TypeScript for å fange opp effective defaults,
+   normalisering av ugyldige verdier, runtime-validering, warnings/deprecations og
+   event-/metodeoppførsel som ikke alltid fremgår av manifests.
+3. **Semantikk og bruk:** Les relevant `.docs.mdx` / konsolidert docs og verifiser at
+   skillen dekker bruksscenarier, variant-regler, retningslinjer, tilgjengelighet,
+   kjente bugs/begrensninger og eventuelle rammeverksnotater.
+4. **Publiserte artefakter:** Verifiser exports/entrypoints, ikon-entrypoints,
+   `theme/default.css`, andre theme/token-filer og eventuelle README-/installasjonsfiler i
+   den publiserte pakken.
+5. **Kompatibilitet:** Sammenlign `peerDependencies` og eventuelle `engines`/andre
+   kompatibilitetsfelt mellom forrige og ny versjon. Dokumenter bare endringer som faktisk
+   påvirker installasjon, oppsett eller brukerråd.
+6. **Stale latest-referanser:** Søk i hele `designsystem/` etter versjonsstrenger som peker på
+   forrige latest, og vurder om de skal oppdateres eller bevisst beholdes som historiske notater.
+
 ### Mangler
 Innhold som finnes i kildekoden, men ikke i skillen. Eksempler:
 - Nye komponenter som ikke er dokumentert
 - Props/API-endringer som ikke er reflektert
 - Nye CSS-variabler eller design tokens
 - Installasjonsinstruksjoner som mangler
+- Bruksscenarier eller kjente begrensninger fra docs som ikke er reflektert
+- Nye public manifests eller publiserte artefakter som skillen ikke tar høyde for
 
 ### Feil eller utdatert innhold
 Innhold i skillen som ikke lenger stemmer med kildekoden. Eksempler:
@@ -194,12 +293,18 @@ Innhold i skillen som ikke lenger stemmer med kildekoden. Eksempler:
 - Utgåtte props eller API-er
 - Endrede importstier
 - Gammel installasjonsmetode
+- Feil effective default fordi runtime-logikk overstyrer deklarert/default antatt verdi
+- Manglende kompatibilitetsnotat ved endring i `peerDependencies` eller lignende
 
-### Andre forbedringer
-Strukturelle, språklige eller pedagogiske forbedringer som ikke er direkte feil, men som gjør skillen mer nyttig for en AI-agent. Eksempler:
-- Manglende kodeeksempler
-- Uklar eller tvetydig formulering
-- Dårlig organisering
+### Andre forbedringer (kun kildedekning)
+Forbedringer som reduserer risikoen for informasjons-tap eller gjør fremtidige verifiseringer
+mer presise, **men som fortsatt må være forankret i konkrete observasjoner fra kildene**.
+Eksempler:
+- En vedlikeholdsnote med latest-versjon som må oppdateres for å unngå stale info
+- En kontraktsjekk som mangler for et nytt publisert artefakt
+- Presisering av hvordan en konsolidert docs-kilde mappes til eksisterende referansefiler
+
+Ikke bruk denne kategorien til stilistisk omskriving.
 
 ### Format for endringsplanen
 
@@ -239,6 +344,8 @@ Etter godkjenning, oppdater filene i `designsystem/`-mappen. Skillen skal dekke 
 - Foretrekk **konkrete kodeeksempler** fremfor lange prosatekster.
 - Ikke inkluder informasjon du ikke har verifisert i kildekoden fra taggen.
 - Hold innhold relevant for den publiserte versjonen – ikke spekuler om fremtidige endringer.
+- Når publisert pakke og intern repo-struktur peker i ulike retninger, la den publiserte pakken
+  styre hva som regnes som public API.
 
 ### Kontrakt for endringer
 
@@ -250,6 +357,11 @@ Disse reglene er absolutte:
 - **Ikke omformuler, omstruktur eller "forbedre"** avsnitt som er faktariktige. Stilistiske preferanser er ikke et gyldig endringsgrunnlag.
 - **Alle endringer skal begrunnes** med en konkret observasjon fra kildekoden – ikke med skjønn alene.
 - Minimalt inngrep: Foretrekk å legge til nytt innhold fremfor å skrive om eksisterende.
+- **Ikke slett historiske delta-filer** når de faller ut av support-vinduet. Fjern dem kun fra
+  `versions/INDEX.md`, med mindre brukeren eksplisitt ber om sletting.
+- **Ikke kast informasjon** bare fordi upstream har flyttet eller konsolidert filer. Hvis flere
+  gamle kilder er slått sammen til én ny kilde, skal fakta fra den nye kilden fortsatt vurderes
+  og mappes inn i skillen.
 
 ---
 
@@ -295,6 +407,12 @@ Les `designsystem/versions/INDEX.md` for å finne:
 
 > **Kumulativ delta-modell (fast regel):** Delta-filer backfylles ikke. Nye public komponenter som legges til i ny latest dokumenteres **ikke** retroaktivt i eldre delta-filer.
 > Se [`versions/GUIDE.md`](../../designsystem/versions/GUIDE.md) for beslutningsflyt om kumulativ delta-modell.
+
+**Presisering for å unngå informasjons-tap:** Default-regelen er fortsatt at eldre delta-filer
+ikke regenereres rutinemessig. **Unntak:** Hvis ny latest introduserer nye public komponenter
+eller andre nye public features som gjør at eksisterende støttede delta-filer blir misvisende
+ved stillhet, oppdater de relevante eldre **støttede** delta-filene eksplisitt med
+`Missing vs latest` eller tilsvarende merknad.
 
 **Standardmal for delta-fil:**
 
@@ -355,6 +473,9 @@ Korte tips for oppgradering til latest.
 3. **Rotasjon:** Fjern eldste "Supported"-rader til totalt antall rader i tabellen er ≤ 10 (latest + maks 9 Supported). Gjenta inntil kriteriet er oppfylt.
 4. Oppdater baseline-kommentaren øverst (`Baseline er alltid SKILL.md (latest vX.Y.Z)`).
 
+> **Viktig:** Rotasjon i `INDEX.md` betyr **ikke** at gamle delta-filer skal slettes fra disk.
+> Historiske filer beholdes, men listes ikke lenger som støttet.
+
 **Eksempel på oppdatert tabell:**
 
 ```markdown
@@ -371,6 +492,10 @@ Oppdater følgende i `designsystem/SKILL.md`:
 - Pakkenavnet og versjonsnummeret i toppkommentaren
 - Feltet `Verifisert mot:` med ny versjon og dato
 - Støttepolicyteksten hvis versjonsvinduet endres
+
+Søk deretter i hele `designsystem/` etter eksplisitte latest-versjonsstrenger og
+vedlikeholdsnotater. Oppdater bare de referansene som faktisk er ment å følge latest.
+Historiske deltafiler og versjonsspesifikke eksempler skal ikke "normaliseres" bort.
 
 ### 7e. Valider lenker og filer
 
@@ -389,7 +514,13 @@ Kjør følgende sjekker for å verifisere at SKILL.md er korrekt for ny versjon:
 |-------|--------------------------|
 | Theme-fil finnes | Verifiser at `theme/default.css` er eksportert i npm-pakken |
 | Komponent-entrypoints | Alle komponenter i komponenttabellen har en entrypoint i pakken |
+| Public API-manifest | Verifiser `custom-elements.json` / `web-types.json` hvis de finnes, og bruk dem for å kryssjekke tag-navn, attributter, events, metoder og slots |
+| Exports / publiserte filer | Sjekk `package.json` `exports` hvis feltet finnes, ellers bruk tarball-filisten til å verifisere import-stier og entrypoints |
 | Ikon-eksempler | Sjekk at ikonnavnene i SKILL.md faktisk finnes i pakken |
+| Kompatibilitet | Sammenlign `peerDependencies` og eventuelle `engines`/andre kompatibilitetsfelt mellom gammel og ny versjon; dokumenter kun brukerrelevant endring |
+| Runtime-defaults | For endrede komponenter: sjekk `update`/`updated`/valideringslogikk for effective defaults, normalisering og warnings som ikke alltid fremgår av manifests |
+| Docs-dekning | Verifiser at relevant `.docs.mdx` / konsolidert docs er dekket i referansefilene: bruksscenarier, retningslinjer, kjente begrensninger, tilgjengelighet, rammeverk-notater |
+| Stale versjonsstrenger | Søk i `designsystem/` etter gamle latest-referanser og verifiser at bare bevisst historiske referanser står igjen |
 | Versjonsnummer | `designsystem/SKILL.md`, `versions/INDEX.md` og `<!-- Basert på ... -->` er konsistente |
 
 ### Synkronisering av `.claude`- og `.codex`-versjonene
@@ -404,6 +535,9 @@ Kjør følgende sjekker for å verifisere at SKILL.md er korrekt for ny versjon:
 |---|---|
 | Git-tag ikke funnet | Sjekk releases-siden og prøv varianter som `{versjon}` uten `v`-prefiks |
 | npm-registeret returnerer ingen `latest` | Prøv `https://registry.npmjs.org/{pakkenavn}` og les `dist-tags.latest` |
+| npm-register-respons trunkeres | Bruk `npm view {pakkenavn} version` og `npm view {pakkenavn} versions --json` i terminalen i stedet for å gjette |
 | Fil ikke funnet på taggen | Sjekk mappestrukturen i repoet for å finne riktig filsti |
+| Filsti-mønsteret stemmer ikke | Anta ikke at `src/components/{komponent}/...` fortsatt gjelder. Les tree-strukturen, manifests og tarballen først; docs kan være flyttet eller konsolidert |
+| `index.js` / forventet exports-sti mangler | Les `package.json` `exports` hvis tilgjengelig, ellers verifiser entrypoints via publisert tarball-filiste |
 | Kildekoden er uleselig / minifisert | Let etter `.ts`-kildefiler i `src/`-mappen fremfor kompilerte filer |
 | Delta-fil for forrige latest er uklar | Bruk "verifisering kreves"-markering for usikre seksjoner |
