@@ -98,21 +98,31 @@ Kun ett av `github`/`webscraping`-feltene er populert per kjøring (avhengig av 
 
 ## Steg 1 — Bestem tilgangsmodus
 
-### 1a. Test GitHub-tilgang
+### 1a. Sjekk lokal docs-klon
+
+Hvis miljøvariabelen `LOCAL_SKYBERT_DOC_CLONE` er satt og peker til en eksisterende katalog:
+- Bruk lokal klon som docs-kilde (raskere, fungerer offline)
+- Les filer direkte fra `$LOCAL_SKYBERT_DOC_CLONE/docs/` (MkDocs-innhold)
+- Hent commit SHA fra den lokale klonen: `git -C "$LOCAL_SKYBERT_DOC_CLONE" rev-parse HEAD`
+- Test fortsatt GitHub-tilgang for infra-repo (steg 1b)
+
+Hvis variabelen ikke er satt eller katalogen ikke eksisterer → gå til steg 1b.
+
+### 1b. Test GitHub-tilgang
 
 ```bash
 gh api repos/FHISkybert/Fhi.Skybert.Docs/commits/main --jq '.sha'
 ```
 
 - **Suksess** → GitHub-modus. Les [github-modus.md](references/github-modus.md).
-- **403/404** → Web-scraping-modus. Les [webscraping-modus.md](references/webscraping-modus.md).
+- **403/404** og ingen lokal klon → Web-scraping-modus. Les [webscraping-modus.md](references/webscraping-modus.md).
 
-### 1b. Les metadata fra skybert/SKILL.md
+### 1c. Les metadata fra skybert/SKILL.md
 
 Parse `<!-- Oppdater-skybert-state: ... -->`-kommentaren. Ekstraher alle felter.
 Hvis kommentaren har gammelt format eller mangler → marker som "metadata mangler".
 
-### 1c. Bestem kjoringsmodus
+### 1d. Bestem kjoringsmodus
 
 | Betingelse | Modus |
 |-----------|-------|

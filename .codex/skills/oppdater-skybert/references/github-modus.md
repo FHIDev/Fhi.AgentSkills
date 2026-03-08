@@ -4,13 +4,22 @@ Denne modusen brukes når agenten har tilgang til kilderepoene via `gh api`, `cu
 
 ## Kildetilgang
 
-**Primær metode:** `gh api` og `curl` med `gh auth token` (ingen lokal clone nødvendig).
+### Docs-repo
 
-**Alternativ metode:** Lokal clone:
+Kildeprioritet for docs (sjekkes i rekkefølge):
+
+1. **Lokal klon via `$LOCAL_SKYBERT_DOC_CLONE`** — Hvis miljøvariabelen er satt og katalogen eksisterer, les filer direkte fra `$LOCAL_SKYBERT_DOC_CLONE/docs/`. Hent commit SHA med `git -C "$LOCAL_SKYBERT_DOC_CLONE" rev-parse HEAD` og commit-dato med `git -C "$LOCAL_SKYBERT_DOC_CLONE" log -1 --format=%cI`. Raskest og fungerer offline.
+2. **`gh api`** — `gh api repos/FHISkybert/Fhi.Skybert.Docs/...` (standard ved GitHub-tilgang uten lokal klon).
+3. **Temporær clone** — `git clone https://github.com/FHISkybert/Fhi.Skybert.Docs ".tmp/oppdater-skybert/docs-repo"` (siste utvei, tregest).
+
+### Infra-repo
+
+Infra-repo hentes alltid via GitHub API (ingen lokal klon-støtte):
 ```bash
-git clone https://github.com/FHISkybert/Fhi.Skybert.Docs ".tmp/oppdater-skybert/docs-repo"
-git clone https://github.com/FHISkybert/Fhi.Skybert.Infra ".tmp/oppdater-skybert/infra-repo"
+gh api repos/FHISkybert/Fhi.Skybert.Infra/commits/main --jq '.sha'
 ```
+
+Alternativ: `git clone https://github.com/FHISkybert/Fhi.Skybert.Infra ".tmp/oppdater-skybert/infra-repo"`
 
 **Hente commit SHA:**
 ```bash
