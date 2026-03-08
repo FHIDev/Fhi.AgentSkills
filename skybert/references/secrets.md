@@ -21,7 +21,6 @@ spec:
           local: DB_PASSWORD
         - remote: api-key
           local: API_KEY
-      mountAsEnv: true
 ```
 
 ## Manuell: SecretStore + ExternalSecret (ESO)
@@ -81,6 +80,7 @@ pod ved secret-endring.
 
 ## Regler
 
+- **Aldri** monter secrets som miljøvariabler (`mountAsEnv: true`) — miljøvariabler kan lekke via crash dumps, `/proc/*/environ`, child-prosesser og logging. Bruk fil-montering (default `mountAsFiles: true`) og les secrets fra filsystemet
 - **Aldri** commit secrets til Git
 - **Aldri** legg secrets i container images
 - Bruk Azure Key Vault som eneste kilde for secrets

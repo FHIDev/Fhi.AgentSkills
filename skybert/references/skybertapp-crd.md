@@ -121,7 +121,7 @@ secrets:
   - remote: database-password
     local: DB_PASSWORD
   - remote: api-key
-  mountAsEnv: true
+  mountAsEnv: false
   mountPath: /secrets/db
 ```
 
