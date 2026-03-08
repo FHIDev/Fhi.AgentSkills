@@ -93,7 +93,7 @@ Workload Identity er **alltid aktivert** for SkybertApp. Composition setter auto
 Du trenger ikke sette noe felt for dette — det skjer automatisk.
 
 > Kilde: https://docs.sky.fhi.no/auth/workload-identity/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8e32c0f/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/crossplane/base/compositions/skybertapp.yaml
 
 ### Secrets
 
@@ -271,7 +271,7 @@ SkybertApp oppretter følgende Kubernetes-ressurser:
 | ConfigMap | `<name>-config` |
 | Secret | `<vault-lowercase>-secret-<index>` (hvis ikke spesifisert med `name`) |
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8e32c0f/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/crossplane/base/compositions/skybertapp.yaml
 
 ## SkybertApp vs WebApp
 
