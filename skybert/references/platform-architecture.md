@@ -15,6 +15,20 @@
 | Git | GitHub (FHIDev org) | Kildekode og CI/CD |
 | Container registry | Azure Container Registry (`crfhiskybert.azurecr.io`) | Image-lagring |
 
+## Klustere og miljøer
+
+> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/
+
+| Sikkerhetssone | Test-kluster | Prod-kluster |
+|----------------|--------------|--------------|
+| Grønn | `aks-green-test-01` | `aks-green-prod-02` |
+| Gul | `aks-yellow-test-01` | `aks-yellow-prod-01` |
+| Rød | `aks-red-test-01` | `aks-red-prod-01` |
+
+Namespace-navnet (`tn-<tenant>`) er identisk på tvers av klustere. Det er klusteret man kobler til som bestemmer miljøet.
+
+GitOps-mappene (`test/`, `prod/`) pakkes som separate OCI-artifacts (`gitops_test`, `gitops_prod`) og deployes til sine respektive klustere.
+
 ## Flux GitOps
 
 > Kilde: https://docs.sky.fhi.no/internal/flux/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/tenants/exempl/base/flux-kustomization.yaml

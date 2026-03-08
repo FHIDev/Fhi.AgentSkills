@@ -68,9 +68,18 @@ En **Tenant** er den grunnleggende organisasjonsenheten i Skybert - et mellomniv
 - `prod/` - Produksjonsmiljø (legges til når klar)
 - `sandbox/` - Sandkassemiljø (kommer)
 
-Hvert miljø er en toppnivå-mappe med egne manifester/verdier.
+Hvert miljø er en toppnivå-mappe med egne manifester/verdier. Mappene pakkes som separate OCI-artifacts (`gitops_test`, `gitops_prod`) og deployes til sine respektive klustere.
+
+**Namespace er identisk i alle miljøer.** Namespace-navnet (`tn-<tenant>`) er det samme i test og prod — det er klusteret du kobler til som bestemmer miljøet, ikke namespace-navnet.
 
 ### Sikkerhetssoner
+
+| Sikkerhetssone | Test-kluster | Prod-kluster |
+|----------------|--------------|--------------|
+| Grønn | `aks-green-test-01` | `aks-green-prod-02` |
+| Gul | `aks-yellow-test-01` | `aks-yellow-prod-01` |
+| Rød | `aks-red-test-01` | `aks-red-prod-01` |
+
 - **Grønn sone**: Åpne data og lavere sensitivitet
 - **Gul sone**: Interne data med moderat sikkerhet (persondata)
 - **Rød sone**: Svært sensitive data med strenge krav (identifiserbar helseinformasjon)
