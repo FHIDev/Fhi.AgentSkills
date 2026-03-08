@@ -17,7 +17,8 @@
 | Kildetype | Format |
 |-----------|--------|
 | Docs-repo | `> Kilde: https://docs.sky.fhi.no/<sti>/` |
-| Infra-repo | `> Kilde: FHISkybert/Fhi.Skybert.Infra/<filbane>` |
+| Infra-repo (fil) | `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/<commit>/<filbane>` |
+| Infra-repo (katalog) | `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/<commit>/<katalogbane>/` |
 | Kombinert | Oppgi begge kilder |
 | Web-scraping | `> Kilde: https://docs.sky.fhi.no/<sti>/` |
 | Ingen kilde (manuelt kuratert) | Behold eksisterende referanser — legg ikke til ny |

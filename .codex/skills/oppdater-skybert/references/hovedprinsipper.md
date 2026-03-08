@@ -59,6 +59,7 @@ Merk tydelig forskjell mellom disse tre typene i UPDATE-PLAN.md og i skillfiler 
 ## Kildehenvisningsformat (differensiert per type)
 
 - **Docs-basert innhold:** `> Kilde: https://docs.sky.fhi.no/<sti>/`
-- **Infra-basert innhold:** `> Kilde: FHISkybert/Fhi.Skybert.Infra/<filbane>`
+- **Infra-basert innhold (fil):** `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/<commit>/<filbane>`
+- **Infra-basert innhold (katalog):** `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/<commit>/<katalogbane>/`
 - **Kombinert innhold:** Oppgi begge kilder.
 - **Innhold uten kilde i repoene:** Ingen ny kilde-referanse — behold eksisterende referanser.

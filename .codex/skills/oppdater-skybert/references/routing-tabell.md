@@ -44,6 +44,10 @@
 | `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
 | `tenants/*/base/*.yaml` | `references/platform-architecture.md`, `SKILL.md` |
 | `scripts/tenant--*.sh` | `references/platform-architecture.md` |
+| `infra/tenant-bootstrap/base/*.yaml` | `references/platform-architecture.md` |
+| `infra/tenant-bootstrap/base/tenants/*.yaml` | `references/platform-architecture.md` |
+| `infra/flux-operator/base/*.yaml` | `references/platform-architecture.md` |
+| `infra/flux-system/*/flux-instance.yaml` | `references/platform-architecture.md` |
 | `infra/globalnetworkpolicies/base/policies-red/*.yaml` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
 
 ---

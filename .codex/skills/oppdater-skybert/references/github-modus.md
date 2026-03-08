@@ -137,6 +137,14 @@ infra/globalnetworkpolicies/base/policies-red/*.yaml
 # Tenant-bootstrap (normativ struktur)
 tenants/*/base/{namespace,rolebinding,serviceaccount*,flux-kustomization}.yaml
 
+# ResourceSet-basert tenant-bootstrap
+infra/tenant-bootstrap/base/*.yaml
+infra/tenant-bootstrap/base/tenants/*.yaml
+
+# Flux Operator og FluxInstance
+infra/flux-operator/base/*.yaml
+infra/flux-system/*/flux-instance.yaml
+
 # Tenant-scripts (normativ bootstrap-logikk)
 scripts/tenant--*.sh
 ```
