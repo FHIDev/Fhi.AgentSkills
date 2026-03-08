@@ -73,16 +73,11 @@ Hvert miljø er en toppnivå-mappe med egne manifester/verdier. Mappene pakkes s
 **Namespace er identisk i alle miljøer.** Namespace-navnet (`tn-<tenant>`) er det samme i test og prod — det er klusteret du kobler til som bestemmer miljøet, ikke namespace-navnet.
 
 ### Sikkerhetssoner
-
-| Sikkerhetssone | Test-kluster | Prod-kluster |
-|----------------|--------------|--------------|
-| Grønn | `aks-green-test-01` | `aks-green-prod-02` |
-| Gul | `aks-yellow-test-01` | `aks-yellow-prod-01` |
-| Rød | `aks-red-test-01` | `aks-red-prod-01` |
-
 - **Grønn sone**: Åpne data og lavere sensitivitet
 - **Gul sone**: Interne data med moderat sikkerhet (persondata)
 - **Rød sone**: Svært sensitive data med strenge krav (identifiserbar helseinformasjon)
+
+Hvert miljø deployes til et dedikert kluster per sikkerhetssone. Se [kubectl-access](references/kubectl-access.md) for fullstendig kluster-liste med subscription-ID-er og proxy-kommandoer.
 
 ### Blåløypa (Golden Path)
 

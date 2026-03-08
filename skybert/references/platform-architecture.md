@@ -19,15 +19,11 @@
 
 > Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/
 
-| Sikkerhetssone | Test-kluster | Prod-kluster |
-|----------------|--------------|--------------|
-| Grønn | `aks-green-test-01` | `aks-green-prod-02` |
-| Gul | `aks-yellow-test-01` | `aks-yellow-prod-01` |
-| Rød | `aks-red-test-01` | `aks-red-prod-01` |
-
-Namespace-navnet (`tn-<tenant>`) er identisk på tvers av klustere. Det er klusteret man kobler til som bestemmer miljøet.
+Namespace-navnet (`tn-<tenant>`) er identisk på tvers av klustere. Det er klusteret man kobler til som bestemmer miljøet, ikke namespace-navnet.
 
 GitOps-mappene (`test/`, `prod/`) pakkes som separate OCI-artifacts (`gitops_test`, `gitops_prod`) og deployes til sine respektive klustere.
+
+For fullstendig kluster-liste per sikkerhetssone (inkludert sandbox), se [kubectl-access](kubectl-access.md).
 
 ## Flux GitOps
 
