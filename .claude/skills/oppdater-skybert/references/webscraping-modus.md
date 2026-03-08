@@ -5,11 +5,14 @@ Denne modusen brukes når agenten **ikke** har tilgang til kilderepoene (gh api 
 ## Domene-strategi
 
 ```
+Lokal klon:   $LOCAL_SKYBERT_DOC_CLONE (hvis satt og katalogen eksisterer)
 Primærkilde:  https://docs.sky.fhi.no
 Fallback:     https://skybert.fhi.no
 ```
 
-Bruk `docs.sky.fhi.no` som autoritativ kilde. Hvis `docs.sky.fhi.no` er utilgjengelig, forsøk `skybert.fhi.no` — men noter i planen at fallback-kilde ble brukt.
+Sjekk først om miljøvariabelen `LOCAL_SKYBERT_DOC_CLONE` er satt og peker til en eksisterende katalog med en lokal klon av FHISkybert/Fhi.Skybert.Docs. Hvis ja, les dokumentasjon direkte fra den lokale klonen (raskere og fungerer offline). Bruk `docs/` undermappen for MkDocs-innhold og `mkdocs.yml` for sidestruktur.
+
+Hvis lokal klon ikke er tilgjengelig, bruk `docs.sky.fhi.no` som autoritativ kilde. Hvis `docs.sky.fhi.no` er utilgjengelig, forsøk `skybert.fhi.no` — men noter i planen at fallback-kilde ble brukt.
 
 ---
 
