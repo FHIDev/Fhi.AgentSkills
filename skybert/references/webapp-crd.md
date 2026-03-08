@@ -2,7 +2,7 @@
 
 > **ADVARSEL:** WebApp CRD er utdatert. Bruk [SkybertApp](skybertapp-crd.md) for alle nye deployments.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8e32c0f/infra/crossplane/base/xrds/webapp.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/crossplane/base/xrds/webapp.yaml
 
 ## API
 
