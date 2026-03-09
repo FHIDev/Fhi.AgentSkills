@@ -18,7 +18,7 @@ Følgende regler gjelder alle Ingress-ressurser:
 - **Wildcards blokkert**: Wildcard-hosts (f.eks. `*.skytest.fhi.no`) er ikke tillatt
 - **SSL-redirect**: Kyverno setter automatisk `ssl-redirect: true` og `force-ssl-redirect: true`
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8e32c0f/infra/kyverno-policies/base/policies-green/ingress-security.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/kyverno-policies/base/policies-green/ingress-security.yaml
 
 ## Nettverkspolicyer
 
@@ -39,7 +39,7 @@ Eksplisitte unntak:
 **Viktig:** Tenanter i rød sone kan IKKE opprette egne NetworkPolicies — dette blokkeres av Kyverno.
 Kontakt plattformteamet for nettverksunntak.
 
-> Kilde: https://docs.sky.fhi.no/internal/global-network-policies/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8e32c0f/infra/globalnetworkpolicies/base/policies-red/
+> Kilde: https://docs.sky.fhi.no/internal/global-network-policies/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/e5bbc4b/infra/globalnetworkpolicies/base/policies-red/
 
 ## Service Mesh
 
@@ -51,8 +51,9 @@ Linkerd er **ikke lenger i bruk** (fjernet fra plattformen).
 
 CA-sertifikater lagres i `/etc/ssl/certs/` i containere. Du er ansvarlig for å holde `ca-certificates`-pakken oppdatert.
 
-**Interne CA-er:** FHI vedlikeholder interne CA-er (`fhi.no` og `red.fhi.sec`) i en `trust-bundle.pem` som automatisk er tilgjengelig.
+**Interne CA-er:** FHI vedlikeholder interne CA-er (`fhi.no` og `red.fhi.sec`) i en `trust-bundle.pem`. Denne filen auto-monteres til `/etc/ssl/certs/trust-bundle.pem` i alle pods i `tn-*` namespaces via Kyverno-policy (`automount-cert-chain-bundle`).
 
-**Bruk trust-bundle:** Sett `SSL_CERT_FILE` til `trust-bundle.pem` for å bruke den kuraterte listen av CAs.
+**Bruk trust-bundle:** Sett `SSL_CERT_FILE=/etc/ssl/certs/trust-bundle.pem` for å bruke den kuraterte listen av CAs i stedet for image-standarder.
 
 > Kilde: https://docs.sky.fhi.no/miscellaneous/publicCA/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml

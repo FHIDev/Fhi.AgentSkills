@@ -1,6 +1,6 @@
 # Kyverno-policier som påvirker tenanter
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8e32c0f/infra/kyverno-policies/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/e5bbc4b/infra/kyverno-policies/
 
 Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle tenant-namespaces (`tn-*`).
 
@@ -11,6 +11,9 @@ Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle ten
 | `auto-set-default-user-and-run-as-non-root` | Setter `runAsNonRoot: true` og `runAsUser: 1000` (hvis ikke satt) | `tn-*` pods |
 | `auto-set-seccomp-runtime-default` | Setter `seccompProfile.type: RuntimeDefault` (hvis ikke satt) | Alle pods |
 | `ingress-security` (mutate) | Setter `ssl-redirect: true` og `force-ssl-redirect: true` på alle Ingress | Alle Ingress |
+| `automount-cert-chain-bundle` | Auto-monterer `trust-bundle.pem` til `/etc/ssl/certs/trust-bundle.pem` i alle pods (inkl. init containers) | `tn-*` pods |
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml
 
 > **Praktisk betydning:** Du trenger vanligvis ikke sette `runAsNonRoot`, `runAsUser` eller `seccompProfile` eksplisitt — Kyverno setter fornuftige defaults. Men du **kan ikke** override `runAsNonRoot` til `false`.
 
@@ -41,6 +44,14 @@ Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle ten
 |--------|---------------|
 | `ingress-security` | Ingress uten TLS-match, uten ingressClassName, med wildcard-hosts |
 
+### Service-typer (alle klustere)
+
+| Policy | Hva blokkeres |
+|--------|---------------|
+| `disallow-nodeport-loadbalancer-services` | NodePort- og LoadBalancer-services. Kun ClusterIP tillatt — bruk Ingress for ekstern tilgang |
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/kyverno-policies/base/policies-green/disallow-nodeport-lb.yaml
+
 ### Ressurser (Audit-modus i `tn-*`)
 
 | Policy | Hva sjekkes |
@@ -62,4 +73,4 @@ I rød sone er **all nettverkstrafikk blokkert som default** (base deny-policy, 
 - Eksplisitte GlobalNetworkPolicies opprettet av plattformteamet (order 500)
 - NFS egress er blokkert for tenanter (order 900)
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8e32c0f/infra/kyverno-policies/base/policies-red/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/e5bbc4b/infra/kyverno-policies/base/policies-red/

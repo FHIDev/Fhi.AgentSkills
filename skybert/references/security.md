@@ -28,7 +28,7 @@ spec:
 ```
 
 **Hva skjer under panseret:**
-AKS-clusteret kjører en mutating webhook (`azure-wi-webhook`) som del av kontrollplanet.
+Clusteret kjører en mutating webhook (`azure-wi-webhook`) som del av kontrollplanet.
 Når en pod har labelen `azure.workload.identity/use: "true"`, injiserer webhooken automatisk:
 
 | Ressurs | Verdi |
@@ -41,9 +41,9 @@ Når en pod har labelen `azure.workload.identity/use: "true"`, injiserer webhook
 
 Du trenger ikke sette disse manuelt — webhooken gjør det for deg.
 
-**SDK-kompatibilitet:** Azure Workload Identity fungerer uten ekstra konfigurasjon med:
-- .NET: `DefaultAzureCredential` og `WorkloadIdentityCredential`
-- Azure CLI
+**SDK-kompatibilitet:** Workload Identity-autentisering fungerer automatisk (out of the box) uten ekstra konfigurasjon:
+- .NET: `DefaultAzureCredential` og `WorkloadIdentityCredential` plukker opp token og miljøvariabler automatisk
+- Azure CLI: `az` plukker opp Workload Identity-autentisering automatisk i pods
 
 > Kilde: https://docs.sky.fhi.no/auth/workload-identity/
 
@@ -63,7 +63,7 @@ Skybert leverer 3 managed identities per tenant:
 2. **Test SA identity**: Knyttet til `<tenant>-azure` service account i test
 3. **Prod SA identity**: Knyttet til `<tenant>-azure` service account i prod
 
-Client ID-ene for SA-identities er synlige på Kubernetes service accounts.
+Identitetene er per miljø (`<tenant>-skybert-sa-<env>`) slik at du kan gi minimale Azure RBAC-tilganger per miljø (least-privilege). Client ID-ene for SA-identities er synlige på Kubernetes service accounts.
 
 ## Obligatorisk sikkerhetskonfigurasjon
 
@@ -94,7 +94,7 @@ I rød sone er default DENY — all trafikk blokkert som utgangspunkt.
 
 Se [Hostnavn og nettverkskonfigurasjon](hostnames-and-networking.md#rød-sone) for detaljer om tillatt trafikk og nettverkspolicyer.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8e32c0f/infra/kyverno-policies/base/policies-red/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/e5bbc4b/infra/kyverno-policies/base/policies-red/
 
 ## Secrets Management
 
@@ -111,9 +111,12 @@ Se [Hostnavn og nettverkskonfigurasjon](hostnames-and-networking.md#rød-sone) f
 
 CA-sertifikater lagres i `/etc/ssl/certs/` i containere. Du er ansvarlig for å holde `ca-certificates`-pakken oppdatert i build-prosessen.
 
-**Interne CA-er:** FHI vedlikeholder interne CA-er (`fhi.no` og `red.fhi.sec`) som automatisk inkluderes i en `trust-bundle.pem`-fil. Du trenger ikke legge disse til manuelt.
+**Interne CA-er:** FHI vedlikeholder interne CA-er (`fhi.no` og `red.fhi.sec`) i en `trust-bundle.pem`. Denne filen auto-monteres til `/etc/ssl/certs/trust-bundle.pem` i alle pods i `tn-*` namespaces via Kyverno-policy (`automount-cert-chain-bundle`). Du trenger ikke legge disse til manuelt.
 
-**Bruk trust-bundle:** Sett miljøvariabelen `SSL_CERT_FILE` til å peke på `trust-bundle.pem` for å bruke den kuraterte listen av public CAs istedenfor image-standarder.
+**Bruk trust-bundle:** Sett `SSL_CERT_FILE=/etc/ssl/certs/trust-bundle.pem` for å bruke den kuraterte listen av CAs i stedet for image-standarder.
+
+> Kilde: https://docs.sky.fhi.no/miscellaneous/publicCA/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml
 
 ## Azure Subscriptions per Sikkerhetssone
 

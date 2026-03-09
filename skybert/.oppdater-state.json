@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "updatedAt": "2026-03-08T08:14:17Z",
+  "mode": "github",
+  "github": {
+    "docs": {
+      "repo": "FHISkybert/Fhi.Skybert.Docs",
+      "branch": "main",
+      "commit": "d4c1aeaf2b7e533b382bee206933c81b340766eb"
+    },
+    "infra": {
+      "repo": "FHISkybert/Fhi.Skybert.Infra",
+      "branch": "main",
+      "commit": "e5bbc4bb05912e0ec4ba5bf4d1f5e0a8789e6a86"
+    }
+  }
+}
