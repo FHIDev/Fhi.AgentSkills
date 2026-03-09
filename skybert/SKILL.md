@@ -178,6 +178,7 @@ spec:
       keys:
         - remote: database-password
           local: DB_PASSWORD
+      mountAsEnv: false
 ```
 
 **Funksjoner:**

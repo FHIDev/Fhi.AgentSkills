@@ -21,6 +21,7 @@ spec:
           local: DB_PASSWORD
         - remote: api-key
           local: API_KEY
+      mountAsEnv: false
 ```
 
 ## Manuell: SecretStore + ExternalSecret (ESO)
