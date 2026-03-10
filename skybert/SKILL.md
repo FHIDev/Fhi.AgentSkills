@@ -6,12 +6,12 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 schema_version=2
 docs_repo=FHISkybert/Fhi.Skybert.Docs
 docs_branch=main
-docs_commit=d4c1aeaf2b7e533b382bee206933c81b340766eb
-docs_commit_date=2026-03-05
+docs_commit=0755df88847828b2321680fb83ab57fb43ff8d70
+docs_commit_date=2026-03-10
 infra_repo=FHISkybert/Fhi.Skybert.Infra
 infra_branch=main
-infra_commit=e5bbc4bb05912e0ec4ba5bf4d1f5e0a8789e6a86
-infra_commit_date=2026-03-06
+infra_commit=986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a
+infra_commit_date=2026-03-10
 last_fullscan_date=2026-03-08
 -->
 
@@ -19,7 +19,7 @@ last_fullscan_date=2026-03-08
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-03-08
+> **Sist verifisert mot offisiell docs:** 2026-03-10
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -66,18 +66,23 @@ En **Tenant** er den grunnleggende organisasjonsenheten i Skybert - et mellomniv
 ### Miljøer
 - `test/` - Testmiljø (standard, alltid til stede)
 - `prod/` - Produksjonsmiljø (legges til når klar)
-- `sandbox/` - Sandkassemiljø (kommer)
+- `sandbox/` - Sandkassemiljø på `aks-sandbox-01`
 
-Hvert miljø er en toppnivå-mappe med egne manifester/verdier. Mappene pakkes som separate OCI-artifacts (`gitops_test`, `gitops_prod`) og deployes til sine respektive klustere.
+Hvert miljø er en toppnivå-mappe med egne manifester/verdier. Mappene pakkes som separate OCI-artifacts (`gitops_test`, `gitops_sandbox`, `gitops_prod`) og deployes til sine respektive klustere.
 
-**Namespace er identisk i alle miljøer.** Namespace-navnet (`tn-<tenant>`) er det samme i test og prod — det er klusteret du kobler til som bestemmer miljøet, ikke namespace-navnet.
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/infra/tenant-repositories/aks-sandbox-01/kustomization.yaml
+
+**Namespace er identisk i alle miljøer.** Namespace-navnet (`tn-<tenant>`) er det samme på tvers av alle miljøer (test, sandbox, prod) — det er klusteret du kobler til som bestemmer miljøet, ikke namespace-navnet.
 
 ### Sikkerhetssoner
 - **Grønn sone**: Åpne data og lavere sensitivitet
 - **Gul sone**: Interne data med moderat sikkerhet (persondata)
 - **Rød sone**: Svært sensitive data med strenge krav (identifiserbar helseinformasjon)
 
-Hvert miljø deployes til et dedikert kluster per sikkerhetssone. Se [kubectl-access](references/kubectl-access.md) for fullstendig kluster-liste med subscription-ID-er og proxy-kommandoer.
+Test og prod deployes til dedikerte klustere per sikkerhetssone. Sandbox er et unntak:
+`aks-sandbox-01` er ett felles kluster delt av alle fargesoner. Se [kubectl-access](references/kubectl-access.md) for fullstendig kluster-liste med subscription-ID-er og proxy-kommandoer.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/scripts/tenant--new.sh
 
 ### Blåløypa (Golden Path)
 
@@ -297,7 +302,7 @@ Støttede domener per miljø:
 
 | Miljø | Domener |
 |-------|---------|
-| Test | `*.skytest.fhi.no`, `*.fhi-k8s.com` |
+| Test / Sandbox | `*.skytest.fhi.no`, `*.fhi-k8s.com` |
 | Produksjon | `*.sky.fhi.no` |
 
 TLS-sertifikater provisjoneres automatisk via cert-manager.

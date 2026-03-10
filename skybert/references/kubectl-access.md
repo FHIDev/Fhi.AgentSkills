@@ -46,7 +46,7 @@ kubectl get pods -n tn-<tenant>
 | aks-green-test-01 | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-yellow-test-01 | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-red-test-01 | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
-| aks-sandbox-01 | TBD |
+| aks-sandbox-01 | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 
 ### Produksjon
 
@@ -57,6 +57,11 @@ kubectl get pods -n tn-<tenant>
 | aks-red-prod-01 | `88fde73a-d4a6-4aab-b8be-31810fcd7116` |
 
 ### Proxy-eksempler per sone
+
+**Sandbox:**
+```powershell
+az connectedk8s proxy --resource-group rg-fhi-aks-sandbox-weu-01 --name aks-sandbox-01 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
+```
 
 **Grønn test:**
 ```powershell

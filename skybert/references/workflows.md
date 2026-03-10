@@ -5,7 +5,7 @@
 GitOps-repoet (`Fhi.<Tenant>.GitOps`) leveres med `.github/workflows/oci-push.yaml` og
 `.github/workflows/update-tag.yaml` ferdig satt opp. Normaltilfellet er å bruke dem som de er.
 
-**OCI-artifact navngivning:** Miljømapper på repo-roten (`test/`, `prod/`) pakkes til
+**OCI-artifact navngivning:** Miljømapper på repo-roten (`test/`, `sandbox/`, `prod/`) pakkes til
 OCI-artifacts med navn `gitops_<env>`. Mappenavn styrer artifact-navn, så ikke endre dem.
 
 > Kilde: https://docs.sky.fhi.no/get-started/kubernetes-yaml/
@@ -201,7 +201,7 @@ Viktig for semantic versioning - sikrer at versjoner bumpes sekvensielt.
 ## oci-push.yaml - Bygge og pushe til ACR
 
 Denne workflowen:
-- Oppdager automatisk alle miljø-mapper (test, prod, etc.)
+- Oppdager automatisk alle miljø-mapper (test/, sandbox/, prod/)
 - Støtter tre konfigurasjonstyper:
   - **Helm**: Hvis `Chart.yaml` finnes
   - **Kustomize**: Hvis `kustomization.yaml` finnes
@@ -216,7 +216,9 @@ Viktig: Kun `TENANT` env-variabelen trenger endring.
 Workflowen pusher OCI-artifacts til:
 `crfhiskybert.azurecr.io/<tenant>/gitops_<env>:latest`
 
-Eksempel: `crfhiskybert.azurecr.io/grossiststatistikken/gitops_test:latest`
+Eksempler:
+- `crfhiskybert.azurecr.io/grossiststatistikken/gitops_test:latest`
+- `crfhiskybert.azurecr.io/grossiststatistikken/gitops_sandbox:latest`
 
 ## update-tag.yaml - Automatisk tag-oppdatering
 

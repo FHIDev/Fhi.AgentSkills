@@ -5,8 +5,8 @@
 ### Oppsett i applikasjon
 
 Skybert leverer ferdig service account per tenant: `<tenant>-azure`, knyttet til managed
-identity `<tenant>-skybert-sa-<env>`. Manuell opprettelse eller annotering av service account
-er ikke nødvendig.
+identity `<tenant>-skybert-sa-<env>`.
+Manuell opprettelse eller annotering av service account er ikke nødvendig.
 
 **For SkybertApp:**
 Workload Identity er alltid aktivert. Composition setter automatisk `azure.workload.identity/use: "true"` og `serviceAccountName: <tenant>-azure` på alle pods. Du trenger ikke gjøre noe ekstra.
