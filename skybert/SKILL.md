@@ -66,7 +66,7 @@ En **Tenant** er den grunnleggende organisasjonsenheten i Skybert - et mellomniv
 ### Miljøer
 - `test/` - Testmiljø (standard, alltid til stede)
 - `prod/` - Produksjonsmiljø (legges til når klar)
-- `sandbox/` - Sandkassemiljø på `aks-sandbox-01`
+- `sandbox/` - Sandkassemiljø på `aks-sandbox-01` for utvikling/testing (kjører grønn sone-policyer)
 
 Hvert miljø er en toppnivå-mappe med egne manifester/verdier. Mappene pakkes som separate OCI-artifacts (`gitops_test`, `gitops_sandbox`, `gitops_prod`) og deployes til sine respektive klustere.
 
@@ -75,12 +75,27 @@ Hvert miljø er en toppnivå-mappe med egne manifester/verdier. Mappene pakkes s
 **Namespace er identisk i alle miljøer.** Namespace-navnet (`tn-<tenant>`) er det samme på tvers av alle miljøer (test, sandbox, prod) — det er klusteret du kobler til som bestemmer miljøet, ikke namespace-navnet.
 
 ### Sikkerhetssoner
-- **Grønn sone**: Åpne data og lavere sensitivitet
-- **Gul sone**: Interne data med moderat sikkerhet (persondata)
-- **Rød sone**: Svært sensitive data med strenge krav (identifiserbar helseinformasjon)
 
-Test og prod deployes til dedikerte klustere per sikkerhetssone. Sandbox er et unntak:
-`aks-sandbox-01` er ett felles kluster delt av alle fargesoner. Se [kubectl-access](references/kubectl-access.md) for fullstendig kluster-liste med subscription-ID-er og proxy-kommandoer.
+Hver sikkerhetssone har dedikerte klustere for test og prod. Kluster-navngivning: `aks-<sone>-<env>-NN`.
+
+| Sone | Dataklassifisering | Kluster (test) | Kluster (prod) |
+|------|-------------------|-----------------|-----------------|
+| **Grønn** | Åpne data, lavere sensitivitet | aks-green-test-01 | aks-green-prod-02 |
+| **Gul** | Interne data, persondata | aks-yellow-test-01 | aks-yellow-prod-01 |
+| **Rød** | Identifiserbar helseinformasjon | aks-red-test-01 | aks-red-prod-01 |
+
+Sandbox (`aks-sandbox-01`) er et unntak — ett felles kluster delt av alle fargesoner, med grønn sone-policyer.
+
+**Grønn og gul sone** bruker identisk policy-sett (Kyverno `policies-green`): Pod Security Standards, image-verifisering, ressurskrav, og standard nettverkspolicyer. Tenanter kan opprette egne `NetworkPolicy`-ressurser.
+
+**Rød sone** har en fundamentalt annerledes sikkerhetsmodell:
+- **Default DENY** — all nettverkstrafikk blokkert som utgangspunkt
+- Kun intern kommunikasjon innenfor eget namespace og DNS er automatisk tillatt
+- Egress til eksterne tjenester krever eksplisitte IP-baserte whitelists (GlobalNetworkPolicy), opprettet av plattformteamet
+- Tenanter kan **ikke** opprette egne `NetworkPolicy`-ressurser (blokkeres av Kyverno)
+- NFS egress (port 2049) er blokkert for alle soner
+
+Se [kubectl-access](references/kubectl-access.md) for fullstendig kluster-liste med subscription-ID-er og proxy-kommandoer.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/scripts/tenant--new.sh
 
