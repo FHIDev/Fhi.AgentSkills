@@ -37,7 +37,7 @@ kubectl get pods -n tn-<tenant>
 
 ## Tilgjengelige klustere
 
-> **Per februar 2026.** Se offisiell docs for oppdaterte verdier: https://docs.sky.fhi.no/get-started/connectedk8s/
+> **Per mars 2026.** Se offisiell docs for oppdaterte verdier: https://docs.sky.fhi.no/get-started/connectedk8s/
 
 ### Test
 
