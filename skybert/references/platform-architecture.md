@@ -21,7 +21,9 @@
 
 Namespace-navnet (`tn-<tenant>`) er identisk på tvers av klustere. Det er klusteret man kobler til som bestemmer miljøet, ikke namespace-navnet.
 
-GitOps-mappene (`test/`, `prod/`) pakkes som separate OCI-artifacts (`gitops_test`, `gitops_prod`) og deployes til sine respektive klustere.
+GitOps-mappene (`test/`, `sandbox/`, `prod/`) pakkes som separate OCI-artifacts (`gitops_test`, `gitops_sandbox`, `gitops_prod`) og deployes til sine respektive klustere. `aks-sandbox-01` er et felles sandkassekluster — alle fargesoner deler det.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/infra/tenant-repositories/aks-sandbox-01/kustomization.yaml
 
 For fullstendig kluster-liste per sikkerhetssone (inkludert sandbox), se [kubectl-access](kubectl-access.md).
 
@@ -103,4 +105,28 @@ Inputs leveres via `ResourceSetInputProvider` per tenant med parametere: `tenant
 
 Legacy `tenants/<tenant>/base/`-strukturen finnes fortsatt for eksisterende tenanter og begge mønstre brukes parallelt.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/tenant-bootstrap/base/resourceset.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/infra/tenant-bootstrap/base/resourceset.yaml
+
+### Tenant-onboarding — plattformoperasjon
+
+> **Intern plattformmekanisme** — gjøres av plattformteamet. Dokumentert her for forståelse av hva som skjer under onboarding.
+
+Plattformteamet bruker `scripts/tenant--new.sh` for å opprette en ny tenant i 4 steg:
+
+1. **Azure-ressurser** — Managed Identity og GitOps-ACR-repo
+2. **GitOps-repo** — GitHub-repo i FHIDev-organisasjonen
+3. **Base-manifester** — namespace, serviceaccounts, rolebinding, Flux Kustomization i infra-repo
+4. **Kluster-onboarding** — kjøres for hvert kluster i valgt sikkerhetssone
+
+Color → kluster-mapping ved onboarding:
+
+| Farge | Klustere |
+|-------|---------|
+| `green` | aks-sandbox-01, aks-green-test-01, aks-green-prod-02 |
+| `yellow` | aks-sandbox-01, aks-yellow-test-01, aks-yellow-prod-01 |
+| `red` | aks-sandbox-01, aks-red-test-01, aks-red-prod-01 |
+
+Grafana klargjøres separat med `scripts/tenant--bootstrap--grafana.sh`: oppretter Grafana-org, Loki/Mimir-datasources filtrert til `tn-<tenant>`, og oppdaterer org_mapping for Entra-gruppekobling.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/scripts/tenant--new.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/scripts/tenant--bootstrap--grafana.sh

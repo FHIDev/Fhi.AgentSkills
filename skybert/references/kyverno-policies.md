@@ -73,4 +73,17 @@ I rød sone er **all nettverkstrafikk blokkert som default** (base deny-policy, 
 - Eksplisitte GlobalNetworkPolicies opprettet av plattformteamet (order 500)
 - NFS egress er blokkert for tenanter (order 900)
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/e5bbc4b/infra/kyverno-policies/base/policies-red/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/infra/kyverno-policies/base/policies-red/
+
+## PolicyExceptions
+
+PolicyExceptions er sentralt styrt av plattformteamet i `kyverno`-namespacet. Tenanter kan ikke self-serve unntak.
+
+Tenant-rettede unntak er sjeldne, men eksisterer: f.eks. har `tn-sindre-exempl` unntak fra `disallow-nodeport-loadbalancer-services` (LoadBalancer-services tillatt). Slike unntak opprettes etter avtale med plattformteamet.
+
+Plattformkomponenter har bredere unntak: f.eks. har `azure-arc-containerstorage`-namespacet unntak fra privileged containers, host-path, capabilities og flere andre policier — fordi plattformkomponenter har andre krav enn tenantworkloads.
+
+**Praktisk:** Hvis du trenger unntak fra en policy, kontakt plattformteamet. Forklar brukstilfelle og krav.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/infra/kyverno-policies/base/policy-exceptions/arc-containerstorage.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/infra/kyverno-policies/base/policy-exceptions/envoy-sindre-exempl.yaml

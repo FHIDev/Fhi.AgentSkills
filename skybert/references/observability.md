@@ -5,8 +5,13 @@
 Applikasjoner logger til stdout/stderr - Alloy samler automatisk inn.
 
 Tilgang via Grafana:
-- URL: (få fra plattformteamet)
+- **Grønn test / sandbox:** https://grafana.skytest.fhi.no
+- **Gul test:** https://grafana-yellow.skytest.fhi.no
+- **Produksjon:** https://grafana.sky.fhi.no
+
 - LogQL-query: `{namespace="tn-<tenant>"}`
+
+> Merk: Grafana-URL varierer per sikkerhetssone. Rød test er ikke verifisert — kontakt plattformteamet.
 
 Eksempel strukturert logging:
 ```json
@@ -18,6 +23,14 @@ Eksempel strukturert logging:
   "requestId": "abc-123"
 }
 ```
+
+### Loki multi-tenancy og isolasjon
+
+Loki kjøres med `auth_enabled: true` — logger er isolert per tenant via headeren `X-Scope-OrgID: tn-<tenant>`. Dette settes automatisk av Grafana-datasourcen som er klargjort for deg; du trenger ikke konfigurere det selv.
+
+> Kilde (X-Scope-OrgID): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/scripts/tenant--bootstrap--grafana.sh
+
+**Loggoppbevaring:** 31 dager.
 
 ### Tips for god logging
 - Bruk strukturert logging (JSON)
@@ -83,6 +96,17 @@ container_memory_usage_bytes{namespace="tn-<tenant>"}
 # CPU usage
 rate(container_cpu_usage_seconds_total{namespace="tn-<tenant>"}[5m])
 ```
+
+### Grafana multi-tenancy
+
+Hver tenant har sin egen **Grafana-organisasjon** med:
+- **Loki-datasource** — filtrert til `tn-<tenant>` (kun egne logger synlig)
+- **Mimir-datasource** — filtrert til `tn-<tenant>` (kun egne metrics synlig)
+- Tilgang gis via Entra ID-gruppe gjennom `org_mapping`-konfigurasjon (satt opp av plattformteamet ved onboarding)
+
+Du logger inn med FHI-bruker. Grafana plasserer deg i riktig organisasjon basert på Entra-gruppemedlemskap via `org_mapping`.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/scripts/tenant--bootstrap--grafana.sh
 
 ## Alerting
 
