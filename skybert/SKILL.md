@@ -6,12 +6,12 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 schema_version=2
 docs_repo=FHISkybert/Fhi.Skybert.Docs
 docs_branch=main
-docs_commit=0755df88847828b2321680fb83ab57fb43ff8d70
-docs_commit_date=2026-03-10
+docs_commit=1d58fab55d96c66452852e8ca7a93a01fe3a87c0
+docs_commit_date=2026-03-16
 infra_repo=FHISkybert/Fhi.Skybert.Infra
 infra_branch=main
-infra_commit=986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a
-infra_commit_date=2026-03-10
+infra_commit=bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f
+infra_commit_date=2026-03-18
 last_fullscan_date=2026-03-08
 -->
 
@@ -19,7 +19,7 @@ last_fullscan_date=2026-03-08
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-03-10
+> **Sist verifisert mot offisiell docs:** 2026-03-18
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -70,7 +70,7 @@ En **Tenant** er den grunnleggende organisasjonsenheten i Skybert - et mellomniv
 
 Hvert miljø er en toppnivå-mappe med egne manifester/verdier. Mappene pakkes som separate OCI-artifacts (`gitops_test`, `gitops_sandbox`, `gitops_prod`) og deployes til sine respektive klustere.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/infra/tenant-repositories/aks-sandbox-01/kustomization.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/tenant-repositories/aks-sandbox-01/kustomization.yaml
 
 **Namespace er identisk i alle miljøer.** Namespace-navnet (`tn-<tenant>`) er det samme på tvers av alle miljøer (test, sandbox, prod) — det er klusteret du kobler til som bestemmer miljøet, ikke namespace-navnet.
 
@@ -86,7 +86,9 @@ Hver sikkerhetssone har dedikerte klustere for test og prod. Kluster-navngivning
 
 Sandbox (`aks-sandbox-01`) er et unntak — ett felles kluster delt av alle fargesoner, med grønn sone-policyer.
 
-**Grønn og gul sone** bruker identisk policy-sett (Kyverno `policies-green`): Pod Security Standards, image-verifisering, ressurskrav, og standard nettverkspolicyer. Tenanter kan opprette egne `NetworkPolicy`-ressurser.
+**Grønn og gul sone** bruker identisk policy-sett (Kyverno `policies-green`): Pod Security Standards, Flux-relatert image/source-signaturverifisering, ressurskrav, og standard nettverkspolicyer. Tenanter kan opprette egne `NetworkPolicy`-ressurser.
+
+> Kilde (policy-sett): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/kyverno-policies/base/policies-green/
 
 **Rød sone** har en fundamentalt annerledes sikkerhetsmodell:
 - **Default DENY** — all nettverkstrafikk blokkert som utgangspunkt
@@ -95,9 +97,11 @@ Sandbox (`aks-sandbox-01`) er et unntak — ett felles kluster delt av alle farg
 - Tenanter kan **ikke** opprette egne `NetworkPolicy`-ressurser (blokkeres av Kyverno)
 - NFS egress (port 2049) er blokkert for alle soner
 
+> Kilde (rød sone-policyer): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/kyverno-policies/base/policies-red/
+
 Se [kubectl-access](references/kubectl-access.md) for fullstendig kluster-liste med subscription-ID-er og proxy-kommandoer.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/scripts/tenant--new.sh
+> Kilde (kluster-mapping): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/scripts/tenant--new.sh
 
 ### Blåløypa (Golden Path)
 

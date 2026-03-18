@@ -1,8 +1,12 @@
 # Observability
 
+Skybert bruker **LGTM-stakken** (Loki, Grafana, Tempo, Mimir) for observability, med **Alloy** som felles collector for logger, metrics og traces. Alloy gjør transformasjoner og videresender telemetri til et sentralt ingestion-kluster. Grafana er inngangspunktet for utviklere — brukes til å utforske logger, metrics, dashboards og alerts.
+
+> Kilde: https://docs.sky.fhi.no/observability/
+
 ## Logging med Loki
 
-Applikasjoner logger til stdout/stderr - Alloy samler automatisk inn.
+Applikasjoner logger til stdout/stderr — Alloy scraper automatisk container-logger og beriker dem med Kubernetes-metadata (namespace, pod, deployment) i Loki/Grafana.
 
 Tilgang via Grafana:
 - **Grønn test / sandbox:** https://grafana.skytest.fhi.no
@@ -28,7 +32,7 @@ Eksempel strukturert logging:
 
 Loki kjøres med `auth_enabled: true` — logger er isolert per tenant via headeren `X-Scope-OrgID: tn-<tenant>`. Dette settes automatisk av Grafana-datasourcen som er klargjort for deg; du trenger ikke konfigurere det selv.
 
-> Kilde (X-Scope-OrgID): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/scripts/tenant--bootstrap--grafana.sh
+> Kilde (X-Scope-OrgID): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/scripts/tenant--bootstrap--grafana.sh
 
 **Loggoppbevaring:** 31 dager.
 
@@ -37,6 +41,20 @@ Loki kjøres med `auth_enabled: true` — logger er isolert per tenant via heade
 - Inkluder correlation IDs / request IDs
 - Logg på riktig nivå (debug, info, warn, error)
 - Unngå å logge sensitive data
+
+### OTLP log ingestion (eksperimentelt)
+
+> **Advarsel:** OTLP log ingestion er per nå ikke ferdig testet. Kontakt plattformteamet før bruk.
+
+I tillegg til automatisk scraping fra stdout/stderr, støtter Skybert direkte sending av logger til Alloy via OTLP SDK-er. Alloy beriker loggene med Kubernetes-metadata (namespace, pod, deployment) og sender dem til Loki.
+
+**Endepunkter (klusterinternt):**
+- HTTP: `alloy.alloy.svc.cluster.local:4318`
+- gRPC: `alloy.alloy.svc.cluster.local:4317`
+
+> **Advarsel:** OTLP log ingestion er ikke HA — forespørsler sendes til Alloy-instansen på samme node som workloaden (nødvendig for Kubernetes-metadata-berikelse). Konfigurer OTLP SDK til å retry ved kortvarig nedetid (f.eks. under pod-rescheduling).
+
+> Kilde: https://docs.sky.fhi.no/observability/logs/
 
 ## Metrics med Mimir
 
@@ -67,9 +85,11 @@ metadata:
 
 ## Tracing med Tempo
 
-Skybert tilbyr distribuert tracing via **Tempo**. Tracing gir innsikt i hvordan forespørsler flyter gjennom distribuerte systemer.
+Skybert planlegger distribuert tracing via **Tempo**. Tracing vil gi innsikt i hvordan forespørsler flyter gjennom distribuerte systemer.
 
-> **Merk:** Tracing-funksjonaliteten er under utvikling og vil bli utvidet. Kontakt plattformteamet for status og oppsett.
+> **Merk:** Traces (gjennom Tempo) er per nå **ikke støttet**. Kontakt plattformteamet for oppdatert status.
+
+> Kilde: https://docs.sky.fhi.no/observability/
 
 ## Grafana Dashboards
 
@@ -106,7 +126,7 @@ Hver tenant har sin egen **Grafana-organisasjon** med:
 
 Du logger inn med FHI-bruker. Grafana plasserer deg i riktig organisasjon basert på Entra-gruppemedlemskap via `org_mapping`.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/scripts/tenant--bootstrap--grafana.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/scripts/tenant--bootstrap--grafana.sh
 
 ## Alerting
 

@@ -23,7 +23,7 @@ Namespace-navnet (`tn-<tenant>`) er identisk på tvers av klustere. Det er klust
 
 GitOps-mappene (`test/`, `sandbox/`, `prod/`) pakkes som separate OCI-artifacts (`gitops_test`, `gitops_sandbox`, `gitops_prod`) og deployes til sine respektive klustere. `aks-sandbox-01` er et felles sandkassekluster — alle fargesoner deler det.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/infra/tenant-repositories/aks-sandbox-01/kustomization.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/tenant-repositories/aks-sandbox-01/kustomization.yaml
 
 For fullstendig kluster-liste per sikkerhetssone (inkludert sandbox), se [kubectl-access](kubectl-access.md).
 
@@ -74,19 +74,31 @@ Hver tenant i infra-repoet har følgende struktur:
 ```yaml
 tenants/<tenant>/
 ├── base/
-│   ├── namespace.yaml          # tn-<tenant>
-│   ├── serviceaccount.yaml     # flux-reconciler + <tenant>-azure
-│   ├── rolebinding.yaml        # Tilgang til namespace
-│   ├── flux-kustomization.yaml # Flux Kustomization (interval: 2m, prune: true)
-│   └── kustomization.yaml      # Kustomize-referanse
+│   ├── namespace.yaml              # tn-<tenant>
+│   ├── serviceaccounts.yaml        # flux-reconciler + <tenant>-azure (flertall i nyere tenanter)
+│   ├── rolebinding.yaml            # flux-reconciler og crossplane → ClusterRole cluster-admin innen namespace
+│   ├── entra-access-rolebinding.yaml  # Entra ID-gruppe → ClusterRole cluster-admin innen namespace
+│   ├── flux-kustomization.yaml     # Flux Kustomization (interval: 2m, prune: true)
+│   └── kustomization.yaml          # Kustomize-referanse
 └── <kluster>/
-    └── kustomization.yaml      # Klusterspesifikk overlay
+    └── kustomization.yaml          # Klusterspesifikk overlay
 ```
 
 Service account `<tenant>-azure` opprettes av plattformteamet med Workload Identity-annotasjoner.
 Service account `flux-reconciler` brukes av Flux for å applye tenant-ressurser.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/e5bbc4b/tenants/exempl/base/
+**`entra-access-rolebinding.yaml`** (observert i nyere tenanter) — RoleBinding som gir en Entra ID-gruppe `cluster-admin`-rolle avgrenset til tenant-namespacet. Observert bootstrap-mønster tyder på at denne gruppen kobles til access packages i MyAccess, men dette er ikke eksplisitt dokumentert i kilderepoene.
+
+> **Merk:** Eldre tenanter kan fortsatt bruke `serviceaccount.yaml` (entall) og mangle `entra-access-rolebinding.yaml`. Begge layouter er gyldige.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/tenants/fida-stat19core/base/kustomization.yaml
+
+Nyere tenanter har to separate RoleBindings:
+- **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) og `crossplane` (fra crossplane-namespace) til `ClusterRole cluster-admin` innen tenant-namespacet. Brukes av plattformen for å reconcile og provisjonere ressurser.
+- **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til `ClusterRole cluster-admin` innen tenant-namespacet. Gir kubectl-tilgang for utviklere.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/tenants/fida-stat19core/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/tenants/fida-airflow/base/entra-access-rolebinding.yaml
 
 ### ResourceSet-basert bootstrap (ny mekanisme)
 
@@ -98,14 +110,21 @@ Plattformteamet har introdusert `ResourceSet` (Flux) som en mer deklarativ tiln�
 - ServiceAccounts (`flux-reconciler` + `<tenant>-azure` med WI-annotasjoner)
 - RoleBinding for flux-reconciler og crossplane
 - Betinget RoleBinding for Entra-gruppe (hvis `entraGroupId` er satt)
-- OCIRepository for GitOps-manifest
+- OCIRepository for GitOps-manifest (se kobling nedenfor)
 - Flux Kustomization (interval: 2m, prune: true, force: true)
+
+Koblingen mellom tenant-bootstrap og GitOps-artifakter:
+1. `infra/tenant-repositories/base/ocirepos/` inneholder én `OCIRepository`-ressurs per tenant, f.eks. `<tenant>-gitops`
+2. OCIRepository peker til `oci://crfhiskybert.azurecr.io/<tenant>/gitops_<env>` med `provider: azure` og `ref.tag: latest`
+3. `flux-kustomization.yaml` i tenant-bootstrap refererer til denne OCIRepository som kilde
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/tenant-repositories/base/ocirepos/oci-fida-stat19core.yaml
 
 Inputs leveres via `ResourceSetInputProvider` per tenant med parametere: `tenant`, `entraGroupId`, `wlidClientId`, `ociUrl`.
 
 Legacy `tenants/<tenant>/base/`-strukturen finnes fortsatt for eksisterende tenanter og begge mønstre brukes parallelt.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/infra/tenant-bootstrap/base/resourceset.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/tenant-bootstrap/base/resourceset.yaml
 
 ### Tenant-onboarding — plattformoperasjon
 
@@ -128,5 +147,5 @@ Color → kluster-mapping ved onboarding:
 
 Grafana klargjøres separat med `scripts/tenant--bootstrap--grafana.sh`: oppretter Grafana-org, Loki/Mimir-datasources filtrert til `tn-<tenant>`, og oppdaterer org_mapping for Entra-gruppekobling.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/scripts/tenant--new.sh
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/986db5d1ad0e4b4a80b8cfb3476bb28fd16bd24a/scripts/tenant--bootstrap--grafana.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/scripts/tenant--new.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/scripts/tenant--bootstrap--grafana.sh

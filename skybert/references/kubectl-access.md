@@ -41,20 +41,20 @@ kubectl get pods -n tn-<tenant>
 
 ### Test
 
-| Kluster | Subscription ID |
-|---------|----------------|
-| aks-green-test-01 | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
-| aks-yellow-test-01 | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
-| aks-red-test-01 | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
-| aks-sandbox-01 | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| Kluster | Resource Group | Subscription ID |
+|---------|---------------|----------------|
+| aks-green-test-01 | `rg-fhi-aks-green-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-yellow-test-01 | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-red-test-01 | `rg-fhi-aks-red-test-weu-01` | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
+| aks-sandbox-01 | `rg-fhi-aks-sandbox-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 
 ### Produksjon
 
-| Kluster | Subscription ID |
-|---------|----------------|
-| aks-green-prod-02 | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
-| aks-yellow-prod-01 | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
-| aks-red-prod-01 | `88fde73a-d4a6-4aab-b8be-31810fcd7116` |
+| Kluster | Resource Group | Subscription ID |
+|---------|---------------|----------------|
+| aks-green-prod-02 | `rg-fhi-aks-green-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
+| aks-yellow-prod-01 | `rg-fhi-aks-yellow-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
+| aks-red-prod-01 | `rg-fhi-aks-red-prod-weu-01` | `88fde73a-d4a6-4aab-b8be-31810fcd7116` |
 
 ### Proxy-eksempler per sone
 
