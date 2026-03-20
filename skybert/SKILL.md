@@ -214,7 +214,6 @@ Tenant-navnet tildeles av plattformteamet. Bruk disse mønstrene:
 | Ressurs | Mønster | Eksempel |
 |---------|---------|----------|
 | Namespace | `tn-<tenant>` | `tn-exempl` |
-| Key Vault | `<vault-navn>` (oppgitt av plattformteamet) | `kv-exempl-test` |
 | Service Account | `<tenant>-azure` | `exempl-azure` |
 | Managed Identity | `<tenant>-skybert-sa-<env>` | `exempl-skybert-sa-test` |
 
@@ -243,6 +242,8 @@ spec:
       serviceAccountRef:
         name: <tenant>-azure
 ```
+
+**RBAC-forutsetning:** SecretStore bruker plattformens SA (`<tenant>-azure`) og dets tilhørende managed identity for å aksessere Key Vault. Denne identiteten provisjoneres av plattformteamet, men **tenanten må selv gi den `Key Vault Secrets User`-rollen** på sin Key Vault. Uten denne rollen feiler alle ExternalSecrets med 403 ForbiddenByRbac. Administrer dette via Terraform eller `az role assignment create`.
 
 ### ExternalSecret
 
