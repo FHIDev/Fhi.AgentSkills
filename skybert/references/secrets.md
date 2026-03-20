@@ -71,6 +71,8 @@ spec:
 
 Key Vault-navnet oppgis av plattformteamet ved onboarding. Det finnes ingen fast navnekonvensjon - bruk det faktiske vault-navnet du har fått tildelt.
 
+**RBAC-krav:** SecretStore bruker plattformens SA (`<tenant>-azure`) og den tilknyttede managed identity-en for å hente secrets fra Key Vault. Tenanten må selv gi denne managed identity-en `Key Vault Secrets User`-rollen på sin Key Vault. Uten dette feiler ExternalSecrets med 403. Administrer dette via Terraform eller `az role assignment create`.
+
 ## Rotasjon og oppdatering
 
 Når en secret endres i Azure Key Vault, oppdateres mountede secret-filer automatisk i containeren.

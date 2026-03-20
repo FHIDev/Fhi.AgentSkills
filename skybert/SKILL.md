@@ -244,6 +244,8 @@ spec:
         name: <tenant>-azure
 ```
 
+**RBAC-forutsetning:** SecretStore bruker plattformens SA (`<tenant>-azure`) og dets tilhørende managed identity for å aksessere Key Vault. Denne identiteten provisjoneres av plattformteamet, men **tenanten må selv gi den `Key Vault Secrets User`-rollen** på sin Key Vault. Uten denne rollen feiler alle ExternalSecrets med 403 ForbiddenByRbac. Administrer dette via Terraform eller `az role assignment create`.
+
 ### ExternalSecret
 
 Henter secrets fra Azure Key Vault:
