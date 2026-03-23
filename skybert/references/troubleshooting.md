@@ -36,12 +36,82 @@ kubectl describe pod <pod-name> -n tn-<tenant>
 
 ### 4. Flux synkroniserer ikke
 
-Flux rekonsilerer automatisk hvert 2. minutt. Vent opptil 2 minutter etter at GitHub workflow lykkes.
+Flux rekonsilerer automatisk hvert 2-3 minutter. Vent opptil 3 minutter etter at GitHub workflow lykkes.
 
-Hvis endringer fortsatt ikke vises etter 5 minutter:
-1. Verifiser at `oci-push.yaml` workflow fullførte uten feil
-2. Sjekk at OCI-artifaktet ble pushet til ACR
-3. Kontakt plattformteamet (#ext-fhi-skybert) - de kan sjekke Flux-status og tvinge rekonsiliering
+**Steg 1: Sjekk kustomization-status med Flux CLI**
+
+Flux CLI bruker samme kubeconfig/kontekst som kubectl. Hvis du har flere kontekster, bruk `--context` flagget eller sett riktig kontekst med `kubectl config use-context` først.
+
+```bash
+# Sjekk kustomization-status (viser applied revision og eventuelle feil)
+flux get kustomization -n tn-<tenant>
+
+# Detaljert info med digest, source ref, og inventory
+kubectl describe kustomization <tenant-name> -n tn-<tenant>
+```
+
+Sammenlign `Last Applied Revision` (OCI digest) og `Last Applied Origin Revision` (git commit SHA) med det du forventer.
+
+**Steg 2: Tving rekonsiliering av kustomization**
+
+```bash
+# Tvinger kustomization til å re-applye fra gjeldende source
+flux reconcile kustomization <tenant-name> -n tn-<tenant>
+```
+
+Merk: dette re-applyer fra den OCI-versjonen source-controlleren allerede har hentet. Hvis problemet er at source-controlleren ikke har hentet ny versjon, hjelper dette ikke.
+
+**Steg 3: Inspiser OCI-artifaktet direkte fra ACR**
+
+Hvis Flux rapporterer gammel digest, verifiser hva som faktisk ligger i ACR:
+
+```bash
+# Logg inn til ACR
+az acr login --name crfhiskybert
+
+# Pull OCI-artifaktet og inspiser innholdet lokalt
+flux pull artifact oci://crfhiskybert.azurecr.io/<tenant>/gitops_test:latest \
+  --output /tmp/oci-check
+
+# Verifiser at forventet innhold er med
+ls /tmp/oci-check/
+cat /tmp/oci-check/<manifest-file>.yaml
+
+# Sjekk ACR-metadata og digests
+az acr manifest list-metadata crfhiskybert.azurecr.io/<tenant>/gitops_test \
+  --orderby time_desc --top 5 -o table
+
+# Vis hva :latest-taggen peker til
+az acr manifest show crfhiskybert.azurecr.io/<tenant>/gitops_test:latest -o json
+```
+
+**Steg 4: Suspend/resume for å jobbe rundt stale source**
+
+Hvis OCIRepository (i `tenant-repositories` namespace) ikke plukker opp ny versjon og du ikke har tilgang til å force-reconcile den:
+
+```bash
+# Suspend Flux — forhindrer at manuelle endringer overskrives
+flux suspend kustomization <tenant-name> -n tn-<tenant>
+
+# Apply manifest manuelt (f.eks. fra pullet OCI-artefakt)
+kubectl apply -f /tmp/oci-check/<manifest>.yaml -n tn-<tenant>
+kubectl rollout restart deployment <name> -n tn-<tenant>
+
+# Verifiser at det fungerer
+kubectl exec deployment/<name> -n tn-<tenant> -- <test-kommando>
+
+# Resume Flux når source-controlleren er oppdatert
+flux resume kustomization <tenant-name> -n tn-<tenant>
+```
+
+**Viktig:** Resume alltid Flux etter debugging. Mens kustomization er suspended, er det ingen automatisk synk.
+
+**Steg 5: Hvis ingenting hjelper**
+
+OCIRepository-ressursen lever i `tenant-repositories` namespace (platform-side). Tenanter har ikke tilgang dit. Kontakt plattformteamet (#ext-fhi-skybert) — de kan:
+- Sjekke OCIRepository-status og eventuelle feil
+- Force-reconcile source-controlleren
+- Verifisere at pull-credentials mot ACR fungerer
 
 ### 5. Nettverkstilkobling feiler (rød sone)
 ```bash

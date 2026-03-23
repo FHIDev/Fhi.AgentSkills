@@ -337,6 +337,43 @@ Skybert har per nå ingen innebygd funksjonalitet for brukervendt autentisering 
 
 > Kilde: https://docs.sky.fhi.no/auth/
 
+## Flux CLI
+
+Tenanter kan bruke `flux` CLI for å sjekke og styre rekonsiliering i eget namespace. Flux CLI bruker **samme kubeconfig og kontekst som kubectl**. Ved flere kontekster velger Flux den aktive:
+
+```bash
+# Se aktiv kontekst (gjelder for både kubectl og flux)
+kubectl config current-context
+
+# Bytt kontekst
+kubectl config use-context <context-name>
+
+# Eller override per kommando
+flux get kustomization -n tn-<tenant> --context=<context-name>
+```
+
+Nyttige Flux CLI-kommandoer tilgjengelig for tenanter:
+
+```bash
+# Sjekk kustomization-status (applied revision, feil)
+flux get kustomization -n tn-<tenant>
+
+# Tving re-apply fra gjeldende source
+flux reconcile kustomization <name> -n tn-<tenant>
+
+# Suspend/resume rekonsiliering (nyttig under debugging)
+flux suspend kustomization <name> -n tn-<tenant>
+flux resume kustomization <name> -n tn-<tenant>
+
+# Pull OCI-artifakt for lokal inspeksjon
+az acr login --name crfhiskybert
+flux pull artifact oci://crfhiskybert.azurecr.io/<tenant>/gitops_test:latest --output /tmp/check
+```
+
+**Merk:** Tenanter kan IKKE reconcile OCIRepository-resurser (lever i `tenant-repositories` namespace). Hvis source-controlleren er stale, kontakt plattformteamet.
+
+Se [Feilsøking](references/troubleshooting.md) seksjon 4 for detaljert steg-for-steg guide ved Flux-problemer.
+
 ## Feilsøking av deployments
 
 Etter push til `main`, følg disse stegene for å verifisere deployment.
