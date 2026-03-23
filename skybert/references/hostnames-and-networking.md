@@ -5,9 +5,12 @@
 | Miljø | Domener |
 |-------|---------|
 | Test | `*.skytest.fhi.no`, `*.fhi-k8s.com` |
+| Sandbox | `*.skytest.fhi.no` |
 | Produksjon | `*.sky.fhi.no` |
 
 TLS-sertifikater provisjoneres automatisk via cert-manager.
+
+**Viktig:** Test og sandbox deler `*.skytest.fhi.no` (på separate clustere). For å unngå DNS-kollisjoner på offentlige hostnavn, må sandbox-tjenester inkludere `-sandbox` i tjenestenavnet. Eksempel: `airflow.skytest.fhi.no` (test) vs `airflow-sandbox.skytest.fhi.no` (sandbox).
 
 ## Ingress-regler (Kyverno-håndhevet)
 
