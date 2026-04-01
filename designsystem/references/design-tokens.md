@@ -18,7 +18,47 @@ FHI Designsystem bruker CSS custom properties (design tokens) for farger, typogr
 
 ## Farger
 
-### Navnemønster
+### To-lags-modellen
+
+Farge-systemet har to lag:
+
+1. **Primitive tokens** — globale fargeskalaer navngitt etter farge (`--fhi-{palett}-{stopp}`). Disse definerer selve fargeverdiene.
+2. **Semantiske tokens** — navngitt etter bruksområde (`--fhi-color-{rolle}-{bruk}-{tilstand}`). Disse peker på primitive tokens.
+
+**Bruk alltid semantiske tokens i egen CSS.** Primitive tokens forklarer hvilke farger som ligger bak, men skal ikke brukes direkte — de kan endre mapping mellom versjoner.
+
+### Primitive fargepaletter
+
+Mønster: `--fhi-{palett}-{stopp}`
+
+| Palett | Eksempel | Merknad |
+|--------|----------|---------|
+| `red` | `--fhi-red-500` | Brukes av `danger` |
+| `blue` | `--fhi-blue-500` | Brukes av `accent` og `info` |
+| `green` | `--fhi-green-500` | Brukes av `success` |
+| `yellow` | `--fhi-yellow-500` | Brukes av `warning` |
+| `orange` | `--fhi-orange-500` | Brukes av `warning` (noen stopp) |
+| `greyblue` | `--fhi-greyblue-500` | Brukes av `neutral` |
+| `greybeige` | `--fhi-greybeige-500` | Ingen semantisk mapping |
+| `teal` | `--fhi-teal-500` | Ingen semantisk mapping |
+| `purple` | `--fhi-purple-500` | Ingen semantisk mapping |
+
+Stopp-skala: `010`, `050`, `100`–`900` (i trinn på 100). Lavere tall = lysere, høyere = mørkere. `black` og `white` finnes som enkelt-tokens (`--fhi-black`, `--fhi-white`).
+
+### Semantisk → primitiv mapping
+
+| Semantisk rolle | Primær primitiv palett |
+|-----------------|----------------------|
+| `neutral` | `greyblue` |
+| `accent` | `blue` |
+| `info` | `blue` |
+| `success` | `green` |
+| `warning` | `yellow` / `orange` |
+| `danger` | `red` |
+
+`greybeige`, `teal` og `purple` har ingen semantiske tokens i v0.33.0.
+
+### Semantiske tokens — navnemønster
 
 ```
 --fhi-color-{rolle}-{bruk}-{tilstand}
