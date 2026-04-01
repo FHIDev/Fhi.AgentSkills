@@ -327,6 +327,89 @@ Støttede domener per miljø:
 
 TLS-sertifikater provisjoneres automatisk via cert-manager.
 
+### Public DNS-oppslag (external-dns)
+
+Som standard resolves ingress-hostnavn til interne 10.x-adresser. For at DNS skal peke til en offentlig IP, legg til annotasjonen `external-dns.alpha.kubernetes.io/target` på Ingress-objektet:
+
+| Cluster | Annotation-verdi |
+|---------|-----------------|
+| green-prod | `external-dns.alpha.kubernetes.io/target: 83.118.177.234` |
+| green-test | `external-dns.alpha.kubernetes.io/target: 83.118.177.220` |
+
+**Merk:** SkybertApp CRD eksponerer ikke denne annotasjonen på Ingress-objektet. Du må derfor opprette tre separate objekter: en SkybertApp (uten ingress), en Service, og et raw Ingress-objekt.
+
+Mønsteret er:
+
+1. **SkybertApp** — kun app-definisjon, ingen ingress-konfigurasjon:
+```yaml
+apiVersion: skybert.fhi.no/v1alpha1
+kind: SkybertApp
+metadata:
+  name: my-app
+  namespace: tn-my-tenant
+spec:
+  image:
+    repository: crfhiskybert.azurecr.io/my-app
+    tag: "latest"
+  port: 8080
+  resources:
+    cpu: "500m"
+    memory: "512Mi"
+```
+
+2. **Service** — kobler til SkybertApp sine pods via label `skybert.fhi.no/webapp`:
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-svc
+  namespace: tn-my-tenant
+spec:
+  type: ClusterIP
+  selector:
+    skybert.fhi.no/webapp: my-app
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+```
+
+3. **Ingress** — med external-dns-annotasjon og cert-manager:
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app-ingress
+  namespace: tn-my-tenant
+  annotations:
+    cert-manager.io/cluster-issuer: skytest-fhi-letsencrypt-azuredns-issuer
+    external-dns.alpha.kubernetes.io/target: "83.118.177.234"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: my-app.skytest.fhi.no
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: my-app-svc
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - my-app.skytest.fhi.no
+      secretName: my-app-tls
+```
+
+Cert-manager cluster-issuere per domene:
+| Domene | Issuer |
+|--------|--------|
+| `*.skytest.fhi.no` | `skytest-fhi-letsencrypt-azuredns-issuer` |
+| `*.fhi-k8s.com` | `fhi-k8s-letsencrypt-azuredns-issuer` |
+| `*.sky.fhi.no` | `sky-fhi-letsencrypt-azuredns-issuer` |
+
 ## Persistence / Data lagring
 
 **Anbefaling:** Hold persistent data utenfor Kubernetes. Avhengig av sikkerhetsklassifisering, lagre data i:
