@@ -182,6 +182,48 @@ gh variable set AZURE_SUBSCRIPTION_ID --body "<verdi>"
 gh variable set GITOPS_REPO --body "FHIDev/Fhi.<Tenant>.GitOps"
 ```
 
+## Image Tag Management og Promotion
+
+**VIKTIG:** Image tags skal ligge i per-miljø `values.yaml` (f.eks. `test/values.yaml`), IKKE i `base/values.yaml`. Base bør ha `tag: "latest"` som fallback. Dette muliggjør uavhengig promotion mellom miljøer.
+
+### Promotion-flyt
+
+```
+sandbox → test → prod
+```
+
+Hvert miljø har sin egen pinned tag. App-repoets build-workflow sender `repository_dispatch` til GitOps-repoet med target-miljø:
+
+```yaml
+# I app-repoets build-workflow (notify-gitops job):
+curl -X POST \
+  -H "Authorization: Bearer ${{ secrets.GITOPS_PAT }}" \
+  "https://api.github.com/repos/${{ vars.GITOPS_REPO }}/dispatches" \
+  -d '{"event_type":"update_tag","client_payload":{
+    "env": "test",
+    "updates": [{"repository": "crfhiskybert.azurecr.io/tenant/app", "tag": "abc1234"}]
+  }}'
+```
+
+### Per-miljø values.yaml
+
+For at `update-tag.yaml` skal finne og oppdatere tags, MÅ `repository:` og `tag:` stå på etterfølgende linjer i miljøets `values.yaml`:
+
+```yaml
+# test/values.yaml
+ki-mcp:
+  myapp:
+    image:
+      repository: crfhiskybert.azurecr.io/tenant/app  # Må stå her
+      tag: "abc1234"                                    # Oppdateres av update-tag workflow
+```
+
+`update-tag.yaml` søker KUN i YAML-filer under den angitte `env`-mappen. Tags i `base/values.yaml` vil IKKE bli funnet med `"env": "test"`.
+
+### Promotion til neste miljø
+
+Promotion er manuell — send en ny `repository_dispatch` med `"env": "prod"` og ønsket tag. Dette kan gjøres via GitHub Actions workflow_dispatch, CLI, eller en dedikert promotion-workflow.
+
 ## SkybertApp CRD
 
 Bruk `SkybertApp` for alle applikasjoner. Den håndterer secrets, ingress, autoskalering og sikkerhetshardening i én ressurs.
