@@ -6,12 +6,12 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 schema_version=2
 docs_repo=FHISkybert/Fhi.Skybert.Docs
 docs_branch=main
-docs_commit=1d58fab55d96c66452852e8ca7a93a01fe3a87c0
-docs_commit_date=2026-03-16
+docs_commit=05b8ec310efa4d0159d47696506135e11ccf5417
+docs_commit_date=2026-03-20
 infra_repo=FHISkybert/Fhi.Skybert.Infra
 infra_branch=main
-infra_commit=bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f
-infra_commit_date=2026-03-18
+infra_commit=6a94bd896a89599f7a257e15106ea8a5b6ef749b
+infra_commit_date=2026-03-31
 last_fullscan_date=2026-03-08
 -->
 
@@ -19,7 +19,7 @@ last_fullscan_date=2026-03-08
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-03-18
+> **Sist verifisert mot offisiell docs:** 2026-04-06
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -312,7 +312,7 @@ subjects:
     name: "user@fhi.no"
     apiGroup: rbac.authorization.k8s.io
   - kind: Group
-    name: "aks:jwt:<entra-group-id>"
+    name: "<entra-group-id>"
     apiGroup: rbac.authorization.k8s.io
 ```
 

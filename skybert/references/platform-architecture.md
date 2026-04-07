@@ -87,7 +87,7 @@ tenants/<tenant>/
 Service account `<tenant>-azure` opprettes av plattformteamet med Workload Identity-annotasjoner.
 Service account `flux-reconciler` brukes av Flux for å applye tenant-ressurser.
 
-**`entra-access-rolebinding.yaml`** (observert i nyere tenanter) — RoleBinding som gir en Entra ID-gruppe `cluster-admin`-rolle avgrenset til tenant-namespacet. Observert bootstrap-mønster tyder på at denne gruppen kobles til access packages i MyAccess, men dette er ikke eksplisitt dokumentert i kilderepoene.
+**`entra-access-rolebinding.yaml`** (observert i de fleste tenant-baser per april 2026) — RoleBinding som gir en Entra ID-gruppe `cluster-admin`-rolle avgrenset til tenant-namespacet. Observert bootstrap-mønster tyder på at denne gruppen kobles til access packages i MyAccess, men dette er ikke eksplisitt dokumentert i kilderepoene.
 
 > **Merk:** Eldre tenanter kan fortsatt bruke `serviceaccount.yaml` (entall) og mangle `entra-access-rolebinding.yaml`. Begge layouter er gyldige.
 
@@ -97,8 +97,8 @@ Nyere tenanter har to separate RoleBindings:
 - **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) og `crossplane` (fra crossplane-namespace) til `ClusterRole cluster-admin` innen tenant-namespacet. Brukes av plattformen for å reconcile og provisjonere ressurser.
 - **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til `ClusterRole cluster-admin` innen tenant-namespacet. Gir kubectl-tilgang for utviklere.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/tenants/fida-stat19core/base/rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/tenants/fida-airflow/base/entra-access-rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/tenants/ki-mcp/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/tenants/ki-mcp/base/entra-access-rolebinding.yaml
 
 ### ResourceSet-basert bootstrap (ny mekanisme)
 
@@ -145,7 +145,23 @@ Color → kluster-mapping ved onboarding:
 | `yellow` | aks-sandbox-01, aks-yellow-test-01, aks-yellow-prod-01 |
 | `red` | aks-sandbox-01, aks-red-test-01, aks-red-prod-01 |
 
-Grafana klargjøres separat med `scripts/tenant--bootstrap--grafana.sh`: oppretter Grafana-org, Loki/Mimir-datasources filtrert til `tn-<tenant>`, og oppdaterer org_mapping for Entra-gruppekobling.
+Grafana klargjøres separat med `scripts/tenant--bootstrap--grafana.sh`:
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/scripts/tenant--new.sh
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/scripts/tenant--bootstrap--grafana.sh
+```bash
+tenant--bootstrap--grafana.sh --tenant <tenant> --entra-group-id <uuid> --color <red|yellow|green>
+```
+
+Kjøres mot alle klustere i fargegruppen (sandbox + test + prod) via `az connectedk8s proxy + kubectl`. Oppretter per kluster: Grafana-org, Loki-datasource og Mimir-datasource (begge filtrert til `tn-<tenant>` via `X-Scope-OrgID`), og oppdaterer `infra/grafana/<cluster>/patch-orgs.yaml` med Entra-gruppekobling.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/scripts/tenant--new.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/scripts/tenant--bootstrap--grafana.sh
+
+### Sentralisert kluster-register
+
+> **Intern plattformmekanisme** — dokumentert her for kontekst om kluster-tilleggsoperasjoner.
+
+`scripts/lib/clusters.sh` er single source of truth for kluster-metadata i infra-repoet. Scripts som trenger kluster-informasjon sourcer denne filen. Registeret inneholder per kluster: navn, resource group, subscription ID, OIDC-issuer URL og PIM-krav. `COLOR_GROUP_CLUSTERS` definerer hvilke klustere som inngår i hvert fargelane (red/yellow/green).
+
+Klustere kan eksistere i registeret uten å tilhøre en fargegruppe. Per april 2026 er `aks-yellow-test-02` og `aks-norsyss-prod-01` registrert men ikke i noen fargegruppe.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/scripts/lib/clusters.sh
