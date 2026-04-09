@@ -33,7 +33,10 @@ Kilde:
 
 ## Steg 1 – Les eksisterende designsystem-skill
 
-Les alle filer i `designsystem/`-mappen i dette repoet. Disse filene er det nåværende grunnlaget – du trenger dem for å identifisere hva som mangler, er feil, eller kan forbedres.
+Les **alle** filer i `designsystem/`-mappen i dette repoet — ikke bare `SKILL.md`, men også
+alle referansefiler under `references/`, `references/components/` og `versions/`.
+Hovedfilen alene er aldri nok til å anse skillen som oppdatert; referansefilene inneholder
+den faktiske dybden.
 
 Les `designsystem/SKILL.md` og finn versjons- og pakkenavn-informasjonen.
 
@@ -54,8 +57,7 @@ skal leses.
 
 Notér også hvilke filer under `designsystem/` som inneholder eksplisitte latest-referanser
 (versjonsnumre, pakkenavn med versjon, eller vedlikeholdsnotater som sier "basert på latest").
-Disse brukes i steg 7d og steg 8 for å unngå at gamle versjonsstrenger blir stående igjen
-etter oppdatering.
+Denne listen brukes i steg 7d for den samlede stale-sjekken.
 
 ---
 
@@ -209,6 +211,8 @@ Disse hentes alltid, for **alle** versjoner og scenarier:
 | `custom-elements.json` og/eller `web-types.json` | Primærkilde for public komponenter, tag-navn, attributter, events, metoder og slots hvis filene finnes i pakken | `custom-elements.json`, `web-types.json` |
 | GitHub compare | Triager hvilke komponenter og docs-områder som faktisk er endret siden forrige latest | `compare/v{gammel}...v{ny}` |
 | `src/storybook/get_started/*.mdx` | Rammeverk-integrasjonsguider (React, Angular, Blazor, osv.) | `src/storybook/get_started/` |
+| `src/theme/default.css` (eller tilsvarende token-fil) | Fasit for **alle** design token-verdier: primitive fargepaletter, semantisk→primitiv mapping, typografi, spacing, border, motion og opacity. Denne filen er primærkilden for token-innhold i skillen. **NB:** Filen er stor og kan trunkeres ved WebFetch — se fallback under Feilhåndtering. | `src/theme/default.css` |
+| Design token MDX-filer i `src/storybook/design-tokens/` | Konseptuell dokumentasjon av token-systemet (f.eks. to-lags-modellen primitiv→semantisk, beskrivelser av roller og sub-grupper). Inneholder også ofte lenker til eksterne ressurser. | `src/storybook/design-tokens/` |
 
 **Komponent-listen** fra Steg 1 (`references/components/*.md` uten filending) brukes til å
 slå opp hvilke public komponenter skillen allerede dokumenterer.
@@ -237,13 +241,31 @@ For disse komponentene gjelder:
 > docs-filer), skal de vurderes som relevante kilder i stedet for å ignoreres fordi de ikke
 > passer dagens filnavnsmønster.
 
+#### Eksterne lenker og ressurser
+
+MDX-filer kan inneholde lenker til eksterne ressurser som Figma-bibliotek, gamle docs-sider
+eller andre verktøy. Typiske plasseringer (per v0.33.0, kan endre seg):
+
+- `src/storybook/overview.mdx` — prosjektoversikt, ofte med Figma-lenke, GitHub-lenke, Teams-kanal
+- `src/storybook/design-tokens/introduction.mdx` — konseptuell docs for token-systemet
+- `src/storybook/design-tokens/design-tokens-*.mdx` — per-kategori token-docs
+
+> **Merk:** Disse stiene er heuristikker. Repoet har endret mappenavn tidligere
+> (f.eks. pakke-mappen het `designsystem` men heter nå `fhi-designsystem`).
+> Les alltid mappestrukturen fra taggen først for å verifisere faktiske stier.
+
+Når du finner eksterne lenker:
+1. Notér URL og kontekst (hvilken MDX-fil, hva lenken beskrives som)
+2. Vurder om lenken bør inkluderes i designsystem-skillen (f.eks. som referanse for brukere)
+3. Hvis lenken peker til innhold som utfyller kildekoden (f.eks. Figma med visuelle eksempler),
+   nevn det i endringsplanen
+
 #### Les om innholdet finnes — skjønnsbasert
 
 | Filtype | Formål |
 |---------|--------|
 | `README.md` og andre `.md`-filer | Installasjon, oppsett, overordnet dokumentasjon |
 | Storybook-stories (`.stories.ts` / `.stories.js`) | Brukseksempler og komponentvarianter — nyttig for å oppdage nye story-scenarier som bør dokumenteres |
-| CSS / SCSS / token-filer | CSS-variabler, design tokens, theming — les ved mistanke om endringer i tokens |
 | Andre `.mdx`-filer i `src/storybook/` | Tilgjengelighets-guider, FAQ, typografi-guider — les hvis disse endres mellom versjoner |
 
 Start med å hente GitHub tree-URL for taggen for å se mappestrukturen, slik at du
@@ -275,8 +297,40 @@ Bruk denne sjekklisten systematisk før du skriver planen:
 5. **Kompatibilitet:** Sammenlign `peerDependencies` og eventuelle `engines`/andre
    kompatibilitetsfelt mellom forrige og ny versjon. Dokumenter bare endringer som faktisk
    påvirker installasjon, oppsett eller brukerråd.
-6. **Stale latest-referanser:** Søk i hele `designsystem/` etter versjonsstrenger som peker på
-   forrige latest, og vurder om de skal oppdateres eller bevisst beholdes som historiske notater.
+6. **Stale latest-referanser:** Bruk listen fra steg 1 til å identifisere filer med
+   versjonsstrenger som peker på forrige latest. Selve oppdateringen gjøres i steg 7d.
+7. **Design tokens (farger, typografi, spacing m.m.):** Sammenlign `default.css` med
+   `references/design-tokens.md`. Verifiser at skillen dekker:
+   - Alle primitive fargepaletter (f.eks. `--fhi-red-*`, `--fhi-blue-*`, `--fhi-green-*` osv.)
+     og deres stopp-skala
+   - Mapping mellom semantiske og primitive tokens (f.eks. at `neutral-*` er mappet til
+     `greyblue`-paletten, `accent-*` til `blue`, osv.)
+   - Konseptuell forklaring av to-lags-modellen (primitiv → semantisk) fra design-token MDX-docs
+   - Eventuelle nye token-kategorier eller endrede verdier
+8. **Eksterne ressurser:** Sjekk om MDX-filer (spesielt `overview.mdx`, `introduction.mdx`,
+   design-token-docs) inneholder lenker til Figma, gamle docs-sider eller andre eksterne
+   ressurser som bør inkluderes i skillen som referanser.
+
+### Domene-dekning
+
+Verifiser at følgende domener er dekket i skillen etter oppdatering. Bruk denne listen
+som sjekkliste — hvert domene skal vurderes eksplisitt, slik at ingen deler faller mellom
+stolene:
+
+| Domene | Hovedfil | Referansefil(er) |
+|--------|----------|------------------|
+| Installasjon og imports | `SKILL.md` (installasjon, importmønster) | `references/framework-setup.md` |
+| Theme / design tokens | `SKILL.md` (kritiske regler) | `references/design-tokens.md` |
+| Komponent-API | `SKILL.md` (komponenttabell) | `references/components/*.md` |
+| Ikoner | `SKILL.md` (ikonimport) | `references/icon-usage.md` |
+| Skjemabruk | `SKILL.md` (kritiske regler) | `references/form-usage.md` |
+| Rammeverk (React, Angular, Blazor) | `SKILL.md` (lenke) | `references/framework-setup.md` |
+| Versjonsstøtte / deltaer | `SKILL.md` (støttepolicy) | `versions/INDEX.md`, `versions/v*.md` |
+
+For hvert domene, verifiser:
+- Innholdet i referansefilen stemmer med kildekoden fra taggen
+- Terminologi og anbefalinger er konsistente mellom hovedfil og referansefil
+- Informasjonen hjelper en AI-agent å gi riktige svar — ikke bare at den er korrekt
 
 ### Mangler
 Innhold som finnes i kildekoden, men ikke i skillen. Eksempler:
@@ -300,13 +354,15 @@ Innhold i skillen som ikke lenger stemmer med kildekoden. Eksempler:
 Forbedringer som reduserer risikoen for informasjons-tap eller gjør fremtidige verifiseringer
 mer presise, **men som fortsatt må være forankret i konkrete observasjoner fra kildene**.
 Eksempler:
-- En vedlikeholdsnote med latest-versjon som må oppdateres for å unngå stale info
 - En kontraktsjekk som mangler for et nytt publisert artefakt
 - Presisering av hvordan en konsolidert docs-kilde mappes til eksisterende referansefiler
 
 Ikke bruk denne kategorien til stilistisk omskriving.
 
 ### Format for endringsplanen
+
+Hver post i planen skal angi **hvilken fil** i `designsystem/` som må oppdateres og
+**kildegrunnlag** (hvilken upstream-fil eller artefakt som underbygger endringen).
 
 Presenter planen slik:
 
@@ -316,13 +372,13 @@ Versjon analysert: v{versjon}
 Dato: {dato}
 
 ### Mangler
-- [ ] ...
+- [ ] {beskrivelse} — Fil: `{designsystem/...}` — Kilde: `{upstream-fil}`
 
 ### Feil / utdatert
-- [ ] ...
+- [ ] {beskrivelse} — Fil: `{designsystem/...}` — Kilde: `{upstream-fil}`
 
 ### Forbedringer
-- [ ] ...
+- [ ] {beskrivelse} — Fil: `{designsystem/...}` — Kilde: `{upstream-fil}`
 ```
 
 **Vent på godkjenning fra bruker før du går videre til steg 5.**
@@ -338,6 +394,34 @@ Etter godkjenning, oppdater filene i `designsystem/`-mappen. Skillen skal dekke 
 - **Theming og CSS-variabler** – Tilgjengelige CSS-variabler og design tokens, og hvordan de brukes
 - **Kodeeksempler** – Konkrete brukseksempler for de viktigste komponentene
 
+### Retningslinjer for token-dokumentasjon i `references/design-tokens.md`
+
+Token-dokumentasjonen skal gi en AI-agent nok informasjon til å velge riktig token uten å
+måtte slå opp `default.css`. Dokumenter tokens i disse lagene:
+
+1. **To-lags-modellen:** Forklar kort at systemet har primitive tokens (globale fargeskalaer)
+   og semantiske tokens (navngitt etter bruksområde). Agenter trenger å forstå at de
+   **alltid skal bruke semantiske tokens** i bruker-CSS, og at primitive tokens forklarer
+   hva som ligger bak.
+
+2. **Primitive fargepaletter:** List opp alle palettnavn (f.eks. `red`, `blue`, `green`,
+   `greyblue`, `teal`, `purple`, `orange`, `yellow`, `greybeige`) og stopp-skalaen
+   (f.eks. `010, 050, 100–900`). Inkluder navnemønsteret (`--fhi-{palett}-{stopp}`).
+   Ikke list opp alle hex-verdier — det er for mange og de endres mellom versjoner.
+   Et par representative eksempler per palett (lyseste og mørkeste) er nok til å gi
+   agenten en idé om fargetonen.
+
+3. **Semantisk→primitiv mapping:** Dokumenter hvilken primitiv palett hver semantisk rolle
+   er mappet til (f.eks. `neutral` → `greyblue`, `accent` → `blue`, `danger` → `red`).
+   Denne mappingen er viktig for at agenten skal forstå fargesammenhengen og gi riktige
+   råd om visuell konsistens.
+
+4. **Semantiske tokens:** Dokumenter roller, bruksområder og tilstander (dette finnes
+   allerede i skillen — behold og oppdater ved behov).
+
+5. **Andre token-kategorier** (typografi, spacing, border, motion, opacity): Dokumenter
+   mønster, verdier og brukseksempler som i dag.
+
 ### Prinsipper for god skill-innhold
 
 - Skill-innhold skrives **for en AI-agent**, ikke for en menneskelig leser. Vær presis og unngå tvetydighet.
@@ -346,6 +430,15 @@ Etter godkjenning, oppdater filene i `designsystem/`-mappen. Skillen skal dekke 
 - Hold innhold relevant for den publiserte versjonen – ikke spekuler om fremtidige endringer.
 - Når publisert pakke og intern repo-struktur peker i ulike retninger, la den publiserte pakken
   styre hva som regnes som public API.
+
+### Fjern støy — hold skillen fokusert
+
+- Ikke dokumenter alt som finnes i koden — dokumenter det som hjelper agenten gi riktige svar.
+- Ikke løft interne refaktorer eller repo-flyttinger inn i docs med mindre de påvirker public kontrakt.
+- Ikke gjør skillen bredere ved hver release uten at det gir bedre beslutningsstøtte.
+  Spør: "endrer dette rådene agenten gir?" Hvis nei → ikke legg det til.
+- Fjern innhold som har blitt irrelevant (f.eks. workarounds for bugs som er fikset)
+  fremfor å bare legge til nytt oppå.
 
 ### Kontrakt for endringer
 
@@ -486,16 +579,27 @@ Korte tips for oppgradering til latest.
 | ...     | Supported   | ...                          | ...             |
 ```
 
-### 7d. Oppdater SKILL.md med ny versjonsinformasjon
+### 7d. Oppdater SKILL.md og samlet stale-sjekk
 
-Oppdater følgende i `designsystem/SKILL.md`:
-- Pakkenavnet og versjonsnummeret i toppkommentaren
+Dette er det autoritative steget for alle versjonsstreng-oppdateringer i `designsystem/`.
+
+**Faste oppdateringer i `designsystem/SKILL.md`:**
+- Pakkenavnet og versjonsnummeret i toppkommentaren (`<!-- Basert på ... -->`)
 - Feltet `Verifisert mot:` med ny versjon og dato
 - Støttepolicyteksten hvis versjonsvinduet endres
 
-Søk deretter i hele `designsystem/` etter eksplisitte latest-versjonsstrenger og
-vedlikeholdsnotater. Oppdater bare de referansene som faktisk er ment å følge latest.
-Historiske deltafiler og versjonsspesifikke eksempler skal ikke "normaliseres" bort.
+**Samlet stale-sjekk i hele `designsystem/`:**
+
+Bruk listen fra steg 1 (filer med eksplisitte latest-referanser) og søk i hele `designsystem/`
+etter versjonsstrenger som peker på forrige latest. For hver treff, vurder:
+
+- **Skal følge latest** (f.eks. `Verifisert mot`, vedlikeholdsnotater, installasjonsinstrukser)
+  → oppdater til ny versjon.
+- **Bevisst historisk** (f.eks. deltafiler, versjonsspesifikke eksempler, migreringsnotater)
+  → behold uendret.
+
+> Ikke "normaliser" historiske referanser. Kun referanser som er ment å peke på gjeldende
+> latest skal oppdateres.
 
 ### 7e. Valider lenker og filer
 
@@ -520,12 +624,55 @@ Kjør følgende sjekker for å verifisere at SKILL.md er korrekt for ny versjon:
 | Kompatibilitet | Sammenlign `peerDependencies` og eventuelle `engines`/andre kompatibilitetsfelt mellom gammel og ny versjon; dokumenter kun brukerrelevant endring |
 | Runtime-defaults | For endrede komponenter: sjekk `update`/`updated`/valideringslogikk for effective defaults, normalisering og warnings som ikke alltid fremgår av manifests |
 | Docs-dekning | Verifiser at relevant `.docs.mdx` / konsolidert docs er dekket i referansefilene: bruksscenarier, retningslinjer, kjente begrensninger, tilgjengelighet, rammeverk-notater |
-| Stale versjonsstrenger | Søk i `designsystem/` etter gamle latest-referanser og verifiser at bare bevisst historiske referanser står igjen |
+| Stale versjonsstrenger | Verifiser at den samlede stale-sjekken i steg 7d er utført — ingen latest-referanser som skulle vært oppdatert peker fortsatt på forrige versjon |
 | Versjonsnummer | `designsystem/SKILL.md`, `versions/INDEX.md` og `<!-- Basert på ... -->` er konsistente |
+| Design tokens vs `default.css` | Verifiser at `references/design-tokens.md` dekker alle primitive fargepaletter, semantisk→primitiv mapping, og eventuelle nye token-kategorier fra `default.css`. Sjekk spesielt at antall paletter, stopp-skala og rolle-mapping stemmer. |
+| Eksterne ressurslenker | Verifiser at eventuelle Figma-lenker, docs-URL-er og andre eksterne ressurser nevnt i MDX-filer er inkludert i skillen der de gir verdi for brukeren |
+| Konsistens hovedfil ↔ referansefiler | Verifiser: (1) Hver komponent i komponenttabellen i SKILL.md har en oppdatert `references/components/*.md`-fil. (2) Token-mønster og terminologi i SKILL.md matcher `references/design-tokens.md`. (3) Ikonimport-mønster i SKILL.md matcher `references/icon-usage.md`. (4) Deprecations nevnt i komponentfiler er reflektert i SKILL.md når de er generelt viktige. |
+| Domene-dekning | Gå gjennom domene-tabellen fra steg 4 og verifiser at hvert domene er dekket med oppdatert innhold i både hovedfil og referansefil(er). |
+| Rammeverk-råd | Verifiser at React-, Angular- og Blazor-rådene i `references/framework-setup.md` fortsatt samsvarer med publisert pakke og upstream get_started-docs. Fjern rammeverksspesifikke råd som ikke lenger er dokumentert eller implisert av upstream. |
 
 ### Synkronisering av `.claude`- og `.codex`-versjonene
 
-`.codex/skills` er en symlink til `.claude/skills` — de er fysisk samme mappe. Ingen manuell synkronisering er nødvendig. Endringer i `.claude/skills/` reflekteres automatisk i `.codex/skills/`.
+`.claude/skills` er kanonisk kilde. `.codex/skills` er en kompatibilitetskopi (ikke symlink)
+som må holdes identisk manuelt. Etter alle endringer i `.claude/skills/oppdater-designsystem/`:
+
+1. Kopier filen til `.codex/skills/oppdater-designsystem/SKILL.md`
+2. Verifiser at filene er identiske (f.eks. `diff .claude/skills/oppdater-designsystem/SKILL.md .codex/skills/oppdater-designsystem/SKILL.md`)
+
+---
+
+## Steg 9 – Kvalitetskontrakt for sluttresultatet
+
+Etter at alle steg er utført, verifiser at den oppdaterte designsystem-skillen oppfyller
+disse kravene. En oppdatering er ikke ferdig før alle punkter er bekreftet.
+
+### Versjonskonsistens
+
+Følgende skal vise **samme versjon** etter oppdatering:
+- `<!-- Basert på ... -->` i `designsystem/SKILL.md`
+- `Verifisert mot:`-feltet i `designsystem/SKILL.md`
+- Latest-raden i `versions/INDEX.md`
+- Vedlikeholdsnotater i referansefiler som er ment å følge latest
+
+### Innholdskvalitet
+
+Designsystem-skillen er skrevet for en AI-agent som skal svare brukere. Etter oppdatering
+skal innholdet gi agenten nok informasjon til å:
+
+- Installere pakken og sette opp theme korrekt
+- Velge riktig komponent og sette riktige attributter/props
+- Bruke semantiske design tokens (og forstå hvorfor primitiver ikke skal brukes direkte)
+- Importere og bruke ikoner med riktig mønster
+- Sette opp pakken i React, Angular og Blazor
+- Gi versjonsspesifikke råd når brukerens versjon avviker fra latest
+
+### Hva som ikke skal inn
+
+Ikke gjør skillen bredere ved hver release uten at det gir bedre beslutningsstøtte:
+- Ikke dokumenter interne refaktorer eller repo-flyttinger med mindre de påvirker public kontrakt
+- Ikke dokumenter alt som finnes i koden — dokumenter det som hjelper agenten gi riktige svar
+- Ikke legg til innhold bare fordi upstream har det; vurder om det faktisk endrer rådene agenten gir
 
 ---
 
@@ -541,3 +688,4 @@ Kjør følgende sjekker for å verifisere at SKILL.md er korrekt for ny versjon:
 | `index.js` / forventet exports-sti mangler | Les `package.json` `exports` hvis tilgjengelig, ellers verifiser entrypoints via publisert tarball-filiste |
 | Kildekoden er uleselig / minifisert | Let etter `.ts`-kildefiler i `src/`-mappen fremfor kompilerte filer |
 | Delta-fil for forrige latest er uklar | Bruk "verifisering kreves"-markering for usikre seksjoner |
+| `default.css` trunkeres ved WebFetch | Filen er stor og WebFetch kan kutte innholdet. Bruk terminal i stedet: `curl -sL https://raw.githubusercontent.com/FHIDev/Fhi.Designsystem/v{versjon}/{sti}/src/theme/default.css` og pipe gjennom `grep` for å hente spesifikke seksjoner (f.eks. `grep "^--fhi-" | head -20` for primitive tokens). Alternativt installer pakken lokalt: `npm pack <pakkenavn>@<versjon>` og les filen fra utpakket tarball. |
