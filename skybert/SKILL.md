@@ -599,6 +599,7 @@ Dette gir AI-agenten kontekst for å generere korrekte konfigurasjoner uten å g
 | Dokument | Innhold |
 |----------|---------|
 | [SkybertApp CRD-spesifikasjon](references/skybertapp-crd.md) | Full SkybertApp felt-referanse |
+| [SkybertApp rendering](references/skybertapp-render.md) | Kjør Composition lokalt med `crossplane render` for å se genererte manifester |
 | [Secrets-mønstre](references/secrets.md) | SecretStore, ExternalSecret-mønstre |
 | [Workflows](references/workflows.md) | GitHub Actions CI/CD workflows |
 | [kubectl-tilgang](references/kubectl-access.md) | Kubectl-tilgang, k9s, kjøre containers lokalt |

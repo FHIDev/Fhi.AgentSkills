@@ -251,6 +251,11 @@ spec:
 
 ## Generated Resources
 
+> For å se nøyaktig hvilke manifester en konkret SkybertApp rendrer til
+> (uten kluster-tilgang), se [SkybertApp rendering](skybertapp-render.md).
+> Kopier av Composition, XRD og en render-klar `functions.yaml` ligger
+> under `references/skybertapp/`.
+
 SkybertApp oppretter følgende Kubernetes-ressurser:
 
 - **Deployment** — Hoved-workload
