@@ -1,0 +1,74 @@
+<svg width="100%" viewBox="0 0 680 600" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+
+<rect x="140" y="60" width="400" height="430" rx="16" fill="none" stroke="#B4B2A9" stroke-width="1" stroke-dasharray="6 4"/>
+<text font-family="sans-serif" font-size="12" fill="#888780" x="340" y="52" text-anchor="middle">Saksbehandlingssystem – systemgrense</text>
+
+<rect x="220" y="80" width="240" height="94" rx="10" fill="#E6F1FB" stroke="#378ADD" stroke-width="0.5"/>
+<text font-family="sans-serif" font-size="14" font-weight="500" fill="#0C447C" x="340" y="114" text-anchor="middle" dominant-baseline="central">Webapplikasjon</text>
+<text font-family="sans-serif" font-size="12" fill="#185FA5" x="340" y="136" text-anchor="middle" dominant-baseline="central">[Container: React SPA]</text>
+<text font-family="sans-serif" font-size="12" fill="#185FA5" x="340" y="152" text-anchor="middle" dominant-baseline="central">Brukergrensesnitt for saksbehandling</text>
+
+<rect x="220" y="240" width="240" height="94" rx="10" fill="#E6F1FB" stroke="#378ADD" stroke-width="0.5"/>
+<text font-family="sans-serif" font-size="14" font-weight="500" fill="#0C447C" x="340" y="274" text-anchor="middle" dominant-baseline="central">API</text>
+<text font-family="sans-serif" font-size="12" fill="#185FA5" x="340" y="296" text-anchor="middle" dominant-baseline="central">[Container: REST API]</text>
+<text font-family="sans-serif" font-size="12" fill="#185FA5" x="340" y="312" text-anchor="middle" dominant-baseline="central">Forretningslogikk og integrasjoner</text>
+
+<rect x="220" y="400" width="240" height="70" rx="10" fill="#EEEDFE" stroke="#7F77DD" stroke-width="0.5"/>
+<text font-family="sans-serif" font-size="14" font-weight="500" fill="#3C3489" x="340" y="428" text-anchor="middle" dominant-baseline="central">Database</text>
+<text font-family="sans-serif" font-size="12" fill="#534AB7" x="340" y="450" text-anchor="middle" dominant-baseline="central">[Container: PostgreSQL]  Saker, vedtak, dokumenter</text>
+
+<rect x="30" y="100" width="80" height="94" rx="10" fill="#E1F5EE" stroke="#1D9E75" stroke-width="0.5"/>
+<text font-family="sans-serif" font-size="14" font-weight="500" fill="#085041" x="70" y="130" text-anchor="middle" dominant-baseline="central">Saks-</text>
+<text font-family="sans-serif" font-size="14" font-weight="500" fill="#085041" x="70" y="148" text-anchor="middle" dominant-baseline="central">behandler</text>
+<text font-family="sans-serif" font-size="12" fill="#0F6E56" x="70" y="170" text-anchor="middle" dominant-baseline="central">[Person]</text>
+
+<rect x="30" y="260" width="80" height="94" rx="10" fill="#E1F5EE" stroke="#1D9E75" stroke-width="0.5"/>
+<text font-family="sans-serif" font-size="14" font-weight="500" fill="#085041" x="70" y="290" text-anchor="middle" dominant-baseline="central">Søker</text>
+<text font-family="sans-serif" font-size="12" fill="#0F6E56" x="70" y="312" text-anchor="middle" dominant-baseline="central">[Person]</text>
+<text font-family="sans-serif" font-size="12" fill="#0F6E56" x="70" y="328" text-anchor="middle" dominant-baseline="central">Innbygger</text>
+
+<rect x="570" y="100" width="80" height="94" rx="10" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text font-family="sans-serif" font-size="14" font-weight="500" fill="#2C2C2A" x="610" y="130" text-anchor="middle" dominant-baseline="central">ID-</text>
+<text font-family="sans-serif" font-size="14" font-weight="500" fill="#2C2C2A" x="610" y="148" text-anchor="middle" dominant-baseline="central">porten</text>
+<text font-family="sans-serif" font-size="12" fill="#5F5E5A" x="610" y="170" text-anchor="middle" dominant-baseline="central">[Eksternt]</text>
+
+<rect x="570" y="260" width="80" height="94" rx="10" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text font-family="sans-serif" font-size="14" font-weight="500" fill="#2C2C2A" x="610" y="294" text-anchor="middle" dominant-baseline="central">Altinn</text>
+<text font-family="sans-serif" font-size="12" fill="#5F5E5A" x="610" y="316" text-anchor="middle" dominant-baseline="central">[Eksternt]</text>
+<text font-family="sans-serif" font-size="12" fill="#5F5E5A" x="610" y="332" text-anchor="middle" dominant-baseline="central">Meldinger</text>
+
+<line x1="110" y1="147" x2="218" y2="147" stroke="#1D9E75" stroke-width="1" marker-end="url(#arrow)"/>
+<text font-family="sans-serif" font-size="12" fill="#0F6E56" x="164" y="140" text-anchor="middle">HTTPS</text>
+
+<path d="M110 307 L164 307 L164 174 L218 174" fill="none" stroke="#1D9E75" stroke-width="1" marker-end="url(#arrow)"/>
+<text font-family="sans-serif" font-size="12" fill="#0F6E56" x="134" y="248" text-anchor="middle">HTTPS</text>
+
+<line x1="340" y1="174" x2="340" y2="238" stroke="#185FA5" stroke-width="1" marker-end="url(#arrow)"/>
+<text font-family="sans-serif" font-size="12" fill="#185FA5" x="352" y="210" text-anchor="start">REST/JSON</text>
+
+<line x1="340" y1="334" x2="340" y2="398" stroke="#534AB7" stroke-width="1" marker-end="url(#arrow)"/>
+<text font-family="sans-serif" font-size="12" fill="#534AB7" x="352" y="370" text-anchor="start">SQL</text>
+
+<line x1="462" y1="287" x2="568" y2="147" stroke="#888780" stroke-width="1" marker-end="url(#arrow)"/>
+<text font-family="sans-serif" font-size="12" fill="#5F5E5A" x="526" y="204" text-anchor="middle">OIDC</text>
+
+<line x1="462" y1="307" x2="568" y2="307" stroke="#888780" stroke-width="1" marker-end="url(#arrow)"/>
+<text font-family="sans-serif" font-size="12" fill="#5F5E5A" x="514" y="300" text-anchor="middle">REST</text>
+
+<rect x="30" y="528" width="620" height="44" rx="8" fill="none" stroke="#D3D1C7" stroke-width="0.5" stroke-dasharray="4 3"/>
+<rect x="44" y="540" width="14" height="14" rx="3" fill="#E1F5EE" stroke="#1D9E75" stroke-width="0.5"/>
+<text font-family="sans-serif" font-size="12" fill="#5F5E5A" x="64" y="552">Person</text>
+<rect x="130" y="540" width="14" height="14" rx="3" fill="#E6F1FB" stroke="#378ADD" stroke-width="0.5"/>
+<text font-family="sans-serif" font-size="12" fill="#5F5E5A" x="150" y="552">Container (i scope)</text>
+<rect x="274" y="540" width="14" height="14" rx="3" fill="#EEEDFE" stroke="#7F77DD" stroke-width="0.5"/>
+<text font-family="sans-serif" font-size="12" fill="#5F5E5A" x="294" y="552">Database</text>
+<rect x="374" y="540" width="14" height="14" rx="3" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text font-family="sans-serif" font-size="12" fill="#5F5E5A" x="394" y="552">Eksternt system</text>
+<line x1="494" y1="547" x2="524" y2="547" stroke="#888780" stroke-width="1" marker-end="url(#arrow)"/>
+<text font-family="sans-serif" font-size="12" fill="#5F5E5A" x="530" y="552">Protokoll/dataflyt</text>
+</svg>
