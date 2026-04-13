@@ -32,7 +32,7 @@ Eksempel strukturert logging:
 
 Loki kjøres med `auth_enabled: true` — logger er isolert per tenant via headeren `X-Scope-OrgID: tn-<tenant>`. Dette settes automatisk av Grafana-datasourcen som er klargjort for deg; du trenger ikke konfigurere det selv.
 
-> Kilde (X-Scope-OrgID): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/scripts/tenant--bootstrap--grafana.sh
+> Kilde (X-Scope-OrgID): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/scripts/tenant--bootstrap--grafana.sh
 
 **Loggoppbevaring:** 31 dager.
 
@@ -124,9 +124,11 @@ Hver tenant har sin egen **Grafana-organisasjon** med:
 - **Mimir-datasource** — filtrert til `tn-<tenant>` (kun egne metrics synlig)
 - Tilgang gis via Entra ID-gruppe gjennom `org_mapping`-konfigurasjon (satt opp av plattformteamet ved onboarding)
 
+Entra-gruppen mappes inn i Grafana-instansen på alle klustere i fargegruppen din (sandbox, test og prod).
+
 Du logger inn med FHI-bruker. Grafana plasserer deg i riktig organisasjon basert på Entra-gruppemedlemskap via `org_mapping`.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/scripts/tenant--bootstrap--grafana.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/scripts/tenant--bootstrap--grafana.sh
 
 ## Alerting
 
