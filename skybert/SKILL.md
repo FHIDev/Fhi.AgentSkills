@@ -194,7 +194,7 @@ sandbox → test → prod
 
 Hvert miljø har sin egen pinned tag. App-repoets build-workflow sender `repository_dispatch` til GitOps-repoet med target-miljø:
 
-```yaml
+```bash
 # I app-repoets build-workflow (notify-gitops job):
 curl -X POST \
   -H "Authorization: Bearer ${{ secrets.GITOPS_PAT }}" \
