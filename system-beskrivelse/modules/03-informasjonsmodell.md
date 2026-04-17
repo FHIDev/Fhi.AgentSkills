@@ -1,8 +1,8 @@
 # Modul 03 – Arkitektur: Informasjonsmodell (logisk modell)
 
-**Produserer:** `{systemnavn}/beskrivelse/02-teknisk beskrivelse/2.2-informasjonsmodell.md`  
-**Avhenger av:** `2.1-komponenter.md`  
-**Neste modul:** 2.3-datamodell.md
+**Produserer:** `{systemnavn}/02-teknisk-beskrivelse/02_informasjonsmodell.md`  
+**Avhenger av:** `02_komponenter.md`  
+**Neste modul:** 02_datamodell.md
 
 ---
 
@@ -29,7 +29,7 @@ eller request/response-format. Tekniske API-detaljer (Swagger/OpenAPI) dokumente
 
 ## Output-format
 
-Skriv filen `{systemnavn}/beskrivelse/02-teknisk beskrivelse/2.2-informasjonsmodell.md` med denne strukturen:
+Skriv filen `{systemnavn}/02-teknisk-beskrivelse/02_informasjonsmodell.md` med denne strukturen:
 
 ```markdown
 # Informasjonsmodell (logisk modell)
@@ -60,7 +60,7 @@ Skriv filen `{systemnavn}/beskrivelse/02-teknisk beskrivelse/2.2-informasjonsmod
 
 ---
 
-*Sist oppdatert: {dato} | Forrige: [2.1-komponenter](./2.1-komponenter.md) | Neste: [2.3-datamodell](./2.3-datamodell.md)*
+*Sist oppdatert: {dato} | Forrige: [02_komponenter](./02_komponenter.md) | Neste: [02_datamodell](./02_datamodell.md)*
 ```
 
 ---

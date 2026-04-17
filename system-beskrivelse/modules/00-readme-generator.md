@@ -42,21 +42,21 @@ Skriv filen `{systemnavn}/README.md` med denne strukturen:
 
 | Modul | Fil | Status | Sist oppdatert |
 |-------|-----|--------|----------------|
-| Oversikt | [01-oversikt.md](./01-oversikt.md) | ✅ Ferdig / 🔄 Under arbeid / 🔲 Ikke startet | |
-| Brukere | [beskrivelse/01-funksjonell beskrivelse/1.1a-brukere.md](./beskrivelse/01-funksjonell%20beskrivelse/1.1a-brukere.md) | | |
-| Roller og rettigheter | [beskrivelse/01-funksjonell beskrivelse/1.1b-roller-og-rettigheter.md](./beskrivelse/01-funksjonell%20beskrivelse/1.1b-roller-og-rettigheter.md) | | |
-| Funksjoner | [beskrivelse/01-funksjonell beskrivelse/1.2-funksjoner.md](./beskrivelse/01-funksjonell%20beskrivelse/1.2-funksjoner.md) | | |
-| Komponenter | [beskrivelse/02-teknisk beskrivelse/2.1-komponenter.md](./beskrivelse/02-teknisk%20beskrivelse/2.1-komponenter.md) | | |
-| Informasjonsmodell | [beskrivelse/02-teknisk beskrivelse/2.2-informasjonsmodell.md](./beskrivelse/02-teknisk%20beskrivelse/2.2-informasjonsmodell.md) | | |
-| Datamodell | [beskrivelse/02-teknisk beskrivelse/2.3-datamodell.md](./beskrivelse/02-teknisk%20beskrivelse/2.3-datamodell.md) | | |
-| Dataflyt | [beskrivelse/02-teknisk beskrivelse/2.4-dataflyt.md](./beskrivelse/02-teknisk%20beskrivelse/2.4-dataflyt.md) | | |
-| Drift | [beskrivelse/02-teknisk beskrivelse/2.5-drift.md](./beskrivelse/02-teknisk%20beskrivelse/2.5-drift.md) | | |
-| Verdivurdering sikkerhetsgradering | [03-vurderinger/3.1-verdivurdering-sikkerhetsgradering.md](./03-vurderinger/3.1-verdivurdering-sikkerhetsgradering.md) | | |
-| Verdivurdering KIT | [03-vurderinger/3.2-verdivurdering-kit.md](./03-vurderinger/3.2-verdivurdering-kit.md) | | |
-| Verdivurdering personvern | [03-vurderinger/3.3-verdivurdering-personvern.md](./03-vurderinger/3.3-verdivurdering-personvern.md) | | |
-| Verdivurdering automatiserte beslutninger | [03-vurderinger/3.4-verdivurdering-automatiserte-beslutninger.md](./03-vurderinger/3.4-verdivurdering-automatiserte-beslutninger.md) | | |
-| Trusselvurdering | [03-vurderinger/3.5-trusselvurdering.md](./03-vurderinger/3.5-trusselvurdering.md) | | |
-| Sårbarhetsvurdering | [03-vurderinger/3.6-sårbarhetsvurdering.md](./03-vurderinger/3.6-sårbarhetsvurdering.md) | | |
+| Oversikt | [00_oversikt.md](./00_oversikt.md) | ✅ Ferdig / 🔄 Under arbeid / 🔲 Ikke startet | |
+| Brukere | [01-funksjonell-beskrivelse/01_brukere.md](./01-funksjonell-beskrivelse/01_brukere.md) | | |
+| Roller og rettigheter | [01-funksjonell-beskrivelse/01_roller-og-rettigheter.md](./01-funksjonell-beskrivelse/01_roller-og-rettigheter.md) | | |
+| Funksjoner | [01-funksjonell-beskrivelse/01_funksjoner.md](./01-funksjonell-beskrivelse/01_funksjoner.md) | | |
+| Komponenter | [02-teknisk-beskrivelse/02_komponenter.md](./02-teknisk-beskrivelse/02_komponenter.md) | | |
+| Informasjonsmodell | [02-teknisk-beskrivelse/02_informasjonsmodell.md](./02-teknisk-beskrivelse/02_informasjonsmodell.md) | | |
+| Datamodell | [02-teknisk-beskrivelse/02_datamodell.md](./02-teknisk-beskrivelse/02_datamodell.md) | | |
+| Dataflyt | [02-teknisk-beskrivelse/02_dataflyt.md](./02-teknisk-beskrivelse/02_dataflyt.md) | | |
+| Drift | [02-teknisk-beskrivelse/02_drift.md](./02-teknisk-beskrivelse/02_drift.md) | | |
+| Verdivurdering sikkerhetsgradering | [03-vurderinger/03_verdivurdering-sikkerhetsgradering.md](./03-vurderinger/03_verdivurdering-sikkerhetsgradering.md) | | |
+| Verdivurdering KIT | [03-vurderinger/03_verdivurdering-kit.md](./03-vurderinger/03_verdivurdering-kit.md) | | |
+| Verdivurdering personvern | [03-vurderinger/03_verdivurdering-personvern.md](./03-vurderinger/03_verdivurdering-personvern.md) | | |
+| Verdivurdering automatiserte beslutninger | [03-vurderinger/03_verdivurdering-automatiserte-beslutninger.md](./03-vurderinger/03_verdivurdering-automatiserte-beslutninger.md) | | |
+| Trusselvurdering | [03-vurderinger/03_trusselvurdering.md](./03-vurderinger/03_trusselvurdering.md) | | |
+| Sårbarhetsvurdering | [03-vurderinger/03_sårbarhetsvurdering.md](./03-vurderinger/03_sårbarhetsvurdering.md) | | |
 
 ---
 
@@ -72,28 +72,28 @@ Skriv filen `{systemnavn}/README.md` med denne strukturen:
 
 ### Nøkkelfunksjoner
 
-{Liste over behandlingsaktivitetene fra 03-funksjoner, én linje per aktivitet.}
+{Liste over behandlingsaktivitetene fra 01_funksjoner.md, én linje per aktivitet.}
 
 - **A1 – {navn}:** {én linje}
 - **A2 – {navn}:** {én linje}
 
 ### Teknisk plattform
 
-{1–2 setninger om hovdkomponenter og infrastruktur, basert på 04-komponenter.}
+{1–2 setninger om hovdkomponenter og infrastruktur, basert på 02_komponenter.md.}
 
 ### Sikkerhetsklassifisering
 
 | Dimensjon | Nivå |
 |-----------|------|
-| Konfidensialitet | {fra 07-kit} |
-| Integritet | {fra 07-kit} |
-| Tilgjengelighet | {fra 07-kit} |
-| **Samlet** | **{fra 07-kit}** |
+| Konfidensialitet | {fra 03_verdivurdering-kit.md} |
+| Integritet | {fra 03_verdivurdering-kit.md} |
+| Tilgjengelighet | {fra 03_verdivurdering-kit.md} |
+| **Samlet** | **{fra 03_verdivurdering-kit.md}** |
 
 ### Personvern
 
-**DPIA nødvendig:** {Ja / Nei / Uavklart} ({begrunnelse fra 3.3-verdivurdering-personvern.md})  
-**Åpne personvernspørsmål:** {antall 🔲-punkter fra 3.3-verdivurdering-personvern.md}
+**DPIA nødvendig:** {Ja / Nei / Uavklart} ({begrunnelse fra 03_verdivurdering-personvern.md})  
+**Åpne personvernspørsmål:** {antall 🔲-punkter fra 03_verdivurdering-personvern.md}
 
 ---
 
@@ -114,7 +114,7 @@ hva som bør gjøres videre, f.eks. trusselvurdering, sårbarhetsvurdering, DPIA
 
 ## Om denne dokumentasjonen
 
-Denne systemdokumentasjonen er utarbeidet med `system-describe`-skillen 
+Denne systemdokumentasjonen er utarbeidet med `system-beskrivelse`-skillen 
 og følger en modulær struktur for design- og planleggingsfasen.
 
 Modulene kan brukes selvstendig eller som grunnlag for:

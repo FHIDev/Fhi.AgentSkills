@@ -1,8 +1,8 @@
 # Modul 09 – KIT-verdivurdering
 
-**Produserer:** `{systemnavn}/03-vurderinger/3.2-verdivurdering-kit.md`  
-**Avhenger av:** `1.2-funksjoner.md` (behandlingsaktiviteter), `2.2-informasjonsmodell.md`  
-**Neste modul:** 3.3-verdivurdering-personvern
+**Produserer:** `{systemnavn}/03-vurderinger/03_verdivurdering-kit.md`  
+**Avhenger av:** `01_funksjoner.md` (behandlingsaktiviteter), `02_informasjonsmodell.md`  
+**Neste modul:** 03_verdivurdering-personvern
 
 > Denne modulen bruker behandlingsaktivitetene fra Modul 03 direkte.
 > Kjør Modul 03 før denne.
@@ -21,7 +21,7 @@ For detaljert KIT-skala, les: `../references/kit-skala.md`
 
 ## Fremgangsmåte
 
-1. Hent listen over behandlingsaktiviteter fra `1.2-funksjoner.md`
+1. Hent listen over behandlingsaktiviteter fra `01_funksjoner.md`
 2. For **hver aktivitet** — gå gjennom K, I og T med brukeren
 3. Still kontrollspørsmålene for hvert nivå (se nedenfor)
 4. Sett nivå og skriv en konkret begrunnelse
@@ -53,13 +53,13 @@ For detaljert KIT-skala, les: `../references/kit-skala.md`
 
 ## Output-format
 
-Skriv filen `{systemnavn}/03-vurderinger/3.2-verdivurdering-kit.md` med denne strukturen:
+Skriv filen `{systemnavn}/03-vurderinger/03_verdivurdering-kit.md` med denne strukturen:
 
 ```markdown
-# {Systemnavn} – KIT-verdivurdering (NSM)
+# {Systemnavn} – KIT-verdivurdering
 
 *Behandlingsaktiviteter hentet fra 
-[1.2-funksjoner](../beskrivelse/01-funksjonell%20beskrivelse/1.2-funksjoner.md).*
+[01_funksjoner](../01-funksjonell-beskrivelse/01_funksjoner.md).*
 
 ## Overordnet systemvurdering
 
@@ -85,7 +85,7 @@ Skriv filen `{systemnavn}/03-vurderinger/3.2-verdivurdering-kit.md` med denne st
 | Tilgjengelighet | | |
 | **Samlet** | **{høyeste}** | |
 
-**Informasjonsverdier:** {hentet fra 1.2-funksjoner.md}  
+**Informasjonsverdier:** {hentet fra 01_funksjoner.md}  
 **Særlige hensyn:** {f.eks. AI-kontekstvindu, tredjepartseksponering, kritiske data}
 
 ---
@@ -112,31 +112,31 @@ og hva som driver den samlede klassifiseringen.}
 
 - **Trusselvurdering:** Hvem kan ønske å angripe disse verdiene?
 - **Sårbarhetsvurdering:** Hvilke svakheter kan utnyttes?
-- **Personvern:** Se [3.3-verdivurdering-personvern](./3.3-verdivurdering-personvern.md) for GDPR-analyse
+- **Personvern:** Se [03_verdivurdering-personvern](./03_verdivurdering-personvern.md) for GDPR-analyse
 
 ---
 *Metodikk: NSM trekantmodell – [nsm.no](https://nsm.no)*  
-*Sist oppdatert: {dato} | Forrige: [2.5-drift](../beskrivelse/02-teknisk%20beskrivelse/2.5-drift.md) | Neste: [3.3-verdivurdering-personvern](./3.3-verdivurdering-personvern.md)*
+*Sist oppdatert: {dato} | Forrige: [02_drift](../02-teknisk-beskrivelse/02_drift.md) | Neste: [03_verdivurdering-personvern](./03_verdivurdering-personvern.md)*
 ```
 
 ---
 
-## Oppdater 1.2-funksjoner.md
+## Oppdater 01_funksjoner.md
 
-Etter at KIT-vurderingen er ferdig, **oppdater KIT-kolonnen i oversiktstabellen i `1.2-funksjoner.md`**
+Etter at KIT-vurderingen er ferdig, **oppdater KIT-kolonnen i oversiktstabellen i `01_funksjoner.md`**
 slik at hver rad lenker til riktig aktivitet i vurderingsfilen:
 
 ```markdown
-| [K:Alvorlig I:Høy T:Lav](../03-vurderinger/3.2-verdivurdering-kit.md#a1) |
+| [K:Alvorlig I:Høy T:Lav](../03-vurderinger/03_verdivurdering-kit.md#a1) |
 ```
 
 Bruk anker som matcher aktivitetens overskrift i vurderingsfilen (`#a1`, `#a2` osv.).
 
 ---
 
-## Oppdater 01-oversikt.md
+## Oppdater 00_oversikt.md
 
-Etter at KIT-vurderingen er ferdig, **legg til Sammendragstabell i `01-oversikt.md` på slutten av Oversikt seksjonen**
+Etter at KIT-vurderingen er ferdig, **legg til Sammendragstabell i `00_oversikt.md` på slutten av Oversikt seksjonen**
 
 ---
 ## Tips

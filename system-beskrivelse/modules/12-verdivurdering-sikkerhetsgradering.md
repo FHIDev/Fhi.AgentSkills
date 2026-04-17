@@ -1,8 +1,8 @@
 # Modul 12 – Verdivurdering: Sikkerhetsgradering (sikkerhetsloven)
 
-**Produserer:** `{systemnavn}/03-vurderinger/3.1-verdivurdering-sikkerhetsgradering.md`  
-**Avhenger av:** `01-oversikt.md`, `1.2-funksjoner.md`, `2.2-informasjonsmodell.md`  
-**Oppdaterer:** `01-oversikt.md` → feltet `Sikkerhetsgradering`  
+**Produserer:** `{systemnavn}/03-vurderinger/03_verdivurdering-sikkerhetsgradering.md`  
+**Avhenger av:** `00_oversikt.md`, `01_funksjoner.md`, `02_informasjonsmodell.md`  
+**Oppdaterer:** `00_oversikt.md` → feltet `Sikkerhetsgradering`  
 **Hjemmel:** Sikkerhetsloven §§ 5-1 – 5-4 (kapittel 5) og §§ 6-1 – 6-5 (kapittel 6)
 
 ---
@@ -12,7 +12,7 @@
 Vurder om systemet behandler **sikkerhetsgradert informasjon** (kapittel 5), og om systemet
 selv er et **skjermingsverdig objekt eller infrastruktur** (kapittel 6).
 
-Resultatet oppdaterer `Sikkerhetsgradering`-feltet i `01-oversikt.md` og
+Resultatet oppdaterer `Sikkerhetsgradering`-feltet i `00_oversikt.md` og
 dokumenteres som en begrunnet vurdering i denne filen.
 
 > **Merk:** Sikkerhetsloven gjelder for virksomheter underlagt loven (§ 1-3).
@@ -120,10 +120,10 @@ dokumenteres som en begrunnet vurdering i denne filen.
 | Dato | {dato} |
 | Neste revisjon | {dato eller hendelse} |
 
-> Feltet `Sikkerhetsgradering` i `01-oversikt.md` oppdateres med konklusjonen ovenfor.
+> Feltet `Sikkerhetsgradering` i `00_oversikt.md` oppdateres med konklusjonen ovenfor.
 
 ---
-*Sist oppdatert: {dato} | Relatert: [01-oversikt](../01-oversikt.md) | [3.2-verdivurdering-kit](./3.2-verdivurdering-kit.md)*
+*Sist oppdatert: {dato} | Relatert: [00_oversikt](../00_oversikt.md) | [03_verdivurdering-kit](./03_verdivurdering-kit.md)*
 ```
 
 ---

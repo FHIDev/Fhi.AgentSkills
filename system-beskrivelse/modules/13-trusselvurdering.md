@@ -1,7 +1,7 @@
 # Modul 13 – Trusselvurdering
 
-**Produserer:** `{systemnavn}/03-vurderinger/3.5-trusselvurdering.md`  
-**Avhenger av:** `01-oversikt.md`, `1.2-funksjoner.md`, `2.2-informasjonsmodell.md`, `1.1a-brukere.md`, `3.2-verdivurdering-kit.md`
+**Produserer:** `{systemnavn}/03-vurderinger/03_trusselvurdering.md`  
+**Avhenger av:** `00_oversikt.md`, `01_funksjoner.md`, `02_informasjonsmodell.md`, `01_brukere.md`, `03_verdivurdering-kit.md`
 
 ---
 
@@ -16,8 +16,8 @@ Resultatet er grunnlaget for sårbarhetsvurdering og risikoanalyse.
 
 ## Fremgangsmåte
 
-1. Hent systemets informasjonsverdier fra `3.2-verdivurdering-kit.md` (KIT-klassifisering)
-2. Hent brukerkategorier og tilgangsroller fra `02-brukere.md`
+1. Hent systemets informasjonsverdier fra `03_verdivurdering-kit.md` (KIT-klassifisering)
+2. Hent brukerkategorier og tilgangsroller fra `01_brukere.md`
 3. Gå gjennom trusselaktørtabellen nedenfor
 4. For **hver aktør** — vurder relevansen for dette konkrete systemet
 5. Dokumenter særlige hensyn og ev. aktører som ikke er relevante (med begrunnelse)
@@ -107,7 +107,7 @@ og hvilke informasjonsverdier er mest utsatt.}
 
 ---
 *Metodikk: FHI årlig trusselvurdering, NSM trekantmodell*  
-*Sist oppdatert: {dato} | Relatert: [3.2-verdivurdering-kit](./3.2-verdivurdering-kit.md) | [1.1a-brukere](../beskrivelse/01-funksjonell%20beskrivelse/1.1a-brukere.md)*
+*Sist oppdatert: {dato} | Relatert: [03_verdivurdering-kit](./03_verdivurdering-kit.md) | [01_brukere](../01-funksjonell-beskrivelse/01_brukere.md)*
 ```
 
 ---

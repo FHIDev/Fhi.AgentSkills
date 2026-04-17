@@ -1,7 +1,7 @@
 # Modul 10 – Personvernvurdering (GDPR)
 
-**Produserer:** `{systemnavn}/03-vurderinger/3.3-verdivurdering-personvern.md`  
-**Avhenger av:** `1.2-funksjoner.md`, `2.2-informasjonsmodell.md`, `2.5-drift.md`  
+**Produserer:** `{systemnavn}/03-vurderinger/03_verdivurdering-personvern.md`  
+**Avhenger av:** `01_funksjoner.md`, `02_informasjonsmodell.md`, `02_drift.md`  
 **Neste steg:** README.md (avsluttende oppsummering)
 
 > Denne modulen bruker behandlingsaktivitetene fra Modul 03 og 
@@ -71,7 +71,7 @@ Systemet bør vurderes for fullstendig DPIA hvis noen av disse gjelder:
 
 ## Output-format
 
-Skriv filen `{systemnavn}/03-vurderinger/3.3-verdivurdering-personvern.md` med denne strukturen:
+Skriv filen `{systemnavn}/03-vurderinger/03_verdivurdering-personvern.md` med denne strukturen:
 
 ```markdown
 # {Systemnavn} – Personvernvurdering
@@ -90,7 +90,7 @@ Skriv filen `{systemnavn}/03-vurderinger/3.3-verdivurdering-personvern.md` med d
 
 ## Behandlingsaktiviteter med persondata
 
-*Hentet fra [1.2-funksjoner](../beskrivelse/01-funksjonell%20beskrivelse/1.2-funksjoner.md)*
+*Hentet fra [01_funksjoner](../01-funksjonell-beskrivelse/01_funksjoner.md)*
 
 ### A1 – {Aktivitetsnavn}
 
@@ -133,7 +133,7 @@ Skriv filen `{systemnavn}/03-vurderinger/3.3-verdivurdering-personvern.md` med d
 | Begrensning (art. 18) | | | |
 | Dataportabilitet (art. 20) | | | |
 | Innsigelse (art. 21) | | | |
-| Manuell overprøving av automatiserte beslutninger (art. 22) | Vurderes i [3.4-verdivurdering-automatiserte-beslutninger](./3.4-verdivurdering-automatiserte-beslutninger.md) | | |
+| Manuell overprøving av automatiserte beslutninger (art. 22) | Vurderes i [03_verdivurdering-automatiserte-beslutninger](./03_verdivurdering-automatiserte-beslutninger.md) | | |
 
 ## DPIA-vurdering
 
@@ -158,7 +158,7 @@ Gjeldende DPIA-kriterier (kryss av det som gjelder):
 | 🔲 {manglende databehandleravtale med Y} | | | |
 
 ---
-*Sist oppdatert: {dato} | Forrige: [3.2-verdivurdering-kit](./3.2-verdivurdering-kit.md)*  
+*Sist oppdatert: {dato} | Forrige: [03_verdivurdering-kit](./03_verdivurdering-kit.md)*  
 *GDPR-referanser: [Datatilsynet.no](https://www.datatilsynet.no)*
 ```
 

@@ -1,10 +1,10 @@
 # Modul 02 – Brukere og konsumenter
 
 **Produserer:**
-- `{systemnavn}/beskrivelse/01-funksjonell beskrivelse/1.1a-brukere.md`
-- `{systemnavn}/beskrivelse/01-funksjonell beskrivelse/1.1b-roller-og-rettigheter.md`
+- `{systemnavn}/01-funksjonell-beskrivelse/01_brukere.md`
+- `{systemnavn}/01-funksjonell-beskrivelse/01_roller-og-rettigheter.md`
 
-**Avhenger av:** `01-oversikt.md` (systemnavn, organisasjon, formål)  
+**Avhenger av:** `00_oversikt.md` (systemnavn, organisasjon, formål)  
 **Neste modul:** 03-funksjoner
 
 ---
@@ -36,7 +36,7 @@ Skill tydelig mellom **sluttbrukere** (mennesker med roller) og **systembrukere*
 
 ## Output-format
 
-### `02-brukere.md`
+### `01_brukere.md`
 
 ```markdown
 # Brukere og konsumenter
@@ -58,19 +58,19 @@ Systemer som integrerer mot {systemnavn} autentiserer med {autentiseringsmekanis
 
 ## Sluttbruker
 
-Se [02b-roller-og-rettigheter](02b-roller-og-rettigheter.md) for roller og rettigheter.
+Se [01_roller-og-rettigheter](01_roller-og-rettigheter.md) for roller og rettigheter.
 
 ## Systembruker
 
-Se [02b-roller-og-rettigheter](02b-roller-og-rettigheter.md) for rettigheter.
+Se [01_roller-og-rettigheter](01_roller-og-rettigheter.md) for rettigheter.
 
-> {Systemets} egne utgående integrasjoner dokumenteres i [2.1-komponenter](../02-teknisk%20beskrivelse/2.1-komponenter.md).
+> {Systemets} egne utgående integrasjoner dokumenteres i [02_komponenter](../02-teknisk-beskrivelse/02_komponenter.md).
 
 ---
-*Sist oppdatert: {dato} | Forrige: [01-oversikt](../../01-oversikt.md) | Neste: [1.2-funksjoner](../01-funksjonell%20beskrivelse/1.2-funksjoner.md)*
+*Sist oppdatert: {dato} | Forrige: [00_oversikt](../00_oversikt.md) | Neste: [01_funksjoner](./01_funksjoner.md)*
 ```
 
-### `02b-roller-og-rettigheter.md`
+### `01_roller-og-rettigheter.md`
 
 ```markdown
 # Roller og rettigheter
@@ -98,7 +98,7 @@ Se [02b-roller-og-rettigheter](02b-roller-og-rettigheter.md) for rettigheter.
 | {Rettighet} | |
 
 ---
-*Sist oppdatert: {dato} | Tilhører: [02-brukere](02-brukere.md) | Neste: [1.2-funksjoner](../01-funksjonell%20beskrivelse/1.2-funksjoner.md)*
+*Sist oppdatert: {dato} | Tilhører: [01_brukere](01_brukere.md) | Neste: [01_funksjoner](./01_funksjoner.md)*
 ```
 
 ---
@@ -108,6 +108,6 @@ Se [02b-roller-og-rettigheter](02b-roller-og-rettigheter.md) for rettigheter.
 - Skill tydelig mellom sluttbrukere (mennesker) og systembrukere (API-konsumenter)
 - Ikke navngi enkeltpersoner — bruk rollebetegnelser
 - Systembrukere autentiserer typisk maskin-til-maskin — noter hvilken mekanisme (HelseID, Entra ID, etc.)
-- Systemets egne utgående integrasjoner (hva systemet henter fra andre) hører hjemme i 04-komponenter og 07-dataflyt, ikke her
+- Systemets egne utgående integrasjoner (hva systemet henter fra andre) hører hjemme i 02_komponenter og 02_dataflyt, ikke her
 - Legg inn `🔲 Ikke kartlagt` der informasjon mangler
 - Spør til slutt: *"Vil du fortsette med Modul 03 (Funksjoner), eller er det noe her som skal justeres?"*

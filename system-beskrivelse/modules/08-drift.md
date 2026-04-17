@@ -1,7 +1,7 @@
 # Modul 08 – Operasjonell Drift
 
-**Produserer:** `{systemnavn}/beskrivelse/02-teknisk beskrivelse/2.5-drift.md`  
-**Avhenger av:** `01-oversikt.md`, `2.1-komponenter.md`  
+**Produserer:** `{systemnavn}/02-teknisk-beskrivelse/02_drift.md`  
+**Avhenger av:** `00_oversikt.md`, `02_komponenter.md`  
 **Neste modul:** README.md (avsluttende oppsummering) 
 
 ---
@@ -56,7 +56,7 @@ tilgjengelighetsvurdering (T i KIT) og hendelseshåndtering.
 
 ## Output-format
 
-Skriv filen `{systemnavn}/drift/06-drift.md` med denne strukturen:
+Skriv filen `{systemnavn}/02-teknisk-beskrivelse/02_drift.md` med denne strukturen:
 
 ```markdown
 # Operasjonell Drift
@@ -130,7 +130,7 @@ Datatilsynet innen 72 timer. Ansvarlig: {navn/rolle}
 | | | | Ja/Nei/🔲 | |
 
 ---
-*Sist oppdatert: {dato} | Forrige: [2.2-informasjonsmodell](./2.2-informasjonsmodell.md) | Neste: [3.2-verdivurdering-kit](../03-vurderinger/3.2-verdivurdering-kit.md)*
+*Sist oppdatert: {dato} | Forrige: [02_dataflyt](./02_dataflyt.md) | Neste: [03_verdivurdering-kit](../03-vurderinger/03_verdivurdering-kit.md)*
 ```
 
 ---

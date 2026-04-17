@@ -1,8 +1,8 @@
 # Modul 07 – Arkitektur: Dataflyt
 
-**Produserer:** `{systemnavn}/beskrivelse/02-teknisk beskrivelse/2.4-dataflyt.md`  
-**Avhenger av:** `2.1-komponenter.md`, `2.2-informasjonsmodell.md`, `1.2-funksjoner.md`  
-**Neste modul:** 3.2-verdivurdering-kit eller 3.3-verdivurdering-personvern
+**Produserer:** `{systemnavn}/02-teknisk-beskrivelse/02_dataflyt.md`  
+**Avhenger av:** `02_komponenter.md`, `02_informasjonsmodell.md`, `01_funksjoner.md`  
+**Neste modul:** 03_verdivurdering-kit eller 03_verdivurdering-personvern
 
 ---
 
@@ -35,7 +35,7 @@ Dette er syntesen av informasjonsmodellen (formen på data) og behandlingsaktivi
 
 ## Output-format
 
-Skriv filen `{systemnavn}/beskrivelse/02-teknisk beskrivelse/2.4-dataflyt.md` med denne strukturen:
+Skriv filen `{systemnavn}/02-teknisk-beskrivelse/02_dataflyt.md` med denne strukturen:
 
 ```markdown
 # Dataflyt og Integrasjoner
@@ -74,7 +74,7 @@ Eksporter til `c4_system_context.svg` i samme mappe.
 | 1 | {Kilde} | {DtoNavn} | {Komponent} | {Ingen / Validering / Mapping} |
 | 2 | {Komponent} | {EntitetNavn} | {Database} | {Persistering} |
 
-**Behandlingsaktivitet:** {Referanse til aktivitet i 1.2-funksjoner.md}
+**Behandlingsaktivitet:** {Referanse til aktivitet i 01_funksjoner.md}
 
 ---
 
@@ -93,7 +93,7 @@ Eksporter til `c4_system_context.svg` i samme mappe.
 | | | | |
 
 ---
-*Sist oppdatert: {dato} | Forrige: [2.2-informasjonsmodell](./2.2-informasjonsmodell.md) | Neste: [2.5-drift](./2.5-drift.md)*
+*Sist oppdatert: {dato} | Forrige: [02_informasjonsmodell](./02_informasjonsmodell.md) | Neste: [02_drift](./02_drift.md)*
 ```
 
 ---

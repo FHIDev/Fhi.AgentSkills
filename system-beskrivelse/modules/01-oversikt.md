@@ -1,6 +1,6 @@
 # Modul 01 – Oversikt
 
-**Produserer:** `{systemnavn}/01-oversikt.md`  
+**Produserer:** `{systemnavn}/00_oversikt.md`  
 **Avhenger av:** Ingenting — start her  
 **Neste modul:** 02-brukere
 
@@ -45,7 +45,7 @@ Still disse spørsmålene. Noen kan besvares raskt, andre krever mer refleksjon.
 
 ## Output-format
 
-Skriv filen `{systemnavn}/01-oversikt.md` med denne strukturen:
+Skriv filen `{systemnavn}/00_oversikt.md` med denne strukturen:
 
 ```markdown
 # Oversikt

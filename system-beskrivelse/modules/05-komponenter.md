@@ -1,8 +1,8 @@
 # Modul 04 – Komponenter
 
-**Produserer:** `{systemnavn}/beskrivelse/02-teknisk beskrivelse/2.1-komponenter.md`
-**Avhenger av:** `01-oversikt.md`, `1.2-funksjoner.md`
-**Neste modul:** 2.2-informasjonsmodell.md
+**Produserer:** `{systemnavn}/02-teknisk-beskrivelse/02_komponenter.md`
+**Avhenger av:** `00_oversikt.md`, `01_funksjoner.md`
+**Neste modul:** 02_informasjonsmodell.md
 
 ---
 
@@ -82,7 +82,7 @@ Eksporter til `c4_container.svg` i samme mappe.
 | Nettverk/soner | {Internett-eksponert, intern sone, DMZ} |
 
 ---
-*Sist oppdatert: {dato} | Forrige: [1.2-funksjoner](../01-funksjonell%20beskrivelse/1.2-funksjoner.md) | Neste: [2.2-informasjonsmodell](./2.2-informasjonsmodell.md)*
+*Sist oppdatert: {dato} | Forrige: [01_funksjoner](../01-funksjonell-beskrivelse/01_funksjoner.md) | Neste: [02_informasjonsmodell](./02_informasjonsmodell.md)*
 ```
 
 ---
@@ -177,7 +177,7 @@ Eksporter til `c4_container_del2.svg` i samme mappe.
 *(legg til flere Del-seksjoner etter behov)*
 
 ---
-*Sist oppdatert: {dato} | Forrige: [1.2-funksjoner](../01-funksjonell%20beskrivelse/1.2-funksjoner.md) | Neste: [2.2-informasjonsmodell](./2.2-informasjonsmodell.md)*
+*Sist oppdatert: {dato} | Forrige: [01_funksjoner](../01-funksjonell-beskrivelse/01_funksjoner.md) | Neste: [02_informasjonsmodell](./02_informasjonsmodell.md)*
 ```
 
 ---
@@ -189,4 +189,4 @@ Eksporter til `c4_container_del2.svg` i samme mappe.
 - **IKKE legg til integrasjoner med eksterne systemer** — dette hører til **07-dataflyt.md**, ikke her
 - Autentisering og tilgangskontroll beskrives i **sikkerhetskontroller** — ikke i komponentoversikten
 - For AI-systemer: vær presis om **hva som sendes til AI-tjenesten** — kritisk for personvern
-- Spør til slutt: *"Vil du fortsette med Modul 05 (Informasjonsmodell), eller er det noe her som skal justeres?"*
+- Spør til slutt: *"Vil du fortsette med 02_informasjonsmodell.md, eller er det noe her som skal justeres?"*
