@@ -195,6 +195,7 @@ sandbox → test → prod
 ### Dispatch fra app-repo
 
 ```bash
+# I app-repoets build-workflow, som bash-step. ${{ ... }} er GitHub Actions-uttrykk.
 curl -X POST \
   -H "Authorization: Bearer ${{ secrets.GITOPS_PAT }}" \
   "https://api.github.com/repos/${{ vars.GITOPS_REPO }}/dispatches" \
@@ -204,7 +205,7 @@ curl -X POST \
   }}'
 ```
 
-`repository` er GitHub repo-navnet (ikke ACR-pathen) — `update-tag.yaml` slår opp på dette feltet for å finne riktig manifestfil. Se `references/workflows.md` for komplett payload-format og workflow-implementasjon.
+`repository` skal være GitHub repo-navnet (ikke ACR-pathen). Primærkilden og andre `update-tag.yaml`-varianter bruker feltet for å velge riktig manifest; default-varianten dokumentert i `references/workflows.md` leser kun `env` og `tag` og bytter alle `tag:`-linjer i en fast fil. Send GitHub repo-navnet for å være kompatibel med begge. Se `references/workflows.md` for komplett payload-format.
 
 ### Hvor tag-en havner
 
