@@ -1,7 +1,7 @@
 # Modul 12 – Verdivurdering: Sikkerhetsgradering (sikkerhetsloven)
 
-**Produserer:** `{systemnavn}/vurderinger/verdivurdering-sikkerhetsgradering.md`  
-**Avhenger av:** `01-oversikt.md`, `03-funksjoner.md`, `05-informasjonsmodell.md`  
+**Produserer:** `{systemnavn}/03-vurderinger/3.1-verdivurdering-sikkerhetsgradering.md`  
+**Avhenger av:** `01-oversikt.md`, `1.2-funksjoner.md`, `2.2-informasjonsmodell.md`  
 **Oppdaterer:** `01-oversikt.md` → feltet `Sikkerhetsgradering`  
 **Hjemmel:** Sikkerhetsloven §§ 5-1 – 5-4 (kapittel 5) og §§ 6-1 – 6-5 (kapittel 6)
 
@@ -123,7 +123,7 @@ dokumenteres som en begrunnet vurdering i denne filen.
 > Feltet `Sikkerhetsgradering` i `01-oversikt.md` oppdateres med konklusjonen ovenfor.
 
 ---
-*Sist oppdatert: {dato} | Relatert: [01-oversikt](../01-oversikt.md) | [verdivurdering-kit](./verdivurdering-kit.md)*
+*Sist oppdatert: {dato} | Relatert: [01-oversikt](../01-oversikt.md) | [3.2-verdivurdering-kit](./3.2-verdivurdering-kit.md)*
 ```
 
 ---

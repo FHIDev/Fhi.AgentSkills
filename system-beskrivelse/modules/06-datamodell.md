@@ -1,7 +1,7 @@
 # Modul 06 – Arkitektur: Datamodell
 
-**Produserer:** `{systemnavn}/arkitektur/06-datamodell.md`  
-**Avhenger av:** `05-informasjonsmodell.md`  
+**Produserer:** `{systemnavn}/beskrivelse/02-teknisk beskrivelse/2.3-datamodell.md`  
+**Avhenger av:** `2.2-informasjonsmodell.md`  
 **Neste modul:** dataflyt
 
 ---
@@ -28,7 +28,7 @@ blobs og mellomlagre. Dette er den interne representasjonen — ikke det som eks
 
 ## Output-format
 
-Skriv filen `{systemnavn}/arkitektur/06-datamodell.md` med denne strukturen:
+Skriv filen `{systemnavn}/beskrivelse/02-teknisk beskrivelse/2.3-datamodell.md` med denne strukturen:
 
 ```markdown
 # Datamodell
@@ -55,7 +55,7 @@ Skriv filen `{systemnavn}/arkitektur/06-datamodell.md` med denne strukturen:
 
 ---
 
-*Sist oppdatert: {dato} | Forrige: [05-informasjonsmodell](./05-informasjonsmodell.md) | Neste: [dataflyt](./dataflyt.md)*
+*Sist oppdatert: {dato} | Forrige: [2.2-informasjonsmodell](./2.2-informasjonsmodell.md) | Neste: [2.4-dataflyt](./2.4-dataflyt.md)*
 ```
 
 ---

@@ -1,3 +1,5 @@
+@~/.claude/privacy.md
+
 # Fhi.AgentSkills – repo-informasjon for Claude
 
 ## Repo-struktur

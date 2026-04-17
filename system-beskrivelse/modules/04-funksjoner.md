@@ -1,9 +1,9 @@
-# Modul 03 – Funksjoner (behandlingsaktiviteter)
+# Modul 04 – Funksjoner (behandlingsaktiviteter)
 
-**Produserer:** `{systemnavn}/funksjonell-beskrivelse/03-funksjoner.md`  
-**Avhenger av:** `01-oversikt.md`, `02-brukere.md`, `04-informasjonsmodell.md`  
-**Neste modul:** 05-komponenter 
-**Brukes av:** 07-kit-verdivurdering, 08-personvern
+**Produserer:** `{systemnavn}/beskrivelse/01-funksjonell beskrivelse/1.2-funksjoner.md`  
+**Avhenger av:** `01-oversikt.md`, `1.1a-brukere.md`  
+**Neste modul:** 2.1-komponenter.md  
+**Brukes av:** 3.2-verdivurdering-kit.md, 3.3-verdivurdering-personvern.md
 
 > ⚠️ Dette er kjernemodelen. Behandlingsaktivitetene som defineres her 
 > brukes direkte i KIT-vurdering (modul 07) og personvernanalyse (modul 08).
@@ -46,7 +46,7 @@ handling og output.
 
 ## Output-format
 
-Skriv filen `{systemnavn}/funksjonell-beskrivelse/03-funksjoner.md` med denne strukturen:
+Skriv filen `{systemnavn}/beskrivelse/01-funksjonell beskrivelse/1.2-funksjoner.md` med denne strukturen:
 
 ```markdown
 # Funksjoner (behandlingsaktiviteter)
@@ -86,7 +86,7 @@ Skriv filen `{systemnavn}/funksjonell-beskrivelse/03-funksjoner.md` med denne st
 ---
 
 ---
-*Sist oppdatert: {dato} | Forrige: [02-brukere](../brukere/02-brukere.md) | Neste: [04-komponenter](../arkitektur/04-komponenter.md)*
+*Sist oppdatert: {dato} | Forrige: [1.1a-brukere](./1.1a-brukere.md) | Neste: [2.1-komponenter](../02-teknisk%20beskrivelse/2.1-komponenter.md)*
 ```
 
 ---
@@ -98,7 +98,7 @@ Skriv filen `{systemnavn}/funksjonell-beskrivelse/03-funksjoner.md` med denne st
 - Typisk 4–8 aktiviteter for et system av middels størrelse
 - For AI-systemer: vær eksplisitt om hva som havner i **kontekstvinduet**
 - Automatiserte beslutninger er særlig viktige for GDPR (artikkel 22) og NSM-vurdering
-- Denne modulen produserer listen som modul 07 og 08 bruker direkte — 
+- Denne modulen produserer listen som 3.2-verdivurdering-kit.md og 3.3-verdivurdering-personvern.md bruker direkte — 
   hjelp brukeren å gi aktivitetene presise, gjenkjennbare navn
-- Spør til slutt: *"Vil du fortsette med Modul 04 (Komponenter) eller 05 (Informasjonsmodell), 
+- Spør til slutt: *"Vil du fortsette med 2.1-komponenter.md eller 2.2-informasjonsmodell.md, 
   eller er det noe her som skal justeres?"*

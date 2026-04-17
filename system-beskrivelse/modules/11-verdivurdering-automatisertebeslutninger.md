@@ -1,8 +1,8 @@
-# Modul – Vurdering: Automatiserte beslutninger
+# Modul 11 – Vurdering: Automatiserte beslutninger
 
-**Produserer:** `{systemnavn}/vurderinger/10-automatiserte-beslutninger.md`
-**Avhenger av:** `03-funksjoner.md`, `05-informasjonsmodell.md`
-**Neste modul:** 09-personvern
+**Produserer:** `{systemnavn}/03-vurderinger/3.4-verdivurdering-automatiserte-beslutninger.md`
+**Avhenger av:** `1.2-funksjoner.md`, `2.2-informasjonsmodell.md`
+**Neste modul:** 3.5-trusselvurdering.md
 
 > Kjør Modul 03 (Funksjoner) og 05 (Informasjonsmodell) før denne.
 
@@ -52,7 +52,7 @@ GDPR art. 22 gjelder når **alle tre** vilkår er oppfylt:
 ```markdown
 # {Systemnavn} – Automatiserte beslutninger
 
-*Basert på behandlingsaktiviteter fra [03-funksjoner](../funksjoner/03-funksjoner.md).*
+*Basert på behandlingsaktiviteter fra [1.2-funksjoner](../beskrivelse/01-funksjonell%20beskrivelse/1.2-funksjoner.md).*
 
 ## Oversikt
 
@@ -92,7 +92,7 @@ GDPR art. 22 gjelder når **alle tre** vilkår er oppfylt:
 - {tiltak 2}
 
 ---
-*Sist oppdatert: {dato} | Forrige: [05-informasjonsmodell](../arkitektur/05-informasjonsmodell.md) | Neste: [09-personvern](./09-personvern.md)*
+*Sist oppdatert: {dato} | Forrige: [3.3-verdivurdering-personvern](./3.3-verdivurdering-personvern.md) | Neste: [3.5-trusselvurdering](./3.5-trusselvurdering.md)*
 ```
 
 ---
@@ -102,4 +102,4 @@ GDPR art. 22 gjelder når **alle tre** vilkår er oppfylt:
 - **Beslutningsstøtte er ikke det samme som ingen beslutning** — data som avgjør hvem som innkalles til helseundersøkelse har reell konsekvens selv om et menneske trykker "send"
 - Art. 22 krever *utelukkende* automatisert beslutning — ett menneskelig steg bryter vilkåret, men steg uten reell overprøving teller ikke
 - For AI-systemer: vurder om modellen selv er en beslutningskomponent
-- Spør til slutt: *"Vil du fortsette med Modul 09 (Personvern/DPIA), eller er det noe her som skal justeres?"*
+- Spør til slutt: *"Vil du fortsette med 3.5-trusselvurdering.md, eller er det noe her som skal justeres?"*

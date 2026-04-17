@@ -1,7 +1,7 @@
-# Modul 10 – Operasjonell Drift
+# Modul 08 – Operasjonell Drift
 
-**Produserer:** `{systemnavn}/drift/10-drift.md`  
-**Avhenger av:** `01-oversikt.md`, `04-komponenter.md`  
+**Produserer:** `{systemnavn}/beskrivelse/02-teknisk beskrivelse/2.5-drift.md`  
+**Avhenger av:** `01-oversikt.md`, `2.1-komponenter.md`  
 **Neste modul:** README.md (avsluttende oppsummering) 
 
 ---
@@ -130,7 +130,7 @@ Datatilsynet innen 72 timer. Ansvarlig: {navn/rolle}
 | | | | Ja/Nei/🔲 | |
 
 ---
-*Sist oppdatert: {dato} | Forrige: [05-informasjonsmodell](../arkitektur/05-informasjonsmodell.md) | Neste: [07-kit-verdivurdering](../vurderinger/07-kit-verdivurdering.md)*
+*Sist oppdatert: {dato} | Forrige: [2.2-informasjonsmodell](./2.2-informasjonsmodell.md) | Neste: [3.2-verdivurdering-kit](../03-vurderinger/3.2-verdivurdering-kit.md)*
 ```
 
 ---

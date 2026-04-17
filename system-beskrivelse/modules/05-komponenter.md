@@ -1,8 +1,8 @@
 # Modul 04 – Komponenter
 
-**Produserer:** `{systemnavn}/beskrivelse/02-teknisk beskrivelse/04-komponenter.md`
-**Avhenger av:** `01-oversikt.md`, `03-funksjoner.md`
-**Neste modul:** 05-informasjonsmodell
+**Produserer:** `{systemnavn}/beskrivelse/02-teknisk beskrivelse/2.1-komponenter.md`
+**Avhenger av:** `01-oversikt.md`, `1.2-funksjoner.md`
+**Neste modul:** 2.2-informasjonsmodell.md
 
 ---
 
@@ -82,7 +82,7 @@ Eksporter til `c4_container.svg` i samme mappe.
 | Nettverk/soner | {Internett-eksponert, intern sone, DMZ} |
 
 ---
-*Sist oppdatert: {dato} | Forrige: [03-funksjoner](../01-funksjonell beskrivelse/03-funksjoner.md) | Neste: [05-informasjonsmodell](./05-informasjonsmodell.md)*
+*Sist oppdatert: {dato} | Forrige: [1.2-funksjoner](../01-funksjonell%20beskrivelse/1.2-funksjoner.md) | Neste: [2.2-informasjonsmodell](./2.2-informasjonsmodell.md)*
 ```
 
 ---
@@ -177,7 +177,7 @@ Eksporter til `c4_container_del2.svg` i samme mappe.
 *(legg til flere Del-seksjoner etter behov)*
 
 ---
-*Sist oppdatert: {dato} | Forrige: [03-funksjoner](../01-funksjonell beskrivelse/03-funksjoner.md) | Neste: [05-informasjonsmodell](./05-informasjonsmodell.md)*
+*Sist oppdatert: {dato} | Forrige: [1.2-funksjoner](../01-funksjonell%20beskrivelse/1.2-funksjoner.md) | Neste: [2.2-informasjonsmodell](./2.2-informasjonsmodell.md)*
 ```
 
 ---

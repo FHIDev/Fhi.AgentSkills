@@ -43,13 +43,20 @@ Skriv filen `{systemnavn}/README.md` med denne strukturen:
 | Modul | Fil | Status | Sist oppdatert |
 |-------|-----|--------|----------------|
 | Oversikt | [01-oversikt.md](./01-oversikt.md) | ✅ Ferdig / 🔄 Under arbeid / 🔲 Ikke startet | |
-| Brukere | [brukere/02-brukere.md](./brukere/02-brukere.md) | | |
-| Funksjoner | [funksjoner/03-funksjoner.md](./funksjoner/03-funksjoner.md) | | |
-| Komponenter | [arkitektur/04-komponenter.md](./arkitektur/04-komponenter.md) | | |
-| Informasjonsmodell | [arkitektur/05-informasjonsmodell.md](./arkitektur/05-informasjonsmodell.md) | | |
-| Drift | [drift/06-drift.md](./drift/06-drift.md) | | |
-| KIT-verdivurdering | [vurderinger/07-kit-verdivurdering.md](./vurderinger/07-kit-verdivurdering.md) | | |
-| Personvern | [vurderinger/08-personvern.md](./vurderinger/08-personvern.md) | | |
+| Brukere | [beskrivelse/01-funksjonell beskrivelse/1.1a-brukere.md](./beskrivelse/01-funksjonell%20beskrivelse/1.1a-brukere.md) | | |
+| Roller og rettigheter | [beskrivelse/01-funksjonell beskrivelse/1.1b-roller-og-rettigheter.md](./beskrivelse/01-funksjonell%20beskrivelse/1.1b-roller-og-rettigheter.md) | | |
+| Funksjoner | [beskrivelse/01-funksjonell beskrivelse/1.2-funksjoner.md](./beskrivelse/01-funksjonell%20beskrivelse/1.2-funksjoner.md) | | |
+| Komponenter | [beskrivelse/02-teknisk beskrivelse/2.1-komponenter.md](./beskrivelse/02-teknisk%20beskrivelse/2.1-komponenter.md) | | |
+| Informasjonsmodell | [beskrivelse/02-teknisk beskrivelse/2.2-informasjonsmodell.md](./beskrivelse/02-teknisk%20beskrivelse/2.2-informasjonsmodell.md) | | |
+| Datamodell | [beskrivelse/02-teknisk beskrivelse/2.3-datamodell.md](./beskrivelse/02-teknisk%20beskrivelse/2.3-datamodell.md) | | |
+| Dataflyt | [beskrivelse/02-teknisk beskrivelse/2.4-dataflyt.md](./beskrivelse/02-teknisk%20beskrivelse/2.4-dataflyt.md) | | |
+| Drift | [beskrivelse/02-teknisk beskrivelse/2.5-drift.md](./beskrivelse/02-teknisk%20beskrivelse/2.5-drift.md) | | |
+| Verdivurdering sikkerhetsgradering | [03-vurderinger/3.1-verdivurdering-sikkerhetsgradering.md](./03-vurderinger/3.1-verdivurdering-sikkerhetsgradering.md) | | |
+| Verdivurdering KIT | [03-vurderinger/3.2-verdivurdering-kit.md](./03-vurderinger/3.2-verdivurdering-kit.md) | | |
+| Verdivurdering personvern | [03-vurderinger/3.3-verdivurdering-personvern.md](./03-vurderinger/3.3-verdivurdering-personvern.md) | | |
+| Verdivurdering automatiserte beslutninger | [03-vurderinger/3.4-verdivurdering-automatiserte-beslutninger.md](./03-vurderinger/3.4-verdivurdering-automatiserte-beslutninger.md) | | |
+| Trusselvurdering | [03-vurderinger/3.5-trusselvurdering.md](./03-vurderinger/3.5-trusselvurdering.md) | | |
+| Sårbarhetsvurdering | [03-vurderinger/3.6-sårbarhetsvurdering.md](./03-vurderinger/3.6-sårbarhetsvurdering.md) | | |
 
 ---
 
@@ -85,8 +92,8 @@ Skriv filen `{systemnavn}/README.md` med denne strukturen:
 
 ### Personvern
 
-**DPIA nødvendig:** {Ja / Nei / Uavklart} ({begrunnelse fra 08-personvern})  
-**Åpne personvernspørsmål:** {antall 🔲-punkter fra 08-personvern}
+**DPIA nødvendig:** {Ja / Nei / Uavklart} ({begrunnelse fra 3.3-verdivurdering-personvern.md})  
+**Åpne personvernspørsmål:** {antall 🔲-punkter fra 3.3-verdivurdering-personvern.md}
 
 ---
 

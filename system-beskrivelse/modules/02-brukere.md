@@ -1,8 +1,8 @@
 # Modul 02 – Brukere og konsumenter
 
 **Produserer:**
-- `{systemnavn}/beskrivelse/01-funksjonell beskrivelse/02-brukere.md`
-- `{systemnavn}/beskrivelse/01-funksjonell beskrivelse/02b-roller-og-rettigheter.md`
+- `{systemnavn}/beskrivelse/01-funksjonell beskrivelse/1.1a-brukere.md`
+- `{systemnavn}/beskrivelse/01-funksjonell beskrivelse/1.1b-roller-og-rettigheter.md`
 
 **Avhenger av:** `01-oversikt.md` (systemnavn, organisasjon, formål)  
 **Neste modul:** 03-funksjoner
@@ -64,10 +64,10 @@ Se [02b-roller-og-rettigheter](02b-roller-og-rettigheter.md) for roller og retti
 
 Se [02b-roller-og-rettigheter](02b-roller-og-rettigheter.md) for rettigheter.
 
-> {Systemets} egne utgående integrasjoner dokumenteres i [04-komponenter](../02-teknisk beskrivelse/04-komponenter.md).
+> {Systemets} egne utgående integrasjoner dokumenteres i [2.1-komponenter](../02-teknisk%20beskrivelse/2.1-komponenter.md).
 
 ---
-*Sist oppdatert: {dato} | Forrige: [01-oversikt](../../01-oversikt.md) | Neste: [03-funksjoner](03-funksjoner.md)*
+*Sist oppdatert: {dato} | Forrige: [01-oversikt](../../01-oversikt.md) | Neste: [1.2-funksjoner](../01-funksjonell%20beskrivelse/1.2-funksjoner.md)*
 ```
 
 ### `02b-roller-og-rettigheter.md`
@@ -98,7 +98,7 @@ Se [02b-roller-og-rettigheter](02b-roller-og-rettigheter.md) for rettigheter.
 | {Rettighet} | |
 
 ---
-*Sist oppdatert: {dato} | Tilhører: [02-brukere](02-brukere.md) | Neste: [03-funksjoner](03-funksjoner.md)*
+*Sist oppdatert: {dato} | Tilhører: [02-brukere](02-brukere.md) | Neste: [1.2-funksjoner](../01-funksjonell%20beskrivelse/1.2-funksjoner.md)*
 ```
 
 ---
