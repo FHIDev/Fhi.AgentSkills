@@ -184,7 +184,7 @@ gh variable set GITOPS_REPO --body "FHIDev/Fhi.<Tenant>.GitOps"
 
 ## Image Tag Management og Promotion
 
-**VIKTIG:** Image tags skal ligge i per-miljø `values.yaml` (f.eks. `test/values.yaml`), IKKE i `base/values.yaml`. Base bør ha `tag: "latest"` som fallback. Dette muliggjør uavhengig promotion mellom miljøer.
+Hvert miljø har sin egen pinned tag i GitOps-repoet. App-repoets build-workflow sender `repository_dispatch` til GitOps-repoet, som kjører `update-tag.yaml` og committer tag-oppdateringen i target-miljøets mappe.
 
 ### Promotion-flyt
 
@@ -192,37 +192,31 @@ gh variable set GITOPS_REPO --body "FHIDev/Fhi.<Tenant>.GitOps"
 sandbox → test → prod
 ```
 
-Hvert miljø har sin egen pinned tag. App-repoets build-workflow sender `repository_dispatch` til GitOps-repoet med target-miljø:
+### Dispatch fra app-repo
 
 ```bash
-# I app-repoets build-workflow (notify-gitops job):
 curl -X POST \
   -H "Authorization: Bearer ${{ secrets.GITOPS_PAT }}" \
   "https://api.github.com/repos/${{ vars.GITOPS_REPO }}/dispatches" \
   -d '{"event_type":"update_tag","client_payload":{
     "env": "test",
-    "updates": [{"repository": "crfhiskybert.azurecr.io/tenant/app", "tag": "abc1234"}]
+    "updates": [{"repository": "${{ github.event.repository.name }}", "tag": "abc1234"}]
   }}'
 ```
 
-### Per-miljø values.yaml
+`repository` er GitHub repo-navnet (ikke ACR-pathen) — `update-tag.yaml` slår opp på dette feltet for å finne riktig manifestfil. Se `references/workflows.md` for komplett payload-format og workflow-implementasjon.
 
-For at `update-tag.yaml` skal finne og oppdatere tags, MÅ `repository:` og `tag:` stå på etterfølgende linjer i miljøets `values.yaml`:
+### Hvor tag-en havner
 
-```yaml
-# test/values.yaml
-ki-mcp:
-  myapp:
-    image:
-      repository: crfhiskybert.azurecr.io/tenant/app  # Må stå her
-      tag: "abc1234"                                    # Oppdateres av update-tag workflow
-```
+`update-tag.yaml` oppdaterer `tag:`-linjer i filer under `${ENV}/`-mappen i GitOps-repoet. Default-varianten dokumentert i `references/workflows.md` kjører `sed` på `${ENV}/skybertapp.yaml`, men GitOps-repoer kan ha egne varianter som håndterer andre filstrukturer (Helm values, Kustomize, osv.). Sjekk den konkrete `update-tag.yaml` i GitOps-repoet for å se hva som faktisk skjer.
 
-`update-tag.yaml` søker KUN i YAML-filer under den angitte `env`-mappen. Tags i `base/values.yaml` vil IKKE bli funnet med `"env": "test"`.
+Uavhengig av filstruktur:
+- Tag-verdien for et miljø må ligge i en fil under `${ENV}/`-mappen. Tags utenfor (f.eks. i `base/`) blir ikke oppdatert av dispatch.
+- Ikke sett en fallback-tag som `latest` i delte baseline-filer. Det maskerer feilet promotion med stille deploy av vilkårlig siste push — la manglende tag feile høyt i stedet.
 
 ### Promotion til neste miljø
 
-Promotion er manuell — send en ny `repository_dispatch` med `"env": "prod"` og ønsket tag. Dette kan gjøres via GitHub Actions workflow_dispatch, CLI, eller en dedikert promotion-workflow.
+Promotion er manuell — send en ny `repository_dispatch` med ønsket `env` og tag. Kan gjøres via `workflow_dispatch`, CLI, eller en dedikert promotion-workflow.
 
 ## SkybertApp CRD
 
