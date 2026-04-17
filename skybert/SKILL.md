@@ -182,6 +182,43 @@ gh variable set AZURE_SUBSCRIPTION_ID --body "<verdi>"
 gh variable set GITOPS_REPO --body "FHIDev/Fhi.<Tenant>.GitOps"
 ```
 
+## Image Tag Management og Promotion
+
+Hvert miljø har sin egen pinned tag i GitOps-repoet. App-repoets build-workflow sender `repository_dispatch` til GitOps-repoet, som kjører `update-tag.yaml` og committer tag-oppdateringen i target-miljøets mappe.
+
+### Promotion-flyt
+
+```
+sandbox → test → prod
+```
+
+### Dispatch fra app-repo
+
+```bash
+# I app-repoets build-workflow, som bash-step. ${{ ... }} er GitHub Actions-uttrykk.
+curl -X POST \
+  -H "Authorization: Bearer ${{ secrets.GITOPS_PAT }}" \
+  "https://api.github.com/repos/${{ vars.GITOPS_REPO }}/dispatches" \
+  -d '{"event_type":"update_tag","client_payload":{
+    "env": "test",
+    "updates": [{"repository": "${{ github.event.repository.name }}", "tag": "abc1234"}]
+  }}'
+```
+
+`repository` skal være GitHub repo-navnet (ikke ACR-pathen). Primærkilden og andre `update-tag.yaml`-varianter bruker feltet for å velge riktig manifest; default-varianten dokumentert i `references/workflows.md` leser kun `env` og `tag` og bytter alle `tag:`-linjer i en fast fil. Send GitHub repo-navnet for å være kompatibel med begge. Se `references/workflows.md` for komplett payload-format.
+
+### Hvor tag-en havner
+
+`update-tag.yaml` oppdaterer `tag:`-linjer i filer under `${ENV}/`-mappen i GitOps-repoet. Default-varianten dokumentert i `references/workflows.md` kjører `sed` på `${ENV}/skybertapp.yaml`, men GitOps-repoer kan ha egne varianter som håndterer andre filstrukturer (Helm values, Kustomize, osv.). Sjekk den konkrete `update-tag.yaml` i GitOps-repoet for å se hva som faktisk skjer.
+
+Uavhengig av filstruktur:
+- Tag-verdien for et miljø må ligge i en fil under `${ENV}/`-mappen. Tags utenfor (f.eks. i `base/`) blir ikke oppdatert av dispatch.
+- Ikke sett en fallback-tag som `latest` i delte baseline-filer. Det maskerer feilet promotion med stille deploy av vilkårlig siste push — la manglende tag feile høyt i stedet.
+
+### Promotion til neste miljø
+
+Promotion er manuell — send en ny `repository_dispatch` med ønsket `env` og tag. Kan gjøres via `workflow_dispatch`, CLI, eller en dedikert promotion-workflow.
+
 ## SkybertApp CRD
 
 Bruk `SkybertApp` for alle applikasjoner. Den håndterer secrets, ingress, autoskalering og sikkerhetshardening i én ressurs.
