@@ -141,7 +141,7 @@ dokumenteres her for å gi et komplett bilde.
 > Feltet `Sikkerhetsgradering` i `00_oversikt.md` oppdateres med konklusjonen ovenfor.
 
 ---
-*Sist oppdatert: {dato} | Relatert: [00_oversikt](../00_oversikt.md) | [03_verdivurdering-kit](./03_verdivurdering-kit.md)*
+*Sist oppdatert: {dato} | Forrige: [00_oversikt](../00_oversikt.md) | Neste: [03_verdivurdering-kit](./03_verdivurdering-kit.md)*
 ```
 
 ---

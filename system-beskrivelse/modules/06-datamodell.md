@@ -2,7 +2,7 @@
 
 **Produserer:** `{systemnavn}/02-teknisk-beskrivelse/02_datamodell.md`  
 **Avhenger av:** `02_informasjonsmodell.md`  
-**Neste modul:** dataflyt
+**Neste modul:** 02_dataflyt.md
 
 ---
 

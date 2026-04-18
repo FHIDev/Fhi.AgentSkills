@@ -32,7 +32,7 @@ handling og output.
 - Hva er **formålet** med behandlingen/funksjonen?
 - Hva **gjør** systemet — beskriv handlingen uten å skille på input/output?
 - Hvem **utfører** aktiviteten? (brukergruppe fra modul 02, eller automatisk?)
-- Hvilke **informasjonsobjekter** fra informasjonsmodellen (modul 05) behandles?
+- Hvilke **informasjonsobjekter** fra informasjonsmodellen (`02_informasjonsmodell.md`) behandles?
 - Hva er **lagringstiden** for opplysningene som behandles i denne aktiviteten?
 - Behandles **særlige kategorier av opplysninger** eller **sensitive data**?
 

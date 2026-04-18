@@ -4,8 +4,8 @@
 **Avhenger av:** `01_funksjoner.md` (behandlingsaktiviteter), `02_informasjonsmodell.md`  
 **Neste modul:** 03_verdivurdering-personvern
 
-> Denne modulen bruker behandlingsaktivitetene fra Modul 03 direkte.
-> Kjør Modul 03 før denne.
+> Denne modulen bruker behandlingsaktivitetene fra Funksjoner-modulen direkte.
+> Kjør `04-funksjoner.md` før denne.
 
 ---
 
@@ -116,7 +116,7 @@ og hva som driver den samlede klassifiseringen.}
 
 ---
 *Metodikk: NSM trekantmodell – [nsm.no](https://nsm.no)*  
-*Sist oppdatert: {dato} | Forrige: [02_drift](../02-teknisk-beskrivelse/02_drift.md) | Neste: [03_verdivurdering-personvern](./03_verdivurdering-personvern.md)*
+*Sist oppdatert: {dato} | Forrige: [03_verdivurdering-sikkerhetsgradering](./03_verdivurdering-sikkerhetsgradering.md) | Neste: [03_verdivurdering-personvern](./03_verdivurdering-personvern.md)*
 ```
 
 ---
@@ -145,4 +145,4 @@ Etter at KIT-vurderingen er ferdig, **legg til Sammendragstabell i `00_oversikt.
 - Den samlede systemklassifiseringen er **den høyeste** enkeltklassifiseringen
 - **Integritet** er ofte undervurdert — vær eksplisitt om hva som skjer ved feil i data
 - For AI-systemer: vurder **kontekstvinduet** som en egen eksponeringsflate
-- Spør til slutt: *"Vil du fortsette med Modul 08 (Personvern), eller er det noe her som skal justeres?"*
+- Spør til slutt: *"Vil du fortsette med Personvernvurdering, eller er det noe her som skal justeres?"*

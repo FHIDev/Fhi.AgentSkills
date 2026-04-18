@@ -2,7 +2,7 @@
 
 **Produserer:** `{systemnavn}/02-teknisk-beskrivelse/02_drift.md`  
 **Avhenger av:** `00_oversikt.md`, `02_komponenter.md`  
-**Neste modul:** README.md (avsluttende oppsummering) 
+**Neste modul:** 03_verdivurdering-sikkerhetsgradering.md
 
 ---
 
@@ -130,7 +130,7 @@ Datatilsynet innen 72 timer. Ansvarlig: {navn/rolle}
 | | | | Ja/Nei/🔲 | |
 
 ---
-*Sist oppdatert: {dato} | Forrige: [02_dataflyt](./02_dataflyt.md) | Neste: [03_verdivurdering-kit](../03-vurderinger/03_verdivurdering-kit.md)*
+*Sist oppdatert: {dato} | Forrige: [02_dataflyt](./02_dataflyt.md) | Neste: [03_verdivurdering-sikkerhetsgradering](../03-vurderinger/03_verdivurdering-sikkerhetsgradering.md)*
 ```
 
 ---
@@ -140,4 +140,4 @@ Datatilsynet innen 72 timer. Ansvarlig: {navn/rolle}
 - **Produksjonsdata i testmiljø** er et veldig vanlig personvernproblem — vær eksplisitt
 - RTO og RPO er ofte ukjent — det er viktig informasjon å avdekke, selv om svaret er "ikke definert"
 - 72-timersregelen for GDPR-varsling er absolutt — sjekk at noen eier dette ansvaret
-- Spør til slutt: *"Vil du fortsette med Modul 07 (KIT-verdivurdering) eller 08 (Personvern)?"*
+- Spør til slutt: *"Vil du fortsette med KIT-verdivurdering eller Personvern?"*

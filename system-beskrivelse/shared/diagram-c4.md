@@ -126,7 +126,7 @@ Se `c4_system_context_eksempel.svg` i samme mappe.
 
 ### Eksport
 Når dokumentasjon genereres, eksporter SVG-en til:
-`beskrivelse/dataflyt/c4_system_context.svg`
+`{systemnavn}/02-teknisk-beskrivelse/c4_system_context.svg`
 
 ### Kvalitetssjekk
 - [ ] Alle elementer har navn, [type] og beskrivelse
@@ -201,7 +201,7 @@ Se `c4_container_eksempel.svg` i samme mappe.
 
 ### Eksport
 Når dokumentasjon genereres, eksporter SVG-en til:
-`beskrivelse/komponent/c4_container.svg`
+`{systemnavn}/02-teknisk-beskrivelse/c4_container.svg`
 
 ### Kvalitetssjekk
 - [ ] Alle containere har navn, [Container: teknologi] og beskrivelse

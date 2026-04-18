@@ -4,7 +4,7 @@
 **Avhenger av:** `01_funksjoner.md`, `02_informasjonsmodell.md`
 **Neste modul:** 03_trusselvurdering.md
 
-> Kjør Modul 03 (Funksjoner) og 05 (Informasjonsmodell) før denne.
+> Kjør Funksjoner-modulen (`04-funksjoner.md`) og Informasjonsmodell-modulen (`03-informasjonsmodell.md`) før denne.
 
 ---
 

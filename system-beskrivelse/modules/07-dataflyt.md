@@ -93,7 +93,7 @@ Eksporter til `c4_system_context.svg` i samme mappe.
 | | | | |
 
 ---
-*Sist oppdatert: {dato} | Forrige: [02_informasjonsmodell](./02_informasjonsmodell.md) | Neste: [02_drift](./02_drift.md)*
+*Sist oppdatert: {dato} | Forrige: [02_datamodell](./02_datamodell.md) | Neste: [02_drift](./02_drift.md)*
 ```
 
 ---

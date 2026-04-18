@@ -2,10 +2,10 @@
 
 **Produserer:** `{systemnavn}/03-vurderinger/03_verdivurdering-personvern.md`  
 **Avhenger av:** `01_funksjoner.md`, `02_informasjonsmodell.md`, `02_drift.md`  
-**Neste steg:** README.md (avsluttende oppsummering)
+**Neste steg:** 03_verdivurdering-automatiserte-beslutninger.md
 
-> Denne modulen bruker behandlingsaktivitetene fra Modul 03 og 
-> informasjonsmodellen fra Modul 05 direkte. Kjør disse først.
+> Denne modulen bruker behandlingsaktivitetene fra Funksjoner-modulen (`04-funksjoner.md`) og
+> informasjonsmodellen (`03-informasjonsmodell.md`) direkte. Kjør disse først.
 
 ---
 
@@ -158,7 +158,7 @@ Gjeldende DPIA-kriterier (kryss av det som gjelder):
 | 🔲 {manglende databehandleravtale med Y} | | | |
 
 ---
-*Sist oppdatert: {dato} | Forrige: [03_verdivurdering-kit](./03_verdivurdering-kit.md)*  
+*Sist oppdatert: {dato} | Forrige: [03_verdivurdering-kit](./03_verdivurdering-kit.md) | Neste: [03_verdivurdering-automatiserte-beslutninger](./03_verdivurdering-automatiserte-beslutninger.md)*  
 *GDPR-referanser: [Datatilsynet.no](https://www.datatilsynet.no)*
 ```
 

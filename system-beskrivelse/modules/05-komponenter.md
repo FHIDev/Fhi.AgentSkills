@@ -1,4 +1,4 @@
-# Modul 04 – Komponenter
+# Modul 05 – Komponenter
 
 **Produserer:** `{systemnavn}/02-teknisk-beskrivelse/02_komponenter.md`
 **Avhenger av:** `00_oversikt.md`, `01_funksjoner.md`

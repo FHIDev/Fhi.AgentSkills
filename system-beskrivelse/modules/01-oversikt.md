@@ -95,7 +95,7 @@ og hvilken kontekst det opererer i.} |
 - 🔲 {spørsmål 2}
 
 ---
-*Sist oppdatert: {dato} | Neste modul: [02-brukere](../brukere/02-brukere.md)*
+*Sist oppdatert: {dato} | Neste: [01_brukere](./01-funksjonell-beskrivelse/01_brukere.md)*
 ```
 
 ---
