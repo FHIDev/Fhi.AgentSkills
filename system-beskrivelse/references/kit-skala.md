@@ -17,10 +17,10 @@
 
 | Nivå | Definisjon | Eksempel |
 |------|-----------|---------|
-| **Lav** | Mindre feil uten påvirkning på tjenester eller beslutninger. Kan enkelt rettes opp. | Skrivefeil i ikke-kritisk dokumentasjon |
-| **Moderat** | Datamanipulasjon som påvirker enkeltvedtak eller enkeltpersoner. Kortvarige feil. | Feil i én brukers profil, feil i et enkelt vedtak |
-| **Høy** | Feil i data som gir feil utbetalinger, feil vedtak for mange, eller forstyrrer kritiske prosesser. | Feil i utbetalingsgrunnlag, manipulert statistikk brukt i politiske beslutninger |
-| **Alvorlig** | Endring av kritiske data med konsekvenser for liv og helse, straffesaker eller nasjonal sikkerhet. | Feil i helseinformasjon (giftig råd, feil medisin), manipulert MSIS-data, endring av beredskapsplaner |
+| **Lav** | Lavt krav – feil påvirker ikke beslutningsprosesser. | Skrivefeil i ikke-kritisk dokumentasjon |
+| **Moderat** | Moderat krav – forventer autentisk og gyldig informasjon. Feil kan gi moderate økonomiske skader og/eller svekket omdømme for instituttet, enkeltindivider eller samarbeidspartnere. | Feil i én brukers profil, feil i et enkelt vedtak |
+| **Høy** | Høyt krav – avhengig av autentisk og gyldig informasjon. Feil kan medføre betydelig økonomisk tap, omdømmetap eller annen skade for instituttet, enkeltindivider eller samarbeidspartnere. | Feil i utbetalingsgrunnlag, manipulert statistikk brukt i politiske beslutninger |
+| **Alvorlig** | Fullstendig krav – kritisk at autentisk og gyldig informasjon avleveres. Feilinformasjon kan føre til fatale konsekvenser eller tap av liv. | Feil i helseinformasjon (feilbehandling av pasienter), manipulert MSIS-data, endring av beredskapsplaner |
 
 ---
 
@@ -28,10 +28,10 @@
 
 | Nivå | Definisjon | Eksempel |
 |------|-----------|---------|
-| **Lav** | Forsinkelser under 5 minutter. Ingen vesentlig påvirkning på tjenester. | Kort nedetid i ikke-kritisk verktøy |
-| **Moderat** | Midlertidige brudd fra noen minutter til 1 time. Håndterbare tjenestebrudd. | Kortvarig nedetid i et internt system |
-| **Høy** | Tjenester nede i 1–6 timer. Redusert tjenesteleveranse. Store kostnader. | Lengre nedetid i systemer ansatte er avhengig av daglig |
-| **Alvorlig** | Langvarig nedetid (>6 timer) i kritiske tjenester. Bortfall av essensielle tjenester. Samfunnskonsekvenser. | Nedetid i nasjonale helseregistre, beredskapsrapportering, infrastruktur |
+| **Lav** | Nedetid har minimalt med innvirkning, og gjenoppretting prioriteres ikke. Håndteres etter «best-effort». | Kort nedetid i ikke-kritisk verktøy |
+| **Moderat** | Nedetid har ikke-ubetydelige konsekvenser, og må ved feil kunne gjenopprettes i løpet av få dager. | Kortvarig nedetid i et internt system |
+| **Høy** | Nedetid er kritisk for instituttet, og må ved feil kunne gjenopprettes i løpet av timer. | Lengre nedetid i systemer ansatte er avhengig av daglig |
+| **Alvorlig** | Tjenesten skal ikke være nede foruten ved planlagt vedlikehold, og skal ved feil så godt som umiddelbart kunne gjenopprettes. | Nedetid i nasjonale helseregistre, beredskapsrapportering, infrastruktur |
 
 ---
 
@@ -43,13 +43,3 @@ settes til **det høyeste nivået** blant K, I og T.
 **Prioriter integritet ved tvil** – feil data i kritiske systemer kan ha 
 usynlige konsekvenser som oppdages for sent.
 
----
-
-## Sikkerhetsgradering (systemnivå)
-
-| Gradering | Beskrivelse |
-|-----------|-------------|
-| **Åpen** | Ingen begrensninger, kan deles offentlig |
-| **Intern** | Kun for interne ansatte, ikke for allmennheten |
-| **Skjermet** | Begrenset distribusjon, særlig sensitiv informasjon |
-| **Strengt hemmelig** | Gradert informasjon etter sikkerhetsloven |

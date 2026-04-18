@@ -60,6 +60,24 @@ dokumenteres som en begrunnet vurdering i denne filen.
 
 ---
 
+## Del 3 – Beskyttelsesinstruksen og informasjonsklassifisering (K1–K4)
+
+FHI følger NHNs K1-K4-system for klassifisering av informasjon etter
+Beskyttelsesinstruksen. Dette er ikke sikkerhetsloven-gradering, men
+dokumenteres her for å gi et komplett bilde.
+
+| K-nivå | Beskyttelsesinstruksen | Informasjonstype | Eksempel |
+|--------|----------------------|------------------|---------|
+| **K4 – Sterkt skjermet** | Strengt fortrolig | Særlig sensitive personopplysninger: helse, biometri, religion, politisk oppfatning, seksuelle forhold, straffedom. Geolokaliserende informasjon om person med adressesperring. | Kode 6/7-adresser, særlige kategorier etter GDPR art. 9 |
+| **K3 – Skjermet** | Fortrolig | Personopplysninger og virksomhetskritisk informasjon | Helseopplysninger, interne risikovurderinger |
+| **K2 – Intern** | Unntatt offentlighet | Intern virksomhetsinformasjon som ikke skal deles eksternt | Interne arbeidsdokumenter, autorisasjonsregistre |
+| **K1 – Åpen** | Åpen | Offentlig informasjon uten begrensninger | Offentlige rapporter, åpen statistikk |
+
+> K-nivået for systemet settes basert på den **mest sensitive informasjonen**
+> systemet behandler.
+
+---
+
 ## Output-format
 
 ```markdown
@@ -115,7 +133,7 @@ dokumenteres som en begrunnet vurdering i denne filen.
 |------|-------|
 | Gradering (kap. 5) | {Ugradert / BEGRENSET / …} |
 | Skjermingsverdig (kap. 6) | {Ja — kategori / Nei} |
-| Beskyttelsesinstruksen | {Åpen / Intern / Skjermet / Strengt fortrolig} |
+| Beskyttelsesinstruksen (K-nivå) | {K1 – Åpen / K2 – Intern / K3 – Skjermet / K4 – Sterkt skjermet} |
 | Fastsatt av | {rolle} |
 | Dato | {dato} |
 | Neste revisjon | {dato eller hendelse} |
