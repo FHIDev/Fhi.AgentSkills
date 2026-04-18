@@ -68,7 +68,7 @@ Skriv filen `{systemnavn}/README.md` med denne strukturen:
 
 ### Brukere
 
-{1–2 setninger om hvem som bruker systemet, basert på 02-brukere.}
+{1–2 setninger om hvem som bruker systemet, basert på 01_brukere.md.}
 
 ### Nøkkelfunksjoner
 
@@ -118,7 +118,7 @@ Denne systemdokumentasjonen er utarbeidet med `system-beskrivelse`-skillen
 og følger en modulær struktur for design- og planleggingsfasen.
 
 Modulene kan brukes selvstendig eller som grunnlag for:
-- NSM risikovurdering (trekantmodellen)
+- Risikovurdering 
 - GDPR personvernkonsekvensvurdering (DPIA)
 - Teknisk onboarding av nye teammedlemmer
 - Anskaffelse og leverandørvurdering
