@@ -83,7 +83,7 @@ import '@folkehelseinstituttet/designsystem/fhi-tag';
 
 ## Tilgjengelige ikoner
 
-> **Vedlikeholdsnote:** Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.33.0`.
+> **Vedlikeholdsnote:** Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.34.0`.
 > For å oppdatere listen ved ny release:
 > ```bash
 > # List alle ikon-entrypoints i publisert pakke
