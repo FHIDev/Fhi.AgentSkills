@@ -23,17 +23,20 @@ Namespace-navnet (`tn-<tenant>`) er identisk på tvers av klustere. Det er klust
 
 GitOps-mappene (`test/`, `sandbox/`, `prod/`) pakkes som separate OCI-artifacts (`gitops_test`, `gitops_sandbox`, `gitops_prod`) og deployes til sine respektive klustere. `aks-sandbox-01` er et felles sandkassekluster — alle fargesoner deler det.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/tenant-repositories/aks-sandbox-01/kustomization.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/tenant-repositories/aks-sandbox-01/kustomization.yaml
 
 For fullstendig kluster-liste per sikkerhetssone (inkludert sandbox), se [kubectl-access](kubectl-access.md).
 
 ## Flux GitOps
 
-> Kilde: https://docs.sky.fhi.no/internal/flux/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/tenants/exempl/base/flux-kustomization.yaml
+> Kilde: https://docs.sky.fhi.no/internal/flux/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/flux-system/base/kustomization.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/flux-system/base/kustomizations-infra/kustomization.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/flux-system/base/kustomizations-infra/flux-system.yaml
 
-Flux er installert direkte (`flux install --export`) på de fleste klustere. Flux Operator (v0.43.0) er under pilottesting på `aks-ops-test-01` med `FluxInstance`-ressurs, men er ikke rullet ut til øvrige klustere ennå.
+Flux rulles ut via en `flux-operator`-komponent som er inkludert i standard infra-kustomization (`infra/flux-system/base/kustomizations-infra/`). `flux-system`-Flux-Kustomizationen har eksplisitt `dependsOn: flux-operator`. `FluxInstance`-ressursen (`infra/flux-system/base/flux-instance.yaml`) er listet i base-kustomizationen og trekkes inn av kluster-overlays (observert i bl.a. `aks-green-test-01`).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/flux-system/aks-ops-test-01/flux-instance.yaml | https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/flux-operator/base/flux-operator-0.43.0-helm.yaml
+> **Merk kildekonflikt (per 2026-04-17):** `docs/internal/flux.md` beskriver fortsatt Flux Operator som en pilot, mens infra-repoet viser bred utrulling med `flux-operator`-Kustomization og `FluxInstance` i base. En kommentar i `flux-instance.yaml` selv hevder at filen "ikke er del av kustomization.yaml ennå fordi den ikke brukes i alle klustere". Det tyder på at migreringen pågår og at dokumentasjonen ikke er fullt synkronisert med repo-tilstanden. Beskriv dagens infra-mekanikk uten å påstå full utrulling.
 
 ### Multi-tenancy lockdown
 
@@ -41,6 +44,15 @@ Flux er installert direkte (`flux install --export`) på de fleste klustere. Flu
 - Tenanter kan IKKE spesifisere ressurser i andre namespaces
 - Remote bases er deaktivert — all YAML må være i GitOps-repoet
 - OCIRepository-ressurser bruker controller-level Workload Identity (ikke per-tenant)
+
+Under `FluxInstance`-modellen (der den er i bruk) modelleres multi-tenancy-låsen som:
+
+- `cluster.multitenant: true`
+- `cluster.tenantDefaultServiceAccount: flux-reconciler`
+- `--no-cross-namespace-refs=false` for `kustomize-controller` og `helm-controller` (nødvendig så lenge `OCIRepository`-ressurser ligger i `tenant-repositories`-namespace; planlagt endret når `tenant-bootstrap`/ResourceSets rulles ut fullt)
+- Workload Identity-patch på `source-controller` (for ACR-tilgang)
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/flux-system/base/flux-instance.yaml
 
 ### Rekonsilieringsintervall
 
@@ -91,7 +103,7 @@ Service account `flux-reconciler` brukes av Flux for å applye tenant-ressurser.
 
 > **Merk:** Eldre tenanter kan fortsatt bruke `serviceaccount.yaml` (entall) og mangle `entra-access-rolebinding.yaml`. Begge layouter er gyldige.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/tenants/fida-stat19core/base/kustomization.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/tenants/fida-stat19core/base/kustomization.yaml
 
 Nyere tenanter har to separate RoleBindings:
 - **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) og `crossplane` (fra crossplane-namespace) til `ClusterRole cluster-admin` innen tenant-namespacet. Brukes av plattformen for å reconcile og provisjonere ressurser.
@@ -118,13 +130,13 @@ Koblingen mellom tenant-bootstrap og GitOps-artifakter:
 2. OCIRepository peker til `oci://crfhiskybert.azurecr.io/<tenant>/gitops_<env>` med `provider: azure` og `ref.tag: latest`
 3. `flux-kustomization.yaml` i tenant-bootstrap refererer til denne OCIRepository som kilde
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/tenant-repositories/base/ocirepos/oci-fida-stat19core.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/tenant-repositories/base/ocirepos/oci-fida-stat19core.yaml
 
 Inputs leveres via `ResourceSetInputProvider` per tenant med parametere: `tenant`, `entraGroupId`, `wlidClientId`, `ociUrl`.
 
 Legacy `tenants/<tenant>/base/`-strukturen finnes fortsatt for eksisterende tenanter og begge mønstre brukes parallelt.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/tenant-bootstrap/base/resourceset.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/tenant-bootstrap/base/resourceset.yaml
 
 ### Tenant-onboarding — plattformoperasjon
 

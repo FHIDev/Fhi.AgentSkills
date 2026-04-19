@@ -21,28 +21,33 @@ Følgende regler gjelder alle Ingress-ressurser:
 - **Wildcards blokkert**: Wildcard-hosts (f.eks. `*.skytest.fhi.no`) er ikke tillatt
 - **SSL-redirect**: Kyverno setter automatisk `ssl-redirect: true` og `force-ssl-redirect: true`
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/kyverno-policies/base/policies-green/ingress-security.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/kyverno-policies/base/policies-green/ingress-security.yaml
 
 ## Nettverkspolicyer
 
-### Grønn/Gul sone
-Ingen spesielle nettverksrestriksjoner utover standard Kubernetes-nettverkspolicyer.
+Et farget (color) klusterpar (test + prod) deler samme nettverksregler — test er ment å oppføre seg identisk med prod slik at det ikke blir overraskelser ved promotion.
+
+### Grønn sone
+Ingen restriksjoner. Utgående trafikk er fullt åpen.
+
+### Gul sone
+**Foreløpig ingen restriksjoner.** Utgående trafikk er åpen, men dette kan endre seg etter hvert som plattformen modnes.
 
 ### Rød sone
-**Default DENY** — all trafikk blokkert som utgangspunkt.
+**Streng egress-kontroll.** All utgående trafikk er blokkert som utgangspunkt, og ingress er begrenset til **NHN secure zone**.
 
 Automatisk tillatt:
 - Intern kommunikasjon innenfor eget namespace (`tn-<tenant>`) via auto-generert GlobalNetworkPolicy
 - DNS (UDP port 53 til kube-system)
 
 Eksplisitte unntak:
-- Egress til spesifikke IP-ranges/porter — opprettes av plattformteamet som GlobalNetworkPolicy
+- Egress til spesifikke IP-ranges/porter — opprettes av plattformteamet som GlobalNetworkPolicy. **Kun IP/CIDR** støttes (ikke L7/hostname-basert).
 - NFS egress (port 2049) er blokkert for alle tenanter
 
 **Viktig:** Tenanter i rød sone kan IKKE opprette egne NetworkPolicies — dette blokkeres av Kyverno.
-Kontakt plattformteamet for nettverksunntak.
+Kontakt plattformteamet i `#ext-fhi-skybert` med IP-ene du trenger å nå.
 
-> Kilde: https://docs.sky.fhi.no/internal/global-network-policies/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/e5bbc4b/infra/globalnetworkpolicies/base/policies-red/
+> Kilde: https://docs.sky.fhi.no/build/environments/ | https://docs.sky.fhi.no/internal/global-network-policies/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/adef9e78918862cd7fedfc2476242e286aadc992/infra/globalnetworkpolicies/base/policies-red/
 
 ## Service Mesh
 
@@ -59,4 +64,4 @@ CA-sertifikater lagres i `/etc/ssl/certs/` i containere. Du er ansvarlig for å 
 **Bruk trust-bundle:** Sett `SSL_CERT_FILE=/etc/ssl/certs/trust-bundle.pem` for å bruke den kuraterte listen av CAs i stedet for image-standarder.
 
 > Kilde: https://docs.sky.fhi.no/miscellaneous/publicCA/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml

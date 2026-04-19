@@ -1,0 +1,13 @@
+# Tving LF på alle tekstfiler — sikrer at `.claude/skills/` og `.codex/skills/`
+# forblir byte-identiske uavhengig av OS/editor.
+* text=auto eol=lf
+
+# Binærfiler — ikke rør
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
