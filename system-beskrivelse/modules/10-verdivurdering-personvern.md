@@ -164,6 +164,19 @@ Gjeldende DPIA-kriterier (kryss av det som gjelder):
 
 ---
 
+## Oppdater 01_funksjoner.md
+
+Etter at personvernvurderingen er ferdig, **oppdater GDPR-grunnlag-kolonnen i oversiktstabellen i `01_funksjoner.md`**
+slik at hver rad viser behandlingsgrunnlaget med lenke til riktig aktivitet i vurderingsfilen:
+
+```markdown
+| [art. 6(1)(e)](../03-vurderinger/03_verdivurdering-personvern.md#a1) |
+```
+
+Bruk anker som matcher aktivitetens overskrift i vurderingsfilen (`#a1`, `#a2` osv.).
+
+---
+
 ## Tips
 
 - **Behandlingsgrunnlaget må foreligge før behandlingen starter** — ikke i etterkant

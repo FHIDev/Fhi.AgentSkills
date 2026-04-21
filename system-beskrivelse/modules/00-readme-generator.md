@@ -56,7 +56,6 @@ Skriv filen `{systemnavn}/README.md` med denne strukturen:
 | Verdivurdering personvern | [03-vurderinger/03_verdivurdering-personvern.md](./03-vurderinger/03_verdivurdering-personvern.md) | | |
 | Verdivurdering automatiserte beslutninger | [03-vurderinger/03_verdivurdering-automatiserte-beslutninger.md](./03-vurderinger/03_verdivurdering-automatiserte-beslutninger.md) | | |
 | Trusselvurdering | [03-vurderinger/03_trusselvurdering.md](./03-vurderinger/03_trusselvurdering.md) | | |
-| Sårbarhetsvurdering | [03-vurderinger/03_sårbarhetsvurdering.md](./03-vurderinger/03_sårbarhetsvurdering.md) | | |
 
 ---
 

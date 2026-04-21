@@ -53,10 +53,13 @@ Skriv filen `{systemnavn}/01-funksjonell-beskrivelse/01_funksjoner.md` med denne
 
 ## Oversikt over behandlingsaktiviteter
 
-| Nr | Aktivitet | Formål | Data | Utføres av | 
-|----|-----------|--------|------|------------|
-| A1 | {navn} | {formål} | {informasjonsobjekt fra informasjonsmodellen} | {brukergruppe/automatisk} |
-| A2 | | | | |
+| Nr | Aktivitet | Formål | Data | Utføres av | KIT-nivå | GDPR-grunnlag |
+|----|-----------|--------|------|------------|----------|---------------|
+| A1 | {navn} | {formål} | {informasjonsobjekt fra informasjonsmodellen} | {brukergruppe/automatisk} | 🔲 | 🔲 |
+| A2 | | | | | 🔲 | 🔲 |
+
+> KIT-nivå fylles ut av `03_verdivurdering-kit.md` (modul 09).  
+> GDPR-grunnlag fylles ut av `03_verdivurdering-personvern.md` (modul 10).
 
 ---
 

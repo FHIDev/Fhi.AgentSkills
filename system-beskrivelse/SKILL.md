@@ -51,8 +51,7 @@ Vurderingsmodulene annoterer også 03-funksjoner.md med klassifiseringer (KIT-ni
     ├── 03_verdivurdering-kit.md                        ← NSM KIT per behandlingsaktivitet.
     ├── 03_verdivurdering-personvern.md                 ← GDPR/DPIA per behandlingsaktivitet.
     ├── 03_verdivurdering-automatiserte-beslutninger.md ← Art. 22-vurdering.
-    ├── 03_trusselvurdering.md                          ← Hvem kan angripe verdiene?
-    └── 03_sårbarhetsvurdering.md                       ← Svakheter, inkl. leverandøravhengigheter.
+    └── 03_trusselvurdering.md                          ← Hvem kan angripe verdiene?
 ```
 
 > `README.md` genereres sist i roten av `{systemnavn}/`.
@@ -67,7 +66,7 @@ Teknisk beskrivelse:        02_komponenter → 02_informasjonsmodell → 02_data
 
 Vurderinger (etter at beskrivelsen er på plass):
   03_verdivurdering-sikkerhetsgradering → 03_verdivurdering-kit → 03_verdivurdering-personvern
-  → 03_verdivurdering-automatiserte-beslutninger → 03_trusselvurdering → 03_sårbarhetsvurdering
+  → 03_verdivurdering-automatiserte-beslutninger → 03_trusselvurdering
 
 Vurderingsmodulene oppdaterer:
   - 03_verdivurdering-sikkerhetsgradering → 00_oversikt.md (Sikkerhetsgradering)
@@ -85,7 +84,7 @@ Vurderingsmodulene oppdaterer:
 | Implementasjon | Techlead / utvikler | 02_komponenter, 02_datamodell, 02_dataflyt |
 | Drift | Techlead / utvikler | 02_drift |
 | Vurdering | Sikkerhetsansvarlig | 03_verdivurdering-sikkerhetsgradering |
-| Vurdering | Techlead + sikkerhetsansvarlig | 03_verdivurdering-kit, 03_trusselvurdering, 03_sårbarhetsvurdering |
+| Vurdering | Techlead + sikkerhetsansvarlig | 03_verdivurdering-kit, 03_trusselvurdering |
 | Vurdering | Techlead + personvernombud | 03_verdivurdering-personvern, 03_verdivurdering-automatiserte-beslutninger |
 
 ---
@@ -125,4 +124,4 @@ Vurderingsmodulene oppdaterer:
 - **README genereres sist** — når alle ønskede moduler er ferdig
 - Spør alltid: *"Vil du fortsette med neste modul, eller er det noe her som skal justeres først?"*
 
-@~/.claude/skills/system-beskrivelse/shared/diagram-c4.md
+@./shared/diagram-c4.md
