@@ -1,0 +1,462 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: skybertapp.skybert.fhi.no
+spec:
+  compositeTypeRef:
+    apiVersion: skybert.fhi.no/v1alpha1
+    kind: SkybertApp
+  mode: Pipeline
+  pipeline:
+  - step: create-deployment
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{- $spec := .observed.composite.resource.spec }}
+          {{- $meta := .observed.composite.resource.metadata }}
+          {{- $name := $meta.name }}
+          {{- $namespace := $meta.namespace | default "default" }}
+          {{- $tenantSA := $namespace | trimPrefix "tn-" | printf "%s-azure" }}
+
+          ---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: {{ $name }}-deployment
+            namespace: {{ $namespace }}
+            labels:
+              skybert.fhi.no/webapp: {{ $name }}
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-deployment
+              gotemplating.fn.crossplane.io/ready: "True"
+          spec:
+            replicas: {{ $spec.replicas | default 1 }}
+            selector:
+              matchLabels:
+                skybert.fhi.no/webapp: {{ $name }}
+            template:
+              metadata:
+                labels:
+                  skybert.fhi.no/webapp: {{ $name }}
+                  azure.workload.identity/use: "true"
+              spec:
+                serviceAccountName: {{ $tenantSA }}
+                containers:
+                - name: {{ $name }}-main
+                  image: {{ $spec.image.repository }}:{{ $spec.image.tag }}
+                  ports:
+                  - containerPort: {{ $spec.port | default 8080 }}
+                  {{- if $spec.command }}
+                  command:
+                  {{- range $spec.command }}
+                  - {{ . | quote }}
+                  {{- end }}
+                  {{- end }}
+
+                  envFrom:
+                  {{- if $spec.config }}
+                  - configMapRef:
+                      name: {{ $name }}-config
+                  {{- end }}
+                  {{- range $i, $secret := $spec.secrets }}
+                  {{- if $secret.mountAsEnv }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  - secretRef:
+                      name: {{ $secretName }}
+                  {{- end }}
+                  {{- end }}
+
+                  volumeMounts:
+                  {{- if $spec.config }}
+                  - name: {{ $name }}-config
+                    mountPath: /config
+                  {{- end }}
+                  {{- range $i, $secret := $spec.secrets }}
+                  {{- if ne $secret.mountAsFiles false }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  {{- $mountPath := $secret.mountPath | default (printf "/secrets/%s" $secretName) }}
+                  - name: {{ $secretName }}-vol
+                    mountPath: {{ $mountPath }}
+                  {{- end }}
+                  {{- end }}
+                  {{- range $i, $dir := $spec.writableDirs }}
+                  - name: main-writable-{{ $i }}
+                    mountPath: {{ $dir }}
+                  {{- end }}
+                  
+                  resources:
+                    requests:
+                      cpu: {{ ($spec.resources).cpu | default "150m" }}
+                      memory: {{ ($spec.resources).memory | default "256Mi" }}
+                    limits:
+                      memory: {{ ($spec.resources).memory | default "256Mi" }}
+                  
+                  securityContext:
+                    capabilities:
+                      drop:
+                      - ALL
+                    {{- if $spec.readOnlyRootFilesystem }}
+                    readOnlyRootFilesystem: true
+                    {{- end }}
+
+                {{- if $spec.initContainers }}
+                initContainers:
+                {{- range $spec.initContainers }}
+                - name: {{ .name }}
+                  image: {{ .image.repository }}:{{ .image.tag }}
+                  {{- if .command }}
+                  command:
+                  {{- range .command }}
+                  - {{ . | quote }}
+                  {{- end }}
+                  {{- end }}
+
+                  envFrom:
+                  {{- if $spec.config }}
+                  - configMapRef:
+                      name: {{ $name }}-config
+                  {{- end }}
+                  {{- range $i, $secret := $spec.secrets }}
+                  {{- if $secret.mountAsEnv }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  - secretRef:
+                      name: {{ $secretName }}
+                  {{- end }}
+                  {{- end }}
+
+                  volumeMounts:
+                  {{- if $spec.config }}
+                  - name: {{ $name }}-config
+                    mountPath: /config
+                  {{- end }}
+                  {{- range $i, $secret := $spec.secrets }}
+                  {{- if ne $secret.mountAsFiles false }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  {{- $mountPath := $secret.mountPath | default (printf "/secrets/%s" $secretName) }}
+                  - name: {{ $secretName }}-vol
+                    mountPath: {{ $mountPath }}
+                  {{- end }}
+                  {{- end }}
+                  {{- $containerName := .name }}
+                  {{- range $i, $dir := .writableDirs }}
+                  - name: init-{{ $containerName }}-writable-{{ $i }}
+                    mountPath: {{ $dir }}
+                  {{- end }}
+
+                  resources:
+                    requests:
+                      cpu: {{ (.resources).cpu | default "150m" }}
+                      memory: {{ (.resources).memory | default "256Mi" }}
+                    limits:
+                      memory: {{ (.resources).memory | default "256Mi" }}
+                  
+                  securityContext:
+                    capabilities:
+                      drop:
+                      - ALL
+                    {{- if .readOnlyRootFilesystem }}
+                    readOnlyRootFilesystem: true
+                    {{- end }}
+                {{- end }}
+                {{- end }}
+
+                {{- if $spec.sidecarContainers }}
+                {{- range $spec.sidecarContainers }}
+                - name: {{ .name }}
+                  image: {{ .image.repository }}:{{ .image.tag }}
+                  restartPolicy: Always
+                  {{- if .command }}
+                  command:
+                  {{- range .command }}
+                  - {{ . | quote }}
+                  {{- end }}
+                  {{- end }}
+
+                  envFrom:
+                  {{- if $spec.config }}
+                  - configMapRef:
+                      name: {{ $name }}-config
+                  {{- end }}
+                  {{- range $i, $secret := $spec.secrets }}
+                  {{- if $secret.mountAsEnv }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  - secretRef:
+                      name: {{ $secretName }}
+                  {{- end }}
+                  {{- end }}
+
+                  volumeMounts:
+                  {{- if $spec.config }}
+                  - name: {{ $name }}-config
+                    mountPath: /config
+                  {{- end }}
+                  {{- range $i, $secret := $spec.secrets }}
+                  {{- if ne $secret.mountAsFiles false }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  {{- $mountPath := $secret.mountPath | default (printf "/secrets/%s" $secretName) }}
+                  - name: {{ $secretName }}-vol
+                    mountPath: {{ $mountPath }}
+                  {{- end }}
+                  {{- end }}
+                  {{- $containerName := .name }}
+                  {{- range $i, $dir := .writableDirs }}
+                  - name: sidecar-{{ $containerName }}-writable-{{ $i }}
+                    mountPath: {{ $dir }}
+                  {{- end }}
+
+                  resources:
+                    requests:
+                      cpu: {{ (.resources).cpu | default "150m" }}
+                      memory: {{ (.resources).memory | default "256Mi" }}
+                    limits:
+                      memory: {{ (.resources).memory | default "256Mi" }}
+                  
+                  securityContext:
+                    capabilities:
+                      drop:
+                      - ALL
+                    {{- if .readOnlyRootFilesystem }}
+                    readOnlyRootFilesystem: true
+                    {{- end }}
+                {{- end }}
+                {{- end }}
+
+                volumes:
+                {{- if $spec.config }}
+                - name: {{ $name }}-config
+                  configMap:
+                    name: {{ $name }}-config
+                {{- end }}
+                {{- range $i, $secret := $spec.secrets }}
+                {{- if ne $secret.mountAsFiles false }}
+                {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                - name: {{ $secretName }}-vol
+                  secret:
+                    secretName: {{ $secretName }}
+                {{- end }}
+                {{- end }}
+                {{- range $i, $dir := $spec.writableDirs }}
+                - name: main-writable-{{ $i }}
+                  emptyDir: {}
+                {{- end }}
+                {{- range $spec.initContainers }}
+                {{- $containerName := .name }}
+                {{- range $i, $dir := .writableDirs }}
+                - name: init-{{ $containerName }}-writable-{{ $i }}
+                  emptyDir: {}
+                {{- end }}
+                {{- end }}
+                {{- range $spec.sidecarContainers }}
+                {{- $containerName := .name }}
+                {{- range $i, $dir := .writableDirs }}
+                - name: sidecar-{{ $containerName }}-writable-{{ $i }}
+                  emptyDir: {}
+                {{- end }}
+                {{- end }}
+                
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                  fsGroup: 1000
+                  seccompProfile:
+                    type: RuntimeDefault
+
+          {{- if $spec.config }}
+          ---
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: {{ $name }}-config
+            namespace: {{ $namespace }}
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-config
+              gotemplating.fn.crossplane.io/ready: "True"
+          data:
+            {{- range $key, $value := $spec.config }}
+            {{ $key }}: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+
+          {{- if $spec.hostname }}
+          {{- $hostname := $spec.hostname }}
+          {{- $issuer := "" }}
+          {{- if contains "skytest.fhi.no" $hostname }}
+          {{- $issuer = "skytest-fhi-letsencrypt-azuredns-issuer" }}
+          {{- else if contains "fhi-k8s.com" $hostname }}
+          {{- $issuer = "fhi-k8s-letsencrypt-azuredns-issuer" }}
+          {{- else if contains "sky.fhi.no" $hostname }}
+          {{- $issuer = "sky-fhi-letsencrypt-azuredns-issuer" }}
+          {{- else }}
+          {{- fail (printf "No matching issuer found for hostname %s" $hostname) }}
+          {{- end }}
+          ---
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: {{ $name }}-ingress
+            namespace: {{ $namespace }}
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-ingress
+              gotemplating.fn.crossplane.io/ready: "True"
+              cert-manager.io/cluster-issuer: {{ $issuer }}
+              nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+              nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          spec:
+            ingressClassName: nginx
+            rules:
+            - host: {{ $hostname }}
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: {{ $name }}-svc
+                      port:
+                        number: {{ $spec.port | default 8080 }}
+            tls:
+            - hosts:
+              - {{ $hostname }}
+              secretName: {{ $name }}-tls
+
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: {{ $name }}-svc
+            namespace: {{ $namespace }}
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-svc
+              gotemplating.fn.crossplane.io/ready: "True"
+          spec:
+            selector:
+              skybert.fhi.no/webapp: {{ $name }}
+            ports:
+            - port: {{ $spec.port | default 8080 }}
+              targetPort: {{ $spec.port | default 8080 }}
+            type: ClusterIP
+          {{- end }}
+
+          {{- if $spec.autoscaling }}
+          ---
+          apiVersion: autoscaling/v2
+          kind: HorizontalPodAutoscaler
+          metadata:
+            name: {{ $name }}-hpa
+            namespace: {{ $namespace }}
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-hpa
+              gotemplating.fn.crossplane.io/ready: "True"
+          spec:
+            scaleTargetRef:
+              apiVersion: apps/v1
+              kind: Deployment
+              name: {{ $name }}-deployment
+            minReplicas: {{ $spec.autoscaling.minReplicas | default 1 }}
+            maxReplicas: {{ $spec.autoscaling.maxReplicas | default 5 }}
+            metrics:
+            - type: Resource
+              resource:
+                name: cpu
+                target:
+                  type: Utilization
+                  averageUtilization: {{ $spec.autoscaling.targetCPU | default 80 }}
+            - type: Resource
+              resource:
+                name: memory
+                target:
+                  type: Utilization
+                  averageUtilization: {{ $spec.autoscaling.targetMemory | default 80 }}
+          {{- end }}
+
+          {{- /* Collect unique vaults into a dict */ -}}
+          {{- $vaults := dict }}
+          {{- range $spec.secrets }}
+          {{- $vaultLower := .vault | lower }}
+          {{- $_ := set $vaults $vaultLower .vault }}
+          {{- end }}
+
+          {{- /* Create one SecretStore per unique vault */ -}}
+          {{- range $vaultKey, $vaultName := $vaults }}
+          ---
+          apiVersion: external-secrets.io/v1
+          kind: SecretStore
+          metadata:
+            name: {{ $vaultKey }}-{{ $name }}
+            namespace: {{ $namespace }}
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $vaultKey }}-secretstore
+              gotemplating.fn.crossplane.io/ready: "True"
+          spec:
+            provider:
+              azurekv:
+                authType: WorkloadIdentity
+                vaultUrl: "https://{{ $vaultName }}.vault.azure.net"
+                serviceAccountRef:
+                  name: {{ $tenantSA }}
+                  namespace: {{ $namespace }}
+          {{- end }}
+
+          {{- /* Create ExternalSecrets, referencing the shared SecretStore */ -}}
+          {{- range $i, $secret := $spec.secrets }}
+          {{- $vaultLower := $secret.vault | lower }}
+          {{- $secretName := $secret.name | default (printf "%s-secret-%d" $vaultLower $i) }}
+          ---
+          apiVersion: external-secrets.io/v1
+          kind: ExternalSecret
+          metadata:
+            name: {{ $vaultLower }}-es-{{ $i }}
+            namespace: {{ $namespace }}
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $vaultLower }}-es-{{ $i }}
+              gotemplating.fn.crossplane.io/ready: "True"
+          spec:
+            secretStoreRef:
+              name: {{ $vaultLower }}-{{ $name }}
+              kind: SecretStore
+            refreshInterval: "10m"
+            target:
+              name: {{ $secretName }}
+              creationPolicy: Owner
+              template:
+                type: {{ $secret.secretType | default "Opaque" }}
+                {{- if or $secret.labels $secret.annotations }}
+                metadata:
+                  {{- if $secret.labels }}
+                  labels:
+                    {{- range $key, $val := $secret.labels }}
+                    {{ $key }}: {{ $val | quote }}
+                    {{- end }}
+                  {{- end }}
+                  {{- if $secret.annotations }}
+                  annotations:
+                    {{- range $key, $val := $secret.annotations }}
+                    {{ $key }}: {{ $val | quote }}
+                    {{- end }}
+                  {{- end }}
+                {{- end }}
+            data:
+            {{- range $secret.keys }}
+            - secretKey: {{ .local | default .remote }}
+              remoteRef:
+                key: {{ .remote }}
+                {{- if .property }}
+                property: {{ .property }}
+                {{- end }}
+            {{- end }}
+          {{- end }}
+          
+  - step: auto-ready
+    functionRef:
+      name: crossplane-contrib-function-auto-ready
+    input:
+      apiVersion: autoready.fn.crossplane.io/v1beta1
+      kind: Input
+      spec:
+        debug: true

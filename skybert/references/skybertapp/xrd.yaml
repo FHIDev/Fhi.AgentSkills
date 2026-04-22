@@ -1,0 +1,308 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: skybertapps.skybert.fhi.no
+spec:
+  scope: Namespaced
+  group: skybert.fhi.no
+  names:
+    kind: SkybertApp
+    plural: skybertapps
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            description: Specification for a Skybert application deployment.
+            properties:
+
+              # ============================================
+              # MAIN CONTAINER
+              # ============================================
+              image:
+                type: object
+                properties:
+                  repository:
+                    description: The repository of the container image.
+                    type: string
+                  tag:
+                    description: The tag of the container image.
+                    type: string
+                required:
+                - repository
+                - tag
+
+              port:
+                description: The port the application listens on.
+                type: integer
+                default: 8080
+
+              command:
+                description: Override the container's default command.
+                type: array
+                items:
+                  type: string
+
+              resources:
+                description: Resource requests and limits for the main container.
+                type: object
+                properties:
+                  cpu:
+                    description: CPU request (and limit is not set for CPU).
+                    type: string
+                    default: "150m"
+                  memory:
+                    description: Memory request and limit.
+                    type: string
+                    default: "256Mi"
+
+              readOnlyRootFilesystem:
+                description: Mount root filesystem as read-only for security.
+                type: boolean
+                default: false
+              writableDirs:
+                description: |
+                  Directories to mount as writable emptyDir volumes.
+                  Useful when readOnlyRootFilesystem is enabled.
+                type: array
+                items:
+                  type: string
+
+              # ============================================
+              # SCALING
+              # ============================================
+              replicas:
+                description: Number of pod replicas (ignored if autoscaling is enabled).
+                type: integer
+                default: 1
+
+              autoscaling:
+                description: |
+                  Enable horizontal pod autoscaling. When specified, the replicas 
+                  field is used as initial count but scaling is managed by HPA.
+                type: object
+                properties:
+                  minReplicas:
+                    description: Minimum number of replicas.
+                    type: integer
+                    default: 1
+                  maxReplicas:
+                    description: Maximum number of replicas.
+                    type: integer
+                    default: 5
+                  targetCPU:
+                    description: Target CPU utilization percentage.
+                    type: integer
+                    default: 80
+                  targetMemory:
+                    description: Target memory utilization percentage.
+                    type: integer
+                    default: 80
+
+              # ============================================
+              # NETWORKING
+              # ============================================
+              hostname:
+                description: |
+                  Hostname to expose via ingress (e.g., "myapp.skytest.fhi.no").
+                  Specifying a hostname enables ingress with automatic TLS.
+                  Supported domains in test: skytest.fhi.no, fhi-k8s.com
+                  In production: sky.fhi.no
+                type: string
+                default: ""
+
+              # ============================================
+              # CONFIGURATION
+              # ============================================
+              config:
+                description: |
+                  Environment variables and config files for all containers.
+                  These are mounted as files at /config and injected as env vars.
+                type: object
+                additionalProperties:
+                  type: string
+                x-kubernetes-preserve-unknown-fields: true
+
+              # ============================================
+              # SECRETS (unified - define once, use everywhere)
+              # ============================================
+              secrets:
+                description: |
+                  Secrets from Azure Key Vault. Define each secret source once 
+                  and configure how it should be exposed to containers.
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      description: |
+                        Name for the Kubernetes secret. If omitted, auto-generated 
+                        from vault name.
+                      type: string
+                    vault:
+                      description: Name of the Azure Key Vault.
+                      type: string
+                    keys:
+                      description: Secret keys to fetch from the vault.
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          remote:
+                            description: Key name in Azure Key Vault.
+                            type: string
+                          local:
+                            description: |
+                              Key name in the Kubernetes secret. 
+                              Defaults to the remote key name.
+                            type: string
+                          property:
+                            description: JSON property to extract (for JSON secrets).
+                            type: string
+                        required:
+                        - remote
+
+                    # How to expose the secret
+                    mountAsEnv:
+                      description: Inject secret keys as environment variables.
+                      type: boolean
+                      default: false
+                    mountAsFiles:
+                      description: Mount secret as files.
+                      type: boolean
+                      default: true
+                    mountPath:
+                      description: |
+                        Path to mount secret files. If omitted, auto-generated to "/secrets/<secretName>".
+                      type: string
+
+                    # Advanced options
+                    secretType:
+                      description: |
+                        Kubernetes secret type (e.g., "Opaque", 
+                        "kubernetes.io/tls").
+                      type: string
+                      default: "Opaque"
+                    labels:
+                      description: Additional labels for the Kubernetes secret.
+                      type: object
+                      additionalProperties:
+                        type: string
+                    annotations:
+                      description: Additional annotations for the Kubernetes secret.
+                      type: object
+                      additionalProperties:
+                        type: string
+
+                  required:
+                  - vault
+                  - keys
+
+              # ============================================
+              # ADDITIONAL CONTAINERS
+              # ============================================
+              initContainers:
+                description: Init containers that run before the main container.
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      description: Name of the init container.
+                      type: string
+                    image:
+                      type: object
+                      properties:
+                        repository:
+                          description: The repository of the container image.
+                          type: string
+                        tag:
+                          description: The tag of the container image.
+                          type: string
+                      required:
+                      - repository
+                      - tag
+                    command:
+                      description: Command to run.
+                      type: array
+                      items:
+                        type: string
+                    resources:
+                      type: object
+                      properties:
+                        cpu:
+                          type: string
+                          default: "150m"
+                        memory:
+                          type: string
+                          default: "256Mi"
+                    readOnlyRootFilesystem:
+                      type: boolean
+                      default: false
+                    writableDirs:
+                      description: |
+                        Directories to mount as writable emptyDir volumes.
+                        Useful when readOnlyRootFilesystem is enabled.
+                      type: array
+                      items:
+                        type: string
+                  required:
+                  - name
+                  - image
+
+              sidecarContainers:
+                description: Sidecar containers that run alongside the main container.
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      description: Name of the sidecar container.
+                      type: string
+                    image:
+                      type: object
+                      properties:
+                        repository:
+                          description: The repository of the container image.
+                          type: string
+                        tag:
+                          description: The tag of the container image.
+                          type: string
+                      required:
+                      - repository
+                      - tag
+                    command:
+                      description: Command to run.
+                      type: array
+                      items:
+                        type: string
+                    resources:
+                      type: object
+                      properties:
+                        cpu:
+                          type: string
+                          default: "150m"
+                        memory:
+                          type: string
+                          default: "256Mi"
+                    readOnlyRootFilesystem:
+                      type: boolean
+                      default: false
+                    writableDirs:
+                      description: |
+                        Directories to mount as writable emptyDir volumes.
+                        Useful when readOnlyRootFilesystem is enabled.
+                      type: array
+                      items:
+                        type: string
+                  required:
+                  - name
+                  - image
+
+            required:
+            - image

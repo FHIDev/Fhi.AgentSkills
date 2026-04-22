@@ -1,0 +1,23 @@
+# Crossplane Functions used by the SkybertApp composition, rewritten to
+# point at the public upstream xpkg registry instead of the private ACR
+# mirror (crfhiskybert.azurecr.io/mirror/...). This lets `crossplane render`
+# run locally without `az acr login`.
+#
+# The in-cluster equivalent lives at:
+#   Fhi.Skybert.Infra:infra/crossplane/base/functions.yaml
+# and uses the ACR mirror for air-gap / supply-chain reasons.
+#
+# Keep the versions in sync with the in-cluster file.
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: crossplane-contrib-function-go-templating
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/function-go-templating:v0.11.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: crossplane-contrib-function-auto-ready
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/function-auto-ready:v0.5.0
