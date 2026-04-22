@@ -6,7 +6,7 @@
 2. kubectl installert (`winget install kubectl` på Windows)
 3. Tilgangspakke via myaccess.microsoft.com (f.eks. `FHI - Skybert - <Tenant>-Test-Yellow`)
 4. Innlogget med `az login`
-5. For produksjon: PIM elevation må fullføres først
+5. For prod og foreløpig red-test (`aks-red-test-01`): PIM elevation må fullføres først
 
 > **Viktig:** Kjør `az logout && az login` etter at tilgang er innvilget, for å oppdatere token.
 
@@ -37,7 +37,19 @@ kubectl get pods -n tn-<tenant>
 
 ## Tilgjengelige klustere
 
-> **Per mars 2026.** Se offisiell docs for oppdaterte verdier: https://docs.sky.fhi.no/get-started/connectedk8s/
+> **Sist oppdatert 2026-04-17.** Se offisiell docs for løpende oppdaterte verdier: https://docs.sky.fhi.no/get-started/connectedk8s/
+>
+> Infra-repoets `scripts/lib/clusters.sh` er autoritativt metadataregister (navn, resource group, subscription ID). Ved tvil, slå opp der.
+>
+> Kilde (autoritativ kluster-liste): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/scripts/lib/clusters.sh
+
+### Sandbox
+
+| Kluster | Resource Group | Subscription ID |
+|---------|---------------|----------------|
+| aks-sandbox-01 | `rg-fhi-aks-sandbox-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+
+`aks-sandbox-01` er felles for alle fargesoner og kjører grønn sone-policyer.
 
 ### Test
 
@@ -45,8 +57,9 @@ kubectl get pods -n tn-<tenant>
 |---------|---------------|----------------|
 | aks-green-test-01 | `rg-fhi-aks-green-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-yellow-test-01 | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-yellow-test-02 [¹] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-red-test-01 | `rg-fhi-aks-red-test-weu-01` | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
-| aks-sandbox-01 | `rg-fhi-aks-sandbox-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-ops-test-01 [²] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 
 ### Produksjon
 
@@ -55,6 +68,27 @@ kubectl get pods -n tn-<tenant>
 | aks-green-prod-02 | `rg-fhi-aks-green-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
 | aks-yellow-prod-01 | `rg-fhi-aks-yellow-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
 | aks-red-prod-01 | `rg-fhi-aks-red-prod-weu-01` | `88fde73a-d4a6-4aab-b8be-31810fcd7116` |
+| aks-norsyss-prod-01 [¹] | `rg-fhi-aks-norsyss-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
+
+[¹] `aks-yellow-test-02` og `aks-norsyss-prod-01` er registrert i `scripts/lib/clusters.sh`, men ikke del av en standard fargegruppe.
+
+[²] `aks-ops-test-01` brukes bl.a. for plattformpilotering (historisk Flux Operator-pilot).
+
+### PIM (Privileged Identity Management)
+
+PIM-elevation kreves for:
+
+- Alle **produksjonsklustere**.
+- **Rød sone test** (`aks-red-test-01`) — foreløpig.
+
+PIM aktiveres via Azure Portal → **Privileged Identity Management** → **My Roles** ([direktelenke](https://portal.azure.com/#blade/Microsoft_Azure_PIMCommon/CommonMenuBlade)). Etter aktivering må tokenet oppdateres:
+
+```powershell
+az logout
+az login
+```
+
+> Kilde: https://docs.sky.fhi.no/miscellaneous/PIM/
 
 ### Proxy-eksempler per sone
 

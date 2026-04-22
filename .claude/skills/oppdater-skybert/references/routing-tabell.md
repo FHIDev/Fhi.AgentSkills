@@ -13,13 +13,14 @@
 | `docs/explanations/blaloypa.md` | `SKILL.md` |
 | `docs/get-started/blaloypa.md` | `SKILL.md` |
 | `docs/get-started/connectedk8s.md` | `references/kubectl-access.md` |
-| `docs/get-started/kubernetes-yaml.md` | `references/configuration.md` |
+| `docs/get-started/gitops-repo.md` | `SKILL.md`, `references/workflows.md` |
 | `docs/get-started/prerequisites/*.md` | `SKILL.md` |
-| `docs/get-started/explanations/access-packages.md` | `SKILL.md` |
-| `docs/get-started/explanations/PIM.md` | `references/kubectl-access.md` |
+| `docs/workloads/index.md` | `references/configuration.md`, `references/skybertapp-crd.md` |
 | `docs/workloads/skybertapp/index.md` | `references/skybertapp-crd.md` |
 | `docs/workloads/skybertapp/references/skybertapp.md` | `references/skybertapp-crd.md` |
 | `docs/workloads/jobs.md` | `references/configuration.md` |
+| `docs/build/index.md` | `SKILL.md`, `references/workflows.md` |
+| `docs/build/environments.md` | `SKILL.md`, `references/hostnames-and-networking.md` |
 | `docs/build/explanations/gitops.md` | `references/workflows.md` |
 | `docs/build/how-to/trigger-gitops-promotion.md` | `references/workflows.md` |
 | `docs/auth/index.md` | `references/security.md` |
@@ -28,10 +29,19 @@
 | `docs/observability/**/*.md` | `references/observability.md` |
 | `docs/miscellaneous/vault_secrets.md` | `references/secrets.md` |
 | `docs/miscellaneous/publicCA.md` | `references/security.md` |
+| `docs/miscellaneous/access-packages.md` | `SKILL.md` |
+| `docs/miscellaneous/PIM.md` | `references/kubectl-access.md` |
 | `docs/legal/*.md` | `SKILL.md` (kort omtale) |
-| `docs/internal/flux.md` | `references/platform-architecture.md` |
+| `docs/troubleshooting/non-root.md` | `references/troubleshooting.md` |
+| `docs/internal/flux.md` | `references/platform-architecture.md` (NB: kan motsi infra-repo — markeres som kildekonflikt) |
 | `docs/internal/service-mesh.md` | `references/hostnames-and-networking.md` |
 | `docs/internal/global-network-policies.md` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
+| `docs/internal/sk8-cli.md` | VURDER — plattformintern, ikke auto-route |
+| `docs/internal/helm-and-crds.md` | VURDER — plattformintern, ikke auto-route |
+| `docs/internal/managing-clusters.md` | VURDER — plattformintern, ikke auto-route |
+| `docs/internal/component-versions.md` | VURDER — versjonsmatrise, endres hyppig; vurder lenking framfor kopiering |
+| `docs/internal/decisions/gatewayapi.md` | VURDER — ADR, historisk beslutning; auto-route hvis implementert i `docs/build/` e.l. |
+| `docs/miscellaneous/fhi-felles-cryptography.md` | VURDER — målgruppe (tenant-utviklere vs. plattform) må avklares |
 
 ### Infra-repo
 
