@@ -56,6 +56,22 @@ kubectl get pods -n tn-<tenant>
 | aks-yellow-prod-01 | `rg-fhi-aks-yellow-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
 | aks-red-prod-01 | `rg-fhi-aks-red-prod-weu-01` | `88fde73a-d4a6-4aab-b8be-31810fcd7116` |
 
+### OIDC issuer URL-er
+
+Trengs ved opprettelse av federated credentials på managed identities (workload identity-binding mot K8s service accounts). Format: `https://europe.oic.prod-arc.azure.com/{tenantId}/{oidcIssuerId}/`. Andre GUID er per-kluster issuer-ID som Azure genererer når `--enable-oidc-issuer` er satt på AKS. Hent live med `az aks show -g <rg> -n <kluster> --query oidcIssuerProfile.issuerUrl -o tsv`.
+
+| Kluster | OIDC issuer URL |
+|---------|-----------------|
+| aks-sandbox-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/9c52953b-7fa5-4f1f-a60d-13bc5864b3ae/` |
+| aks-green-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/8eae23c5-dedf-4812-9c32-9de1adbb67c9/` |
+| aks-yellow-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/5218cffc-5c13-4b12-8edc-0d76cba4c9a3/` |
+| aks-red-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/30e79bc7-b120-4a86-8b94-07d875ccface/` |
+| aks-green-prod-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/2776d74b-e71f-41e5-b56e-4db0abc67cd3/` |
+| aks-yellow-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/3ba54ddb-2c2c-4bf5-81d0-e2f419b5f466/` |
+| aks-red-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/94639478-26a0-487a-926e-0dca36bce049/` |
+
+> Kilde: `Fhi.Skybert.Infra/scripts/lib/clusters.sh`
+
 ### Proxy-eksempler per sone
 
 **Sandbox:**
