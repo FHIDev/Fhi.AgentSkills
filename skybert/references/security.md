@@ -5,7 +5,7 @@
 ### Oppsett i applikasjon
 
 Skybert leverer ferdig service account per tenant: `<tenant>-azure`, knyttet til managed
-identity `<tenant>-skybert-sa-<env>`.
+identity `tn-<tenant>-skybert-sa-<env>` (verifisert mot Azure 2026-04-17).
 Manuell opprettelse eller annotering av service account er ikke nødvendig.
 
 **For SkybertApp:**
@@ -49,7 +49,7 @@ Du trenger ikke sette disse manuelt — webhooken gjør det for deg.
 
 ### Tilgang til Azure-ressurser
 
-Managed Identity `<tenant>-skybert-sa-<env>` har tilganger satt opp av plattformteamet.
+Managed Identity `tn-<tenant>-skybert-sa-<env>` har tilganger satt opp av plattformteamet.
 
 Typiske bruksområder:
 - Azure Storage
@@ -58,12 +58,18 @@ Typiske bruksområder:
 - Azure Service Bus
 
 ### Managed Identities (leveres av plattformteamet)
-Skybert leverer 3 managed identities per tenant:
-1. **ACR-push identity**: For GitHub Actions å pushe images til ACR
-2. **Test SA identity**: Knyttet til `<tenant>-azure` service account i test
-3. **Prod SA identity**: Knyttet til `<tenant>-azure` service account i prod
 
-Identitetene er per miljø (`<tenant>-skybert-sa-<env>`) slik at du kan gi minimale Azure RBAC-tilganger per miljø (least-privilege). Client ID-ene for SA-identities er synlige på Kubernetes service accounts.
+Skybert leverer to typer managed identities per tenant:
+
+- **ACR-push identity** — brukes av GitHub Actions-workflows for å pushe images til ACR. Én per tenant.
+- **Workload Identities per miljø** — én per miljø (`sandbox`, `test`, `prod`) etter mønsteret `tn-<tenant>-skybert-sa-<env>`. Disse kobles mot Kubernetes service account `<tenant>-azure` i det respektive miljø-klusteret via OIDC federation, slik at applikasjonen får passordløs tilgang til Azure-ressurser.
+
+Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per miljø (least-privilege). Client ID-ene for workload identities er synlige på Kubernetes service accounts som annotasjoner.
+
+> **Navnekonvensjon (verifisert mot Azure 2026-04-17):** `tn-`-prefikset er faktisk i bruk — eksempel: `tn-grossiststatistikken-skybert-sa-test`. Merk at offisielle docs (`docs/auth/workload-identity.md`) viser mønsteret uten prefiks (`<tenant>-skybert-sa-<env>`); dette er etterslep i docs. Autoritativ kilde for navnet er infra-scriptet `scripts/tenant--add--to-cluster.sh` samt faktisk Azure-state (oppslag via `az ad sp show --id <client-id>` på annotasjonen `azure.workload.identity/client-id`).
+
+> Kilde (script, autoritativ): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/scripts/tenant--add--to-cluster.sh
+> Kilde (docs, etterslep): https://docs.sky.fhi.no/auth/workload-identity/
 
 ## Obligatorisk sikkerhetskonfigurasjon
 

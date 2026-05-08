@@ -6,20 +6,20 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 schema_version=2
 docs_repo=FHISkybert/Fhi.Skybert.Docs
 docs_branch=main
-docs_commit=05b8ec310efa4d0159d47696506135e11ccf5417
-docs_commit_date=2026-03-20
+docs_commit=e7f41eca2e5ec7ba1818075e8e314839f8ebaff9
+docs_commit_date=2026-04-15
 infra_repo=FHISkybert/Fhi.Skybert.Infra
 infra_branch=main
-infra_commit=6a94bd896a89599f7a257e15106ea8a5b6ef749b
-infra_commit_date=2026-03-31
-last_fullscan_date=2026-03-08
+infra_commit=adef9e78918862cd7fedfc2476242e286aadc992
+infra_commit_date=2026-04-17
+last_fullscan_date=2026-04-17
 -->
 
 # Skybert Platform Skill
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-04-06
+> **Sist verifisert mot offisiell docs:** 2026-04-17
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -64,13 +64,24 @@ En **Tenant** er den grunnleggende organisasjonsenheten i Skybert - et mellomniv
 3. Flux i klusteret oppdager endringer og applyer til klusteret
 
 ### Miljøer
-- `test/` - Testmiljø (standard, alltid til stede)
-- `prod/` - Produksjonsmiljø (legges til når klar)
-- `sandbox/` - Sandkassemiljø på `aks-sandbox-01` for utvikling/testing (kjører grønn sone-policyer)
 
-Hvert miljø er en toppnivå-mappe med egne manifester/verdier. Mappene pakkes som separate OCI-artifacts (`gitops_test`, `gitops_sandbox`, `gitops_prod`) og deployes til sine respektive klustere.
+Nye tenants leveres med alle tre miljømappene fra start:
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/tenant-repositories/aks-sandbox-01/kustomization.yaml
+- `sandbox/` — Sandkassemiljø på `aks-sandbox-01` (felles kluster for alle fargesoner, kjører grønn sone-policyer)
+- `test/` — Testmiljø (skal oppføre seg som prod innen samme fargesone — samme policyer og nettverksregler)
+- `prod/` — Produksjonsmiljø
+
+Hvert miljø er en toppnivå-mappe med egne manifester/verdier. Mappene pakkes som separate OCI-artifacts (`gitops_sandbox`, `gitops_test`, `gitops_prod`) og deployes til sine respektive klustere.
+
+**Miljø- og sonepresiseringer (per 2026-04-17):**
+
+- Gul sone har foreløpig **åpen egress** uten IP/CIDR-whitelist.
+- Rød sone krever **IP/CIDR-baserte egress-unntak** (GlobalNetworkPolicy, opprettet av plattformteamet) og er kun nåbar fra **secure zone** på ingress-siden.
+- Test og prod innen samme farge deler policy-sett — test er ikke en svakere variant.
+
+> Kilde: https://docs.sky.fhi.no/build/environments/
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/tenant-repositories/aks-sandbox-01/kustomization.yaml
 
 **Namespace er identisk i alle miljøer.** Namespace-navnet (`tn-<tenant>`) er det samme på tvers av alle miljøer (test, sandbox, prod) — det er klusteret du kobler til som bestemmer miljøet, ikke namespace-navnet.
 
@@ -88,7 +99,7 @@ Sandbox (`aks-sandbox-01`) er et unntak — ett felles kluster delt av alle farg
 
 **Grønn og gul sone** bruker identisk policy-sett (Kyverno `policies-green`): Pod Security Standards, Flux-relatert image/source-signaturverifisering, ressurskrav, og standard nettverkspolicyer. Tenanter kan opprette egne `NetworkPolicy`-ressurser.
 
-> Kilde (policy-sett): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/kyverno-policies/base/policies-green/
+> Kilde (policy-sett): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/adef9e78918862cd7fedfc2476242e286aadc992/infra/kyverno-policies/base/policies-green/
 
 **Rød sone** har en fundamentalt annerledes sikkerhetsmodell:
 - **Default DENY** — all nettverkstrafikk blokkert som utgangspunkt
@@ -97,11 +108,11 @@ Sandbox (`aks-sandbox-01`) er et unntak — ett felles kluster delt av alle farg
 - Tenanter kan **ikke** opprette egne `NetworkPolicy`-ressurser (blokkeres av Kyverno)
 - NFS egress (port 2049) er blokkert for alle soner
 
-> Kilde (rød sone-policyer): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/kyverno-policies/base/policies-red/
+> Kilde (rød sone-policyer): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/adef9e78918862cd7fedfc2476242e286aadc992/infra/kyverno-policies/base/policies-red/
 
 Se [kubectl-access](references/kubectl-access.md) for fullstendig kluster-liste med subscription-ID-er og proxy-kommandoer.
 
-> Kilde (kluster-mapping): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/scripts/tenant--new.sh
+> Kilde (kluster-mapping): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/scripts/tenant--new.sh
 
 ### Blåløypa (Golden Path)
 
@@ -125,7 +136,7 @@ Blåløypa er den anbefalte veien for å komme i gang på Skybert.
 - GitHub-organisasjon: FHIDev
 - Azure-tilganger fra plattformteamet
 - Tilgangspakke via MyAccess-portalen (myaccess.microsoft.com)
-- For produksjonstilgang: PIM elevation
+- For prod og foreløpig red-test (`aks-red-test-01`): PIM elevation (se `references/kubectl-access.md` for presis regel)
 - Kjør `az logout && az login` etter tilgangsendringer
 
 **Steg-for-steg (Blåløypa):**
@@ -135,10 +146,10 @@ Blåløypa er den anbefalte veien for å komme i gang på Skybert.
    - Én av tenantens approvere må godkjenne søknader i access package-flyten
    - Tenant owner/approvere må følge opp access reviews (kvartalsvis) innen frist for å unngå at medlemmer mister tilgang
 
-> Kilde: https://docs.sky.fhi.no/get-started/explanations/access-packages/
+> Kilde: https://docs.sky.fhi.no/miscellaneous/access-packages/
 
 3. **Verifiser GitOps-repo** (`Fhi.<Tenant>.GitOps`): oci-push og update-tag workflows er allerede satt opp
-4. **Deploy med minimal SkybertApp**: Lag `test/skybertapp.yaml` og push til main
+4. **Deploy med minimal SkybertApp**: Lag `sandbox/skybertapp.yaml` og push til main (docs anbefaler å starte i sandbox; bruk `test/` eller `prod/` når miljøet er klart)
 5. **Verifiser i klusteret**: Vent på Flux-rekonsiliering (hvert 2 min), sjekk pods og ingress
 
 > Detaljert steg-for-steg finnes på https://docs.sky.fhi.no/get-started/blaloypa/ (noe innhold er under arbeid)
@@ -146,9 +157,12 @@ Blåløypa er den anbefalte veien for å komme i gang på Skybert.
 ## Repository-oppsett
 
 Nye tenants starter fra en mal som inneholder:
-- `.github/workflows/oci-push.yaml` - Bygger og pusher OCI-artifakter
-- `.github/workflows/update-tag.yaml` - Webhook for image tag-oppdateringer
-- `test/` - Initialt testmiljø
+- `.github/workflows/oci-push.yaml` — Bygger og pusher OCI-artifakter
+- `.github/workflows/update-tag.yaml` — Webhook for image tag-oppdateringer
+- `sandbox/`, `test/`, `prod/` — Alle tre miljømapper fra start
+
+> Kilde: https://docs.sky.fhi.no/build/
+> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/
 
 ### Påkrevde GitHub Repository-variabler og secrets
 

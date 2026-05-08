@@ -2,8 +2,9 @@
 
 ## Anbefalt startpunkt: Minimal SkybertApp
 
-Start alltid med minimal SkybertApp i `test/`-mappen. Bruk Helm/Kustomize/raw manifests
-kun når behovet tilsier det (komplekse apps, upstream Helm charts, etc.).
+Start alltid med minimal SkybertApp i riktig miljømappe — docs anbefaler `sandbox/` som
+første steg (https://docs.sky.fhi.no/build/). Bruk Helm/Kustomize/raw manifests kun når
+behovet tilsier det (komplekse apps, upstream Helm charts, etc.).
 
 ```yaml
 apiVersion: skybert.fhi.no/v1alpha1
@@ -18,7 +19,42 @@ spec:
   hostname: <app-navn>.skytest.fhi.no
 ```
 
-> Kilde: https://docs.sky.fhi.no/get-started/kubernetes-yaml/
+> Kilde: https://docs.sky.fhi.no/workloads/
+> Kilde: https://docs.sky.fhi.no/build/
+
+## Job og CronJob
+
+Det finnes foreløpig ingen Skybert-CRD for batch-arbeid eller planlagte jobber. Bruk Kubernetes sine innebygde `Job`/`CronJob` som vanlige manifester i miljø-mappen (`test/`, `prod/`, osv.).
+
+Samme plattform-konvensjoner gjelder som for øvrige workloads:
+
+- Kjør i eget tenant-namespace (`tn-<tenant>`).
+- Bruk Workload Identity ved å sette `serviceAccountName: <tenant>-azure` og labelen `azure.workload.identity/use: "true"` på pod-template (tilsvarende raw Deployment — se [Sikkerhet](security.md)).
+- Secrets via ExternalSecret/SecretStore — se [Secrets-mønstre](secrets.md).
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: <tenant>-daily-job
+  namespace: tn-<tenant>
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            azure.workload.identity/use: "true"
+        spec:
+          serviceAccountName: <tenant>-azure
+          restartPolicy: OnFailure
+          containers:
+            - name: job
+              image: crfhiskybert.azurecr.io/<tenant>/<job-image>:<tag>
+```
+
+> Kilde: https://docs.sky.fhi.no/workloads/jobs/
 
 ## Legacy-eksempler (for eksisterende workloads)
 

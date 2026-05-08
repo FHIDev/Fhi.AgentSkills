@@ -3,12 +3,13 @@
 ## Premade baseline i GitOps-repo
 
 GitOps-repoet (`Fhi.<Tenant>.GitOps`) leveres med `.github/workflows/oci-push.yaml` og
-`.github/workflows/update-tag.yaml` ferdig satt opp. Normaltilfellet er å bruke dem som de er.
+`.github/workflows/update-tag.yaml` ferdig satt opp, samt miljømappene `sandbox/`, `test/` og `prod/` fra start. Normaltilfellet er å bruke workflows-filene som de er.
 
-**OCI-artifact navngivning:** Miljømapper på repo-roten (`test/`, `sandbox/`, `prod/`) pakkes til
+**OCI-artifact navngivning:** Miljømapper på repo-roten (`sandbox/`, `test/`, `prod/`) pakkes til
 OCI-artifacts med navn `gitops_<env>`. Mappenavn styrer artifact-navn, så ikke endre dem.
 
-> Kilde: https://docs.sky.fhi.no/get-started/kubernetes-yaml/
+> Kilde: https://docs.sky.fhi.no/build/
+> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/
 
 ---
 

@@ -8,14 +8,37 @@ Skybert bruker **LGTM-stakken** (Loki, Grafana, Tempo, Mimir) for observability,
 
 Applikasjoner logger til stdout/stderr — Alloy scraper automatisk container-logger og beriker dem med Kubernetes-metadata (namespace, pod, deployment) i Loki/Grafana.
 
-Tilgang via Grafana:
-- **Grønn test / sandbox:** https://grafana.skytest.fhi.no
-- **Gul test:** https://grafana-yellow.skytest.fhi.no
-- **Produksjon:** https://grafana.sky.fhi.no
+Tilgang til Grafana er **per kluster** — hvert kluster eksponerer sin egen Grafana-instans. URL-mønsteret er `https://grafana.<color>-<instance>.<domain>`, der `<domain>` er `skytest.fhi.no` for test og `sky.fhi.no` for prod.
 
-- LogQL-query: `{namespace="tn-<tenant>"}`
+| Kluster | Grafana-URL |
+|---------|-------------|
+| aks-sandbox-01 | `https://grafana.sandbox-01.skytest.fhi.no` |
+| aks-green-test-01 | `https://grafana.green-01.skytest.fhi.no` |
+| aks-green-prod-02 | `https://grafana.green-02.sky.fhi.no` |
+| aks-yellow-test-01 | `https://grafana.yellow-01.skytest.fhi.no` |
+| aks-yellow-prod-01 | `https://grafana.yellow-01.sky.fhi.no` |
+| aks-red-test-01 | `https://grafana.red-01.skytest.fhi.no` |
+| aks-red-prod-01 | `https://grafana.red-01.sky.fhi.no` (kun nåbar fra secure zone) |
 
-> Merk: Grafana-URL varierer per sikkerhetssone. Rød test er ikke verifisert — kontakt plattformteamet.
+> Kilde: https://docs.sky.fhi.no/observability/
+
+LogQL-query for egne logger:
+```
+{namespace="tn-<tenant>"}
+```
+
+### Logs Drilldown og nyttige labels
+
+Grafana eksponerer **Logs Drilldown** som gir label-basert navigasjon uten å måtte skrive LogQL manuelt. Nyttige labels:
+
+| Label | Typisk bruk |
+|-------|-------------|
+| `namespace` | Filter til `tn-<tenant>` (automatisk gitt av Grafana-datasourcen) |
+| `pod` | Isoler én pod |
+| `container` | Filtrer mellom main-container og sidecars |
+| `node_name` | Node-nivå feilsøking |
+
+> Kilde: https://docs.sky.fhi.no/observability/logs/
 
 Eksempel strukturert logging:
 ```json
@@ -32,7 +55,7 @@ Eksempel strukturert logging:
 
 Loki kjøres med `auth_enabled: true` — logger er isolert per tenant via headeren `X-Scope-OrgID: tn-<tenant>`. Dette settes automatisk av Grafana-datasourcen som er klargjort for deg; du trenger ikke konfigurere det selv.
 
-> Kilde (X-Scope-OrgID): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/scripts/tenant--bootstrap--grafana.sh
+> Kilde (X-Scope-OrgID): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/scripts/tenant--bootstrap--grafana.sh
 
 **Loggoppbevaring:** 31 dager.
 
@@ -58,7 +81,11 @@ I tillegg til automatisk scraping fra stdout/stderr, støtter Skybert direkte se
 
 ## Metrics med Mimir
 
-Eksporter Prometheus-metrics på `/metrics`:
+**Status per 2026-04-17:** Cluster- og infrastrukturmetrics er tilgjengelig i Grafana/Mimir. **Scraping av egendefinerte applikasjonsmetrics er foreløpig ikke aktivert plattformmessig** — se `docs/observability/metrics.md` for gjeldende status. Forberedelsene nedenfor er gyldige slik at instrumenteringen er klar den dagen scraping slås på.
+
+> Kilde: https://docs.sky.fhi.no/observability/metrics/
+
+### Forberedelser: eksporter Prometheus-metrics på `/metrics`
 
 ```python
 # Python eksempel
@@ -85,18 +112,16 @@ metadata:
 
 ## Tracing med Tempo
 
-Skybert planlegger distribuert tracing via **Tempo**. Tracing vil gi innsikt i hvordan forespørsler flyter gjennom distribuerte systemer.
+Distribuert tracing via **Tempo** er **planlagt, foreløpig ikke tilgjengelig** på plattformen. Forbered appen ved å instrumentere med OpenTelemetry (SDK-er for .NET/Python/Node m.fl.) slik at tracing fungerer den dagen Tempo slås på — men ikke regn med funksjonalitet i dag. Kontakt plattformteamet for oppdatert status.
 
-> **Merk:** Traces (gjennom Tempo) er per nå **ikke støttet**. Kontakt plattformteamet for oppdatert status.
-
-> Kilde: https://docs.sky.fhi.no/observability/
+> Kilde: https://docs.sky.fhi.no/observability/tracing/
 
 ## Grafana Dashboards
 
 Tilgang dashboards for:
 - Pod-metrics (CPU, minne, nettverk)
 - HTTP-metrics (RPS, latency, errors)
-- Custom app-metrics
+- Custom app-metrics (forberedes — plattform-scraping er foreløpig ikke aktivert, se note under "Metrics med Mimir" over)
 
 ### PromQL eksempler
 
@@ -128,7 +153,7 @@ Entra-gruppen mappes inn i Grafana-instansen på alle klustere i fargegruppen di
 
 Du logger inn med FHI-bruker. Grafana plasserer deg i riktig organisasjon basert på Entra-gruppemedlemskap via `org_mapping`.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/scripts/tenant--bootstrap--grafana.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/scripts/tenant--bootstrap--grafana.sh
 
 ## Alerting
 
