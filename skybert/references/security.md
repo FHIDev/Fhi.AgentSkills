@@ -96,11 +96,11 @@ securityContext:
 
 I rød sone er default DENY — all trafikk blokkert som utgangspunkt.
 
-**Viktig:** Tenanter kan IKKE opprette egne `NetworkPolicy`-ressurser i rød sone — dette blokkeres av Kyverno (`deny-netpol`-policy). Be plattformteamet om GlobalNetworkPolicy-unntak for egress til spesifikke IP-ranges/porter.
+**Viktig:** Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt i rød sone — blokkeres av Kyverno-policy `sub-1200-calico-netpol-in-tenants`. Tenanter kan derimot opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for ingress-only med `spec.order < 1200`. Egress styres sentralt — be plattformteamet om GlobalNetworkPolicy-unntak for egress til spesifikke IP-ranges/porter.
 
 Se [Hostnavn og nettverkskonfigurasjon](hostnames-and-networking.md#rød-sone) for detaljer om tillatt trafikk og nettverkspolicyer.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/e5bbc4b/infra/kyverno-policies/base/policies-red/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a16a243/infra/kyverno-policies/base/policies-red/
 
 ## Secrets Management
 

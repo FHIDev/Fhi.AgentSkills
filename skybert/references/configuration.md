@@ -22,6 +22,83 @@ spec:
 > Kilde: https://docs.sky.fhi.no/workloads/
 > Kilde: https://docs.sky.fhi.no/build/
 
+## Health probes i .NET-apper
+
+Kubernetes har tre probe-typer:
+
+- **Liveness** — restarter container ved feil. Bruk for hengte prosesser.
+- **Readiness** — fjerner pod fra service-endpoints ved feil. Bruk for traffic gating.
+- **Startup** — gates liveness/readiness mens appen booter. Bruk for sakte-startende apper.
+
+**Anbefalinger:**
+
+- Bruk separate, lette endepunkter (`/health/live`, `/health/ready`, `/health/startup`).
+- **Ikke** legg tunge migreringer eller DB-spørringer i readinessProbe — under DB-last vil pods feile readiness og trekkes ut av trafikk selv om appen ellers er frisk.
+- Skill **public** health checks (enkel "appen kjører") fra **private** (DB-konnektivitet og avhengigheter). Public-endepunktet er den eneste som bør være tilgjengelig fra ingress.
+
+### .NET Health Checks API
+
+Konfigurer separate "live"- og "ready"-tags og map dem til distinkte endepunkter:
+
+```csharp
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "live" })
+    .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+                  tags: new[] { "ready" });
+
+app.MapHealthChecks("/liveness", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live")
+});
+
+app.MapHealthChecks("/readiness", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
+```
+
+### Public vs private endepunkter
+
+Kun en enkel "appen kjører"-sjekk bør eksponeres via offentlig ingress. Detaljerte health checks (DB, intern kø, etc.) bør kun være nåbar fra klusteret.
+
+I .NET kan dette begrenses med `.RequireHost("*:<privat-port>")`:
+
+```csharp
+public static WebApplication MapDefaultEndpoints(this WebApplication app, int? privatePort = null)
+{
+    // Public health endpoint — kun "service kjører", ingen detaljer
+    app.MapHealthChecks(HealthEndpointPath, new HealthCheckOptions
+    {
+        Predicate = healthCheck => healthCheck.Tags.Contains("public")
+    }).RequireHost();
+
+    // Private health endpoints — detaljert status, kun fra klusteret
+    var livenessEndpoint = app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
+    {
+        Predicate = healthCheck => healthCheck.Tags.Contains("private") && healthCheck.Tags.Contains("live")
+    });
+
+    var readinessEndpoint = app.MapHealthChecks(ReadinessEndpointPath, new HealthCheckOptions
+    {
+        Predicate = healthCheck => healthCheck.Tags.Contains("private") && healthCheck.Tags.Contains("ready")
+    });
+
+    if (privatePort.HasValue)
+    {
+        livenessEndpoint.RequireHost($"*:{privatePort}");
+        readinessEndpoint.RequireHost($"*:{privatePort}");
+    }
+
+    return app;
+}
+```
+
+> **⚠️ `.RequireHost()` er kun en applikasjonslag-sjekk.** For at barrieren skal være effektiv, må infrastrukturen også passe på å ikke eksponere den private porten gjennom ingress. Dette er et delt ansvar mellom kode og deployment.
+
+For SkybertApp setter du probes via [`probes`-feltet](skybertapp-crd.md#health-probes) — Composition rendrer ferdig liveness-/readiness-/startup-probe på Deployment.
+
+> Kilde: https://docs.sky.fhi.no/miscellaneous/probes/
+
 ## Job og CronJob
 
 Det finnes foreløpig ingen Skybert-CRD for batch-arbeid eller planlagte jobber. Bruk Kubernetes sine innebygde `Job`/`CronJob` som vanlige manifester i miljø-mappen (`test/`, `prod/`, osv.).

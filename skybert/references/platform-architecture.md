@@ -30,13 +30,15 @@ For fullstendig kluster-liste per sikkerhetssone (inkludert sandbox), se [kubect
 ## Flux GitOps
 
 > Kilde: https://docs.sky.fhi.no/internal/flux/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/flux-system/base/kustomization.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/flux-system/base/kustomizations-infra/kustomization.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/flux-system/base/kustomizations-infra/flux-system.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a16a243/infra/flux-system/base/kustomization.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a16a243/infra/flux-system/base/kustomizations-infra/kustomization.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a16a243/infra/flux-system/base/kustomizations-infra/flux-system.yaml
 
-Flux rulles ut via en `flux-operator`-komponent som er inkludert i standard infra-kustomization (`infra/flux-system/base/kustomizations-infra/`). `flux-system`-Flux-Kustomizationen har eksplisitt `dependsOn: flux-operator`. `FluxInstance`-ressursen (`infra/flux-system/base/flux-instance.yaml`) er listet i base-kustomizationen og trekkes inn av kluster-overlays (observert i bl.a. `aks-green-test-01`).
+**Flux Operator er normativ installasjonsmodell:** Flux installeres og oppgraderes via Flux Operator med multi-tenancy aktivert. Operatoren håndterer CRD-livssyklus og oppgraderinger, så manuelt CRD-versjonsarbeid er ikke lenger nødvendig. Operator-versjonen versjonsstyres via Flux selv (samme mønster som andre infra-komponenter).
 
-> **Merk kildekonflikt (per 2026-04-17):** `docs/internal/flux.md` beskriver fortsatt Flux Operator som en pilot, mens infra-repoet viser bred utrulling med `flux-operator`-Kustomization og `FluxInstance` i base. En kommentar i `flux-instance.yaml` selv hevder at filen "ikke er del av kustomization.yaml ennå fordi den ikke brukes i alle klustere". Det tyder på at migreringen pågår og at dokumentasjonen ikke er fullt synkronisert med repo-tilstanden. Beskriv dagens infra-mekanikk uten å påstå full utrulling.
+Flux rulles ut via en `flux-operator`-komponent som er inkludert i standard infra-kustomization (`infra/flux-system/base/kustomizations-infra/`). `flux-system`-Flux-Kustomizationen har eksplisitt `dependsOn: flux-operator`. `FluxInstance`-ressursen (`infra/flux-system/base/flux-instance.yaml`) er listet i base-kustomizationen og trekkes inn av kluster-overlays.
+
+Flux Web UI er installert på alle klustere — se [Flux-verktøy](flux-tooling.md) for utviklerrettet bruk og URL-tabeller per kluster.
 
 ### Multi-tenancy lockdown
 
@@ -49,10 +51,10 @@ Under `FluxInstance`-modellen (der den er i bruk) modelleres multi-tenancy-låse
 
 - `cluster.multitenant: true`
 - `cluster.tenantDefaultServiceAccount: flux-reconciler`
-- `--no-cross-namespace-refs=false` for `kustomize-controller` og `helm-controller` (nødvendig så lenge `OCIRepository`-ressurser ligger i `tenant-repositories`-namespace; planlagt endret når `tenant-bootstrap`/ResourceSets rulles ut fullt)
+- `--no-cross-namespace-refs=false` for `kustomize-controller` og `helm-controller` — dette er en **bevisst patch** av controller-args fordi `OCIRepository`-ressurser ligger i en plattform-managed namespace (`tenant-repositories`), ikke per-tenant. Migrering til per-tenant `OCIRepository` er planlagt — patchen fjernes da.
 - Workload Identity-patch på `source-controller` (for ACR-tilgang)
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/flux-system/base/flux-instance.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a16a243/infra/flux-system/base/flux-instance.yaml
 
 ### Rekonsilieringsintervall
 

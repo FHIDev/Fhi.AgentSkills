@@ -35,7 +35,7 @@ spec:
               gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-deployment
               gotemplating.fn.crossplane.io/ready: "True"
           spec:
-            replicas: {{ $spec.replicas | default 1 }}
+            replicas: {{ if $spec.autoscaling }}{{ $spec.autoscaling.minReplicas | default 1 }}{{ else }}{{ $spec.replicas | default 1 }}{{ end }}
             selector:
               matchLabels:
                 skybert.fhi.no/webapp: {{ $name }}
@@ -43,7 +43,19 @@ spec:
               metadata:
                 labels:
                   skybert.fhi.no/webapp: {{ $name }}
+                  app: {{ $name }}
                   azure.workload.identity/use: "true"
+                {{- if $spec.metrics }}
+                annotations:
+                  prometheus.io/scrape: "true"
+                  prometheus.io/port: {{ $spec.metrics.port | quote }}
+                  {{- if $spec.metrics.path }}
+                  prometheus.io/path: {{ $spec.metrics.path | quote }}
+                  {{- end }}
+                  {{- if $spec.metrics.scheme }}
+                  prometheus.io/scheme: {{ $spec.metrics.scheme | quote }}
+                  {{- end }}
+                {{- end }}
               spec:
                 serviceAccountName: {{ $tenantSA }}
                 containers:
@@ -51,9 +63,45 @@ spec:
                   image: {{ $spec.image.repository }}:{{ $spec.image.tag }}
                   ports:
                   - containerPort: {{ $spec.port | default 8080 }}
+                  {{- if ($spec.probes).liveness }}
+                  livenessProbe:
+                    httpGet:
+                      path: {{ $spec.probes.liveness.path }}
+                      port: {{ $spec.probes.liveness.port | default ($spec.port | default 8080) }}
+                    initialDelaySeconds: {{ $spec.probes.liveness.initialDelaySeconds | default 10 }}
+                    periodSeconds: {{ $spec.probes.liveness.periodSeconds | default 10 }}
+                    timeoutSeconds: {{ $spec.probes.liveness.timeoutSeconds | default 3 }}
+                    failureThreshold: {{ $spec.probes.liveness.failureThreshold | default 3 }}
+                  {{- end }}
+                  {{- if ($spec.probes).readiness }}
+                  readinessProbe:
+                    httpGet:
+                      path: {{ $spec.probes.readiness.path }}
+                      port: {{ $spec.probes.readiness.port | default ($spec.port | default 8080) }}
+                    initialDelaySeconds: {{ $spec.probes.readiness.initialDelaySeconds | default 5 }}
+                    periodSeconds: {{ $spec.probes.readiness.periodSeconds | default 3 }}
+                    timeoutSeconds: {{ $spec.probes.readiness.timeoutSeconds | default 2 }}
+                    failureThreshold: {{ $spec.probes.readiness.failureThreshold | default 2 }}
+                  {{- end }}
+                  {{- if ($spec.probes).startup }}
+                  startupProbe:
+                    httpGet:
+                      path: {{ $spec.probes.startup.path }}
+                      port: {{ $spec.probes.startup.port | default ($spec.port | default 8080) }}
+                    initialDelaySeconds: {{ $spec.probes.startup.initialDelaySeconds | default 0 }}
+                    periodSeconds: {{ $spec.probes.startup.periodSeconds | default 5 }}
+                    timeoutSeconds: {{ $spec.probes.startup.timeoutSeconds | default 3 }}
+                    failureThreshold: {{ $spec.probes.startup.failureThreshold | default 60 }}
+                  {{- end }}
                   {{- if $spec.command }}
                   command:
                   {{- range $spec.command }}
+                  - {{ . | quote }}
+                  {{- end }}
+                  {{- end }}
+                  {{- if $spec.args }}
+                  args:
+                  {{- range $spec.args }}
                   - {{ . | quote }}
                   {{- end }}
                   {{- end }}
@@ -97,6 +145,7 @@ spec:
                       memory: {{ ($spec.resources).memory | default "256Mi" }}
                   
                   securityContext:
+                    allowPrivilegeEscalation: false
                     capabilities:
                       drop:
                       - ALL
@@ -112,6 +161,12 @@ spec:
                   {{- if .command }}
                   command:
                   {{- range .command }}
+                  - {{ . | quote }}
+                  {{- end }}
+                  {{- end }}
+                  {{- if .args }}
+                  args:
+                  {{- range .args }}
                   - {{ . | quote }}
                   {{- end }}
                   {{- end }}
@@ -156,6 +211,7 @@ spec:
                       memory: {{ (.resources).memory | default "256Mi" }}
                   
                   securityContext:
+                    allowPrivilegeEscalation: false
                     capabilities:
                       drop:
                       - ALL
@@ -173,6 +229,12 @@ spec:
                   {{- if .command }}
                   command:
                   {{- range .command }}
+                  - {{ . | quote }}
+                  {{- end }}
+                  {{- end }}
+                  {{- if .args }}
+                  args:
+                  {{- range .args }}
                   - {{ . | quote }}
                   {{- end }}
                   {{- end }}
@@ -217,6 +279,7 @@ spec:
                       memory: {{ (.resources).memory | default "256Mi" }}
                   
                   securityContext:
+                    allowPrivilegeEscalation: false
                     capabilities:
                       drop:
                       - ALL
@@ -373,6 +436,34 @@ spec:
                 target:
                   type: Utilization
                   averageUtilization: {{ $spec.autoscaling.targetMemory | default 80 }}
+          {{- end }}
+
+          {{- /* PDB: auto-create only when steady-state replica count is above 1, unless explicitly configured. */ -}}
+          {{- $pdbEnabled := false }}
+          {{- if ($spec.podDisruptionBudget).enabled }}
+            {{- $pdbEnabled = true }}
+          {{- else if and (not (hasKey ($spec.podDisruptionBudget | default dict) "enabled")) (or (gt (($spec.autoscaling).minReplicas | default 1 | int) 1) (gt ($spec.replicas | default 1 | int) 1)) }}
+            {{- $pdbEnabled = true }}
+          {{- end }}
+          {{- if $pdbEnabled }}
+          ---
+          apiVersion: policy/v1
+          kind: PodDisruptionBudget
+          metadata:
+            name: {{ $name }}-pdb
+            namespace: {{ $namespace }}
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-pdb
+              gotemplating.fn.crossplane.io/ready: "True"
+          spec:
+            {{- if ($spec.podDisruptionBudget).maxUnavailable }}
+            maxUnavailable: {{ $spec.podDisruptionBudget.maxUnavailable | quote }}
+            {{- else }}
+            minAvailable: {{ ($spec.podDisruptionBudget).minAvailable | default "33%" | quote }}
+            {{- end }}
+            selector:
+              matchLabels:
+                skybert.fhi.no/webapp: {{ $name }}
           {{- end }}
 
           {{- /* Collect unique vaults into a dict */ -}}

@@ -44,10 +44,22 @@ Eksplisitte unntak:
 - Egress til spesifikke IP-ranges/porter — opprettes av plattformteamet som GlobalNetworkPolicy. **Kun IP/CIDR** støttes (ikke L7/hostname-basert).
 - NFS egress (port 2049) er blokkert for alle tenanter
 
-**Viktig:** Tenanter i rød sone kan IKKE opprette egne NetworkPolicies — dette blokkeres av Kyverno.
-Kontakt plattformteamet i `#ext-fhi-skybert` med IP-ene du trenger å nå.
+**Tenant-NetworkPolicies i rød sone:** Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er fortsatt forbudt. Tenanter kan derimot opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for å finjustere ingress — men kun med `Ingress`-regler og `spec.order < 1200`. Egress styres sentralt via GlobalNetworkPolicy fra plattformteamet (kun IP/CIDR-basert). Kontakt `#ext-fhi-skybert` for egress-unntak.
 
-> Kilde: https://docs.sky.fhi.no/build/environments/ | https://docs.sky.fhi.no/internal/global-network-policies/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/adef9e78918862cd7fedfc2476242e286aadc992/infra/globalnetworkpolicies/base/policies-red/
+**Base GlobalNetworkPolicies (rød sone, plattform-styrt):**
+
+| Policy | Type | Order | Effekt |
+|--------|------|-------|--------|
+| `base-tenant-egress` | Egress | 800 | Tillater DNS (UDP 53 til `kube-system`/kube-dns), deretter Deny |
+| `base-tenant-ingress` | Ingress | 1200 | Tillater fra `ingress-nginx`-namespace (TCP), deretter Deny |
+
+Tenant-egne Calico NetworkPolicies må ha `spec.order < 1200` for ikke å konflikte med base-policiene.
+
+**Egress til Entra ID (rød sone):** Plattformen leverer en sentralt forvaltet GlobalNetworkPolicy som tillater 443/TCP til Microsoft Entra ID login-IPer. Konkrete IP-ranges holdes synkron med Microsofts publiserte ranges av plattformteamet.
+
+Apper i rød sone som trenger pålogging mot Entra ID kontakter plattformteamet på `#ext-fhi-skybert`. Plattformen aktiverer unntaket for ditt namespace. Tenanter setter ikke namespace-labels selv.
+
+> Kilde: https://docs.sky.fhi.no/build/environments/ | https://docs.sky.fhi.no/internal/global-network-policies/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a16a243/infra/globalnetworkpolicies/base/policies-red/
 
 ## Service Mesh
 

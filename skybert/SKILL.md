@@ -6,12 +6,12 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 schema_version=2
 docs_repo=FHISkybert/Fhi.Skybert.Docs
 docs_branch=main
-docs_commit=e7f41eca2e5ec7ba1818075e8e314839f8ebaff9
-docs_commit_date=2026-04-15
+docs_commit=519aa9ed9b7c155eb61dd8c1a53d08ab97854eda
+docs_commit_date=2026-05-06
 infra_repo=FHISkybert/Fhi.Skybert.Infra
 infra_branch=main
-infra_commit=adef9e78918862cd7fedfc2476242e286aadc992
-infra_commit_date=2026-04-17
+infra_commit=a16a2432bab5713dc9ab15b792e17b2441fd9157
+infra_commit_date=2026-05-08
 last_fullscan_date=2026-04-17
 -->
 
@@ -19,7 +19,7 @@ last_fullscan_date=2026-04-17
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-04-17
+> **Sist verifisert mot offisiell docs:** 2026-05-09
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -102,13 +102,13 @@ Sandbox (`aks-sandbox-01`) er et unntak — ett felles kluster delt av alle farg
 > Kilde (policy-sett): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/adef9e78918862cd7fedfc2476242e286aadc992/infra/kyverno-policies/base/policies-green/
 
 **Rød sone** har en fundamentalt annerledes sikkerhetsmodell:
-- **Default DENY** — all nettverkstrafikk blokkert som utgangspunkt
+- **Default DENY** — all egress-trafikk blokkert som utgangspunkt
 - Kun intern kommunikasjon innenfor eget namespace og DNS er automatisk tillatt
 - Egress til eksterne tjenester krever eksplisitte IP-baserte whitelists (GlobalNetworkPolicy), opprettet av plattformteamet
-- Tenanter kan **ikke** opprette egne `NetworkPolicy`-ressurser (blokkeres av Kyverno)
+- Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt. Tenanter kan derimot opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for ingress-only med `spec.order < 1200`
 - NFS egress (port 2049) er blokkert for alle soner
 
-> Kilde (rød sone-policyer): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/adef9e78918862cd7fedfc2476242e286aadc992/infra/kyverno-policies/base/policies-red/
+> Kilde (rød sone-policyer): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a16a243/infra/kyverno-policies/base/policies-red/
 
 Se [kubectl-access](references/kubectl-access.md) for fullstendig kluster-liste med subscription-ID-er og proxy-kommandoer.
 
@@ -144,7 +144,8 @@ Blåløypa er den anbefalte veien for å komme i gang på Skybert.
 2. **Søk tilgang via MyAccess**: Teammedlemmer søker riktig access package (f.eks. `FHI - Skybert - <Tenant>-Test-Yellow`)
    - Access package-tilgang er tidsbegrenset (typisk 1 år) og må fornyes
    - Én av tenantens approvere må godkjenne søknader i access package-flyten
-   - Tenant owner/approvere må følge opp access reviews (kvartalsvis) innen frist for å unngå at medlemmer mister tilgang
+   - **Approvere kan ikke godkjenne sin egen tilgangssøknad** — den andre approveren må gjøre det
+   - **Tenant owner er ansvarlig** for å gjennomføre access review hver tredje måned (Microsoft sender e-post når review skal startes). Manglende fullføring innen frist fører til at alle medlemmer mister tilgang.
 
 > Kilde: https://docs.sky.fhi.no/miscellaneous/access-packages/
 
@@ -248,6 +249,11 @@ spec:
     repository: crfhiskybert.azurecr.io/mytenant/myapp
     tag: "1.0.0"
   hostname: myapp.skytest.fhi.no
+  probes:
+    liveness:
+      path: /health/live
+    readiness:
+      path: /health/ready
   secrets:
     - vault: my-keyvault
       keys:
@@ -256,6 +262,8 @@ spec:
       mountAsEnv: false
 ```
 
+> **Probes anbefales for produksjon.** Se [SkybertApp CRD](references/skybertapp-crd.md#health-probes) for full felt-liste og [konfigurasjon](references/configuration.md#health-probes-i-net-apper) for .NET-mønster (Health Checks API + public/private endpoints).
+
 **Funksjoner:**
 - Enhetlig secrets-håndtering - spesifiser bare vault-navn og nøkler
 - Automatisk SecretStore + ExternalSecret-opprettelse
@@ -263,6 +271,10 @@ spec:
 - `writableDirs`-støtte for sikkerhetshardening
 - Renere konfigurasjonssyntaks (objekt vs array)
 - HPA-støtte
+- Innebygde **probes** (liveness/readiness/startup) via `probes`-felt
+- Automatisk **PodDisruptionBudget** når `replicas>1` eller `autoscaling.minReplicas>1` (default `minAvailable: "33%"`)
+- **Prometheus metrics-scraping** via `metrics.port` — annotasjoner settes automatisk
+- **`args`** for argumenter til container-kommandoen
 
 **Begrensninger:**
 - Memory limit er alltid lik request
@@ -547,6 +559,13 @@ kubectl describe externalsecret <name> -n tn-<tenant>
 kubectl get secrets -n tn-<tenant>
 ```
 
+## Flux-verktøy for utviklere
+
+- **Flux Dashboard** — web-UI per kluster (`https://flux.<color>-<instance>.<domain>`) for å se Kustomization-status, suspendere/resumere, og trigge manuell rekonsiliering. Pålogging via FHI Entra ID.
+- **Flux Operator MCP** — Model Context Protocol-server som lar AI-assistenter (Cursor, VS Code Copilot, Claude Desktop) lese kluster-tilstand og pod-logger. Anbefalt med `--read-only`.
+
+Se [Flux-verktøy](references/flux-tooling.md) for URL-tabeller og oppsett.
+
 ## Filstruktur
 
 Typisk tenant repository-struktur:
@@ -625,6 +644,7 @@ Dette gir AI-agenten kontekst for å generere korrekte konfigurasjoner uten å g
 | [Plattformarkitektur](references/platform-architecture.md) | Flux, Crossplane, OCI-flyt, tenant-bootstrap |
 | [Kyverno-policier](references/kyverno-policies.md) | Sikkerhetspolicier som påvirker tenanter |
 | [Hostnavn og nettverk](references/hostnames-and-networking.md) | Domener, TLS, ingress-regler, nettverkspolicyer |
+| [Flux-verktøy](references/flux-tooling.md) | Flux Dashboard og Flux Operator MCP |
 
 ## Support
 
