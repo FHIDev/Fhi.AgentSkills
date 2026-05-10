@@ -79,11 +79,33 @@ import '@folkehelseinstituttet/designsystem/fhi-tag';
 </fhi-tag>
 ```
 
+### I fhi-text-input (fra v0.35.0)
+
+`fhi-text-input` har slottene `start` og `end` for ikon-plassering. Ikonet får automatisk `size="1.5rem"` og er visuelt (ikke klikkbart — slottene har `pointer-events: none`).
+
+```typescript
+import '@folkehelseinstituttet/designsystem/fhi-text-input';
+import '@folkehelseinstituttet/designsystem/fhi-icon-user';
+import '@folkehelseinstituttet/designsystem/fhi-icon-search';
+```
+
+```html
+<fhi-text-input label="Brukernavn" name="username">
+  <fhi-icon-user slot="start"></fhi-icon-user>
+</fhi-text-input>
+
+<fhi-text-input label="Søk" name="q">
+  <fhi-icon-search slot="end"></fhi-icon-search>
+</fhi-text-input>
+```
+
+Se [`fhi-text-input`](components/fhi-text-input.md) for runtime-validering og fargeoppførsel per tilstand.
+
 ---
 
 ## Tilgjengelige ikoner
 
-> **Vedlikeholdsnote:** Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.34.0`.
+> **Vedlikeholdsnote:** Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.35.0` (ikon-entrypoint-listen er uendret fra v0.34.0).
 > For å oppdatere listen ved ny release:
 > ```bash
 > # List alle ikon-entrypoints i publisert pakke

@@ -1,11 +1,12 @@
 # Versjonsindeks
 
-Baseline er alltid SKILL.md (latest v0.34.0).
+Baseline er alltid SKILL.md (latest v0.35.0).
 Støttepolicy: Latest + 9 tidligere minor (totalt 10 minor).
 
 | Versjon | Status      | Nøkkelavvik vs latest                             | Delta-fil       |
 |---------|-------------|---------------------------------------------------|-----------------|
-| 0.34.x  | Latest      | —                                                 | —               |
+| 0.35.x  | Latest      | —                                                 | —               |
+| 0.34.x  | Supported   | `fhi-text-input` mangler `start`/`end` ikon-slots; eldre input-width-atferd | [v0.34.x.md](v0.34.x.md) |
 | 0.33.x  | Supported   | Mangler publiserte `exports`/`.d.ts` for import-intellisense | [v0.33.x.md](v0.33.x.md) |
 | 0.32.x  | Supported   | `fhi-grid` mangler `rows`-property                | [v0.32.x.md](v0.32.x.md) |
 | 0.31.x  | Supported   | Robustere håndtering av null-/ugyldige verdier i latest | [v0.31.x.md](v0.31.x.md) |
@@ -14,8 +15,7 @@ Støttepolicy: Latest + 9 tidligere minor (totalt 10 minor).
 | 0.28.x  | Supported   | `fhi-modal-dialog` mangler; input event i 0.28.4  | [v0.28.x.md](v0.28.x.md) |
 | 0.27.x  | Supported   | `fhi-modal-dialog` mangler                        | [v0.27.x.md](v0.27.x.md) |
 | 0.26.x  | Supported   | `fhi-modal-dialog` mangler; verifisering kreves   | [v0.26.x.md](v0.26.x.md) |
-| 0.25.x  | Supported   | Verifisering kreves; eldste støttede versjon      | [v0.25.x.md](v0.25.x.md) |
-| < 0.25  | Ikke støttet | Best effort, anbefal oppgradering                | —               |
+| < 0.26  | Ikke støttet | Best effort, anbefal oppgradering                | —               |
 
 ## Matching-regler
 
