@@ -24,10 +24,10 @@ Rendering skjer lokalt via `crossplane render`, uten kluster-tilgang.
 
 **Kilde og provenance:**
 - Repo: `FHISkybert/Fhi.Skybert.Infra`
-- Commit: `9790452` (main, 2026-03-18)
+- Commit: `a16a243` (main, 2026-05-08)
 - Opprinnelige filer:
-  - `infra/crossplane/base/compositions/skybertapp.yaml` (sist endret: `1df8be3`)
-  - `infra/crossplane/base/xrds/skybertapp.yaml` (sist endret: `e2ce1ca`)
+  - `infra/crossplane/base/compositions/skybertapp.yaml` (sist endret: `696acda`, 2026-04-30)
+  - `infra/crossplane/base/xrds/skybertapp.yaml` (sist endret: `c2a5888`, 2026-04-30)
   - `infra/crossplane/base/functions.yaml` — **ikke kopiert som-den-er**;
     vår `functions.yaml` bruker public xpkg i stedet for ACR-mirroren
 
@@ -72,9 +72,15 @@ Forventet output (forkortet) for kodeverk-mcp slik den står i `main`:
 
 Fordi XR-et ikke setter `secrets`, `config`, eller `autoscaling`, blir de
 respektive grenene (`ConfigMap`, `SecretStore`, `ExternalSecret`,
-`HorizontalPodAutoscaler`) ikke rendret. For å se disse: lag et XR som
+`HorizontalPodAutoscaler`) ikke rendret. `PodDisruptionBudget` rendres heller
+ikke uten `replicas > 1`, `autoscaling.minReplicas > 1`, eller eksplisitt
+`podDisruptionBudget.enabled: true`. For å se disse: lag et XR som
 aktiverer dem, eller bruk et annet tenant-manifest som allerede gjør det
 (f.eks. `hdsoknad` i samme repo dersom enabled).
+
+`metrics`- og `probes`-feltene rendres ikke som egne ressurser — de påvirker
+felter på selve `Deployment`-en (Prometheus-annotasjoner på pod-template,
+respektive `livenessProbe`/`readinessProbe`/`startupProbe` på main-container).
 
 ## Eksempel: rått XR uten Helm
 

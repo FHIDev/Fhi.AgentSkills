@@ -65,15 +65,18 @@ Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle ten
 
 | Policy | Handling |
 |--------|----------|
-| `deny-netpol` | Blokkerer tenant-opprettede NetworkPolicies i `tn-*` |
+| `sub-1200-calico-netpol-in-tenants` | Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt. Calico `NetworkPolicy` (`crd.projectcalico.org/v1`) er tillatt i `tn-*` med to begrensninger: kun `Ingress`-regler (egress styres sentralt via GlobalNetworkPolicy) og `spec.order < 1200` (1200+ reservert for plattform default-deny GNPs). |
 | `generate-tenant-internal-gnp` | Genererer automatisk GlobalNetworkPolicy per tenant-namespace som tillater intern kommunikasjon |
 
-I rød sone er **all nettverkstrafikk blokkert som default** (base deny-policy, order 800). Unntak:
-- Intern kommunikasjon innenfor eget namespace (auto-generert, order 600)
-- Eksplisitte GlobalNetworkPolicies opprettet av plattformteamet (order 500)
-- NFS egress er blokkert for tenanter (order 900)
+I rød sone er **egress blokkert som default** (base deny-policy). Unntak:
+- DNS (UDP 53 til `kube-system`/kube-dns) — tillatt automatisk
+- Intern kommunikasjon innenfor eget namespace (auto-generert per tenant)
+- Eksplisitte GlobalNetworkPolicies opprettet av plattformteamet (lavere `order`-tall = høyere prioritet)
+- NFS egress er blokkert for tenanter
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/kyverno-policies/base/policies-red/
+**Tenanter kan opprette egne Calico ingress-NetworkPolicies** for å finjustere ingress-segmentering (f.eks. begrense hvilke tenant-tjenester som er nåbare via ingress-nginx). Egress derimot kan IKKE styres av tenanten — kontakt `#ext-fhi-skybert` for egress-unntak.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a16a243/infra/kyverno-policies/base/policies-red/
 
 ## PolicyExceptions
 

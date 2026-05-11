@@ -75,17 +75,17 @@ I tillegg til automatisk scraping fra stdout/stderr, støtter Skybert direkte se
 - HTTP: `alloy.alloy.svc.cluster.local:4318`
 - gRPC: `alloy.alloy.svc.cluster.local:4317`
 
-> **Advarsel:** OTLP log ingestion er ikke HA — forespørsler sendes til Alloy-instansen på samme node som workloaden (nødvendig for Kubernetes-metadata-berikelse). Konfigurer OTLP SDK til å retry ved kortvarig nedetid (f.eks. under pod-rescheduling).
+Alloy bruker `internalTrafficPolicy: Local` slik at OTLP-trafikk havner på Alloy-instansen på *samme node* som workloaden — nødvendig for at `k8sattributes`-prosessoren skal kunne resolve namespace/pod/deployment fra source-IP. **Konsekvens:** OTLP SDK-en MÅ retry ved feil. Under pod-rescheduling kan den lokale Alloy-instansen være borte kortvarig.
 
 > Kilde: https://docs.sky.fhi.no/observability/logs/
 
 ## Metrics med Mimir
 
-**Status per 2026-04-17:** Cluster- og infrastrukturmetrics er tilgjengelig i Grafana/Mimir. **Scraping av egendefinerte applikasjonsmetrics er foreløpig ikke aktivert plattformmessig** — se `docs/observability/metrics.md` for gjeldende status. Forberedelsene nedenfor er gyldige slik at instrumenteringen er klar den dagen scraping slås på.
+**Status per 2026-05-09:** Cluster- og infrastrukturmetrics scrapes automatisk. **Custom application metrics scrapes nå plattformmessig** — legg `prometheus.io/scrape: "true"` + `prometheus.io/port` på pod-template (eller bruk `metrics`-feltet i SkybertApp). Alloy oppdager annoterte pods og remote-writer til Mimir via cortex-tenant-proxy som setter `X-Scope-OrgID` basert på namespace, slik at metrics isoleres per tenant.
 
 > Kilde: https://docs.sky.fhi.no/observability/metrics/
 
-### Forberedelser: eksporter Prometheus-metrics på `/metrics`
+### Eksporter Prometheus-metrics på `/metrics`
 
 ```python
 # Python eksempel
@@ -96,6 +96,7 @@ request_duration = Histogram('http_request_duration_seconds', 'Request duration'
 ```
 
 ### Konfigurasjon
+
 ```yaml
 metadata:
   annotations:
@@ -104,11 +105,26 @@ metadata:
     prometheus.io/path: "/metrics"
 ```
 
+| Annotation | Påkrevet | Default | Beskrivelse |
+|------------|----------|---------|-------------|
+| `prometheus.io/scrape` | Ja | — | `"true"` for å opt-in |
+| `prometheus.io/port` | Ja | — | Port for `/metrics` |
+| `prometheus.io/path` | Nei | `/metrics` | Path |
+| `prometheus.io/scheme` | Nei | `http` | `http` eller `https` |
+
+Annotasjonene skal stå på pod-template (`.spec.template.metadata.annotations`), ikke på Deployment-metadata.
+
+> **SkybertApp-snarvei:** Sett `metrics.port: 9090` (og evt. `path`/`scheme`) i SkybertApp-spec så legger composition annotasjonene automatisk på pod-template. Se [SkybertApp CRD — Metrics](skybertapp-crd.md#metrics).
+
 ### Anbefalte metrics
 - `http_requests_total` - Antall requests (med labels for status, method, endpoint)
 - `http_request_duration_seconds` - Request latency
 - `http_requests_in_flight` - Pågående requests
 - Applikasjonsspesifikke business metrics
+
+### Custom-metrics-HPA (planlagt)
+
+Plattformteamet vurderer KEDA for autoskalering basert på request rate, kø-dybde, latens m.m. Kontakt `#ext-fhi-skybert` med use case for å påvirke designet.
 
 ## Tracing med Tempo
 
@@ -121,7 +137,7 @@ Distribuert tracing via **Tempo** er **planlagt, foreløpig ikke tilgjengelig** 
 Tilgang dashboards for:
 - Pod-metrics (CPU, minne, nettverk)
 - HTTP-metrics (RPS, latency, errors)
-- Custom app-metrics (forberedes — plattform-scraping er foreløpig ikke aktivert, se note under "Metrics med Mimir" over)
+- Custom app-metrics (eksponer `/metrics` og opt-in via Prometheus-annotasjoner eller SkybertApp `metrics`-feltet — se "Metrics med Mimir" over)
 
 ### PromQL eksempler
 
