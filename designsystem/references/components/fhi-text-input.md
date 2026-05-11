@@ -29,6 +29,46 @@ import '@folkehelseinstituttet/designsystem/fhi-text-input';
 
 > Fokusrelaterte hendelser håndteres som native DOM-events og kan variere mellom rammeverk. I Blazor: bruk `@onfocusin`/`@onfocusout`.
 
+## Slots (fra v0.35.0)
+
+| Slot | Beskrivelse |
+|------|-------------|
+| `start` | Ikon på venstre side i inputfeltet |
+| `end` | Ikon på høyre side i inputfeltet |
+
+**Begrensninger og runtime-atferd:**
+
+- Slottene aksepterer **kun FHI-ikoner** (`fhi-icon-*`). Komponenten sjekker første assigned node i slotten og krever en tag som starter med `fhi-icon`. Ugyldig innhold gir `console.error` ved runtime — det er **ikke** en manifest-deklarert kontrakt (`custom-elements.json`/`web-types.json` viser ikke disse slotene i v0.35.0).
+- Ikonet får automatisk `size="1.5rem"` satt som attributt; egne `size`-verdier overstyres.
+- Input får `padding-{left|right}: var(--fhi-spacing-500)` for å gi plass til ikonet.
+- Slottene er **visuelle, ikke interaktive**: slot-elementene har `pointer-events: none`. Ikon kan ikke være en klikkbar handling i denne implementasjonen.
+- Ikon-fargen følger input-tilstanden automatisk for `start`-slotten:
+  - Standard: `--fhi-color-neutral-text-subtle`
+  - Hover: `--fhi-color-accent-text-subtle`
+  - Focus/active: `--fhi-color-accent-text-default`
+  - Error (`status="error"`): `--fhi-color-danger-text-subtle`
+- `end`-slotten har konstant `--fhi-color-neutral-text-subtle` og endrer seg **ikke** med hover, focus eller error-status. Hvis du trenger statusfarge på et høyre-ikon, må du style det selv via tokens — komponenten gir det ikke automatisk.
+
+**Retningslinjer fra docs:**
+
+- Venstre (`start`): visuell kontekst om hva feltet ber om (mail, lock, user).
+- Høyre (`end`): visuell felttypeindikasjon. Merk at `end` ikke får automatisk error-farge — ikke bruk slotten alene som valideringsindikator; bruk `status="error"` + `message` for det.
+- Hvert ikon legger til kognitiv last — bruk kun når det gir reell verdi.
+
+```html
+<!-- Ikon på venstre -->
+<fhi-text-input label="Brukernavn" name="username">
+  <fhi-icon-user slot="start"></fhi-icon-user>
+</fhi-text-input>
+
+<!-- Ikon på høyre -->
+<fhi-text-input label="Søk" name="q">
+  <fhi-icon-search slot="end"></fhi-icon-search>
+</fhi-text-input>
+```
+
+> Husk å importere ikon-komponenten: `import '@folkehelseinstituttet/designsystem/fhi-icon-user';`
+
 ## Eksempler
 
 ```html

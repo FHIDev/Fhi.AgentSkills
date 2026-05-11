@@ -64,14 +64,17 @@ Delta-filer dokumenterer **eksplisitte avvik**: en delta som er "skrevet mot v0.
 fordi eksplisitt dokumenterte avvik (f.eks. "fhi-modal-dialog mangler i v0.28.x") forblir gyldige frem til den eldre
 versjonen oppgraderes — uavhengig av ny latest.
 
-**Viktig begrensning:** Delta-filer fanger **ikke** automatisk opp nye public komponenter lagt til i later latest-versjoner.
-Hvis v0.32.0 legger til `fhi-wizard`, vil eldre delta-filer ikke nevne at den mangler i v0.28.x — og
-verifiseringsstatus for slike nye tillegg er ukjent med mindre det er eksplisitt dokumentert.
+**Viktig begrensning:** Delta-filer fanger **ikke** automatisk opp nye public komponenter eller nye public
+features (f.eks. nye attributter, slots, events eller methods på eksisterende komponenter) lagt til i nyere
+latest-versjoner. Hvis v0.32.0 legger til `fhi-wizard`, eller v0.35.0 legger til en ny slot på `fhi-text-input`,
+vil eldre delta-filer ikke nevne at disse mangler i v0.28.x — og verifiseringsstatus for slike nye tillegg er
+ukjent med mindre det er eksplisitt dokumentert.
 
 **Konsekvens for oppdateringsworkflow:** Når en ny latest-versjon publiseres, opprettes **kun én ny delta-fil**
 for forrige latest-versjon. Eksisterende delta-filer for eldre støttede versjoner trenger **ikke** å regenereres —
-**unntatt** hvis ny latest har lagt til nye public komponenter: disse skal da noteres eksplisitt som "Missing"
-i alle eksisterende delta-filer som ikke allerede nevner dem.
+**unntatt** hvis ny latest har lagt til nye public komponenter eller nye public features (slots, attributter,
+events, methods) på eksisterende komponenter: disse skal da noteres eksplisitt som "Missing" i alle eksisterende
+delta-filer som ikke allerede nevner dem.
 
 ---
 

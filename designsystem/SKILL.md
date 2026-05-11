@@ -2,17 +2,17 @@
 name: designsystem
 description: Ekspert på FHI Designsystem (@folkehelseinstituttet/designsystem). Bruk ved installasjon eller oppsett av designsystemet, bruk av FHI-komponenter (fhi-button, fhi-text-input, fhi-checkbox, etc.), bruk av FHI design tokens (farger, typografi, spacing), ikoner, eller rammeverk-integrasjon (React, Angular, Blazor).
 ---
-<!-- Basert på @folkehelseinstituttet/designsystem v0.34.0 -->
+<!-- Basert på @folkehelseinstituttet/designsystem v0.35.0 -->
 
 # FHI Designsystem — Brukerveiledning
 
 Bruk FHI Designsystem i egne prosjekter. Designsystemet er basert på standard web components og fungerer i alle rammeverk.
 
-> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.34.0 — latest)
+> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.35.0 — latest)
 > **Dokumentasjon:** https://designsystem.fhi.no/
 > **GitHub:** https://github.com/FHIDev/Fhi.Designsystem
 > **Figma:** https://www.figma.com/design/VgQG6XeEbFOmHIrxyAOACR/FHI-Designsystem
-> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.34.0` (2026-04-19)
+> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.35.0` (2026-05-10)
 > **Støttepolicy:** Latest + 9 tidligere minor (totalt 10 minor). Se [`versions/INDEX.md`](versions/INDEX.md) for støttede versjoner.
 >
 > **Versjonsbehandling:**
@@ -103,7 +103,7 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 | Kategori | Komponent | Beskrivelse |
 |----------|-----------|-------------|
 | Form | [`fhi-button`](references/components/fhi-button.md) | Knapp med farger, varianter og størrelser |
-| Form | [`fhi-text-input`](references/components/fhi-text-input.md) | Tekstfelt med label, hjelpetekst og validering |
+| Form | [`fhi-text-input`](references/components/fhi-text-input.md) | Tekstfelt med label, hjelpetekst, validering og ikon-slots (`start`/`end`, fra v0.35.0) |
 | Form | [`fhi-date-input`](references/components/fhi-date-input.md) | Datofelt med kalender (YYYY-MM-DD) |
 | Form | [`fhi-checkbox`](references/components/fhi-checkbox.md) | Avkrysningsboks |
 | Form | [`fhi-radio`](references/components/fhi-radio.md) | Radioknapp (grupper med felles `name`) |
