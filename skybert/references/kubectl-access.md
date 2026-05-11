@@ -62,7 +62,7 @@ Trengs ved opprettelse av federated credentials på managed identities (workload
 
 | Kluster | OIDC issuer URL |
 |---------|-----------------|
-| aks-sandbox-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/9c52953b-7fa5-4f1f-a60d-13bc5864b3ae/` |
+| aks-sandbox-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/cf8f6b35-4954-4548-b3da-37287cdbe99b/` |
 | aks-green-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/8eae23c5-dedf-4812-9c32-9de1adbb67c9/` |
 | aks-yellow-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/5218cffc-5c13-4b12-8edc-0d76cba4c9a3/` |
 | aks-red-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/30e79bc7-b120-4a86-8b94-07d875ccface/` |
