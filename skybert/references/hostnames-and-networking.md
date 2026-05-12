@@ -61,6 +61,28 @@ Apper i rød sone som trenger pålogging mot Entra ID kontakter plattformteamet 
 
 > Kilde: https://docs.sky.fhi.no/build/environments/ | https://docs.sky.fhi.no/internal/global-network-policies/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a16a243/infra/globalnetworkpolicies/base/policies-red/
 
+## Egress-IP (utgående trafikk fra clusterne)
+
+All utgående trafikk fra Skybert-clusterne (test, sandbox, prod -- alle soner) går ut via **én felles egress-IP**:
+
+| Formål | IP |
+|--------|-----|
+| Skybert cluster egress (felles for alle clustere) | `83.118.167.10` |
+
+Bruk denne IP-en når en ekstern tjeneste må whiteliste trafikk fra Skybert -- f.eks. Azure SQL firewall-regler, eksterne API-er, NHN-tjenester etc.
+
+### FHI kontor-IP-er
+
+For sammenligning, normale FHI kontor-IP-er som ofte brukes i samme brannmurregler:
+
+| Navn | IP/range |
+|------|----------|
+| office-subnet | `83.118.167.0/27` (`.0`–`.31`) |
+| office-host-1 | `83.118.189.38` |
+| office-host-2 | `83.118.185.198` |
+| office-nat-1 | `31.25.222.168` |
+| office-nat-2 | `31.25.222.166` |
+
 ## Service Mesh
 
 Linkerd er **ikke lenger i bruk** (fjernet fra plattformen).
