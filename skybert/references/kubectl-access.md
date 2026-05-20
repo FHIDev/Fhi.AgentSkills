@@ -92,7 +92,7 @@ az login
 
 ### OIDC issuer URL-er
 
-Trengs ved opprettelse av federated credentials på managed identities (workload identity-binding mot K8s service accounts). Format: `https://europe.oic.prod-arc.azure.com/{tenantId}/{oidcIssuerId}/`. Andre GUID er per-kluster issuer-ID som Azure genererer når `--enable-oidc-issuer` er satt på AKS. Hent live med `az aks show -g <rg> -n <kluster> --query oidcIssuerProfile.issuerUrl -o tsv`.
+Trengs ved opprettelse av federated credentials på managed identities (workload identity-binding mot K8s service accounts). Format: `https://europe.oic.prod-arc.azure.com/{tenantId}/{oidcIssuerId}/`. Andre GUID er per-kluster issuer-ID som Azure genererer når workload identity er aktivert.
 
 | Kluster | OIDC issuer URL |
 |---------|-----------------|
@@ -106,21 +106,34 @@ Trengs ved opprettelse av federated credentials på managed identities (workload
 
 > Kilde: `Fhi.Skybert.Infra/scripts/lib/clusters.sh`
 
-### OIDC issuer URL-er
+Hent live:
 
-Trengs ved opprettelse av federated credentials på managed identities (workload identity-binding mot K8s service accounts). Format: `https://europe.oic.prod-arc.azure.com/{tenantId}/{oidcIssuerId}/`. Andre GUID er per-kluster issuer-ID som Azure genererer når `--enable-oidc-issuer` er satt på AKS. Hent live med `az aks show -g <rg> -n <kluster> --query oidcIssuerProfile.issuerUrl -o tsv`.
+```bash
+az connectedk8s show \
+  --name <cluster> --resource-group <rg> --subscription <sub> \
+  --query oidcIssuerProfile.issuerUrl -o tsv
+```
 
-| Kluster | OIDC issuer URL |
-|---------|-----------------|
-| aks-sandbox-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/cf8f6b35-4954-4548-b3da-37287cdbe99b/` |
-| aks-green-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/8eae23c5-dedf-4812-9c32-9de1adbb67c9/` |
-| aks-yellow-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/5218cffc-5c13-4b12-8edc-0d76cba4c9a3/` |
-| aks-red-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/30e79bc7-b120-4a86-8b94-07d875ccface/` |
-| aks-green-prod-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/2776d74b-e71f-41e5-b56e-4db0abc67cd3/` |
-| aks-yellow-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/3ba54ddb-2c2c-4bf5-81d0-e2f419b5f466/` |
-| aks-red-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/94639478-26a0-487a-926e-0dca36bce049/` |
+**Viktig**: Skybert-klusterne er **AKS on Azure Stack HCI** (Arc-projisert som `microsoft.kubernetes/connectedclusters`), ikke Azure-cloud AKS. Derfor virker **ikke** `az aks show` -- bruk `az connectedk8s show`.
 
-> Kilde: `Fhi.Skybert.Infra/scripts/lib/clusters.sh`
+### Nyttige felt fra `az connectedk8s show`
+
+Hele JSON-objektet inneholder mer enn bare OIDC. Felt verdt å huske til fremtidige queries:
+
+| Felt | Hva det forteller |
+|------|-------------------|
+| `oidcIssuerProfile.issuerUrl` | Workload identity issuer (federated credential setup) |
+| `aadProfile.adminGroupObjectIDs` | Entra-grupper med cluster-admin via Azure RBAC for Kubernetes |
+| `aadProfile.enableAzureRbac` | Bekrefter at Azure RBAC styrer K8s-autorisasjon |
+| `identity.principalId` | System-assigned MI på selve connected-cluster-ressursen |
+| `connectivityStatus` | Arc-agent: `Connected` / `Offline` / `Expired` |
+| `lastConnectivityTime` | Siste heartbeat fra Arc-agenten |
+| `agentVersion`, `arcAgentProfile.agentState`, `arcAgentProfile.agentAutoUpgrade` | Arc-agentens helse og oppgraderingsmodus |
+| `kubernetesVersion` | K8s-versjon på klusteret |
+| `distribution`, `infrastructure`, `offering` | Bekrefter clustertype (`aks_workload` / `azure_stack_hci` / `AzureStackHCI_AKS_Workload`) |
+| `managedIdentityCertificateExpirationTime` | Når Arc-MI-sertifikatet utløper (rotasjon kreves før dette) |
+| `securityProfile.workloadIdentity.enabled` | Om workload identity er på |
+| `totalCoreCount`, `totalNodeCount` | Kapasitet |
 
 ### Proxy-eksempler per sone
 
