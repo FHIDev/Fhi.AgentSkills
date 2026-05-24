@@ -483,6 +483,12 @@ Plattformen planlegger å tilby tre StorageClass-nivåer med ulike nivåer av re
 
 > Kilde: https://docs.sky.fhi.no/persistence/
 
+### `ontap-nas` accessMode -- bare RWX
+
+Inntil videre skal alle PVCer mot `ontap-nas` opprettes med
+`accessModes: [ReadWriteMany]` (RWX). **Bruk aldri `ReadWriteOnce`
+(RWO)**. Helm-charts som default-er til RWO må overrides.
+
 ## Azure Workload Identity
 
 Skybert bruker Azure Workload Identity for passordløs autentisering mot Azure-tjenester (Key Vault, Blob Storage, etc.).
