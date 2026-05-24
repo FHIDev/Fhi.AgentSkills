@@ -485,20 +485,9 @@ Plattformen planlegger å tilby tre StorageClass-nivåer med ulike nivåer av re
 
 ### `ontap-nas` accessMode -- bare RWX
 
-Inntil videre støtter Skybert sin `ontap-nas` StorageClass (Trident /
-NetApp ONTAP NFS) **kun `ReadWriteMany` (RWX)**, ikke `ReadWriteOnce`
-(RWO). Bakgrunn: stale `VolumeAttachment`-objekter mot døde eller
-degraderte noder har forårsaket flere langvarige utfall hvor RWO-PVCer
-ble pinnet til en ødelagt node og nye podder ikke kunne mounte. RWX
-sidesteg hele CSI ControllerPublish-pathen og gir umiddelbar
-node-failover.
-
-**Konsekvenser for tenant-design:**
-
-- Alle nye PVCer mot `ontap-nas` skal opprettes med `accessModes: [ReadWriteMany]`. Helm-charts som default-er til RWO må overrides.
-- Single-writer applikasjoner over NFS (typisk SQLite, eller andre filsystem-baserte databaser med locking) er fortsatt usikre med flere skriver-podder samtidig. Bruk Kyverno `Policy` eller chart-nivå constraint for å låse `replicas: 1` der det trengs.
-- Postgres / andre ekte databaser skal **ikke** kjøre på `ontap-nas` uavhengig av accessMode -- bruk Azure Postgres eller annen managed DB.
-- Eksisterende RWO-PVCer må migreres (PVC delete + recreate), siden `accessModes` er immutable etter binding.
+Inntil videre skal alle PVCer mot `ontap-nas` opprettes med
+`accessModes: [ReadWriteMany]` (RWX). **Bruk aldri `ReadWriteOnce`
+(RWO)**. Helm-charts som default-er til RWO må overrides.
 
 ## Azure Workload Identity
 
