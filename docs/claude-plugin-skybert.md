@@ -5,6 +5,9 @@ Repoet publiserer `skybert` som en Claude Code-plugin via marketplace-filen
 installasjonen som er beskrevet i [README](../README.md) – pluginen lar deg installere
 Skybert-skillen direkte med `/plugin`-kommandoer i Claude Code.
 
+> For Codex finnes en egen plugin med annen struktur, se
+> [codex-plugin-skybert.md](codex-plugin-skybert.md).
+
 ## Struktur
 
 Skillen distribueres **direkte** fra `skybert/`-mappa – det finnes ingen kopi i repoet.
