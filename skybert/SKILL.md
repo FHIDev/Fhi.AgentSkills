@@ -6,8 +6,8 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 schema_version=2
 docs_repo=FHISkybert/Fhi.Skybert.Docs
 docs_branch=main
-docs_commit=8aeff5d52caaa9ac208a06d0a28463227e09f07b
-docs_commit_date=2026-06-01
+docs_commit=9d90658b0484fde08bd87cd79a14fe1704c2c38a
+docs_commit_date=2026-06-03
 infra_repo=FHISkybert/Fhi.Skybert.Infra
 infra_branch=main
 infra_commit=01abbad59bd704ac2a41db68952bcca7565ded60

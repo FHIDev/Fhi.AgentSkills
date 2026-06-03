@@ -15,12 +15,10 @@ Tilgang til Grafana er **per kluster** — hvert kluster eksponerer sin egen Gra
 | aks-sandbox-01 | `https://grafana.sandbox-01.skytest.fhi.no` |
 | aks-green-test-01 | `https://grafana.green-01.skytest.fhi.no` |
 | aks-green-prod-02 | `https://grafana.green-02.sky.fhi.no` |
-| aks-yellow-test-01 | `https://grafana.yellow-01.skytest.fhi.no` |
+| aks-yellow-test-02 | `https://grafana.yellow-02.skytest.fhi.no` |
 | aks-yellow-prod-01 | `https://grafana.yellow-01.sky.fhi.no` |
 | aks-red-test-01 | `https://grafana.red-01.skytest.fhi.no` |
 | aks-red-prod-01 | `https://grafana.red-01.sky.fhi.no` (kun nåbar fra secure zone) |
-
-> **Merk (gul test):** Den nye docs-siden viser fortsatt gul test = `aks-yellow-test-01` (`grafana.yellow-01.skytest.fhi.no`), mens infra `COLOR_GROUP_CLUSTERS["yellow"]` i `clusters.sh` nå bruker `aks-yellow-test-02` i fargeløypa. URL-en er ikke endret her (docs er autoritativ for bruker-URLer) — verifiser med plattformteamet ved tvil.
 
 > Kilde: https://docs.sky.fhi.no/observability/grafana/
 

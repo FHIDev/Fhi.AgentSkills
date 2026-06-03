@@ -6,7 +6,7 @@
     "docs": {
       "repo": "FHISkybert/Fhi.Skybert.Docs",
       "branch": "main",
-      "commit": "8aeff5d52caaa9ac208a06d0a28463227e09f07b"
+      "commit": "9d90658b0484fde08bd87cd79a14fe1704c2c38a"
     },
     "infra": {
       "repo": "FHISkybert/Fhi.Skybert.Infra",

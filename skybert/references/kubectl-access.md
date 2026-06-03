@@ -62,7 +62,6 @@ kubectl get pods -n tn-<tenant>
 | Kluster | Resource Group | Subscription ID |
 |---------|---------------|----------------|
 | aks-green-test-01 | `rg-fhi-aks-green-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
-| aks-yellow-test-01 [³] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-yellow-test-02 | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-red-test-01 | `rg-fhi-aks-red-test-weu-01` | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
 | aks-ops-test-01 [²] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
@@ -79,8 +78,6 @@ kubectl get pods -n tn-<tenant>
 [¹] `aks-norsyss-prod-01` er registrert i `scripts/lib/clusters.sh`, men ikke del av en standard fargegruppe.
 
 [²] `aks-ops-test-01` brukes bl.a. for plattformpilotering (historisk Flux Operator-pilot).
-
-[³] `aks-yellow-test-01` er fortsatt i klusterregisteret, men `COLOR_GROUP_CLUSTERS["yellow"]` i `clusters.sh` bruker nå `aks-yellow-test-02` som gul test-kluster. Komponent-overlays for `aks-yellow-test-01` er fjernet i infra. Den nye docs-siden `observability/grafana.md` viser likevel fortsatt gul test = `aks-yellow-test-01` (`grafana.yellow-01.skytest.fhi.no`) — verifiser med plattformteamet ved tvil.
 
 ### PIM (Privileged Identity Management)
 
@@ -106,7 +103,6 @@ Trengs ved opprettelse av federated credentials på managed identities (workload
 |---------|-----------------|
 | aks-sandbox-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/cf8f6b35-4954-4548-b3da-37287cdbe99b/` |
 | aks-green-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/8eae23c5-dedf-4812-9c32-9de1adbb67c9/` |
-| aks-yellow-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/5218cffc-5c13-4b12-8edc-0d76cba4c9a3/` |
 | aks-yellow-test-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/bfb4e46e-3df2-436b-985b-ecdc184e46f7/` |
 | aks-ops-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/50541d55-54ba-48bc-bb33-bfeec177d216/` |
 | aks-red-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/30e79bc7-b120-4a86-8b94-07d875ccface/` |

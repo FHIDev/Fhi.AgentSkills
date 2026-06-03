@@ -186,6 +186,6 @@ Kjøres mot alle klustere i fargegruppen (sandbox + test + prod) via `az connect
 
 `scripts/lib/clusters.sh` er single source of truth for kluster-metadata i infra-repoet. Scripts som trenger kluster-informasjon sourcer denne filen. Registeret inneholder per kluster: navn, resource group, subscription ID, OIDC-issuer URL og PIM-krav. `COLOR_GROUP_CLUSTERS` definerer hvilke klustere som inngår i hvert fargelane (red/yellow/green).
 
-Klustere kan eksistere i registeret uten å tilhøre en fargegruppe. Per juni 2026 bruker `COLOR_GROUP_CLUSTERS["yellow"]` nå `aks-yellow-test-02` (ikke lenger `aks-yellow-test-01`) som gul test-kluster. `aks-norsyss-prod-01` er registrert men ikke del av en fargegruppe. `aks-yellow-test-01` står fortsatt i registeret, men er ute av fargeløypa og har fått komponent-overlays fjernet.
+Klustere kan eksistere i registeret uten å tilhøre en fargegruppe. Per juni 2026 bruker `COLOR_GROUP_CLUSTERS["yellow"]` `aks-yellow-test-02` (tidligere `aks-yellow-test-01`) som gul test-kluster, og `aks-norsyss-prod-01` er registrert uten å tilhøre en fargegruppe.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/scripts/lib/clusters.sh
