@@ -1,0 +1,92 @@
+# Secrets-mønstre
+
+## Anbefalt: SkybertApp inline secrets
+
+SkybertApp håndterer SecretStore og ExternalSecret automatisk:
+
+```yaml
+apiVersion: skybert.fhi.no/v1alpha1
+kind: SkybertApp
+metadata:
+  name: myapp
+  namespace: tn-mytenant
+spec:
+  image:
+    repository: crfhiskybert.azurecr.io/mytenant/myapp
+    tag: "1.0.0"
+  secrets:
+    - vault: my-keyvault
+      keys:
+        - remote: database-password
+          local: DB_PASSWORD
+        - remote: api-key
+          local: API_KEY
+      mountAsEnv: false
+```
+
+## Manuell: SecretStore + ExternalSecret (ESO)
+
+External Secrets Operator (ESO) er standard mekanisme for secrets-håndtering utenfor SkybertApp. Påkrevet for raw Kubernetes deployments eller spesielle behov.
+
+### SecretStore
+
+```yaml
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: myapp-secret-store
+  namespace: tn-<tenant>
+spec:
+  provider:
+    azurekv:
+      authType: WorkloadIdentity
+      vaultUrl: "https://<vault-navn>.vault.azure.net"
+      serviceAccountRef:
+        name: <tenant>-azure
+```
+
+### ExternalSecret
+
+```yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: myapp-db-secret
+  namespace: tn-<tenant>
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: myapp-secret-store
+    kind: SecretStore
+  target:
+    name: myapp-db-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: password
+      remoteRef:
+        key: "database-password"
+```
+
+## Key Vault
+
+Key Vault-navnet oppgis av plattformteamet ved onboarding. Det finnes ingen fast navnekonvensjon - bruk det faktiske vault-navnet du har fått tildelt.
+
+**RBAC-krav:** SecretStore bruker plattformens SA (`<tenant>-azure`) og den tilknyttede managed identity-en for å hente secrets fra Key Vault. Tenanten må selv gi denne managed identity-en `Key Vault Secrets User`-rollen på sin Key Vault. Uten dette feiler ExternalSecrets med 403. Administrer dette via Terraform eller `az role assignment create`.
+
+## Rotasjon og oppdatering
+
+Når en secret endres i Azure Key Vault, oppdateres mountede secret-filer automatisk i containeren.
+Hvis applikasjonen ikke leser filendringer fortløpende, vurder reloader-mønster som restarter
+pod ved secret-endring.
+
+> Kilde: https://docs.sky.fhi.no/miscellaneous/vault_secrets/
+
+## Regler
+
+- **Unngå** å montere secrets som miljøvariabler (`mountAsEnv: true`) — miljøvariabler kan lekke via crash dumps, `/proc/*/environ`, child-prosesser og logging. Bruk fil-montering (default `mountAsFiles: true`) som standard og les secrets fra filsystemet
+- **Aldri** commit secrets til Git
+- **Aldri** legg secrets i container images
+- Bruk Azure Key Vault som eneste kilde for secrets
+- SkybertApp inline secrets er foretrukket fremfor manuell SecretStore/ExternalSecret
+- ESO (SecretStore + ExternalSecret) er **standard** mekanisme
+- CSI driver (SecretProviderClass) er **legacy** - unngå for nye deployments
