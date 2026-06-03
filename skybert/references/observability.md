@@ -20,7 +20,9 @@ Tilgang til Grafana er **per kluster** — hvert kluster eksponerer sin egen Gra
 | aks-red-test-01 | `https://grafana.red-01.skytest.fhi.no` |
 | aks-red-prod-01 | `https://grafana.red-01.sky.fhi.no` (kun nåbar fra secure zone) |
 
-> Kilde: https://docs.sky.fhi.no/observability/
+> **Merk (gul test):** Den nye docs-siden viser fortsatt gul test = `aks-yellow-test-01` (`grafana.yellow-01.skytest.fhi.no`), mens infra `COLOR_GROUP_CLUSTERS["yellow"]` i `clusters.sh` nå bruker `aks-yellow-test-02` i fargeløypa. URL-en er ikke endret her (docs er autoritativ for bruker-URLer) — verifiser med plattformteamet ved tvil.
+
+> Kilde: https://docs.sky.fhi.no/observability/grafana/
 
 LogQL-query for egne logger:
 ```
@@ -138,6 +140,50 @@ Tilgang dashboards for:
 - Pod-metrics (CPU, minne, nettverk)
 - HTTP-metrics (RPS, latency, errors)
 - Custom app-metrics (eksponer `/metrics` og opt-in via Prometheus-annotasjoner eller SkybertApp `metrics`-feltet — se "Metrics med Mimir" over)
+
+### Dashboards fra GitOps (ConfigMap)
+
+Du kan publisere dashboards fra Kubernetes ved å opprette en labelet `ConfigMap` i tenant-namespacet ditt (`tn-<tenant>`). En in-cluster controller (`grafana-dashboard-syncer`) watcher disse og upserter dashboardet i din Grafana-org via HTTP API. Typisk flyt: commit ConfigMap i GitOps-repoet → Flux applyer → syncer oppretter/oppdaterer dashboardet.
+
+| Krav | Detalj |
+|------|--------|
+| **Label (påkrevd)** | `skybert.fhi.no/grafana-dashboard: "true"` (kun ConfigMaps som matcher label-selektoren synkes) |
+| **Data-nøkkel (påkrevd)** | Nøyaktig `json` under `data:` (ren tekst). `binaryData` brukes ikke. |
+
+`data.json` kan være enten (1) klassisk dashboard-modell (må ha stabil `uid`, samt `title` og/eller `panels`) eller (2) full save-payload `{"dashboard": {...}, "folderUid": "..."}`. Synceren lagrer alltid med `overwrite: true`.
+
+| Annotasjon (valgfri) | Funksjon |
+|----------------------|----------|
+| `skybert.fhi.no/grafana-folder` | Sikrer at en mappe med gitt tittel finnes og lagrer dashboardet der. Verdien trimmes, maks 100 tegn, og saneres til `[a-zA-Z0-9 _\-.]`. |
+| `skybert.fhi.no/grafana-dashboard-org-home` | Truthy verdi (`true`/`1`/`yes`) setter dashboardet som org-hjem etter lagring. Bruk sparsomt. |
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-service-overview
+  namespace: tn-<tenant>
+  labels:
+    skybert.fhi.no/grafana-dashboard: "true"
+data:
+  json: |
+    {
+      "title": "My service overview",
+      "uid": "<tenant>-service-overview",
+      "schemaVersion": 39,
+      "version": 1,
+      "panels": []
+    }
+```
+
+**Atferd og begrensninger:**
+- **Resync hvert 5. minutt** — overskriver manuelle endringer gjort i Grafana-UI. Vil du redigere kun i UI, fjern ConfigMap (men da mister du GitOps-backup).
+- **Ingen auto-sletting** — sletting av ConfigMap (eller fjerning av label) fjerner ikke dashboardet i Grafana. Slett/omdøp manuelt i UI.
+- **Maks `data.json`: 900 000 bytes** (Kubernetes-ressursgrense). Større payloads avvises ved validering. Kontakt `#ext-fhi-skybert` ved behov.
+- **Metrics i Mimir:** `syncer_dashboard_configmaps` og `syncer_malformed_dashboard_configmaps` (oppdateres hvert minutt).
+
+> Kilde: https://docs.sky.fhi.no/observability/grafana/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/infra/grafana/base/dashboard-syncer.yaml
 
 ### PromQL eksempler
 

@@ -91,7 +91,7 @@ tenants/<tenant>/
 │   ├── namespace.yaml              # tn-<tenant>
 │   ├── serviceaccounts.yaml        # flux-reconciler + <tenant>-azure (flertall i nyere tenanter)
 │   ├── rolebinding.yaml            # flux-reconciler og crossplane → ClusterRole cluster-admin innen namespace
-│   ├── entra-access-rolebinding.yaml  # Entra ID-gruppe → ClusterRole cluster-admin innen namespace
+│   ├── entra-access-rolebinding.yaml  # Entra ID-gruppe → ClusterRole (cluster-admin eller skybert:tenant-admin) innen namespace
 │   ├── flux-kustomization.yaml     # Flux Kustomization (interval: 2m, prune: true)
 │   └── kustomization.yaml          # Kustomize-referanse
 └── <kluster>/
@@ -101,18 +101,28 @@ tenants/<tenant>/
 Service account `<tenant>-azure` opprettes av plattformteamet med Workload Identity-annotasjoner.
 Service account `flux-reconciler` brukes av Flux for å applye tenant-ressurser.
 
-**`entra-access-rolebinding.yaml`** (observert i de fleste tenant-baser per april 2026) — RoleBinding som gir en Entra ID-gruppe `cluster-admin`-rolle avgrenset til tenant-namespacet. Observert bootstrap-mønster tyder på at denne gruppen kobles til access packages i MyAccess, men dette er ikke eksplisitt dokumentert i kilderepoene.
+**`entra-access-rolebinding.yaml`** (observert i de fleste tenant-baser per april 2026) — RoleBinding som gir en Entra ID-gruppe en ClusterRole avgrenset til tenant-namespacet (`cluster-admin` for eldre tenanter, `skybert:tenant-admin` for migrerte — se «Aggregert tenant-admin RBAC» nedenfor). Observert bootstrap-mønster tyder på at denne gruppen kobles til access packages i MyAccess, men dette er ikke eksplisitt dokumentert i kilderepoene.
 
 > **Merk:** Eldre tenanter kan fortsatt bruke `serviceaccount.yaml` (entall) og mangle `entra-access-rolebinding.yaml`. Begge layouter er gyldige.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/tenants/fida-stat19core/base/kustomization.yaml
 
 Nyere tenanter har to separate RoleBindings:
-- **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) og `crossplane` (fra crossplane-namespace) til `ClusterRole cluster-admin` innen tenant-namespacet. Brukes av plattformen for å reconcile og provisjonere ressurser.
-- **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til `ClusterRole cluster-admin` innen tenant-namespacet. Gir kubectl-tilgang for utviklere.
+- **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) og `crossplane` (fra crossplane-namespace) til `ClusterRole cluster-admin` innen tenant-namespacet. Brukes av plattformen for å reconcile og provisjonere ressurser. **Uendret.**
+- **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til en ClusterRole innen tenant-namespacet. Gir kubectl-tilgang for utviklere. **Under utrulling:** nyere/migrerte tenanter binder mot den kuraterte `skybert:tenant-admin` (least-privilege, f.eks. `fida-stat19`), mens eldre tenanter og mal-tenanten `exempl` fortsatt binder mot `cluster-admin`.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/tenants/ki-mcp/base/rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/tenants/ki-mcp/base/entra-access-rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/tenants/fida-stat19/base/entra-access-rolebinding.yaml
+
+#### Aggregert tenant-admin RBAC (ny modell)
+
+Menneskelig tenant-admin-tilgang er nå modellert som aggregerte ClusterRole-fragmenter i `infra/skybert-system/base/tenant-admin-clusterroles/` (erstatter den fjernede `tenant-namespace-admin-clusterrole.yaml`):
+
+- **`skybert:tenant-admin:core`** — baseline namespaced rettigheter uten wildcards (workloads, services, ingresses, configmaps, secrets, PVC, HPA, PDB, namespaced RBAC uten `bind`/`escalate`, native + Calico NetworkPolicies, cert-manager, Gateway API-ruter, external-secrets, Crossplane-claims, metrics, policy-rapport-innsyn). Aggregeres inn i miljøspesifikke roller via labels (`aggregate-to-tenant-admin-{red-prod,red-test,yellow-prod,green-prod,test-sandbox}`).
+- **`skybert:tenant-admin:test-sandbox:runtime-access`** — legger til runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral). Aggregeres **kun** via `test-sandbox`-labelen → gjelder green-test, yellow-test-02, ops-test og sandbox. **Ikke** `aks-red-test-01`, som derfor mangler runtime-tilgang (i tillegg blokkert av Kyverno `deny-tenant-portforward`). Dette forklarer hvorfor interaktiv debugging oppfører seg ulikt per miljø.
+- **`skybert:tenant-flux-reconciler`** — egen aggregering for Flux-rekonsiliering.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/01abbad/infra/skybert-system/base/tenant-admin-clusterroles/
 
 ### ResourceSet-basert bootstrap (ny mekanisme)
 
@@ -156,7 +166,7 @@ Color → kluster-mapping ved onboarding:
 | Farge | Klustere |
 |-------|---------|
 | `green` | aks-sandbox-01, aks-green-test-01, aks-green-prod-02 |
-| `yellow` | aks-sandbox-01, aks-yellow-test-01, aks-yellow-prod-01 |
+| `yellow` | aks-sandbox-01, aks-yellow-test-02, aks-yellow-prod-01 |
 | `red` | aks-sandbox-01, aks-red-test-01, aks-red-prod-01 |
 
 Grafana klargjøres separat med `scripts/tenant--bootstrap--grafana.sh`:
@@ -176,6 +186,6 @@ Kjøres mot alle klustere i fargegruppen (sandbox + test + prod) via `az connect
 
 `scripts/lib/clusters.sh` er single source of truth for kluster-metadata i infra-repoet. Scripts som trenger kluster-informasjon sourcer denne filen. Registeret inneholder per kluster: navn, resource group, subscription ID, OIDC-issuer URL og PIM-krav. `COLOR_GROUP_CLUSTERS` definerer hvilke klustere som inngår i hvert fargelane (red/yellow/green).
 
-Klustere kan eksistere i registeret uten å tilhøre en fargegruppe. Per april 2026 er `aks-yellow-test-02` og `aks-norsyss-prod-01` registrert men ikke i noen fargegruppe.
+Klustere kan eksistere i registeret uten å tilhøre en fargegruppe. Per juni 2026 bruker `COLOR_GROUP_CLUSTERS["yellow"]` nå `aks-yellow-test-02` (ikke lenger `aks-yellow-test-01`) som gul test-kluster. `aks-norsyss-prod-01` er registrert men ikke del av en fargegruppe. `aks-yellow-test-01` står fortsatt i registeret, men er ute av fargeløypa og har fått komponent-overlays fjernet.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/scripts/lib/clusters.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/scripts/lib/clusters.sh

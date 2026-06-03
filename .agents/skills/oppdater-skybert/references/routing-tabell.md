@@ -11,6 +11,7 @@
 | `docs/explanations/what-is-a-tenant.md` | `SKILL.md` |
 | `docs/explanations/under-the-hood.md` | `references/platform-architecture.md` |
 | `docs/explanations/blaloypa.md` | `SKILL.md` |
+| `docs/explanations/shared-responsibilities.md` | `SKILL.md` |
 | `docs/get-started/blaloypa.md` | `SKILL.md` |
 | `docs/get-started/connectedk8s.md` | `references/kubectl-access.md` |
 | `docs/get-started/gitops-repo.md` | `SKILL.md`, `references/workflows.md` |
@@ -23,6 +24,8 @@
 | `docs/build/environments.md` | `SKILL.md`, `references/hostnames-and-networking.md` |
 | `docs/build/explanations/gitops.md` | `references/workflows.md` |
 | `docs/build/how-to/trigger-gitops-promotion.md` | `references/workflows.md` |
+| `docs/build/flux-dashboard.md` | `references/flux-tooling.md` |
+| `docs/build/flux-mcp.md` | `references/flux-tooling.md` |
 | `docs/auth/index.md` | `references/security.md` |
 | `docs/auth/workload-identity.md` | `references/security.md` |
 | `docs/persistence/*.md` | `SKILL.md` |
@@ -31,6 +34,7 @@
 | `docs/miscellaneous/publicCA.md` | `references/security.md` |
 | `docs/miscellaneous/access-packages.md` | `SKILL.md` |
 | `docs/miscellaneous/PIM.md` | `references/kubectl-access.md` |
+| `docs/miscellaneous/probes.md` | `references/configuration.md`, `SKILL.md` |
 | `docs/legal/*.md` | `SKILL.md` (kort omtale) |
 | `docs/troubleshooting/non-root.md` | `references/troubleshooting.md` |
 | `docs/internal/flux.md` | `references/platform-architecture.md` (NB: kan motsi infra-repo — markeres som kildekonflikt) |
@@ -39,6 +43,7 @@
 | `docs/internal/sk8-cli.md` | VURDER — plattformintern, ikke auto-route |
 | `docs/internal/helm-and-crds.md` | VURDER — plattformintern, ikke auto-route |
 | `docs/internal/managing-clusters.md` | VURDER — plattformintern, ikke auto-route |
+| `docs/internal/replace-cluster-in-place.md` | VURDER — plattformintern runbook; hent kun tenant-impact (federated credentials / Workload Identity-konsekvenser ved cluster-bytte) |
 | `docs/internal/component-versions.md` | VURDER — versjonsmatrise, endres hyppig; vurder lenking framfor kopiering |
 | `docs/internal/decisions/gatewayapi.md` | VURDER — ADR, historisk beslutning; auto-route hvis implementert i `docs/build/` e.l. |
 | `docs/miscellaneous/fhi-felles-cryptography.md` | VURDER — målgruppe (tenant-utviklere vs. plattform) må avklares |
@@ -52,6 +57,7 @@
 | `infra/crossplane/base/compositions/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/platform-architecture.md` |
 | `infra/crossplane/base/compositions/webapp.yaml` | `references/webapp-crd.md` |
 | `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
+| `infra/skybert-system/base/tenant-admin-clusterroles/*.yaml` | `references/platform-architecture.md`, `references/security.md`, `references/kyverno-policies.md` |
 | `tenants/*/base/*.yaml` | `references/platform-architecture.md`, `SKILL.md` |
 | `scripts/tenant--*.sh` | `references/platform-architecture.md` |
 | `infra/tenant-bootstrap/base/*.yaml` | `references/platform-architecture.md` |
