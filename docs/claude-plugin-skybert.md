@@ -7,22 +7,27 @@ Skybert-skillen direkte med `/plugin`-kommandoer i Claude Code.
 
 ## Struktur
 
+Skillen distribueres **direkte** fra `skybert/`-mappa – det finnes ingen kopi i repoet.
+Marketplace-oppslaget peker på `./skybert` som plugin-kilde, og `skybert/`-mappa er
+samtidig selve pluginen:
+
 ```text
 .claude-plugin/
-  marketplace.json            # Marketplace-manifest
-
-plugins/
-  skybert-plugin/
-    .claude-plugin/
-      plugin.json             # Plugin-manifest
-    skills/
-      skybert/                # Generert kopi av /skybert
-        SKILL.md
-        references/
+  marketplace.json            # Marketplace-manifest, source: ./skybert
+skybert/
+  .claude-plugin/
+    plugin.json               # Plugin-manifest
+  SKILL.md                    # Skillen (enkelt SKILL.md i plugin-roten)
+  references/                 # Støttefiler
 ```
 
-Innholdet under `plugins/skybert-plugin/skills/skybert/` er en **generert kopi** av
-`/skybert`. Rediger alltid kilden i `/skybert/` – ikke den genererte kopien.
+Claude Code støtter at en plugin har skillen som en enkelt `SKILL.md` med støttefiler i
+plugin-roten, så `skybert/` fungerer både som vanlig skill (via symlink) og som plugin
+(via marketplace) uten duplisering. Rediger alltid `skybert/` direkte.
+
+> **Merk:** Når Claude Code installerer pluginen, kopieres hele `skybert/`-mappa til en
+> lokal cache. Den interne `skybert/.oppdater-state.json` (sync-metadata for
+> `oppdater-skybert`) blir da med. Det er harmløst – fila inneholder ingen hemmeligheter.
 
 ## Installer marketplace i Claude Code
 
@@ -42,24 +47,24 @@ Innholdet under `plugins/skybert-plugin/skills/skybert/` er en **generert kopi**
 /reload-plugins
 ```
 
-## Hvordan pluginen bygges
+## Validering
 
-Pluginen bygges automatisk fra innholdet i `/skybert` av GitHub Actions-workflowen
-[`build-claude-skybert-plugin.yml`](../.github/workflows/build-claude-skybert-plugin.yml).
+Manifestene valideres av GitHub Actions-workflowen
+[`validate-claude-skybert-plugin.yml`](../.github/workflows/validate-claude-skybert-plugin.yml),
+som kjører på pull requests og push til `main` når `skybert/**` eller `.claude-plugin/**`
+endres. Workflowen sjekker at manifestene er gyldig JSON og at marketplace-source peker på
+`./skybert`.
 
-Workflowen:
+Lokalt kan du i tillegg kjøre:
 
-- trigges ved push til `main` når `skybert/**` eller workflowen selv endres
-- kan også startes manuelt via `workflow_dispatch`
-- kopierer `/skybert` til `plugins/skybert-plugin/skills/skybert` (uten den interne
-  `.oppdater-state.json`)
-- skriver/oppdaterer `.claude-plugin/marketplace.json` og
-  `plugins/skybert-plugin/.claude-plugin/plugin.json`
-- committer og pusher kun når det faktisk er endringer
+```text
+claude plugin validate skybert
+claude plugin validate .
+```
 
 ## Oppdatering
 
-Når `/skybert` endres på `main`, regenererer workflowen plugin-filene og committer dem.
-For at Claude Code skal hente oppdateringen automatisk må marketplace auto-update være
-aktivert. Pluginen har ingen eksplisitt `version`; ved git-basert distribusjon kan
-Claude Code bruke Git commit-SHA som versjon.
+Siden skillen distribueres direkte fra `skybert/`, er en endring i `skybert/` på `main`
+nok – det finnes ingen kopi som må regenereres. For at Claude Code skal hente oppdateringen
+automatisk må marketplace auto-update være aktivert. Pluginen har ingen eksplisitt
+`version`; ved git-basert distribusjon kan Claude Code bruke Git commit-SHA som versjon.

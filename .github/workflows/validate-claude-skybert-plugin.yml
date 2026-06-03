@@ -1,0 +1,58 @@
+name: Validate Claude Skybert plugin
+
+# Validerer at plugin- og marketplace-manifestene er gyldige.
+# Skybert-skillen distribueres direkte som plugin (marketplace source: ./skybert),
+# saa det finnes ingen generert kopi aa bygge - kun validering.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "skybert/**"
+      - ".claude-plugin/**"
+      - ".github/workflows/validate-claude-skybert-plugin.yml"
+  pull_request:
+    paths:
+      - "skybert/**"
+      - ".claude-plugin/**"
+      - ".github/workflows/validate-claude-skybert-plugin.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Valider manifester og struktur
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "== Sjekker at filer finnes =="
+          for f in ".claude-plugin/marketplace.json" "skybert/.claude-plugin/plugin.json" "skybert/SKILL.md"; do
+            [ -f "$f" ] || { echo "Mangler fil: $f"; exit 1; }
+            echo "OK finnes: $f"
+          done
+
+          echo "== Validerer JSON =="
+          python3 -m json.tool ".claude-plugin/marketplace.json" > /dev/null
+          python3 -m json.tool "skybert/.claude-plugin/plugin.json" > /dev/null
+          echo "OK gyldig JSON"
+
+          echo "== Sjekker at marketplace-source peker paa ./skybert =="
+          python3 - <<'PY'
+          import json, sys
+          mp = json.load(open(".claude-plugin/marketplace.json"))
+          srcs = [p.get("source") for p in mp.get("plugins", [])]
+          if "./skybert" not in srcs:
+              print(f"Forventet source './skybert' i marketplace.json, fant: {srcs}")
+              sys.exit(1)
+          print("OK source ./skybert")
+          PY
