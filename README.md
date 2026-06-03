@@ -43,9 +43,9 @@ Disse skillene brukes til å holde domenekunnskap-skillene i dette repoet oppdat
 
 Se [docs/claude-plugin-skybert.md](docs/claude-plugin-skybert.md) for detaljer.
 
-**Codex** – en egen Codex-plugin genereres fra `skybert/` under `plugins/codex/skybert-plugin/`,
-med marketplace i `.agents/plugins/marketplace.json`. Se
-[docs/codex-plugin-skybert.md](docs/codex-plugin-skybert.md) for detaljer.
+**Codex** – en egen Codex-plugin under `plugins/codex/skybert-plugin/` lenker til `skybert/`
+via en symlink (ingen kopi), med marketplace i `.agents/plugins/marketplace.json`. Se
+[docs/codex-plugin-skybert.md](docs/codex-plugin-skybert.md) for detaljer og forbehold.
 
 ## Installasjon
 

@@ -1,6 +1,7 @@
 # Skybert som Codex-plugin
 
-Repoet bygger en Codex-plugin fra `skybert/`.
+Repoet publiserer en Codex-plugin for `skybert`. For å unngå en ekstra kopi av skillen
+**lenkes** innholdet via en symlink i stedet for å kopieres.
 
 Kilden ligger her:
 
@@ -8,7 +9,7 @@ Kilden ligger her:
 skybert/
 ```
 
-Generert Codex-plugin ligger her:
+Codex-pluginen ligger her:
 
 ```text
 plugins/codex/skybert-plugin/
@@ -18,12 +19,6 @@ Codex marketplace ligger her:
 
 ```text
 .agents/plugins/marketplace.json
-```
-
-Skillen kopieres inn i pluginen her:
-
-```text
-plugins/codex/skybert-plugin/skills/skybert/
 ```
 
 ## Struktur
@@ -38,45 +33,59 @@ plugins/
       .codex-plugin/
         plugin.json                   # Codex plugin-manifest (skills: ./skills)
       skills/
-        skybert/
-          SKILL.md
-          references/
+        skybert  ->  ../../../../skybert   # SYMLINK til repo-rotens skybert/
 ```
 
-`source.path` i marketplace-fila løses relativt til **repo-roten** (marketplace-roten),
-ikke til `.agents/plugins/`-mappa. Derfor er stien `./plugins/codex/skybert-plugin`.
+Codex krever skill-layoutet `skills/<navn>/SKILL.md`. I stedet for å kopiere `skybert/` hit,
+er `skills/skybert` en **symlink** til repo-rotens `skybert/`. Slik finnes innholdet bare ett
+sted i repoet.
 
-## Hva som ekskluderes fra kopien
+`source.path` i marketplace-fila løses relativt til **repo-roten**, ikke til
+`.agents/plugins/`-mappa. Derfor er stien `./plugins/codex/skybert-plugin`.
 
-Ved kopiering fra `skybert/` utelates:
+## Konsekvenser og risiko
 
-- `skybert/.claude-plugin/` – Claude-spesifikk pluginmetadata, ikke relevant for Codex
-- `skybert/.oppdater-state.json` – intern sync-metadata for `oppdater-skybert`, ikke nødvendig i pluginpakken
+Denne symlink-løsningen er bevisst valgt for å unngå duplisering, men har forbehold som
+**må testes i faktisk Codex** før den regnes som støttet:
 
-## Bygging
+- **Codex cache (udokumentert):** Codex kopierer hele plugin-mappa til
+  `~/.codex/plugins/cache/...` ved install, og dokumentasjonen nevner ikke symlinks.
+  Symlinken peker utenfor plugin-roten. Løsningen virker bare hvis Codex *følger* symlinken
+  ved kopiering; ellers blir det en hengende symlink i cachen og skillen lastes ikke.
+- **Windows:** symlinks er upålitelige på Windows-checkout (samme grunn som at
+  `.agents/skills` er en kopi). En Windows-bruker uten symlink-støtte kan få en tekstfil i
+  stedet for symlinken.
+- **Ingen filfiltrering:** symlinken peker på hele `skybert/`, så `.claude-plugin/` og
+  `.oppdater-state.json` blir med (harmløst).
 
-Etter endringer i `skybert/` bygges Codex-pluginstrukturen automatisk av GitHub
-Actions-workflowen [`build-codex-skybert-plugin.yml`](../.github/workflows/build-codex-skybert-plugin.yml).
+### Vakt mot ødelagt symlink
 
-Workflowen:
+GitHub Actions-workflowen
+[`validate-codex-skybert-plugin.yml`](../.github/workflows/validate-codex-skybert-plugin.yml)
+sjekker at git-modus for `plugins/codex/skybert-plugin/skills/skybert` er `120000` (symlink),
+og feiler ellers. Sjekken leser git-treet, ikke arbeidskopien, så den fanger opp en
+Windows-checkout som har staget symlinken som vanlig fil. For at dette skal *hindre* merge til
+`main`, må sjekken settes som påkrevd status-check i repoets branch protection.
 
-- trigges ved push til `main` når `skybert/**` eller workflowen selv endres
-- kan også startes manuelt via `workflow_dispatch`
-- kopierer `skybert/` til `plugins/codex/skybert-plugin/skills/skybert/` (uten
-  `.claude-plugin/` og `.oppdater-state.json`)
-- skriver/oppdaterer `.codex-plugin/plugin.json` og `.agents/plugins/marketplace.json`
-- validerer JSON
-- committer og pusher kun når det faktisk er endringer
+### Merknad til bidragsytere (Windows)
+
+Slå på symlink-støtte før du jobber med repoet, så du ikke ødelegger symlinken lokalt:
+
+```text
+git config --global core.symlinks true
+```
+
+(krever Developer Mode eller administrator på Windows). CI-vakten fanger opp brudd uansett.
 
 ## Forholdet til Claude-pluginen
 
-Claude-pluginen bruker en annen struktur og distribueres **direkte** fra `skybert/` via
-`.claude-plugin/marketplace.json` (se [claude-plugin-skybert.md](claude-plugin-skybert.md)).
-Denne skal ikke blandes med Codex-pluginstrukturen.
+Claude-pluginen distribueres **direkte** fra `skybert/` via `.claude-plugin/marketplace.json`
+(se [claude-plugin-skybert.md](claude-plugin-skybert.md)) og bruker ikke symlink. De to
+oppsettene skal ikke blandes.
 
 ## Gjenstår å teste manuelt
 
-Automatisk oppdatering og installasjon i Codex (CLI/app/IDE) er **ikke** verifisert og må
-testes i faktisk Codex før det dokumenteres som støttet. Codex-plugin-formatet her følger
-offisiell dokumentasjon (developers.openai.com/codex/plugins), men er ikke kjørt mot en
-Codex-valideringskommando.
+Installasjon og lasting av skillen i faktisk Codex (CLI/app/IDE) er **ikke** verifisert.
+Det avgjørende testpunktet er om Codex faktisk laster `skybert`-skillen fra cachen etter
+install — altså om symlinken følges ved cache-kopiering. Hvis ikke, se fallback-løsningen
+(flytte skillen til delt `skills/skybert/`-layout) beskrevet i prosjektets planunderlag.
