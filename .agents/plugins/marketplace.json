@@ -1,0 +1,20 @@
+{
+  "name": "fhi-agent-skills",
+  "interface": {
+    "displayName": "FHI Agent Skills"
+  },
+  "plugins": [
+    {
+      "name": "skybert-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex/skybert-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
