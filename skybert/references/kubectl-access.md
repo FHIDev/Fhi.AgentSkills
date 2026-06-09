@@ -12,7 +12,13 @@
 
 ## Koble til klusteret
 
-> **Viktig (produksjon):** I normal drift bør du ikke trenge å koble til produksjonsklusteret — bruk logger/metrics/Grafana i stedet. Direkte shell/`kubectl exec` i pods i produksjon kan utløse sikkerhetsvarsler. Bruk kun ved nødvendig feilsøking.
+> **Viktig (prod + red-test):** I normal drift bør du ikke trenge å koble til produksjonsklusteret — bruk logger/metrics/Grafana i stedet.
+>
+> - **Hvor det gjelder:** Klustere som inkluderer `policies-prod` — alle prod-klustere samt `aks-red-test-01`.
+> - **Blokkert** (Enforce, Kyverno `deny-tenant-portforward`): `kubectl exec`, `port-forward`, `attach`, API-`proxy` (pod og service) og ephemeral debug-containere i `tn-*`.
+> - **Hva du gjør i stedet:** Bruk green-test, yellow-test-02, ops-test eller sandbox for interaktiv debugging (runtime-tilgang via fragmentet `skybert:tenant-admin:test-sandbox:runtime-access`); feilsøk prod/red-test via logger/metrics/Grafana.
+>
+> Se [Kyverno-policier](kyverno-policies.md#produksjon--red-test--runtime-restriksjoner).
 
 > Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/
 
@@ -37,11 +43,11 @@ kubectl get pods -n tn-<tenant>
 
 ## Tilgjengelige klustere
 
-> **Sist oppdatert 2026-05-09.** Se offisiell docs for løpende oppdaterte verdier: https://docs.sky.fhi.no/get-started/connectedk8s/
+> **Sist oppdatert 2026-06-03.** Se offisiell docs for løpende oppdaterte verdier: https://docs.sky.fhi.no/get-started/connectedk8s/
 >
 > Infra-repoets `scripts/lib/clusters.sh` er autoritativt metadataregister (navn, resource group, subscription ID). Ved tvil, slå opp der.
 >
-> Kilde (autoritativ kluster-liste): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a16a243/scripts/lib/clusters.sh
+> Kilde (autoritativ kluster-liste): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/scripts/lib/clusters.sh
 
 ### Sandbox
 
@@ -56,8 +62,7 @@ kubectl get pods -n tn-<tenant>
 | Kluster | Resource Group | Subscription ID |
 |---------|---------------|----------------|
 | aks-green-test-01 | `rg-fhi-aks-green-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
-| aks-yellow-test-01 | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
-| aks-yellow-test-02 [¹] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-yellow-test-02 | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-red-test-01 | `rg-fhi-aks-red-test-weu-01` | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
 | aks-ops-test-01 [²] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 
@@ -70,7 +75,7 @@ kubectl get pods -n tn-<tenant>
 | aks-red-prod-01 | `rg-fhi-aks-red-prod-weu-01` | `88fde73a-d4a6-4aab-b8be-31810fcd7116` |
 | aks-norsyss-prod-01 [¹] | `rg-fhi-aks-norsyss-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
 
-[¹] `aks-yellow-test-02` og `aks-norsyss-prod-01` er registrert i `scripts/lib/clusters.sh`, men ikke del av en standard fargegruppe.
+[¹] `aks-norsyss-prod-01` er registrert i `scripts/lib/clusters.sh`, men ikke del av en standard fargegruppe.
 
 [²] `aks-ops-test-01` brukes bl.a. for plattformpilotering (historisk Flux Operator-pilot).
 
@@ -98,11 +103,13 @@ Trengs ved opprettelse av federated credentials på managed identities (workload
 |---------|-----------------|
 | aks-sandbox-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/cf8f6b35-4954-4548-b3da-37287cdbe99b/` |
 | aks-green-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/8eae23c5-dedf-4812-9c32-9de1adbb67c9/` |
-| aks-yellow-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/5218cffc-5c13-4b12-8edc-0d76cba4c9a3/` |
+| aks-yellow-test-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/bfb4e46e-3df2-436b-985b-ecdc184e46f7/` |
+| aks-ops-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/50541d55-54ba-48bc-bb33-bfeec177d216/` |
 | aks-red-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/30e79bc7-b120-4a86-8b94-07d875ccface/` |
 | aks-green-prod-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/2776d74b-e71f-41e5-b56e-4db0abc67cd3/` |
 | aks-yellow-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/3ba54ddb-2c2c-4bf5-81d0-e2f419b5f466/` |
 | aks-red-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/94639478-26a0-487a-926e-0dca36bce049/` |
+| aks-norsyss-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/2e7d357f-5942-4fad-bc16-91b0de9a7471/` |
 
 > Kilde: `Fhi.Skybert.Infra/scripts/lib/clusters.sh`
 
@@ -149,7 +156,7 @@ az connectedk8s proxy --resource-group rg-fhi-aks-green-test-weu-01 --name aks-g
 
 **Gul test:**
 ```powershell
-az connectedk8s proxy --resource-group rg-fhi-aks-yellow-test-weu-01 --name aks-yellow-test-01 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
+az connectedk8s proxy --resource-group rg-fhi-aks-yellow-test-weu-01 --name aks-yellow-test-02 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
 ```
 
 **Rød test:**
@@ -175,6 +182,8 @@ az connectedk8s proxy --resource-group rg-fhi-aks-red-prod-weu-01 --name aks-red
 ## Nyttige kubectl-kommandoer
 
 **Viktig:** Husk ALLTID å spesifisere namespace med `-n tn-<tenant>` eller sett default namespace først.
+
+> **Merk:** `kubectl exec`, `port-forward`, `attach` og `proxy` virker kun i klustere uten `policies-prod` (green-test, yellow-test-02, ops-test, sandbox). I prod og `aks-red-test-01` blokkeres de av Kyverno — se [Koble til klusteret](#koble-til-klusteret).
 
 ```powershell
 # Se pods
@@ -222,7 +231,7 @@ brew install derailed/k9s/k9s
 
 1. Start proxy i én terminal (må holdes åpen):
    ```powershell
-   az connectedk8s proxy --resource-group rg-fhi-aks-yellow-test-weu-01 --name aks-yellow-test-01 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
+   az connectedk8s proxy --resource-group rg-fhi-aks-yellow-test-weu-01 --name aks-yellow-test-02 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
    ```
 
 2. Start k9s i en annen terminal:

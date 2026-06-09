@@ -140,6 +140,9 @@ infra/crossplane/base/compositions/webapp.yaml
 infra/kyverno-policies/base/policies-*/**/*.yaml
 # + relevante overlays per kluster der de avviker fra base
 
+# Tenant-admin RBAC (aggregerte ClusterRole-fragmenter — hva tenanter kan administrere)
+infra/skybert-system/base/tenant-admin-clusterroles/*.yaml
+
 # GlobalNetworkPolicies (rød sone tenant-regler)
 infra/globalnetworkpolicies/base/policies-red/*.yaml
 

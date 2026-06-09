@@ -45,13 +45,12 @@ Hvis endringer fortsatt ikke vises etter 5 minutter:
 
 ### 5. Nettverkstilkobling feiler (rød sone)
 ```bash
-# Verifiser NetworkPolicy
+# Verifiser NetworkPolicy (native + Calico)
 kubectl get networkpolicy -n tn-<tenant>
 kubectl describe networkpolicy <policy-name> -n tn-<tenant>
-
-# Test tilkobling fra pod
-kubectl exec -it <pod-name> -n tn-<tenant> -- curl <url>
 ```
+
+> **Merk:** `kubectl exec` for å teste tilkobling (`kubectl exec -it <pod-name> -n tn-<tenant> -- curl <url>`) er **blokkert i rød sone** (både `aks-red-test-01` og prod inkluderer `policies-prod` → `deny-tenant-portforward`). Alternativer: sjekk app-logger/events i Grafana, `kubectl get events -n tn-<tenant>`, eller deploy en kortvarig test-/helseendepunkt-pod via GitOps. Egress styres uansett sentralt via GlobalNetworkPolicy — kontakt `#ext-fhi-skybert` for egress-unntak.
 
 ### 6. URL viser feil eller gammel app
 
@@ -120,7 +119,7 @@ Skybert bruker Azure Arc-connected Kubernetes, ikke vanlig AKS. Du må bruke `az
 **Løsning:**
 ```powershell
 # Start proxy i egen terminal (må holdes åpen)
-az connectedk8s proxy --resource-group rg-fhi-aks-yellow-test-weu-01 --name aks-yellow-test-01 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
+az connectedk8s proxy --resource-group rg-fhi-aks-yellow-test-weu-01 --name aks-yellow-test-02 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
 
 # Kjør kubectl i annen terminal
 kubectl get pods -n tn-<tenant>
@@ -190,8 +189,12 @@ kubectl get pod <pod-name> -n tn-<tenant> -o jsonpath='{.metadata.labels.azure\.
 # Skal returnere "true"
 
 # 3. Sjekk at pod har fått WI-miljøvariabler injisert
+#    Ikke-exec (virker overalt): webhooken injiserer env i selve pod-specen
+kubectl get pod <pod-name> -n tn-<tenant> -o jsonpath='{range .spec.containers[*].env[*]}{.name}{"\n"}{end}' | grep AZURE
+# Skal vise AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_FEDERATED_TOKEN_FILE, AZURE_AUTHORITY_HOST
+
+# Alternativ via exec (kun green-test/yellow-test-02/ops-test/sandbox — blokkert i prod og red-test):
 kubectl exec <pod-name> -n tn-<tenant> -- env | grep AZURE
-# Skal vise AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_FEDERATED_TOKEN_FILE
 
 # 4. Sjekk pod-logger for autentiseringsfeil
 kubectl logs <pod-name> -n tn-<tenant> | head -50
@@ -259,10 +262,10 @@ kubectl logs <pod-name> -n tn-<tenant>
 # Follow logs
 kubectl logs -f <pod-name> -n tn-<tenant>
 
-# Exec inn i pod
+# Exec inn i pod (kun green-test/yellow-test-02/ops-test/sandbox — blokkert i prod og red-test)
 kubectl exec -it <pod-name> -n tn-<tenant> -- /bin/sh
 
-# Port-forward for lokal testing
+# Port-forward for lokal testing (samme miljøbegrensning som exec)
 kubectl port-forward <pod-name> 8080:8080 -n tn-<tenant>
 
 # Describe ressurs

@@ -71,6 +71,28 @@ Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per milj
 > Kilde (script, autoritativ): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/scripts/tenant--add--to-cluster.sh
 > Kilde (docs, etterslep): https://docs.sky.fhi.no/auth/workload-identity/
 
+## Tenant-RBAC — hva du kan administrere
+
+> **Under utrulling (per 2026-06):** Menneskelig tilgang (Entra ID-gruppe) bindes nå til en kuratert least-privilege ClusterRole `skybert:tenant-admin` i stedet for `cluster-admin`. Migrert for minst `fida-stat19`; mal-tenanten `exempl` bruker fortsatt `cluster-admin`. Eldre tenanter kan derfor fortsatt ha bredere tilgang. `flux-reconciler`/`crossplane` beholder `cluster-admin` innen namespacet for plattform-rekonsiliering.
+
+`skybert:tenant-admin:core` gir deg eksplisitte rettigheter (uten wildcards) i ditt eget namespace på blant annet:
+
+- **Workloads:** pods, deployments, statefulsets, daemonsets, jobs, cronjobs, replicasets (+ scale/rollback)
+- **Nettverk/tilgang:** services, ingresses, configmaps, secrets, serviceaccounts, persistentvolumeclaims, HPA, PDB
+- **Namespaced RBAC:** `roles`/`rolebindings` (uten `bind`/`escalate` — du kan kun delegere et subsett av egne rettigheter)
+- **NetworkPolicies:** native (`networking.k8s.io`) og Calico (`crd.projectcalico.org`)
+- **Sertifikater:** cert-manager `certificates`/`certificaterequests`/`issuers` og trust-manager `bundles`
+- **Gateway API-ruter:** `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes`, `udproutes`
+- **Secrets:** external-secrets `externalsecrets`/`secretstores` (+ `secretproviderclasses`, deprecated)
+- **Crossplane-claims:** alt i API-gruppen `skybert.fhi.no` (f.eks. SkybertApp)
+- **Innsyn:** `kubectl top pods` (metrics), lesing av policy-rapporter, read-only på ResourceQuota/LimitRange (plattformstyrt)
+
+Runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral) er kun med i `test-sandbox`-aggregeringen — altså green-test, yellow-test-02, ops-test og sandbox. Prod og `aks-red-test-01` mangler denne fragmenten, og blokkeres i tillegg av Kyverno (`deny-tenant-portforward`). Se [kubectl-tilgang](kubectl-access.md) og [Kyverno-policier](kyverno-policies.md).
+
+> **Merk:** RBAC gir *adgang* til ressurstypene over, men Kyverno-policyer kan fortsatt begrense hva som faktisk godtas. F.eks. i rød sone blokkeres native `NetworkPolicy` (kun Calico tillatt), og Calico-egress styres sentralt. Se [Kyverno-policier](kyverno-policies.md).
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
+
 ## Obligatorisk sikkerhetskonfigurasjon
 
 ```yaml
