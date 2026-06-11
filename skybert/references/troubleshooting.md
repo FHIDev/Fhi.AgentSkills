@@ -50,7 +50,7 @@ kubectl get networkpolicy -n tn-<tenant>
 kubectl describe networkpolicy <policy-name> -n tn-<tenant>
 ```
 
-> **Merk:** `kubectl exec` for å teste tilkobling (`kubectl exec -it <pod-name> -n tn-<tenant> -- curl <url>`) er **blokkert i rød sone** (både `aks-red-test-01` og prod inkluderer `policies-prod` → `deny-tenant-portforward`). Alternativer: sjekk app-logger/events i Grafana, `kubectl get events -n tn-<tenant>`, eller deploy en kortvarig test-/helseendepunkt-pod via GitOps. Egress styres uansett sentralt via GlobalNetworkPolicy — kontakt `#ext-fhi-skybert` for egress-unntak.
+> **Merk:** `kubectl exec` for å teste tilkobling (`kubectl exec -it <pod-name> -n tn-<tenant> -- curl <url>`) er **blokkert i prod** (`policies-prod` → `deny-tenant-runtime-access`). I `aks-red-test-01` blokkerer Kyverno ikke lenger exec (`policies-prod` fjernet juni 2026; ny policy `restrict-tenant-runtime-access` dekker kun port-forward/attach/proxy), men om exec fungerer avhenger av RBAC/tilgang — den kuraterte tenant-admin-rollen har ikke runtime-fragmentet for red-test. Alternativer: sjekk app-logger/events i Grafana, `kubectl get events -n tn-<tenant>`, eller deploy en kortvarig test-/helseendepunkt-pod via GitOps. Egress styres uansett sentralt via GlobalNetworkPolicy — kontakt `#ext-fhi-skybert` for egress-unntak.
 
 ### 6. URL viser feil eller gammel app
 

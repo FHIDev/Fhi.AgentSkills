@@ -14,11 +14,11 @@
 
 > **Viktig (prod + red-test):** I normal drift bør du ikke trenge å koble til produksjonsklusteret — bruk logger/metrics/Grafana i stedet.
 >
-> - **Hvor det gjelder:** Klustere som inkluderer `policies-prod` — alle prod-klustere samt `aks-red-test-01`.
-> - **Blokkert** (Enforce, Kyverno `deny-tenant-portforward`): `kubectl exec`, `port-forward`, `attach`, API-`proxy` (pod og service) og ephemeral debug-containere i `tn-*`.
+> - **Prod-klustere** (inkluderer `policies-prod`): Kyverno `deny-tenant-runtime-access` blokkerer (Enforce) `kubectl exec`, `port-forward`, `attach`, API-`proxy` (pod og service) og ephemeral debug-containere i `tn-*`.
+> - **`aks-red-test-01`** (inkluderer ikke lenger `policies-prod`, fjernet juni 2026): Kyverno `restrict-tenant-runtime-access` blokkerer `port-forward`, `attach` og API-`proxy`. Kyverno blokkerer **ikke** exec der; om exec fungerer avhenger av RBAC/tilgang — `skybert:tenant-admin` har ikke runtime-fragmentet for red-test.
 > - **Hva du gjør i stedet:** Bruk green-test, yellow-test-02, ops-test eller sandbox for interaktiv debugging (runtime-tilgang via fragmentet `skybert:tenant-admin:test-sandbox:runtime-access`); feilsøk prod/red-test via logger/metrics/Grafana.
 >
-> Se [Kyverno-policier](kyverno-policies.md#produksjon--red-test--runtime-restriksjoner).
+> Se [Kyverno-policier](kyverno-policies.md#produksjon--runtime-restriksjoner).
 
 > Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/
 
@@ -183,7 +183,7 @@ az connectedk8s proxy --resource-group rg-fhi-aks-red-prod-weu-01 --name aks-red
 
 **Viktig:** Husk ALLTID å spesifisere namespace med `-n tn-<tenant>` eller sett default namespace først.
 
-> **Merk:** `kubectl exec`, `port-forward`, `attach` og `proxy` virker kun i klustere uten `policies-prod` (green-test, yellow-test-02, ops-test, sandbox). I prod og `aks-red-test-01` blokkeres de av Kyverno — se [Koble til klusteret](#koble-til-klusteret).
+> **Merk:** `kubectl exec`, `port-forward`, `attach` og `proxy` virker i praksis kun i green-test, yellow-test-02, ops-test og sandbox. I prod blokkeres alle av Kyverno (`deny-tenant-runtime-access`); i `aks-red-test-01` blokkeres port-forward/attach/proxy av Kyverno (`restrict-tenant-runtime-access`), mens exec avhenger av RBAC/tilgang — se [Koble til klusteret](#koble-til-klusteret).
 
 ```powershell
 # Se pods

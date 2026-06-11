@@ -1,6 +1,6 @@
 # Kyverno-policier som påvirker tenanter
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/01abbad/infra/kyverno-policies/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/3e3d50b/infra/kyverno-policies/
 
 Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle tenant-namespaces (`tn-*`).
 
@@ -75,6 +75,7 @@ Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle ten
 |--------|----------|
 | `sub-1200-calico-netpol-in-tenants` | Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt. Calico `NetworkPolicy` (`crd.projectcalico.org/v1`) er tillatt i `tn-*` med to begrensninger: kun `Ingress`-regler (egress styres sentralt via GlobalNetworkPolicy) og `spec.order < 1200` (1200+ reservert for plattform default-deny GNPs). |
 | `generate-tenant-internal-gnp` | Genererer automatisk GlobalNetworkPolicy per tenant-namespace som tillater intern kommunikasjon |
+| `restrict-tenant-runtime-access` | Blokkerer `kubectl port-forward`, `attach` og API-`proxy` (pod og service) i `tn-*` (Enforce). Blokkerer **ikke** `kubectl exec` eller ephemeral debug-containere |
 
 I rød sone er **egress blokkert som default** (base deny-policy). Unntak:
 - DNS (UDP 53 til `kube-system`/kube-dns) — tillatt automatisk
@@ -84,19 +85,23 @@ I rød sone er **egress blokkert som default** (base deny-policy). Unntak:
 
 **Tenanter kan opprette egne Calico ingress-NetworkPolicies** for å finjustere ingress-segmentering (f.eks. begrense hvilke tenant-tjenester som er nåbare via ingress-nginx). Egress derimot kan IKKE styres av tenanten — kontakt `#ext-fhi-skybert` for egress-unntak.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/01abbad/infra/kyverno-policies/base/policies-red/
+**Runtime-tilgang i rød sone:** `restrict-tenant-runtime-access` (ny juni 2026) gjelder begge rød-klustere (aks-red-prod-01 og aks-red-test-01). I motsetning til prod-policyen (se nedenfor) blokkerer den **ikke** `kubectl exec` eller ephemeral debug-containere — policy-beskrivelsen i kilden nevner ephemeral containers, men policyen har ingen regel for det (reglene er autoritative). Konsekvens i `aks-red-test-01`: Kyverno blokkerer ikke lenger exec der; om exec faktisk fungerer avhenger av RBAC/tilgang — den kuraterte `skybert:tenant-admin`-rollen har ikke runtime-fragmentet aggregert for red-test (utledet mønster). I `aks-red-prod-01` gjelder både `policies-prod` og `policies-red`, så all interaktiv runtime-tilgang forblir Kyverno-blokkert der.
 
-## Produksjon + red-test — runtime-restriksjoner
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/3e3d50b/infra/kyverno-policies/base/policies-red/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/3e3d50b/infra/kyverno-policies/base/policies-red/restrict-tenant-runtime-access.yaml
 
-Klustere som inkluderer `policies-prod` — **alle prod-klustere samt `aks-red-test-01`** — håndhever en ekstra policy som blokkerer interaktiv runtime-tilgang i `tn-*`:
+## Produksjon — runtime-restriksjoner
+
+`policies-prod` inkluderes nå **kun av prod-klustere** — aks-green-prod-02, aks-norsyss-prod-01, aks-red-prod-01 og aks-yellow-prod-01. `aks-red-test-01` inkluderer **ikke lenger** `policies-prod` (fjernet juni 2026); red-test dekkes i stedet av rød sone-policyen `restrict-tenant-runtime-access` (se over).
 
 | Policy | Hva blokkeres |
 |--------|---------------|
-| `deny-tenant-portforward` (fil: `deny-tenant-runtime-access.yaml`) | `kubectl exec`, `port-forward`, `attach`, API-`proxy` (pod og service) og ephemeral debug-containere i `tn-*` |
+| `deny-tenant-runtime-access` | `kubectl exec`, `port-forward`, `attach`, API-`proxy` (pod og service) og ephemeral debug-containere i `tn-*` |
 
-I green-test, yellow-test-02, ops-test og sandbox (kun `policies-green`) er disse tillatt. Konsekvens: feilsøk i prod og red-test via logger/metrics/Grafana — se [kubectl-tilgang](kubectl-access.md). Merk navnediskrepansen: filnavnet er `deny-tenant-runtime-access.yaml`, men selve policyen heter `deny-tenant-portforward`.
+I green-test, yellow-test-02, ops-test og sandbox (kun `policies-green`) er disse tillatt. Konsekvens: feilsøk i prod via logger/metrics/Grafana — se [kubectl-tilgang](kubectl-access.md).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/infra/kyverno-policies/base/policies-prod/deny-tenant-runtime-access.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/3e3d50b/infra/kyverno-policies/base/policies-prod/deny-tenant-runtime-access.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/3e3d50b/infra/kyverno-policies/aks-red-test-01/kustomization.yaml
 
 ## PolicyExceptions
 
