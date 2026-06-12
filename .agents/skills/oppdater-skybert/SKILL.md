@@ -86,7 +86,7 @@ last_fullscan_date=<dato>
 
 Parseren skal akseptere både multi-linje (kanonisk) og én-linjes variant med mellomrom-separerte par.
 
-**Web-scraping-modus:** `<!-- Kilde-hash: <globalHash> -->`
+**Web-scraping-modus:** `<!-- Kilde-hash: <globalHash> last_fullscan_date=<dato> -->`
 
 ### Persistent state for inkrementell oppdatering (skybert/.oppdater-state.json)
 
@@ -121,8 +121,8 @@ Kun ett av `github`/`webscraping`-feltene er populert per kjøring (avhengig av 
 ### Regler
 
 - Metadata-kommentar og state-fil oppdateres kun etter vellykket Apply (steg 9)
-- `last_fullscan_date` oppdateres kun ved FULL-modus
-- Gammelt `<!-- Kilde-hash: ... -->`-format → behandle som FULL modus
+- `last_fullscan_date` oppdateres kun ved FULL-modus (begge moduser)
+- Gammelt `<!-- Kilde-hash: ... -->`-format uten `last_fullscan_date` → behandle som FULL modus
 - State-fil mangler men metadata finnes → FULL modus (med migrasjonsmelding)
 
 ---

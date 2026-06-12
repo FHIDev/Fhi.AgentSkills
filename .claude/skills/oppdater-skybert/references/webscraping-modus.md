@@ -44,7 +44,9 @@ Bygg per-side map: `{ [location]: { title, hash: sha256(location+title+text_norm
 
 Les `<!-- Kilde-hash: ... -->`-kommentaren fra `skybert/SKILL.md`.
 
-**No-op:** Hvis `globalHash == previousGlobalHash` → rapporter "ingen endringer" og stopp.
+**Periodisk FULL:** Hvis `last_fullscan_date` mangler i kommentaren eller er > 30 dager gammel → kjør FULL modus selv om `globalHash` er uendret (samme regel som steg 1d i SKILL.md).
+
+**No-op:** Ellers, hvis `globalHash == previousGlobalHash` → rapporter "ingen endringer" og stopp.
 
 ## Steg 4 — Hent HTML-sider
 
@@ -80,7 +82,7 @@ Lagre til `.tmp/oppdater-skybert/pages/<sidenavn>.html`.
 
 ### FULL modus (uten eksisterende state)
 
-Hent `search_index.json`, beregn alle per-side hashes, hent HTML for alle sider i scope, analyser alt. Kjøres når `skybert/.oppdater-state.json` mangler eller ikke har `webscraping`-felt.
+Hent `search_index.json`, beregn alle per-side hashes, hent HTML for alle sider i scope, analyser alt. Kjøres når `skybert/.oppdater-state.json` mangler eller ikke har `webscraping`-felt, eller når `last_fullscan_date` mangler / er > 30 dager gammel (periodisk FULL, se steg 3).
 
 ### INKREMENTELL modus (med eksisterende state i skybert/.oppdater-state.json)
 
@@ -121,8 +123,10 @@ Denne modusen kan IKKE verifisere innhold som har infra-repoet som kilde (kilder
 I web-scraping-modus skrives en forenklet metadata-kommentar (uten infra-felter):
 
 ```html
-<!-- Kilde-hash: <globalHash> -->
+<!-- Kilde-hash: <globalHash> last_fullscan_date=<dato> -->
 ```
+
+`last_fullscan_date` oppdateres kun ved FULL-modus og driver den periodiske FULL-sjekken i steg 3. Gammelt format uten `last_fullscan_date` → behandle som FULL modus.
 
 ### Persistent state for inkrementell (skybert/.oppdater-state.json)
 
@@ -151,10 +155,15 @@ Metadata-kommentaren brukes for rask NO-OP-sjekk (globalHash uendret → stopp).
 
 I web-scraping-modus utføres kun **Del A — Docs coverage-matrise**:
 
-| Docs-side (fra search_index) | Hovedtema | Dekket i skillen hvor? | Dekningsgrad |
-|---|---|---|---|
-| `skybertapp/` | SkybertApp CRD | `references/skybertapp-crd.md` | Komplett |
-| `auth/workload-identity/` | WI | `references/security.md` | Delvis |
+| Docs-side (fra search_index) | Hovedtema | Dekket i skillen hvor? | Dekningsgrad | Hva mangler | Foreslått målfil hvis udekket |
+|---|---|---|---|---|---|
+| `skybertapp/` | SkybertApp CRD | `references/skybertapp-crd.md` | Komplett | -- | -- |
+| `auth/workload-identity/` | WI | `references/security.md` | Delvis | Federated credential-oppsett, token-utløp | -- |
+| `new-topic/` | Nytt emne | Ikke dekket | Fraværende | Alt | ny `references/new-topic.md` |
+
+**Regler for dekningsgrad:**
+- `Delvis` er ugyldig uten konkret innhold i «Hva mangler»-kolonnen — det skal stå *hvilke* opplysninger fra siden som ikke er representert, ikke bare at noe mangler. Hver mangel skal ha en tilhørende endringspost (eller eksplisitt begrunnelse for hvorfor den droppes).
+- `Komplett` for normative sider (CRD-referanser, policy-oversikter) krever felt-/regel-nivå-verifikasjon — ikke bare at temaet er omtalt.
 
 Del B (infra signal inventory) og Del C (innhold uten kilde) kan ikke utføres uten repo-tilgang.
 
