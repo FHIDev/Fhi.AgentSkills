@@ -3,7 +3,7 @@
 ## 10 hovedregler
 
 1. **Legg til og utvid** — hovedfokus er å berike skillen med maks detaljer.
-2. **Aldri slett uten positiv evidens** — kun direkte feil, deprecated eller erstattet innhold fjernes, med kildehenvisning. Fravær i repoene er aldri nok.
+2. **Aldri slett uten positiv evidens** — kun direkte feil, deprecated eller erstattet innhold fjernes, med kildehenvisning. Fravær i repoene er aldri nok. Positiv evidens omfatter også motstrid med faktisk implementasjon i infra-repoet (f.eks. en default-verdi eller policy som beviser at en påstand i skillen er feil) — ikke bare eksplisitt «deprecated»-tekst i docs. Ikke-slett-reglene skal aldri brukes til å la beviselig feil innhold leve videre: ved motstrid er `KORRIGER` riktig, ikke bevaring.
 3. **Skillen inneholder mer enn repoene** — den har kunnskap fra plattformteam, Slack, erfaring. Aldri fjern noe bare fordi det mangler i kildene.
 4. **All docs-info må dekkes** — hver docs-side må spores til minst ett sted i skillen via obligatorisk dekningsmatrise.
 5. **Maks detaljer, minimalt tap** — når innhold komprimeres, flyttes eller konsolideres, skal alle operative detaljer fortsatt være representert. Ingen detaljer tapes ved restrukturering.
@@ -32,6 +32,17 @@
 | Konseptforklaring av tenant-modellen | Docs |
 | Faktisk tenant-bootstrap-logikk | Infra |
 | Arbeidsflyt-anbefalinger (CI/CD) | Docs |
+
+## Avledede påstander
+
+Skillen inneholder mange tekniske verdier som er *avledet* fra kildene uten å stå i filen kilden ruter til: rekonsilieringsintervaller, CRD-defaults, versjonsnumre, hostnames, image-stier, namespace-mønstre. Når en kildefil endres, skal alle avledede påstander i **hele** skillen re-verifiseres — ikke bare målfilene fra routing-tabellen. Konkret: identifiser nøkkelverdiene som endret seg, og søk etter forekomster av dem i alle skybert/-filer. Se konsekvenssjekken i [github-modus.md](github-modus.md).
+
+## Re-validering ved FULL
+
+Ved FULL modus skal alle påstander merket **Operasjonell antakelse** vurderes på nytt mot kildene:
+- Dekker kildene nå temaet og bekrefter påstanden → oppgrader til dokumentert fakta med kildereferanse.
+- Motsier kildene påstanden → `KORRIGER`/`FJERN` med evidens.
+- Fortsatt udekket i kildene → behold, men bekreft i bevaringsseksjonen at den fremdeles er vurdert som korrekt.
 
 ## Eksplisitte ikke-slett-regler
 

@@ -161,7 +161,16 @@ infra/flux-system/*/flux-instance.yaml
 scripts/tenant--*.sh
 ```
 
-**Ekskludert fra infra:** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, øvrige drifts-scripts.
+**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, øvrige drifts-scripts.
+
+Disse mappene skal IKKE dypleses, men skannes for tenant-impact i discovery pass (FULL) og når compare viser endringer i dem (INKREMENTELL). Tenant-impact betyr konfigurasjon som endrer hva utviklere kan bruke eller observere, f.eks.:
+- `crds/` — hvilke CRD-er som er tilgjengelige for tenanter (ExternalSecret, ServiceMonitor, osv.) og deres versjoner
+- `infra/external-secrets/` — ClusterSecretStore-navn og oppsett som tenant-manifester refererer til
+- `infra/ingress-nginx/` — ingress-klasser, annotasjoner og TLS-oppsett som påvirker tenant-ingress
+- `infra/grafana/`, `infra/loki/`, `infra/mimir/`, `infra/alloy/` — datasource-navn, retention, label-konvensjoner som påvirker observability-veiledningen
+- `infra/cert-manager/` — issuer-navn og sertifikatflyt
+
+Ren driftskonfigurasjon (replicas, resources, intern tuning) i disse mappene er støy og hoppes over.
 
 ---
 
@@ -194,9 +203,19 @@ gh api repos/FHISkybert/Fhi.Skybert.Docs/compare/<old_sha>...<new_sha> --jq '.fi
 gh api repos/FHISkybert/Fhi.Skybert.Infra/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
 ```
 
-- Bare endrede filer (i scope) leses og analyseres
-- Discovery pass hoppes over ved INKREMENTELL
+- Bare endrede filer (i scope) leses og analyseres — men se konsekvenssjekken under
+- Discovery pass hoppes over ved INKREMENTELL, MED UNNTAK: nye stier i compare-output (added-filer/nye mapper) som ikke matcher routing-tabellen eller filtermønstrene skal leses (mini-discovery), og routing-/filteroppdatering foreslås som selvoppdaterings-post
 - Hvis compare feiler (force-push, rebase) → fall tilbake til FULL modus og informer bruker
+
+### Konsekvenssjekk (obligatorisk ved INKREMENTELL)
+
+Routing-tabellen sier hvilke målfiler en endret kildefil *primært* ruter til — men avledede påstander kan ligge hvor som helst i skillen. Etter å ha lest de endrede kildefilene:
+
+1. Identifiser **endrede nøkkelverdier**: feltnavn, defaults, enum-verdier, versjonsnumre, hostnames, image-stier, intervaller, namespace-/navnekonvensjoner, policy-navn.
+2. Søk etter hver nøkkelverdi (gammel OG ny form) i **alle** filer under `skybert/` — ikke bare målfilene fra routing.
+3. Hvert treff i en fil utenfor primær-routing vurderes: er påstanden der fortsatt korrekt? Hvis ikke → egen endringspost (`KORRIGER`/`UTVID`) for den filen.
+
+Eksempel: endres rekonsilieringsintervallet i `flux-instance.yaml`, berører det ikke bare `platform-architecture.md` (routing), men også «Flux rekonsilerer hvert 2. minutt»-påstanden i `SKILL.md`.
 
 **Runtime output:** Skriv `.tmp/oppdater-skybert/changed-files.json` (ephemeral):
 ```json
@@ -244,19 +263,56 @@ Ved endring (f.eks. v1alpha1 → v1beta1):
 - Inkluder: gammel versjon, ny versjon, alle feltendringer, migreringsveiledning
 - Oppdater alle eksempler i `skybertapp-crd.md` og `SKILL.md`
 
+### Felt-nivå-diff (obligatorisk ved enhver XRD-endring)
+
+Versjonssporing er ikke nok — de fleste XRD-endringer skjer innenfor samme versjon. Når `infra/crossplane/base/xrds/skybertapp.yaml` (eller `webapp.yaml`) er endret, lag en felt-nivå-diff av `openAPIV3Schema`:
+
+- Lagt til / fjernet felt
+- Endrede `default`-verdier
+- Endrede `enum`-verdier
+- Endringer i `required`-lister
+- Endrede typer, constraints (min/max, pattern) og beskrivelser
+
+Hver feltendring får **egen endringspost** i planen — ikke samlepost som «XRD oppdatert». Dette sikrer at defaults, enums og required/optional aldri blir ufullstendig representert.
+
+### Felt-dekningssjekk (obligatorisk ved FULL)
+
+Ved FULL modus: verifiser at hvert felt i XRD-schemaet er representert i `references/skybertapp-crd.md` med korrekt type, default og required-status. Udekkede felt → `UTVID`-post per felt (eller gruppert per seksjon hvis mange).
+
+### Statiske kopier i skybert/references/skybertapp/
+
+Skillen inneholder statiske kopier av infra-filer, brukt av `references/skybertapp-render.md` for lokal `crossplane render`:
+
+| Kopi i skillen | Kilde i infra-repo |
+|----------------|--------------------|
+| `references/skybertapp/xrd.yaml` | `infra/crossplane/base/xrds/skybertapp.yaml` (kopieres som-den-er) |
+| `references/skybertapp/composition.yaml` | `infra/crossplane/base/compositions/skybertapp.yaml` (kopieres som-den-er) |
+| `references/skybertapp/functions.yaml` | `infra/crossplane/base/functions.yaml` — **kopieres IKKE som-den-er**: image-referanser skal omskrives fra ACR-mirror til public `xpkg.crossplane.io` slik at render fungerer uten ACR-login |
+
+Når en kildefil over er endret (compare/discovery):
+1. Opprett endringspost for å oppdatere den statiske kopien (for `functions.yaml`: bevar xpkg-omskrivingen, oppdater bare versjoner/innhold)
+2. Oppdater provenance-blokken i `references/skybertapp-render.md` (commit SHA, dato, per-fil «sist endret»)
+3. Verifiser at eksemplene i `skybertapp-render.md` fortsatt stemmer med ny composition-output
+
+Disse kopiene skal ALDRI drifte stille: ved FULL modus sammenlignes de alltid mot kildefilene, uavhengig av om compare viser endring.
+
 ---
 
 ## Dekningsanalyse (3 obligatoriske matriser)
 
 ### Del A — Docs coverage-matrise (side-for-side)
 
-| Docs-side (fra mkdocs.yml) | Hovedtema | Dekket i skillen hvor? | Dekningsgrad | Foreslått målfil hvis udekket |
-|---|---|---|---|---|
-| `docs/get-started/index.md` | Onboarding | `skybert/SKILL.md` linjer 30-80 | Komplett | -- |
-| `docs/auth/workload-identity.md` | WI | `references/security.md` | Delvis | -- |
-| `docs/new-topic/something.md` | Nytt emne | Ikke dekket | Fraværende | ny `references/new-topic.md` |
+| Docs-side (fra mkdocs.yml) | Hovedtema | Dekket i skillen hvor? | Dekningsgrad | Hva mangler | Foreslått målfil hvis udekket |
+|---|---|---|---|---|---|
+| `docs/get-started/index.md` | Onboarding | `skybert/SKILL.md` linjer 30-80 | Komplett | -- | -- |
+| `docs/auth/workload-identity.md` | WI | `references/security.md` | Delvis | Federated credential-oppsett, token-utløp | -- |
+| `docs/new-topic/something.md` | Nytt emne | Ikke dekket | Fraværende | Alt | ny `references/new-topic.md` |
 
 Hver docs-side MÅ finnes i denne tabellen. Ingen side skal mangle.
+
+**Regler for dekningsgrad:**
+- `Delvis` er ugyldig uten konkret innhold i «Hva mangler»-kolonnen — det skal stå *hvilke* opplysninger fra siden som ikke er representert, ikke bare at noe mangler. Hver mangel skal ha en tilhørende endringspost (eller eksplisitt begrunnelse for hvorfor den droppes).
+- `Komplett` for normative sider (CRD-referanser, policy-oversikter) krever felt-/regel-nivå-verifikasjon — ikke bare at temaet er omtalt.
 
 ### Del B — Infra repo signal inventory
 

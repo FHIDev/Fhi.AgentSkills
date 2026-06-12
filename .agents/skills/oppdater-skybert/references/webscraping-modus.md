@@ -96,10 +96,21 @@ Hent `search_index.json`, beregn alle per-side hashes, hent HTML for alle sider 
 
 | Begrensning | Konsekvens |
 |-------------|------------|
-| Ingen infra-repo-tilgang | Ingen CRD-versjonssporing, ingen infra signal inventory |
+| Ingen infra-repo-tilgang | Ingen CRD-versjonssporing, ingen infra signal inventory, infra-basert innhold kan ikke verifiseres |
 | Ingen `docs/internal/`-tilgang | Kun publiserte sider er tilgjengelige |
 | Kun publisert docs | Ingen tilgang til mkdocs.yml, workflows eller README |
 | Inkrementell basert på per-side hash | Krever persistent state i `skybert/.oppdater-state.json` |
+| Hash-normalisering lowercaser tekst | Rene case-endringer i docs (f.eks. feltnavn) oppdages ikke av no-op-sjekken |
+| Kompletthet gjelder kun søkeindeksen | Sider/vedlegg som ikke er i `search_index.json` er usynlige for denne modusen |
+
+### Vern av infra-basert innhold (kritisk)
+
+Denne modusen kan IKKE verifisere innhold som har infra-repoet som kilde (kildereferanser mot `github.com/FHISkybert/Fhi.Skybert.Infra`). Derfor:
+
+- Foreslå ALDRI `KORRIGER` eller `FJERN` av infra-basert innhold i web-scraping-modus — selv om publisert docs ser ut til å motsi det. Bruk `VURDER` med begge kilder sitert.
+- Merk alle infra-baserte seksjoner i UPDATE-PLAN.md som **«ikke verifisert i denne kjøringen»** — planen skal ikke gi inntrykk av at hele skillen er validert.
+- Rør aldri infra-feltene i metadata-kommentaren eller `.oppdater-state.json` (`infra_commit` osv. beholdes uendret).
+- De statiske kopiene i `references/skybertapp/` kan ikke oppdateres i denne modusen — noter alder (provenance-dato i `skybertapp-render.md`) i planen hvis den er over 30 dager gammel.
 
 ---
 
