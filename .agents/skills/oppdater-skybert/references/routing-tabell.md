@@ -52,10 +52,11 @@
 
 | Kildesti | Primær målfil |
 |----------|--------------|
-| `infra/crossplane/base/xrds/skybertapp.yaml` | `references/skybertapp-crd.md` |
+| `infra/crossplane/base/xrds/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/skybertapp/xrd.yaml` (statisk kopi) |
 | `infra/crossplane/base/xrds/webapp.yaml` | `references/webapp-crd.md` |
-| `infra/crossplane/base/compositions/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/platform-architecture.md` |
+| `infra/crossplane/base/compositions/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/platform-architecture.md`, `references/skybertapp/composition.yaml` (statisk kopi) |
 | `infra/crossplane/base/compositions/webapp.yaml` | `references/webapp-crd.md` |
+| `infra/crossplane/base/functions.yaml` | `references/skybertapp/functions.yaml` (kopi med xpkg-omskriving), `references/skybertapp-render.md` (provenance) |
 | `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
 | `infra/skybert-system/base/tenant-admin-clusterroles/*.yaml` | `references/platform-architecture.md`, `references/security.md`, `references/kyverno-policies.md` |
 | `tenants/*/base/*.yaml` | `references/platform-architecture.md`, `SKILL.md` |
@@ -98,3 +99,13 @@ Brukes når agenten ikke har filsti-tilgang, kun emnenavn fra docs-sider.
 - Filer i docs-repo som ikke matcher noen rad → vurder om emnet passer en eksisterende målfil eller trenger ny fil.
 - Routing-tabellen er et startpunkt, ikke en tvangstrøye. Foreslå den plasseringen som gir best struktur.
 - Nye referansefiler kan opprettes for ethvert emneområde som ikke passer naturlig inn i eksisterende filer.
+
+## Vedlikehold av tabellen
+
+Tabellen skal holdes i synk med virkeligheten i samme kjøring som avviket oppdages:
+
+- Når en ny målfil opprettes i `skybert/` (godkjent `ny-fil`-post) → legg til routing-rad(er) for kildene som ruter dit.
+- Når dekningsmatrise A foreslår målfil for en udekket side → legg til routing-rad når forslaget godkjennes.
+- Når en kildefil er flyttet/omdøpt i kilderepoene (compare viser removed+added) → oppdater raden, ikke la den peke på død sti.
+
+Disse oppdateringene rapporteres som selvoppdaterings-poster i UPDATE-PLAN.md (se SKILL.md) og speiles til `.agents/skills/oppdater-skybert/`.

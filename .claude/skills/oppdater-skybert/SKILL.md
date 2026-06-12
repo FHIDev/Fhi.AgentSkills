@@ -30,6 +30,7 @@ Skybert-skill (oppdateres):
 skybert/
 ├── SKILL.md                                 (onboarding, konsepter, Blaloypa, navnekonvensjoner)
 ├── .oppdater-state.json                     (persistent state for inkrementell oppdatering)
+├── .claude-plugin/plugin.json               (plugin-manifest — vedlikeholdes IKKE av denne skillen)
 └── references/
     ├── skybertapp-crd.md                    (SkybertApp XRD-spec)
     ├── webapp-crd.md                        (legacy WebApp XRD, migreringsguide)
@@ -42,7 +43,13 @@ skybert/
     ├── platform-architecture.md             (Flux, Crossplane, OCI-flyt, tenant-bootstrap)
     ├── kyverno-policies.md                  (policier som pavirker tenanter)
     ├── troubleshooting.md                   (feilsoeking)
-    └── hostnames-and-networking.md          (domener, TLS, ingress-regler)
+    ├── hostnames-and-networking.md          (domener, TLS, ingress-regler)
+    ├── flux-tooling.md                      (Flux dashboard, Flux MCP)
+    ├── skybertapp-render.md                 (lokal rendering med crossplane render)
+    └── skybertapp/                          (STATISKE KOPIER fra infra-repo — se github-modus.md)
+        ├── xrd.yaml                         (kopi av infra/crossplane/base/xrds/skybertapp.yaml)
+        ├── composition.yaml                 (kopi av infra/crossplane/base/compositions/skybertapp.yaml)
+        └── functions.yaml                   (basert pa infra/crossplane/base/functions.yaml, omskrevet til public xpkg)
 
 Runtime-cache (opprettes, ikke committet):
 .tmp/oppdater-skybert/
@@ -50,17 +57,36 @@ Runtime-cache (opprettes, ikke committet):
 └── UPDATE-PLAN.md
 ```
 
+**Treet over er illustrativt, ikke autoritativt.** I steg 3 skal faktisk innhold i `skybert/` enumereres (alle filer, inkludert undermapper og ikke-markdown-filer). Avvik mellom faktisk filliste og treet over → opprett selvoppdaterings-post for denne filen (se [Selvoppdatering](#selvoppdatering-av-oppdater-skybert)).
+
 ---
 
 ## Metadata-kontrakt
 
 ### Rask NO-OP-sjekk (metadata-kommentar i skybert/SKILL.md)
 
-Metadata lagres som HTML-kommentar i `skybert/SKILL.md`, rett etter frontmatter:
+Metadata lagres som HTML-kommentar i `skybert/SKILL.md`, rett etter frontmatter.
 
-**GitHub-modus:** `<!-- Oppdater-skybert-state: schema_version=2 docs_repo=... docs_commit=<sha> docs_commit_date=<dato> infra_repo=... infra_commit=<sha> infra_commit_date=<dato> last_fullscan_date=<dato> -->`
+**GitHub-modus** (multi-linje, ett `nokkel=verdi`-par per linje):
 
-**Web-scraping-modus:** `<!-- Kilde-hash: <globalHash> -->`
+```html
+<!-- Oppdater-skybert-state:
+schema_version=2
+docs_repo=FHISkybert/Fhi.Skybert.Docs
+docs_branch=main
+docs_commit=<sha>
+docs_commit_date=<dato>
+infra_repo=FHISkybert/Fhi.Skybert.Infra
+infra_branch=main
+infra_commit=<sha>
+infra_commit_date=<dato>
+last_fullscan_date=<dato>
+-->
+```
+
+Parseren skal akseptere både multi-linje (kanonisk) og én-linjes variant med mellomrom-separerte par.
+
+**Web-scraping-modus:** `<!-- Kilde-hash: <globalHash> last_fullscan_date=<dato> -->`
 
 ### Persistent state for inkrementell oppdatering (skybert/.oppdater-state.json)
 
@@ -81,17 +107,22 @@ Metadata lagres som HTML-kommentar i `skybert/SKILL.md`, rett etter frontmatter:
     "pages": [
       { "location": "skybertapp/", "title": "SkybertApp", "hash": "<per-side sha256>" }
     ]
-  }
+  },
+  "openVurder": [
+    { "id": "<kort-slug>", "summary": "<beslutningssporsmal>", "firstSeen": "<ISO-dato>" }
+  ]
 }
 ```
 
 Kun ett av `github`/`webscraping`-feltene er populert per kjøring (avhengig av modus).
 
+`openVurder` er valgfritt (bakoverkompatibelt innenfor schemaVersion 2) og lagrer `VURDER`-poster brukeren ikke avklarte i steg 7, slik at de gjentas i neste plan i stedet for å forsvinne med `.tmp/`. Se [analyseregler.md](references/analyseregler.md).
+
 ### Regler
 
 - Metadata-kommentar og state-fil oppdateres kun etter vellykket Apply (steg 9)
-- `last_fullscan_date` oppdateres kun ved FULL-modus
-- Gammelt `<!-- Kilde-hash: ... -->`-format → behandle som FULL modus
+- `last_fullscan_date` oppdateres kun ved FULL-modus (begge moduser)
+- Gammelt `<!-- Kilde-hash: ... -->`-format uten `last_fullscan_date` → behandle som FULL modus
 - State-fil mangler men metadata finnes → FULL modus (med migrasjonsmelding)
 
 ---
@@ -124,13 +155,17 @@ Hvis kommentaren har gammelt format eller mangler → marker som "metadata mangl
 
 ### 1d. Bestem kjoringsmodus
 
+Betingelsene evalueres ovenfra og ned — første treff vinner:
+
 | Betingelse | Modus |
 |-----------|-------|
-| SHAs/hash uendret fra lagret metadata | **NO-OP** — rapporter "ingen endringer" og stopp |
 | Metadata mangler / ugyldig / gammelt format | **FULL** |
-| `last_fullscan_date` > 30 dager gammel | **FULL** |
 | State-fil mangler men metadata finnes | **FULL** (med migrasjonsmelding) |
+| `last_fullscan_date` > 30 dager gammel | **FULL** — kjøres selv om SHAs/hash er uendret |
+| SHAs/hash uendret fra lagret metadata | **NO-OP** — rapporter "ingen endringer" og stopp |
 | SHA/hash endret + state-fil finnes | **INKREMENTELL** (begge moduser) |
+
+Periodisk FULL ved uendrede kilder er ikke bortkastet: det er mekanismen som fanger akkumulert drift fra inkrementelle kjøringer (delvis godkjente planer, avledede påstander som ble oversett) og re-validerer dekningsmatrisene og selve denne skillen.
 
 **Les [hovedprinsipper.md](references/hovedprinsipper.md) for du fortsetter.**
 
@@ -152,12 +187,16 @@ Hent og les alle relevante kildefiler basert på tilgangsmodus.
 
 ## Steg 3 — Les eksisterende skybert/-filer
 
-Les `skybert/SKILL.md` og alle `skybert/references/*.md`.
+Enumerér ALLE filer under `skybert/` rekursivt — inkludert undermapper og ikke-markdown-filer (f.eks. de statiske YAML-kopiene i `references/skybertapp/`). Unnta kun `.claude-plugin/` (plugin-manifest) og `.oppdater-state.json`. Les deretter alt.
+
+Sammenlign den faktiske fillisten med Forutsetninger-treet i denne filen — avvik gir selvoppdaterings-post.
 
 For hvert avsnitt:
 - Noter innhold og struktur
 - Identifiser kildereferanser (`> Kilde:`)
 - Identifiser manuelt kuratert innhold (avsnitt uten `> Kilde:`-referanse)
+
+For statiske kopier (YAML): noter provenance (commit i `skybertapp-render.md`) og sammenlign med gjeldende kildefil i infra-repo — se «Statiske kopier» i [github-modus.md](references/github-modus.md).
 
 ---
 
@@ -175,6 +214,8 @@ Utfor dekningsanalyse basert på tilgangsmodus:
 Sammenlign kildeinnhold med eksisterende skybert/-filer. Bruk routing fra [routing-tabell.md](references/routing-tabell.md) og regler fra [analyseregler.md](references/analyseregler.md).
 
 Kategoriser hver endring som: `NY`, `UTVID`, `KORRIGER`, `OMSTRUKTURER`, `FORBEDRING`, `FJERN` eller `VURDER`.
+
+**Ved INKREMENTELL:** Routing-tabellen er ikke nok — utfør også konsekvenssjekken beskrevet i [github-modus.md](references/github-modus.md) (søk i hele `skybert/` etter avledede påstander som berøres av endrede nøkkelverdier). Inkluder uavklarte `VURDER`-poster fra `openVurder` i state-filen i planen på nytt.
 
 ---
 
@@ -222,6 +263,7 @@ Oppdater metadata-kommentaren i `skybert/SKILL.md` med nye SHAs/hash og datoer. 
 Skriv/oppdater `skybert/.oppdater-state.json` med detaljert state:
 - **GitHub-modus:** Lagre commit SHAs for begge repoer
 - **Web-scraping-modus:** Lagre `globalHash` og per-side hashes fra `search_index.json`
+- **Begge moduser:** Ajourfør `openVurder` — legg til `VURDER`-poster brukeren utsatte i steg 7, fjern poster som ble avklart
 
 Begge filer (`skybert/SKILL.md` og `skybert/.oppdater-state.json`) committes sammen.
 
@@ -233,16 +275,21 @@ Begge filer (`skybert/SKILL.md` og `skybert/.oppdater-state.json`) committes sam
 
 Ved **FULL** modus skal oppdater-skybert også vurdere om selve oppdateringsskillen trenger endringer.
 
+Ved **INKREMENTELL** modus trigges selvoppdatering når compare-output inneholder nye stier (added-filer eller nye mapper) som ikke matcher noen rad i routing-tabellen eller noe filtermønster — da skal de nye stiene leses (mini-discovery) og routing-/filteroppdatering foreslås.
+
 ### Hva sjekkes
 
-1. **Routing-tabellen** — Nye docs-filer eller infra-mapper som ikke er mappet?
+1. **Routing-tabellen** — Nye docs-filer eller infra-mapper som ikke er mappet? Nye målfiler i `skybert/` uten routing-rad?
 2. **Sti-baserte filtermoenstre** — Har mappestrukturen endret seg?
 3. **Metadata-format** — Er `schema_version` konsistent?
 4. **Nye emner** — Nye dokumentasjonsomrader uten dekning i routing eller filstruktur?
+5. **Forutsetninger-treet** — Stemmer det med faktisk filliste i `skybert/` (fra steg 3)?
 
 ### Output
 
 Rapporteres som egen seksjon i UPDATE-PLAN.md med per-endring: fil, type (routing/filter/metadata/scope), observasjon og foreslatt endring. Krever eksplisitt godkjenning.
+
+**Speiling:** Godkjente endringer i `.claude/skills/oppdater-skybert/` skal alltid speiles identisk til `.agents/skills/oppdater-skybert/` (kompatibilitetskopi for Codex — se repoets CLAUDE.md).
 
 ---
 

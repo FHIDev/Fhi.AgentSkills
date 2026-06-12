@@ -36,6 +36,26 @@
 
 ---
 
+## Krav til `VURDER`-poster (ingen sovepute)
+
+`VURDER` er et beslutningspunkt, ikke en måte å skyve problemet foran seg. Hver post MÅ inneholde:
+
+1. **Konkret beslutningsspørsmål** — formulert slik at brukeren kan svare ja/nei eller velge mellom navngitte alternativer.
+2. **Anbefaling med begrunnelse** — agentens beste forslag, ikke bare «usikkert».
+3. **Konsekvens av å utsette** — hva forblir feil/udekket i skillen hvis posten ikke avklares nå.
+
+**Persistens:** `VURDER`-poster brukeren ikke avklarer i steg 7 lagres i `openVurder` i `skybert/.oppdater-state.json` (id, beslutningsspørsmål, `firstSeen`-dato). Ved neste kjøring tas de inn i planen på nytt, med `firstSeen` synlig — en post som har stått åpen over flere kjøringer skal fremheves øverst i planen. Avklarte poster fjernes fra `openVurder` i steg 9.
+
+---
+
+## Presisjon i påstander og endringsposter
+
+- **Skill mellom lag:** hva som *håndheves av policy* (Kyverno mutating/validating), hva som er *RBAC-konsekvens* (hva tenant-roller faktisk tillater), og hva som er *anbefalt brukeratferd* (veiledning i docs). Ikke generaliser på tvers — «kan ikke» (håndhevet) og «skal ikke» (anbefalt) er forskjellige påstander, og kilden avgjør hvilken som er riktig.
+- **Siter ordrett:** «Nåværende tekst» i en endringspost skal være ordrett sitat fra skillfilen — aldri parafrase. «Foreslått tekst» skal være den eksakte erstatningsteksten, klar til innsetting.
+- **Én påstand, én kilde:** når en setning kombinerer fakta fra flere lag/kilder, splitt den i planen slik at hver del kan vurderes mot riktig kilde.
+
+---
+
 ## Hva hører hjemme i SKILL.md vs. references/
 
 - `SKILL.md` skal dekke: onboarding-konsepter, tenant-modell, overordnede prinsipper, kritiske regler, miljøoversikt, Blåløypa.

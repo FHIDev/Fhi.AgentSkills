@@ -83,6 +83,9 @@ Etter implementering, verifiser:
 5. Interne temaer er merket som interne.
 6. Ingen sensitiv informasjon fra infra-repo er inkludert.
 7. Alle `OMSTRUKTURER`-endringer har beholdt alle detaljer fra opprinnelig plassering.
+8. Statiske kopier i `references/skybertapp/` er synkronisert hvis XRD/composition/functions ble endret, og provenance-blokken i `skybertapp-render.md` er oppdatert (gjelder kun GitHub-modus).
+9. Routing-tabellen har rad(er) for alle nye målfiler som ble opprettet.
+10. `openVurder` i `skybert/.oppdater-state.json` er ajourført: utsatte poster lagt til, avklarte fjernet.
 
 ---
 
