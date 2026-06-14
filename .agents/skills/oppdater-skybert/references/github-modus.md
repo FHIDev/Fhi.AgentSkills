@@ -159,9 +159,17 @@ infra/flux-system/*/flux-instance.yaml
 
 # Tenant-scripts (normativ bootstrap-logikk)
 scripts/tenant--*.sh
+# Hjelpebibliotek sourcet av tenant-scriptene — bærer avledede fakta (f.eks.
+# X-Scope-OrgID, org_mapping) etter refaktorering. Følg disse når en provenance-
+# referanse peker på et tenant-script og logikken er flyttet hit.
+scripts/lib/grafana/*.sh
+# Andre scripts/lib/*.sh leses selektivt bare når de sources av en endret
+# tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk.
 ```
 
-**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, øvrige drifts-scripts.
+**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, `infra/tenant-repositories/`, øvrige drifts-scripts.
+
+**Ny tenant vs. innholdsendring:** `infra/tenant-repositories/base/ocirepos/*.yaml` (OCIRepository pr. tenant) og `infra/grafana/*/patch-orgs.yaml` (Entra-gruppe→org-mapping) endres typisk når en **ny tenant** legges til. Da følger de et allerede dokumentert mønster og gir normalt ingen skill-endring — og UUID-er/Entra-gruppe-IDer i `patch-orgs.yaml` filtreres bort per sikkerhetsreglene. Behandle dem kun som skill-relevante hvis selve mønsteret endres (nytt felt, ny provider, endret URL-konvensjon), ikke når en ny tenant-instans tilføyes.
 
 Disse mappene skal IKKE dypleses, men skannes for tenant-impact i discovery pass (FULL) og når compare viser endringer i dem (INKREMENTELL). Tenant-impact betyr konfigurasjon som endrer hva utviklere kan bruke eller observere, f.eks.:
 - `crds/` — hvilke CRD-er som er tilgjengelige for tenanter (ExternalSecret, ServiceMonitor, osv.) og deres versjoner
