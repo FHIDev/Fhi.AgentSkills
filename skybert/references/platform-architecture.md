@@ -109,17 +109,18 @@ Service account `flux-reconciler` brukes av Flux for å applye tenant-ressurser.
 
 Nyere tenanter har to separate RoleBindings:
 - **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) og `crossplane` (fra crossplane-namespace) til `ClusterRole cluster-admin` innen tenant-namespacet. Brukes av plattformen for å reconcile og provisjonere ressurser. **Uendret.**
-- **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til en ClusterRole innen tenant-namespacet. Gir kubectl-tilgang for utviklere. **Under utrulling:** nyere/migrerte tenanter binder mot den kuraterte `skybert:tenant-admin` (least-privilege, f.eks. `fida-stat19`), mens eldre tenanter og mal-tenanten `exempl` fortsatt binder mot `cluster-admin`.
+- **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til en ClusterRole innen tenant-namespacet. Gir kubectl-tilgang for utviklere. **Under utrulling:** migrerte tenanter binder mot den kuraterte `skybert:tenant-admin` (least-privilege, f.eks. `fida-stat19`), mens eldre tenanter og mal-tenanten `exempl` binder mot `cluster-admin`. Minst to nye tenant-baser lagt til i juni 2026 (`fida-evergreen`, `oslo-exempl`) binder også mot `cluster-admin` — hvilken rolle en tenant har kan altså ikke utledes av når den ble opprettet.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/tenants/ki-mcp/base/rolebinding.yaml
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/tenants/fida-stat19/base/entra-access-rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/3e3d50b/tenants/fida-evergreen/base/entra-access-rolebinding.yaml
 
 #### Aggregert tenant-admin RBAC (ny modell)
 
 Menneskelig tenant-admin-tilgang er nå modellert som aggregerte ClusterRole-fragmenter i `infra/skybert-system/base/tenant-admin-clusterroles/` (erstatter den fjernede `tenant-namespace-admin-clusterrole.yaml`):
 
 - **`skybert:tenant-admin:core`** — baseline namespaced rettigheter uten wildcards (workloads, services, ingresses, configmaps, secrets, PVC, HPA, PDB, namespaced RBAC uten `bind`/`escalate`, native + Calico NetworkPolicies, cert-manager, Gateway API-ruter, external-secrets, Crossplane-claims, metrics, policy-rapport-innsyn). Aggregeres inn i miljøspesifikke roller via labels (`aggregate-to-tenant-admin-{red-prod,red-test,yellow-prod,green-prod,test-sandbox}`).
-- **`skybert:tenant-admin:test-sandbox:runtime-access`** — legger til runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral). Aggregeres **kun** via `test-sandbox`-labelen → gjelder green-test, yellow-test-02, ops-test og sandbox. **Ikke** `aks-red-test-01`, som derfor mangler runtime-tilgang (i tillegg blokkert av Kyverno `deny-tenant-portforward`). Dette forklarer hvorfor interaktiv debugging oppfører seg ulikt per miljø.
+- **`skybert:tenant-admin:test-sandbox:runtime-access`** — legger til runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral). Aggregeres **kun** via `test-sandbox`-labelen → gjelder green-test, yellow-test-02, ops-test og sandbox. **Ikke** `aks-red-test-01`, som derfor mangler runtime-RBAC. I prod blokkeres runtime-tilgang i tillegg av Kyverno (`deny-tenant-runtime-access`); i red-test blokkerer Kyverno (`restrict-tenant-runtime-access`) port-forward/attach/proxy, men ikke exec — om exec fungerer der avhenger av RBAC/tilgang. Dette forklarer hvorfor interaktiv debugging oppfører seg ulikt per miljø.
 - **`skybert:tenant-flux-reconciler`** — egen aggregering for Flux-rekonsiliering.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/01abbad/infra/skybert-system/base/tenant-admin-clusterroles/
@@ -146,7 +147,7 @@ Koblingen mellom tenant-bootstrap og GitOps-artifakter:
 
 Inputs leveres via `ResourceSetInputProvider` per tenant med parametere: `tenant`, `entraGroupId`, `wlidClientId`, `ociUrl`.
 
-Legacy `tenants/<tenant>/base/`-strukturen finnes fortsatt for eksisterende tenanter og begge mønstre brukes parallelt.
+Legacy `tenants/<tenant>/base/`-strukturen finnes fortsatt og begge mønstre brukes parallelt — minst to nye tenant-baser lagt til i juni 2026 (`fida-evergreen`, `oslo-exempl`) bruker legacy-strukturen.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/tenant-bootstrap/base/resourceset.yaml
 

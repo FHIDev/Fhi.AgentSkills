@@ -73,7 +73,7 @@ Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per milj
 
 ## Tenant-RBAC — hva du kan administrere
 
-> **Under utrulling (per 2026-06):** Menneskelig tilgang (Entra ID-gruppe) bindes nå til en kuratert least-privilege ClusterRole `skybert:tenant-admin` i stedet for `cluster-admin`. Migrert for minst `fida-stat19`; mal-tenanten `exempl` bruker fortsatt `cluster-admin`. Eldre tenanter kan derfor fortsatt ha bredere tilgang. `flux-reconciler`/`crossplane` beholder `cluster-admin` innen namespacet for plattform-rekonsiliering.
+> **Under utrulling (per 2026-06):** Menneskelig tilgang (Entra ID-gruppe) bindes nå til en kuratert least-privilege ClusterRole `skybert:tenant-admin` i stedet for `cluster-admin`. Migrert for minst `fida-stat19`; mal-tenanten `exempl` bruker fortsatt `cluster-admin`. Eldre tenanter kan derfor fortsatt ha bredere tilgang. Minst to nye tenant-baser (juni 2026: `fida-evergreen`, `oslo-exempl`) binder fortsatt mot `cluster-admin`. `flux-reconciler`/`crossplane` beholder `cluster-admin` innen namespacet for plattform-rekonsiliering.
 
 `skybert:tenant-admin:core` gir deg eksplisitte rettigheter (uten wildcards) i ditt eget namespace på blant annet:
 
@@ -87,7 +87,7 @@ Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per milj
 - **Crossplane-claims:** alt i API-gruppen `skybert.fhi.no` (f.eks. SkybertApp)
 - **Innsyn:** `kubectl top pods` (metrics), lesing av policy-rapporter, read-only på ResourceQuota/LimitRange (plattformstyrt)
 
-Runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral) er kun med i `test-sandbox`-aggregeringen — altså green-test, yellow-test-02, ops-test og sandbox. Prod og `aks-red-test-01` mangler denne fragmenten, og blokkeres i tillegg av Kyverno (`deny-tenant-portforward`). Se [kubectl-tilgang](kubectl-access.md) og [Kyverno-policier](kyverno-policies.md).
+Runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral) er kun med i `test-sandbox`-aggregeringen — altså green-test, yellow-test-02, ops-test og sandbox. Prod og `aks-red-test-01` mangler denne fragmenten. I prod blokkeres runtime-tilgang i tillegg av Kyverno (`deny-tenant-runtime-access`). I red-test blokkerer Kyverno (`restrict-tenant-runtime-access`) port-forward/attach/proxy, men ikke exec — om exec fungerer der avhenger av RBAC/tilgang; `skybert:tenant-admin` har ikke runtime-fragmentet for red-test. Se [kubectl-tilgang](kubectl-access.md) og [Kyverno-policier](kyverno-policies.md).
 
 > **Merk:** RBAC gir *adgang* til ressurstypene over, men Kyverno-policyer kan fortsatt begrense hva som faktisk godtas. F.eks. i rød sone blokkeres native `NetworkPolicy` (kun Calico tillatt), og Calico-egress styres sentralt. Se [Kyverno-policier](kyverno-policies.md).
 
