@@ -61,6 +61,8 @@
 | `infra/skybert-system/base/tenant-admin-clusterroles/*.yaml` | `references/platform-architecture.md`, `references/security.md`, `references/kyverno-policies.md` |
 | `tenants/*/base/*.yaml` | `references/platform-architecture.md`, `SKILL.md` |
 | `scripts/tenant--*.sh` | `references/platform-architecture.md` |
+| `scripts/lib/grafana/*.sh` | Ikke egen målfil — hjelpebibliotek der avledede fakta (X-Scope-OrgID, org_mapping) havner etter refaktorering. Brukes til provenance-referanser i `references/observability.md` / `references/platform-architecture.md`. Andre `scripts/lib/*.sh` leses bare selektivt når de sources av en endret tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk |
+| `infra/tenant-repositories/base/ocirepos/*.yaml`, `infra/grafana/*/patch-orgs.yaml` | Normalt ingen routing (ny tenant-instans = dokumentert mønster). Kun ved mønsterendring → `references/platform-architecture.md`. Se seleksjonsreglene i [github-modus.md](github-modus.md) |
 | `infra/tenant-bootstrap/base/*.yaml` | `references/platform-architecture.md` |
 | `infra/tenant-bootstrap/base/tenants/*.yaml` | `references/platform-architecture.md` |
 | `infra/flux-operator/base/*.yaml` | `references/platform-architecture.md` |
