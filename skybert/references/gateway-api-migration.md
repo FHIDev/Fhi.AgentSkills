@@ -96,7 +96,11 @@ settes på **HTTPRoute**-objektet.
 
 ## HTTPRoute-mal
 
-For én host som ruter alt (`/`) til én Service:
+### Fase 1 — route uten DNS-target
+
+For én host som ruter alt (`/`) til én Service. **Ingen** `external-dns`-target
+ennå — den legges til først i fase 2, ellers kan external-dns flytte DNS til
+Traefik før routen er verifisert (se P1-advarselen i tofasemodellen).
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -104,8 +108,6 @@ kind: HTTPRoute
 metadata:
   name: httproute-<app>
   namespace: tn-<tenant>
-  annotations:
-    external-dns.alpha.kubernetes.io/target: <traefik-public-ip>  # IKKE nginx-IP! bekreft med plattformteam
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
@@ -123,6 +125,17 @@ spec:
       backendRefs:
         - name: <service-navn>
           port: <service-port>
+```
+
+### Fase 2 — legg til DNS-target (egen commit)
+
+Først **etter** at routen er verifisert akseptert og trafikk er testet mot
+Traefik, legg til annotasjonen i en egen commit for å flytte DNS:
+
+```yaml
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/target: <traefik-public-ip>  # IKKE nginx-IP! bekreft med plattformteam
 ```
 
 ### Flere hosts / path-baserte regler
@@ -153,5 +166,7 @@ ikke er tillatt av listeneren. `reason: BackendNotFound` betyr feil Service-navn
 
 ## Opprydding
 
-Slett Ingress-templaten fra tenant-repoet i samme commit som HTTPRoute legges til.
-Service-objektet beholdes.
+Slett Ingress-templaten fra tenant-repoet i en **egen commit**, først etter at
+HTTPRoute er verifisert akseptert (`Accepted=True`) og trafikk er bekreftet mot
+Traefik (fase 2). Slett den **aldri** i samme commit som HTTPRoute legges til —
+det er nettopp arbeidsflyten som ga 404/nedetid. Service-objektet beholdes.
