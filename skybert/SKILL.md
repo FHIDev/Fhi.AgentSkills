@@ -650,6 +650,7 @@ Dette gir AI-agenten kontekst for å generere korrekte konfigurasjoner uten å g
 | [Plattformarkitektur](references/platform-architecture.md) | Flux, Crossplane, OCI-flyt, tenant-bootstrap |
 | [Kyverno-policier](references/kyverno-policies.md) | Sikkerhetspolicier som påvirker tenanter |
 | [Hostnavn og nettverk](references/hostnames-and-networking.md) | Domener, TLS, ingress-regler, nettverkspolicyer |
+| [Gateway API-migrering](references/gateway-api-migration.md) | Runbook: nginx Ingress → Traefik HTTPRoute (green-klustere) |
 | [Flux-verktøy](references/flux-tooling.md) | Flux Dashboard og Flux Operator MCP |
 
 ## Support
