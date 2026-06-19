@@ -6,20 +6,20 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 schema_version=2
 docs_repo=FHISkybert/Fhi.Skybert.Docs
 docs_branch=main
-docs_commit=519aa9ed9b7c155eb61dd8c1a53d08ab97854eda
-docs_commit_date=2026-05-06
+docs_commit=7d22ad5687944fa35224f16f97df5b71a9f896e7
+docs_commit_date=2026-06-12
 infra_repo=FHISkybert/Fhi.Skybert.Infra
 infra_branch=main
-infra_commit=a16a2432bab5713dc9ab15b792e17b2441fd9157
-infra_commit_date=2026-05-08
-last_fullscan_date=2026-04-17
+infra_commit=f9d7cc36e9f8e50abe39234495debcebc8bf3332
+infra_commit_date=2026-06-12
+last_fullscan_date=2026-06-03
 -->
 
 # Skybert Platform Skill
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-05-09
+> **Sist verifisert mot offisiell docs:** 2026-06-14
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -92,7 +92,7 @@ Hver sikkerhetssone har dedikerte klustere for test og prod. Kluster-navngivning
 | Sone | Dataklassifisering | Kluster (test) | Kluster (prod) |
 |------|-------------------|-----------------|-----------------|
 | **Grønn** | Åpne data, lavere sensitivitet | aks-green-test-01 | aks-green-prod-02 |
-| **Gul** | Interne data, persondata | aks-yellow-test-01 | aks-yellow-prod-01 |
+| **Gul** | Interne data, persondata | aks-yellow-test-02 | aks-yellow-prod-01 |
 | **Rød** | Identifiserbar helseinformasjon | aks-red-test-01 | aks-red-prod-01 |
 
 Sandbox (`aks-sandbox-01`) er et unntak — ett felles kluster delt av alle fargesoner, med grønn sone-policyer.
@@ -482,6 +482,12 @@ Cert-manager cluster-issuere per domene:
 Plattformen planlegger å tilby tre StorageClass-nivåer med ulike nivåer av redundans, snapshot-retensjon og backup. Nåværende planlagte løsning er **ikke egnet for IO-intensive workloads** som aktive databaser.
 
 > Kilde: https://docs.sky.fhi.no/persistence/
+
+### `ontap-nas` accessMode -- bare RWX
+
+Inntil videre skal alle PVCer mot `ontap-nas` opprettes med
+`accessModes: [ReadWriteMany]` (RWX). **Bruk aldri `ReadWriteOnce`
+(RWO)**. Helm-charts som default-er til RWO må overrides.
 
 ## Azure Workload Identity
 

@@ -1,0 +1,14 @@
+{
+  "name": "fhi-agent-skills",
+  "owner": {
+    "name": "Folkehelseinstituttet"
+  },
+  "description": "FHI Agent Skills for Claude Code",
+  "plugins": [
+    {
+      "name": "skybert-plugin",
+      "source": "./skybert",
+      "description": "Skybert-skill: FHI sin Kubernetes-plattform (GitOps, SkybertApp CRD, Flux, Workload Identity)."
+    }
+  ]
+}

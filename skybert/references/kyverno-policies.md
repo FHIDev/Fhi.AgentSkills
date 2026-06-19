@@ -1,6 +1,6 @@
 # Kyverno-policier som påvirker tenanter
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/e5bbc4b/infra/kyverno-policies/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/3e3d50b/infra/kyverno-policies/
 
 Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle tenant-namespaces (`tn-*`).
 
@@ -13,7 +13,7 @@ Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle ten
 | `ingress-security` (mutate) | Setter `ssl-redirect: true` og `force-ssl-redirect: true` på alle Ingress | Alle Ingress |
 | `automount-cert-chain-bundle` | Auto-monterer `trust-bundle.pem` til `/etc/ssl/certs/trust-bundle.pem` i alle pods (inkl. init containers) | `tn-*` pods |
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml
 
 > **Praktisk betydning:** Du trenger vanligvis ikke sette `runAsNonRoot`, `runAsUser` eller `seccompProfile` eksplisitt — Kyverno setter fornuftige defaults. Men du **kan ikke** override `runAsNonRoot` til `false`.
 
@@ -50,7 +50,15 @@ Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle ten
 |--------|---------------|
 | `disallow-nodeport-loadbalancer-services` | NodePort- og LoadBalancer-services. Kun ClusterIP tillatt — bruk Ingress for ekstern tilgang |
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/kyverno-policies/base/policies-green/disallow-nodeport-lb.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/infra/kyverno-policies/base/policies-green/disallow-nodeport-lb.yaml
+
+### ServiceAccount (alle klustere)
+
+| Policy | Hva blokkeres |
+|--------|---------------|
+| `restrict-tenant-workload-serviceaccount` | Tenant-workloads (Pod + Deployment/StatefulSet/DaemonSet/Job/CronJob/ReplicaSet) i `tn-*` som setter `serviceAccountName: flux-reconciler`. `flux-reconciler` er reservert for Flux-rekonsiliering — bruk `default`, workload-identity-SA `<tenant>-azure`, eller en egen SA. |
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/infra/kyverno-policies/base/policies-green/restrict-tenant-workload-serviceaccount.yaml
 
 ### Ressurser (Audit-modus i `tn-*`)
 
@@ -67,6 +75,7 @@ Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle ten
 |--------|----------|
 | `sub-1200-calico-netpol-in-tenants` | Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt. Calico `NetworkPolicy` (`crd.projectcalico.org/v1`) er tillatt i `tn-*` med to begrensninger: kun `Ingress`-regler (egress styres sentralt via GlobalNetworkPolicy) og `spec.order < 1200` (1200+ reservert for plattform default-deny GNPs). |
 | `generate-tenant-internal-gnp` | Genererer automatisk GlobalNetworkPolicy per tenant-namespace som tillater intern kommunikasjon |
+| `restrict-tenant-runtime-access` | Blokkerer `kubectl port-forward`, `attach` og API-`proxy` (pod og service) i `tn-*` (Enforce). Blokkerer **ikke** `kubectl exec` eller ephemeral debug-containere |
 
 I rød sone er **egress blokkert som default** (base deny-policy). Unntak:
 - DNS (UDP 53 til `kube-system`/kube-dns) — tillatt automatisk
@@ -76,7 +85,23 @@ I rød sone er **egress blokkert som default** (base deny-policy). Unntak:
 
 **Tenanter kan opprette egne Calico ingress-NetworkPolicies** for å finjustere ingress-segmentering (f.eks. begrense hvilke tenant-tjenester som er nåbare via ingress-nginx). Egress derimot kan IKKE styres av tenanten — kontakt `#ext-fhi-skybert` for egress-unntak.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a16a243/infra/kyverno-policies/base/policies-red/
+**Runtime-tilgang i rød sone:** `restrict-tenant-runtime-access` (ny juni 2026) gjelder begge rød-klustere (aks-red-prod-01 og aks-red-test-01). I motsetning til prod-policyen (se nedenfor) blokkerer den **ikke** `kubectl exec` eller ephemeral debug-containere — policy-beskrivelsen i kilden nevner ephemeral containers, men policyen har ingen regel for det (reglene er autoritative). Konsekvens i `aks-red-test-01`: Kyverno blokkerer ikke lenger exec der; om exec faktisk fungerer avhenger av RBAC/tilgang — den kuraterte `skybert:tenant-admin`-rollen har ikke runtime-fragmentet aggregert for red-test (utledet mønster). I `aks-red-prod-01` gjelder både `policies-prod` og `policies-red`, så all interaktiv runtime-tilgang forblir Kyverno-blokkert der.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/3e3d50b/infra/kyverno-policies/base/policies-red/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/3e3d50b/infra/kyverno-policies/base/policies-red/restrict-tenant-runtime-access.yaml
+
+## Produksjon — runtime-restriksjoner
+
+`policies-prod` inkluderes nå **kun av prod-klustere** — aks-green-prod-02, aks-norsyss-prod-01, aks-red-prod-01 og aks-yellow-prod-01. `aks-red-test-01` inkluderer **ikke lenger** `policies-prod` (fjernet juni 2026); red-test dekkes i stedet av rød sone-policyen `restrict-tenant-runtime-access` (se over).
+
+| Policy | Hva blokkeres |
+|--------|---------------|
+| `deny-tenant-runtime-access` | `kubectl exec`, `port-forward`, `attach`, API-`proxy` (pod og service) og ephemeral debug-containere i `tn-*` |
+
+I green-test, yellow-test-02, ops-test og sandbox (kun `policies-green`) er disse tillatt. Konsekvens: feilsøk i prod via logger/metrics/Grafana — se [kubectl-tilgang](kubectl-access.md).
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/3e3d50b/infra/kyverno-policies/base/policies-prod/deny-tenant-runtime-access.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/3e3d50b/infra/kyverno-policies/aks-red-test-01/kustomization.yaml
 
 ## PolicyExceptions
 
