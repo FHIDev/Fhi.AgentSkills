@@ -6,12 +6,12 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 schema_version=2
 docs_repo=FHISkybert/Fhi.Skybert.Docs
 docs_branch=main
-docs_commit=4c245a21e201210b089335125bf016f1bbe613ad
-docs_commit_date=2026-06-08
+docs_commit=7d22ad5687944fa35224f16f97df5b71a9f896e7
+docs_commit_date=2026-06-12
 infra_repo=FHISkybert/Fhi.Skybert.Infra
 infra_branch=main
-infra_commit=3e3d50b925e9e3aac42bcbd102eb43e8f5badc60
-infra_commit_date=2026-06-11
+infra_commit=f9d7cc36e9f8e50abe39234495debcebc8bf3332
+infra_commit_date=2026-06-12
 last_fullscan_date=2026-06-03
 -->
 
@@ -19,7 +19,7 @@ last_fullscan_date=2026-06-03
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-06-11
+> **Sist verifisert mot offisiell docs:** 2026-06-14
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.

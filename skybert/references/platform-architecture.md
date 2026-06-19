@@ -90,7 +90,7 @@ tenants/<tenant>/
 ├── base/
 │   ├── namespace.yaml              # tn-<tenant>
 │   ├── serviceaccounts.yaml        # flux-reconciler + <tenant>-azure (flertall i nyere tenanter)
-│   ├── rolebinding.yaml            # flux-reconciler og crossplane → ClusterRole cluster-admin innen namespace
+│   ├── rolebinding.yaml            # flux-reconciler → ClusterRole (cluster-admin eller skybert:tenant-flux-reconciler) innen namespace; enkelte eldre baser har også crossplane-SA som subject
 │   ├── entra-access-rolebinding.yaml  # Entra ID-gruppe → ClusterRole (cluster-admin eller skybert:tenant-admin) innen namespace
 │   ├── flux-kustomization.yaml     # Flux Kustomization (interval: 2m, prune: true)
 │   └── kustomization.yaml          # Kustomize-referanse
@@ -107,11 +107,14 @@ Service account `flux-reconciler` brukes av Flux for å applye tenant-ressurser.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/tenants/fida-stat19core/base/kustomization.yaml
 
-Nyere tenanter har to separate RoleBindings:
-- **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) og `crossplane` (fra crossplane-namespace) til `ClusterRole cluster-admin` innen tenant-namespacet. Brukes av plattformen for å reconcile og provisjonere ressurser. **Uendret.**
+Tenant-baser kan ha to separate RoleBindings:
+- **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) til en `ClusterRole` innen tenant-namespacet, brukt av plattformen til å reconcile og provisjonere ressurser. Både rolle og subjects varierer per tenant: `tsd-gateway` binder `cluster-admin` med kun `flux-reconciler` som subject, `fida-stat19` er migrert til least-privilege `skybert:tenant-flux-reconciler` (kun `flux-reconciler`), og eldre `fida-stat19core` inkluderer fortsatt `crossplane`-SA-en (fra `crossplane`-namespace) som ekstra subject mot `cluster-admin`. Den separate ResourceSet-bootstrappen (se nedenfor) genererer fortsatt `cluster-admin` med begge subjects.
 - **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til en ClusterRole innen tenant-namespacet. Gir kubectl-tilgang for utviklere. **Under utrulling:** migrerte tenanter binder mot den kuraterte `skybert:tenant-admin` (least-privilege, f.eks. `fida-stat19`), mens eldre tenanter og mal-tenanten `exempl` binder mot `cluster-admin`. Minst to nye tenant-baser lagt til i juni 2026 (`fida-evergreen`, `oslo-exempl`) binder også mot `cluster-admin` — hvilken rolle en tenant har kan altså ikke utledes av når den ble opprettet.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/tenants/ki-mcp/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/fida-stat19/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/fida-stat19core/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/tsd-gateway/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/infra/tenant-bootstrap/base/resourceset.yaml
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/tenants/fida-stat19/base/entra-access-rolebinding.yaml
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/3e3d50b/tenants/fida-evergreen/base/entra-access-rolebinding.yaml
 
@@ -173,13 +176,13 @@ Color → kluster-mapping ved onboarding:
 Grafana klargjøres separat med `scripts/tenant--bootstrap--grafana.sh`:
 
 ```bash
-tenant--bootstrap--grafana.sh --tenant <tenant> --entra-group-id <uuid> --color <red|yellow|green>
+tenant--bootstrap--grafana.sh --tenant <tenant>
 ```
 
-Kjøres mot alle klustere i fargegruppen (sandbox + test + prod) via `az connectedk8s proxy + kubectl`. Oppretter per kluster: Grafana-org, Loki-datasource og Mimir-datasource (begge filtrert til `tn-<tenant>` via `X-Scope-OrgID`), og oppdaterer `infra/grafana/<cluster>/patch-orgs.yaml` med Entra-gruppekobling.
+Entra-gruppe-ID-en leses fra `tenants/<tenant>/base/entra-access-rolebinding.yaml` (ikke et flagg). Målklustere utledes fra overlay-katalogene under `tenants/<tenant>/`, eller angis eksplisitt med `-c/--cluster` (repeterbar). Kjøres via `az connectedk8s proxy + kubectl`. Oppretter per kluster: Grafana-org, Loki-datasource og Mimir-datasource (begge filtrert til `tn-<tenant>` via `X-Scope-OrgID`), og oppdaterer `infra/grafana/<cluster>/patch-orgs.yaml` med Entra-gruppekobling.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/scripts/tenant--new.sh
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/scripts/tenant--bootstrap--grafana.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/scripts/tenant--bootstrap--grafana.sh
 
 ### Sentralisert kluster-register
 

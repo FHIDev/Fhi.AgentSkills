@@ -55,7 +55,7 @@ Eksempel strukturert logging:
 
 Loki kjøres med `auth_enabled: true` — logger er isolert per tenant via headeren `X-Scope-OrgID: tn-<tenant>`. Dette settes automatisk av Grafana-datasourcen som er klargjort for deg; du trenger ikke konfigurere det selv.
 
-> Kilde (X-Scope-OrgID): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/scripts/tenant--bootstrap--grafana.sh
+> Kilde (X-Scope-OrgID): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/scripts/lib/grafana/datasource.sh
 
 **Loggoppbevaring:** 31 dager.
 
@@ -133,6 +133,10 @@ Distribuert tracing via **Tempo** er **planlagt, foreløpig ikke tilgjengelig** 
 > Kilde: https://docs.sky.fhi.no/observability/tracing/
 
 ## Grafana Dashboards
+
+Grafana er forhåndskonfigurert med et **standard-dashboard** laget av plattformteamet, som gir innsikt i helsen til applikasjonene og deploymentene dine. Dashboardet vedlikeholdes av plattformteamet og kan bli oppdatert når som helst — endringer du gjør i det via web-UI kan bli overskrevet. Vil du tilpasse det, kopier det til et eget dashboard som du vedlikeholder selv.
+
+> Kilde: https://docs.sky.fhi.no/observability/grafana/
 
 Tilgang dashboards for:
 - Pod-metrics (CPU, minne, nettverk)
@@ -213,7 +217,7 @@ Entra-gruppen mappes inn i Grafana-instansen på alle klustere i fargegruppen di
 
 Du logger inn med FHI-bruker. Grafana plasserer deg i riktig organisasjon basert på Entra-gruppemedlemskap via `org_mapping`.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/scripts/tenant--bootstrap--grafana.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/scripts/tenant--bootstrap--grafana.sh
 
 ## Alerting
 
