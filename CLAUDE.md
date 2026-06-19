@@ -8,7 +8,7 @@
 Fhi.AgentSkills/
 ├── .claude/
 │   └── skills/          ← kanonisk plassering for alle skills
-├── .codex/
+├── .agents/
 │   └── skills/          ← kompatibilitetskopi av .claude/skills for Codex
 ├── designsystem/        ← designsystem-skillen
 ├── skybert/             ← skybert-skillen
@@ -18,11 +18,11 @@ Fhi.AgentSkills/
 ## Viktig: `.claude/skills` er kanonisk kilde
 
 `.claude/skills` er kanonisk plassering for interne vedlikeholds-skills.
-`.codex/skills` er en kompatibilitetskopi for Codex/oppsett uten pålitelig symlink-støtte (f.eks. enkelte Windows-oppsett).
+`.agents/skills` er en kompatibilitetskopi for Codex/oppsett uten pålitelig symlink-støtte (f.eks. enkelte Windows-oppsett).
 
 - Rediger alltid filer under `.claude/skills/`
-- Speil samme endringer til `.codex/skills/` slik at innholdet forblir identisk
-- Opprett nye vedlikeholds-skills under `.claude/skills/` først, og kopier deretter til `.codex/skills/`
+- Speil samme endringer til `.agents/skills/` slik at innholdet forblir identisk
+- Opprett nye vedlikeholds-skills under `.claude/skills/` først, og kopier deretter til `.agents/skills/`
 
 ## Bidrag og PR-tilgang
 

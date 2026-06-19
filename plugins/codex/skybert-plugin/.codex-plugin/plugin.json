@@ -1,0 +1,10 @@
+{
+  "name": "skybert-plugin",
+  "version": "0.1.0",
+  "description": "Codex-plugin med Skybert-skill.",
+  "skills": "./skills",
+  "author": {
+    "name": "Folkehelseinstituttet"
+  },
+  "repository": "https://github.com/FHIDev/Fhi.AgentSkills"
+}

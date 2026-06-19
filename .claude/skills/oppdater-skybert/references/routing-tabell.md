@@ -11,6 +11,7 @@
 | `docs/explanations/what-is-a-tenant.md` | `SKILL.md` |
 | `docs/explanations/under-the-hood.md` | `references/platform-architecture.md` |
 | `docs/explanations/blaloypa.md` | `SKILL.md` |
+| `docs/explanations/shared-responsibilities.md` | `SKILL.md` |
 | `docs/get-started/blaloypa.md` | `SKILL.md` |
 | `docs/get-started/connectedk8s.md` | `references/kubectl-access.md` |
 | `docs/get-started/gitops-repo.md` | `SKILL.md`, `references/workflows.md` |
@@ -23,6 +24,8 @@
 | `docs/build/environments.md` | `SKILL.md`, `references/hostnames-and-networking.md` |
 | `docs/build/explanations/gitops.md` | `references/workflows.md` |
 | `docs/build/how-to/trigger-gitops-promotion.md` | `references/workflows.md` |
+| `docs/build/flux-dashboard.md` | `references/flux-tooling.md` |
+| `docs/build/flux-mcp.md` | `references/flux-tooling.md` |
 | `docs/auth/index.md` | `references/security.md` |
 | `docs/auth/workload-identity.md` | `references/security.md` |
 | `docs/persistence/*.md` | `SKILL.md` |
@@ -31,6 +34,7 @@
 | `docs/miscellaneous/publicCA.md` | `references/security.md` |
 | `docs/miscellaneous/access-packages.md` | `SKILL.md` |
 | `docs/miscellaneous/PIM.md` | `references/kubectl-access.md` |
+| `docs/miscellaneous/probes.md` | `references/configuration.md`, `SKILL.md` |
 | `docs/legal/*.md` | `SKILL.md` (kort omtale) |
 | `docs/troubleshooting/non-root.md` | `references/troubleshooting.md` |
 | `docs/internal/flux.md` | `references/platform-architecture.md` (NB: kan motsi infra-repo — markeres som kildekonflikt) |
@@ -39,6 +43,7 @@
 | `docs/internal/sk8-cli.md` | VURDER — plattformintern, ikke auto-route |
 | `docs/internal/helm-and-crds.md` | VURDER — plattformintern, ikke auto-route |
 | `docs/internal/managing-clusters.md` | VURDER — plattformintern, ikke auto-route |
+| `docs/internal/replace-cluster-in-place.md` | VURDER — plattformintern runbook; hent kun tenant-impact (federated credentials / Workload Identity-konsekvenser ved cluster-bytte) |
 | `docs/internal/component-versions.md` | VURDER — versjonsmatrise, endres hyppig; vurder lenking framfor kopiering |
 | `docs/internal/decisions/gatewayapi.md` | VURDER — ADR, historisk beslutning; auto-route hvis implementert i `docs/build/` e.l. |
 | `docs/miscellaneous/fhi-felles-cryptography.md` | VURDER — målgruppe (tenant-utviklere vs. plattform) må avklares |
@@ -47,13 +52,17 @@
 
 | Kildesti | Primær målfil |
 |----------|--------------|
-| `infra/crossplane/base/xrds/skybertapp.yaml` | `references/skybertapp-crd.md` |
+| `infra/crossplane/base/xrds/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/skybertapp/xrd.yaml` (statisk kopi) |
 | `infra/crossplane/base/xrds/webapp.yaml` | `references/webapp-crd.md` |
-| `infra/crossplane/base/compositions/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/platform-architecture.md` |
+| `infra/crossplane/base/compositions/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/platform-architecture.md`, `references/skybertapp/composition.yaml` (statisk kopi) |
 | `infra/crossplane/base/compositions/webapp.yaml` | `references/webapp-crd.md` |
+| `infra/crossplane/base/functions.yaml` | `references/skybertapp/functions.yaml` (kopi med xpkg-omskriving), `references/skybertapp-render.md` (provenance) |
 | `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
+| `infra/skybert-system/base/tenant-admin-clusterroles/*.yaml` | `references/platform-architecture.md`, `references/security.md`, `references/kyverno-policies.md` |
 | `tenants/*/base/*.yaml` | `references/platform-architecture.md`, `SKILL.md` |
 | `scripts/tenant--*.sh` | `references/platform-architecture.md` |
+| `scripts/lib/grafana/*.sh` | Ikke egen målfil — hjelpebibliotek der avledede fakta (X-Scope-OrgID, org_mapping) havner etter refaktorering. Brukes til provenance-referanser i `references/observability.md` / `references/platform-architecture.md`. Andre `scripts/lib/*.sh` leses bare selektivt når de sources av en endret tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk |
+| `infra/tenant-repositories/base/ocirepos/*.yaml`, `infra/grafana/*/patch-orgs.yaml` | Normalt ingen routing (ny tenant-instans = dokumentert mønster). Kun ved mønsterendring → `references/platform-architecture.md`. Se seleksjonsreglene i [github-modus.md](github-modus.md) |
 | `infra/tenant-bootstrap/base/*.yaml` | `references/platform-architecture.md` |
 | `infra/tenant-bootstrap/base/tenants/*.yaml` | `references/platform-architecture.md` |
 | `infra/flux-operator/base/*.yaml` | `references/platform-architecture.md` |
@@ -92,3 +101,13 @@ Brukes når agenten ikke har filsti-tilgang, kun emnenavn fra docs-sider.
 - Filer i docs-repo som ikke matcher noen rad → vurder om emnet passer en eksisterende målfil eller trenger ny fil.
 - Routing-tabellen er et startpunkt, ikke en tvangstrøye. Foreslå den plasseringen som gir best struktur.
 - Nye referansefiler kan opprettes for ethvert emneområde som ikke passer naturlig inn i eksisterende filer.
+
+## Vedlikehold av tabellen
+
+Tabellen skal holdes i synk med virkeligheten i samme kjøring som avviket oppdages:
+
+- Når en ny målfil opprettes i `skybert/` (godkjent `ny-fil`-post) → legg til routing-rad(er) for kildene som ruter dit.
+- Når dekningsmatrise A foreslår målfil for en udekket side → legg til routing-rad når forslaget godkjennes.
+- Når en kildefil er flyttet/omdøpt i kilderepoene (compare viser removed+added) → oppdater raden, ikke la den peke på død sti.
+
+Disse oppdateringene rapporteres som selvoppdaterings-poster i UPDATE-PLAN.md (se SKILL.md) og speiles til `.agents/skills/oppdater-skybert/`.

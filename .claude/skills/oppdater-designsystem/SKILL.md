@@ -632,13 +632,13 @@ Kjør følgende sjekker for å verifisere at SKILL.md er korrekt for ny versjon:
 | Domene-dekning | Gå gjennom domene-tabellen fra steg 4 og verifiser at hvert domene er dekket med oppdatert innhold i både hovedfil og referansefil(er). |
 | Rammeverk-råd | Verifiser at React-, Angular- og Blazor-rådene i `references/framework-setup.md` fortsatt samsvarer med publisert pakke og upstream get_started-docs. Fjern rammeverksspesifikke råd som ikke lenger er dokumentert eller implisert av upstream. |
 
-### Synkronisering av `.claude`- og `.codex`-versjonene
+### Synkronisering av `.claude`- og `.agents`-versjonene
 
-`.claude/skills` er kanonisk kilde. `.codex/skills` er en kompatibilitetskopi (ikke symlink)
+`.claude/skills` er kanonisk kilde. `.agents/skills` er en kompatibilitetskopi (ikke symlink)
 som må holdes identisk manuelt. Etter alle endringer i `.claude/skills/oppdater-designsystem/`:
 
-1. Kopier filen til `.codex/skills/oppdater-designsystem/SKILL.md`
-2. Verifiser at filene er identiske (f.eks. `diff .claude/skills/oppdater-designsystem/SKILL.md .codex/skills/oppdater-designsystem/SKILL.md`)
+1. Kopier filen til `.agents/skills/oppdater-designsystem/SKILL.md`
+2. Verifiser at filene er identiske (f.eks. `diff .claude/skills/oppdater-designsystem/SKILL.md .agents/skills/oppdater-designsystem/SKILL.md`)
 
 ---
 

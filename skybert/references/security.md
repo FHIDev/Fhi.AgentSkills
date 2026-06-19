@@ -71,6 +71,33 @@ Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per milj
 > Kilde (script, autoritativ): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/scripts/tenant--add--to-cluster.sh
 > Kilde (docs, etterslep): https://docs.sky.fhi.no/auth/workload-identity/
 
+## Tenant-RBAC — hva du kan administrere
+
+> **Under utrulling (per 2026-06):** Menneskelig tilgang (Entra ID-gruppe) bindes nå til en kuratert least-privilege ClusterRole `skybert:tenant-admin` i stedet for `cluster-admin`. Migrert for minst `fida-stat19`; mal-tenanten `exempl` bruker fortsatt `cluster-admin`. Eldre tenanter kan derfor fortsatt ha bredere tilgang. Minst to nye tenant-baser (juni 2026: `fida-evergreen`, `oslo-exempl`) binder fortsatt mot `cluster-admin`. Plattform-rekonsiliering bruker en egen `rolebinding.yaml` som binder `flux-reconciler` til en ClusterRole innen namespacet; rollen kan være `cluster-admin`, mens en migrert tenant som `fida-stat19` bruker den kuraterte least-privilege `skybert:tenant-flux-reconciler`. `crossplane`-SA-en er fortsatt et ekstra subject i eldre `fida-stat19core`, men er ikke med i `tsd-gateway` eller migrerte `fida-stat19`. Den separate ResourceSet-bootstrappen genererer fortsatt `cluster-admin` med begge subjects.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/fida-stat19/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/fida-stat19core/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/tsd-gateway/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/infra/tenant-bootstrap/base/resourceset.yaml
+
+`skybert:tenant-admin:core` gir deg eksplisitte rettigheter (uten wildcards) i ditt eget namespace på blant annet:
+
+- **Workloads:** pods, deployments, statefulsets, daemonsets, jobs, cronjobs, replicasets (+ scale/rollback)
+- **Nettverk/tilgang:** services, ingresses, configmaps, secrets, serviceaccounts, persistentvolumeclaims, HPA, PDB
+- **Namespaced RBAC:** `roles`/`rolebindings` (uten `bind`/`escalate` — du kan kun delegere et subsett av egne rettigheter)
+- **NetworkPolicies:** native (`networking.k8s.io`) og Calico (`crd.projectcalico.org`)
+- **Sertifikater:** cert-manager `certificates`/`certificaterequests`/`issuers` og trust-manager `bundles`
+- **Gateway API-ruter:** `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes`, `udproutes`
+- **Secrets:** external-secrets `externalsecrets`/`secretstores` (+ `secretproviderclasses`, deprecated)
+- **Crossplane-claims:** alt i API-gruppen `skybert.fhi.no` (f.eks. SkybertApp)
+- **Innsyn:** `kubectl top pods` (metrics), lesing av policy-rapporter, read-only på ResourceQuota/LimitRange (plattformstyrt)
+
+Runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral) er kun med i `test-sandbox`-aggregeringen — altså green-test, yellow-test-02, ops-test og sandbox. Prod og `aks-red-test-01` mangler denne fragmenten. I prod blokkeres runtime-tilgang i tillegg av Kyverno (`deny-tenant-runtime-access`). I red-test blokkerer Kyverno (`restrict-tenant-runtime-access`) port-forward/attach/proxy, men ikke exec — om exec fungerer der avhenger av RBAC/tilgang; `skybert:tenant-admin` har ikke runtime-fragmentet for red-test. Se [kubectl-tilgang](kubectl-access.md) og [Kyverno-policier](kyverno-policies.md).
+
+> **Merk:** RBAC gir *adgang* til ressurstypene over, men Kyverno-policyer kan fortsatt begrense hva som faktisk godtas. F.eks. i rød sone blokkeres native `NetworkPolicy` (kun Calico tillatt), og Calico-egress styres sentralt. Se [Kyverno-policier](kyverno-policies.md).
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
+
 ## Obligatorisk sikkerhetskonfigurasjon
 
 ```yaml
@@ -132,4 +159,3 @@ Hver sikkerhetssone har egne Azure subscriptions:
 - (tilsvarende for Grønn og Rød sone)
 
 Workflows må bruke riktig `AZURE_SUBSCRIPTION_ID` for miljøet.
-

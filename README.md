@@ -30,6 +30,23 @@ Disse skillene brukes til å holde domenekunnskap-skillene i dette repoet oppdat
 
 > **Merk:** Disse ligger kanonisk under `.claude/skills/` og skal ikke symlinkes til andre prosjekter.
 
+## Plugin
+
+`skybert` er også tilgjengelig som plugin, som alternativ til symlink-oppsettet under.
+
+**Claude Code** – distribueres direkte fra `skybert/` via en marketplace i repoet:
+
+```text
+/plugin marketplace add FHIDev/Fhi.AgentSkills
+/plugin install skybert-plugin@fhi-agent-skills
+```
+
+Se [docs/claude-plugin-skybert.md](docs/claude-plugin-skybert.md) for detaljer.
+
+**Codex** – en egen Codex-plugin under `plugins/codex/skybert-plugin/` lenker til `skybert/`
+via en symlink (ingen kopi), med marketplace i `.agents/plugins/marketplace.json`. Se
+[docs/codex-plugin-skybert.md](docs/codex-plugin-skybert.md) for detaljer og forbehold.
+
 ## Installasjon
 
 ### 1. Klon repoet
@@ -87,25 +104,25 @@ Codex bruker `AGENTS.md` og kan referere til eksterne filer.
 **Global plassering:**
 ```bash
 # macOS/Linux
-mkdir -p ~/.codex/skills
+mkdir -p ~/.agents/skills
 # Generisk mønster:
-# ln -s ~/repos/Fhi.AgentSkills/<skill-navn> ~/.codex/skills/<skill-navn>
+# ln -s ~/repos/Fhi.AgentSkills/<skill-navn> ~/.agents/skills/<skill-navn>
 
-ln -s ~/repos/Fhi.AgentSkills/skybert ~/.codex/skills/skybert
-ln -s ~/repos/Fhi.AgentSkills/designsystem ~/.codex/skills/designsystem
+ln -s ~/repos/Fhi.AgentSkills/skybert ~/.agents/skills/skybert
+ln -s ~/repos/Fhi.AgentSkills/designsystem ~/.agents/skills/designsystem
 
 # Windows (PowerShell som admin)
-mkdir -Force "$env:USERPROFILE\.codex\skills"
-New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.codex\skills\skybert" -Target "C:\repos\Fhi.AgentSkills\skybert"
-New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.codex\skills\designsystem" -Target "C:\repos\Fhi.AgentSkills\designsystem"
+mkdir -Force "$env:USERPROFILE\.agents\skills"
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.agents\skills\skybert" -Target "C:\repos\Fhi.AgentSkills\skybert"
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.agents\skills\designsystem" -Target "C:\repos\Fhi.AgentSkills\designsystem"
 ```
 
 **I AGENTS.md:**
 ```markdown
 ## Domenekunnskap
 
-Se [skybert skill](~/.codex/skills/skybert/SKILL.md) for Skybert-plattformen.
-Se [designsystem skill](~/.codex/skills/designsystem/SKILL.md) for FHI Designsystem.
+Se [skybert skill](~/.agents/skills/skybert/SKILL.md) for Skybert-plattformen.
+Se [designsystem skill](~/.agents/skills/designsystem/SKILL.md) for FHI Designsystem.
 ```
 
 > **Merk:** `~` er kun et eksempel (hjemmekatalog). Tilpass stien til din faktiske plassering og operativsystem.
@@ -134,8 +151,8 @@ New-Item -ItemType SymbolicLink -Path ".cursor\rules\designsystem" -Target "C:\r
 ## Repostruktur for vedlikeholdere
 
 - `.claude/skills/` – kanonisk plassering for interne vedlikeholds-skills (`oppdater-*`)
-- `.codex/skills/` – kompatibilitetskopi av `.claude/skills/` for Codex/oppsett uten symlink-støtte
-- Rediger alltid interne vedlikeholds-skills under `.claude/skills/`, og speil endringene til `.codex/skills/`
+- `.agents/skills/` – kompatibilitetskopi av `.claude/skills/` for Codex/oppsett uten symlink-støtte
+- Rediger alltid interne vedlikeholds-skills under `.claude/skills/`, og speil endringene til `.agents/skills/`
 - `AGENTS.md` – repo-informasjon for OpenAI Codex-agenter
 - `CLAUDE.md` – repo-informasjon for Claude Code
 

@@ -1,0 +1,60 @@
+name: Validate Codex Skybert plugin
+
+# Validerer Codex-pluginen. Skillen lenkes via symlink fra
+# plugins/codex/skybert-plugin/skills/skybert -> skybert/, saa det finnes ingen
+# kopi aa bygge - kun validering, inkludert en vakt mot at symlinken blir oedelagt.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "skybert/**"
+      - ".agents/plugins/**"
+      - "plugins/codex/**"
+      - ".github/workflows/validate-codex-skybert-plugin.yml"
+  pull_request:
+    paths:
+      - "skybert/**"
+      - ".agents/plugins/**"
+      - "plugins/codex/**"
+      - ".github/workflows/validate-codex-skybert-plugin.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Symlink-vakt
+        shell: bash
+        run: |
+          set -euo pipefail
+          LINK="plugins/codex/skybert-plugin/skills/skybert"
+          # Les git-treet (ikke arbeidskopien) -> OS-uavhengig sjekk
+          mode=$(git ls-files -s "$LINK" | awk '{print $1}')
+          if [ "$mode" != "120000" ]; then
+            echo "Symlinken $LINK er oedelagt (mode '$mode', forventet '120000')."
+            echo "En Windows-checkout kan ha staget den som vanlig fil. Gjenopprett symlinken."
+            exit 1
+          fi
+          echo "OK symlink (mode 120000), peker paa: $(git cat-file -p "$(git rev-parse :"$LINK")")"
+
+      - name: Valider manifester og at SKILL.md naas via symlinken
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool ".agents/plugins/marketplace.json" > /dev/null
+          python3 -m json.tool "plugins/codex/skybert-plugin/.codex-plugin/plugin.json" > /dev/null
+          echo "OK gyldig JSON"
+
+          # Paa Linux materialiseres symlinken, saa SKILL.md skal vaere lesbar via den
+          SKILL="plugins/codex/skybert-plugin/skills/skybert/SKILL.md"
+          [ -f "$SKILL" ] || { echo "Naar ikke $SKILL via symlinken"; exit 1; }
+          echo "OK SKILL.md naas via symlinken"
