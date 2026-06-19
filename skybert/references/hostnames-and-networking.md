@@ -61,27 +61,25 @@ Apper i rød sone som trenger pålogging mot Entra ID kontakter plattformteamet 
 
 > Kilde: https://docs.sky.fhi.no/build/environments/ | https://docs.sky.fhi.no/internal/global-network-policies/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a16a243/infra/globalnetworkpolicies/base/policies-red/
 
-## Egress-IP (utgående trafikk fra clusterne)
+## Egress-IP (tillatt utgående trafikk fra clusterne)
 
-All utgående trafikk fra Skybert-clusterne (test, sandbox, prod -- alle soner) går ut via **én felles egress-IP**:
+Når egress er tillatt eller åpnet fra Skybert-clusterne, er trafikken oppgitt å
+gå ut via denne felles egress-IP-en:
 
 | Formål | IP |
 |--------|-----|
-| Skybert cluster egress (felles for alle clustere) | `83.118.167.10` |
+| Skybert cluster egress | `83.118.167.10` |
 
-Bruk denne IP-en når en ekstern tjeneste må whiteliste trafikk fra Skybert -- f.eks. Azure SQL firewall-regler, eksterne API-er, NHN-tjenester etc.
+IP-en kan være aktuell når en ekstern tjeneste skal tillate trafikk fra
+Skybert, for eksempel i Azure SQL-brannmurregler eller mot eksterne API-er.
+Bekreft verdien med plattformteamet (`#ext-fhi-skybert`) før den legges i en
+brannmurregel.
 
-### FHI kontor-IP-er
-
-For sammenligning, normale FHI kontor-IP-er som ofte brukes i samme brannmurregler:
-
-| Navn | IP/range |
-|------|----------|
-| office-subnet | `83.118.167.0/27` (`.0`–`.31`) |
-| office-host-1 | `83.118.189.38` |
-| office-host-2 | `83.118.185.198` |
-| office-nat-1 | `31.25.222.168` |
-| office-nat-2 | `31.25.222.166` |
+> **Verifikasjonsgrunnlag:** Verdien er oppgitt av bidragsyter basert på
+> intern plattformkunnskap, men ble ikke funnet i Skybert docs eller infra-repo
+> ved kontroll 2026-06-19. Den er derfor et operativt hint, ikke en autoritativ
+> kilde. Rød sone har fortsatt default deny og krever eksplisitte
+> GlobalNetworkPolicy-unntak før trafikk kan gå ut.
 
 ## Service Mesh
 
