@@ -87,12 +87,20 @@ settes på **HTTPRoute**-objektet.
    API-rollouten ikke er live på klusteret ennå, eller feil `sectionName`.
    **Ikke gå videre til fase 2 før dette er grønt.**
 
-### Fase 2 — flytt trafikk og fjern Ingress
+### Fase 2 — test Traefik, flytt DNS og fjern Ingress
 
-6. **Bekreft korrekt offentlig IP for Traefik** (se IP-advarsel under) og pek
-   `external-dns.alpha.kubernetes.io/target` på HTTPRoute dit. Verifiser at
-   `curl https://<host>/` treffer appen (ikke nginx 404).
-7. **Slett Ingress-templaten** i en egen commit. Service beholdes.
+6. **Bekreft korrekt offentlig IP for Traefik** (se IP-advarsel under), og test
+   routen direkte før DNS endres. Bruk `curl --resolve` for å sende trafikken
+   til Traefik-IP-en samtidig som originalt hostnavn beholdes for TLS/SNI og
+   HTTP `Host`:
+   ```bash
+   curl -sSI --resolve "<host>:443:<traefik-public-ip>" "https://<host>/"
+   ```
+   Svaret skal komme fra appen, ikke nginx default-backend.
+7. **Legg til `external-dns.alpha.kubernetes.io/target`** på HTTPRoute i en egen
+   commit, push, og vent på rekonsiliering. Verifiser deretter at DNS peker på
+   Traefik-IP-en og at vanlig `curl https://<host>/` fortsatt treffer appen.
+8. **Slett Ingress-templaten** i en ny, egen commit. Service beholdes.
 
 ## HTTPRoute-mal
 
@@ -129,8 +137,9 @@ spec:
 
 ### Fase 2 — legg til DNS-target (egen commit)
 
-Først **etter** at routen er verifisert akseptert og trafikk er testet mot
-Traefik, legg til annotasjonen i en egen commit for å flytte DNS:
+Først **etter** at routen er verifisert akseptert og trafikk er testet direkte
+mot Traefik med `curl --resolve`, legg til annotasjonen i en egen commit for å
+flytte DNS:
 
 ```yaml
 metadata:
@@ -153,11 +162,16 @@ metadata:
 kubectl -n tn-<tenant> get httproute httproute-<app> -o yaml | \
   grep -A15 'status:'
 
-# DNS peker på riktig offentlig IP (vent på external-dns-rekonsiliering)
+# Pre-DNS-test: send hosten direkte til Traefik-IP-en, med korrekt TLS/SNI
+curl -sSI --resolve "<app>.skytest.fhi.no:443:<traefik-public-ip>" \
+  "https://<app>.skytest.fhi.no/"
+
+# Etter at DNS-target er lagt til: DNS peker på riktig offentlig IP
+# (vent på external-dns-rekonsiliering)
 dig +short <app>.skytest.fhi.no
 
-# End-to-end mot hosten
-curl -sI https://<app>.skytest.fhi.no/
+# End-to-end via ordinær DNS
+curl -sSI https://<app>.skytest.fhi.no/
 ```
 
 I `status.parents[].conditions` skal `Accepted` og `ResolvedRefs` være `True`.
