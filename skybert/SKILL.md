@@ -94,6 +94,15 @@ Hver sikkerhetssone har dedikerte klustere for test og prod. Kluster-navngivning
 | **Grønn** | Åpne data, lavere sensitivitet | aks-green-test-01 | aks-green-prod-02 |
 | **Gul** | Interne data, persondata | aks-yellow-test-02 | aks-yellow-prod-01 |
 | **Rød** | Identifiserbar helseinformasjon | aks-red-test-01 | aks-red-prod-01 |
+| **Norsyss** | Egen prod-pipeline for Norsyss | – | aks-norsyss-prod-01 |
+| **Ops** | Plattformtjenester (intern, ikke en standard fargegruppe) | aks-ops-test-01 | – |
+
+Totalt 10 klustere er registrert i `scripts/lib/clusters.sh`. I den autoritative
+`COLOR_GROUP_CLUSTERS`-mappingen er `aks-yellow-test-02` aktivt testkluster for
+yellow-lanen. `aks-yellow-test-01` er fortsatt registrert, men inngår ikke i
+yellow-lanen og er under utfasing.
+
+> Kilde (autoritativ kluster-mapping): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/scripts/lib/clusters.sh
 
 Sandbox (`aks-sandbox-01`) er et unntak — ett felles kluster delt av alle fargesoner, med grønn sone-policyer.
 
