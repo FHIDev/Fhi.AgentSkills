@@ -2,19 +2,26 @@
 
 Runbook for å flytte en tenant fra nginx-ingress til Traefik Gateway API på Skybert.
 
-> **Status (per 2026-06):** Gateway API er kun aktivert på **green**-klusterne
-> (`aks-green-test-01`, `aks-green-prod-02`). Andre soner/klustere bruker
-> fortsatt nginx-ingress. Sjekk infra-repoet før du migrerer en tenant i
-> en annen sone.
+> **STATUS — IKKE KLAR TIL OPERATIV BRUK (verifisert 2026-06-19):** Gateway API
+> er foreløpig ikke aktivert i Skybert-infra. I infra-commit `8aa3d7a` er
+> `providers.kubernetesGateway.enabled`, `gatewayClass.enabled` og
+> `gateway.enabled` alle satt til `false`. Green-overlayene patcher bare
+> LoadBalancer-IP på Traefik Service; de oppretter ingen Gateway.
 >
-> nginx-ingress kjører parallelt under migreringsvinduet, så en tenant kan
-> migreres uten samtidig opprydding på plattformsiden. external-dns har både
-> `ingress`- og `gateway-httproute`-source aktivert i denne perioden.
+> external-dns har støtte for både `ingress` og `gateway-httproute`, men dette
+> betyr ikke at en Gateway-controller eller Gateway-ressurs er aktiv. Denne
+> runbooken er et utkast for den planlagte migreringen. Ikke opprett HTTPRoute
+> eller flytt DNS før plattformteamet har aktivert Gateway API og publisert det
+> faktiske gateway-navnet, listener-navnet og den offentlige IP-en.
+>
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/traefik/base/traefik-40.3.0-values.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/traefik
 
-## Plattform-oppsettet du migrerer mot
+## Planlagt plattform-oppsett — må verifiseres etter utrulling
 
-Traefik er deployet med Gateway API-provider. Den sentrale gatewayen er felles
-for alle tenants:
+Verdiene under beskriver det foreslåtte målbildet i dette utkastet. De finnes
+ikke som aktiv, rendret Gateway-ressurs i dagens infra og må verifiseres på nytt
+etter at Gateway API er aktivert:
 
 | Felt | Verdi |
 |------|-------|
@@ -23,14 +30,14 @@ for alle tenants:
 | HTTPS-listener (`sectionName`) | `websecure` (port 8443, `allowedRoutes.namespaces.from: All`) |
 | GatewayClass | `traefik` |
 
-> **Merk:** En tidligere migrasjonsplan i infra-repoet
-> (`manifests/httproute-migration.md`) refererte til gateway-navn `traefik` og
-> sectionName `https`. Det stemmer **ikke** med den faktisk renderte ressursen
-> fra Helm-charten. Bruk `traefik-gateway` / `websecure`. Verifiser alltid mot
-> den rendrede Gateway-ressursen i infra hvis du er usikker:
+> **Merk:** Navnene `traefik-gateway` / `websecure` er foreslåtte verdier i
+> dette utkastet, ikke verifiserte navn fra en aktiv Gateway-ressurs. Når
+> plattformutrullingen er på plass, hent navnene fra den faktisk rendrede
+> ressursen før runbooken tas i bruk:
 > ```bash
 > grep -n -A20 'kind: Gateway' infra/traefik/base/traefik-*-helm.yaml
 > ```
+> Hvis kommandoen ikke finner en Gateway, er utrullingen fortsatt ikke klar.
 
 ### TLS
 
