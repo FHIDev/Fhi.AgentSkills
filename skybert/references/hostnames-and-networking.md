@@ -77,7 +77,7 @@ brannmurregel.
 
 > **Verifikasjonsgrunnlag:** Verdien er oppgitt av bidragsyter basert på
 > intern plattformkunnskap, men ble ikke funnet i Skybert docs eller infra-repo
-> ved kontroll 2026-06-19. Den er derfor et operativt hint, ikke en autoritativ
+> ved kontroll 2026-06-20. Den er derfor et operativt hint, ikke en autoritativ
 > kilde. Rød sone har fortsatt default deny og krever eksplisitte
 > GlobalNetworkPolicy-unntak før trafikk kan gå ut.
 
