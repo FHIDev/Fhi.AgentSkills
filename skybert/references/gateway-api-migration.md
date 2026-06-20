@@ -2,7 +2,7 @@
 
 Runbook for å flytte en tenant fra nginx-ingress til Traefik Gateway API på Skybert.
 
-> **STATUS — IKKE KLAR TIL OPERATIV BRUK (verifisert 2026-06-19):** Gateway API
+> **STATUS — IKKE KLAR TIL OPERATIV BRUK (verifisert 2026-06-20):** Gateway API
 > er foreløpig ikke aktivert i Skybert-infra. I infra-commit `8aa3d7a` er
 > `providers.kubernetesGateway.enabled`, `gatewayClass.enabled` og
 > `gateway.enabled` alle satt til `false`. Green-overlayene patcher bare
