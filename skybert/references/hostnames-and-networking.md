@@ -61,6 +61,26 @@ Apper i rød sone som trenger pålogging mot Entra ID kontakter plattformteamet 
 
 > Kilde: https://docs.sky.fhi.no/build/environments/ | https://docs.sky.fhi.no/internal/global-network-policies/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a16a243/infra/globalnetworkpolicies/base/policies-red/
 
+## Egress-IP (tillatt utgående trafikk fra clusterne)
+
+Når egress er tillatt eller åpnet fra Skybert-clusterne, er trafikken oppgitt å
+gå ut via denne felles egress-IP-en:
+
+| Formål | IP |
+|--------|-----|
+| Skybert cluster egress | `83.118.167.10` |
+
+IP-en kan være aktuell når en ekstern tjeneste skal tillate trafikk fra
+Skybert, for eksempel i Azure SQL-brannmurregler eller mot eksterne API-er.
+Bekreft verdien med plattformteamet (`#ext-fhi-skybert`) før den legges i en
+brannmurregel.
+
+> **Verifikasjonsgrunnlag:** Verdien er oppgitt av bidragsyter basert på
+> intern plattformkunnskap, men ble ikke funnet i Skybert docs eller infra-repo
+> ved kontroll 2026-06-20. Den er derfor et operativt hint, ikke en autoritativ
+> kilde. Rød sone har fortsatt default deny og krever eksplisitte
+> GlobalNetworkPolicy-unntak før trafikk kan gå ut.
+
 ## Service Mesh
 
 Linkerd er **ikke lenger i bruk** (fjernet fra plattformen).
