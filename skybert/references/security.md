@@ -73,12 +73,11 @@ Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per milj
 
 ## Tenant-RBAC — hva du kan administrere
 
-> **Under utrulling (per 2026-06):** Menneskelig tilgang (Entra ID-gruppe) bindes nå til en kuratert least-privilege ClusterRole `skybert:tenant-admin` i stedet for `cluster-admin`. Migrert for minst `fida-stat19`; mal-tenanten `exempl` bruker fortsatt `cluster-admin`. Eldre tenanter kan derfor fortsatt ha bredere tilgang. Minst to nye tenant-baser (juni 2026: `fida-evergreen`, `oslo-exempl`) binder fortsatt mot `cluster-admin`. Plattform-rekonsiliering bruker en egen `rolebinding.yaml` som binder `flux-reconciler` til en ClusterRole innen namespacet; rollen kan være `cluster-admin`, mens en migrert tenant som `fida-stat19` bruker den kuraterte least-privilege `skybert:tenant-flux-reconciler`. `crossplane`-SA-en er fortsatt et ekstra subject i eldre `fida-stat19core`, men er ikke med i `tsd-gateway` eller migrerte `fida-stat19`. Den separate ResourceSet-bootstrappen genererer fortsatt `cluster-admin` med begge subjects.
+> **Tenant-RBAC (oppdatert per 2026-06-18):** Alle katalog-baserte tenant-baser (`tenants/<tenant>/base/`) er migrert vekk fra `cluster-admin`. Menneskelig tilgang (Entra ID-gruppe) bindes til den kuraterte least-privilege ClusterRole `skybert:tenant-admin`, og plattform-rekonsiliering (`flux-reconciler`-SA) bindes til `skybert:tenant-flux-reconciler` — begge via `RoleBinding` avgrenset til tenant-namespacet. `crossplane`-SA-en er fjernet som subject fra disse `rolebinding.yaml`-filene. **Unntak:** den separate ResourceSet-bootstrappen (`infra/tenant-bootstrap/base/resourceset.yaml`) genererer fortsatt `cluster-admin` med både `flux-reconciler` og `crossplane` som subjects — tenanter bootstrappet via den mekanismen kan ha bredere tilgang.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/fida-stat19/base/rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/fida-stat19core/base/rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/tsd-gateway/base/rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/infra/tenant-bootstrap/base/resourceset.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/entra-access-rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/tenant-bootstrap/base/resourceset.yaml
 
 `skybert:tenant-admin:core` gir deg eksplisitte rettigheter (uten wildcards) i ditt eget namespace på blant annet:
 
@@ -90,6 +89,7 @@ Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per milj
 - **Gateway API-ruter:** `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes`, `udproutes`
 - **Secrets:** external-secrets `externalsecrets`/`secretstores` (+ `secretproviderclasses`, deprecated)
 - **Crossplane-claims:** alt i API-gruppen `skybert.fhi.no` (f.eks. SkybertApp)
+- **Flux:** lese og patche egne `Kustomizations` (`kustomize.toolkit.fluxcd.io`) for suspend/resume — `get`/`list`/`watch`/`patch`/`update`, **ikke** `create`/`delete` (plattform-bootstrappet). Også Flux notification `alerts`/`providers`.
 - **Innsyn:** `kubectl top pods` (metrics), lesing av policy-rapporter, read-only på ResourceQuota/LimitRange (plattformstyrt)
 
 Runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral) er kun med i `test-sandbox`-aggregeringen — altså green-test, yellow-test-02, ops-test og sandbox. Prod og `aks-red-test-01` mangler denne fragmenten. I prod blokkeres runtime-tilgang i tillegg av Kyverno (`deny-tenant-runtime-access`). I red-test blokkerer Kyverno (`restrict-tenant-runtime-access`) port-forward/attach/proxy, men ikke exec — om exec fungerer der avhenger av RBAC/tilgang; `skybert:tenant-admin` har ikke runtime-fragmentet for red-test. Se [kubectl-tilgang](kubectl-access.md) og [Kyverno-policier](kyverno-policies.md).

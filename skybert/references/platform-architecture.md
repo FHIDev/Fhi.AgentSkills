@@ -90,8 +90,8 @@ tenants/<tenant>/
 ├── base/
 │   ├── namespace.yaml              # tn-<tenant>
 │   ├── serviceaccounts.yaml        # flux-reconciler + <tenant>-azure (flertall i nyere tenanter)
-│   ├── rolebinding.yaml            # flux-reconciler → ClusterRole (cluster-admin eller skybert:tenant-flux-reconciler) innen namespace; enkelte eldre baser har også crossplane-SA som subject
-│   ├── entra-access-rolebinding.yaml  # Entra ID-gruppe → ClusterRole (cluster-admin eller skybert:tenant-admin) innen namespace
+│   ├── rolebinding.yaml            # flux-reconciler → skybert:tenant-flux-reconciler (RoleBinding innen namespace)
+│   ├── entra-access-rolebinding.yaml  # Entra ID-gruppe → skybert:tenant-admin (RoleBinding innen namespace)
 │   ├── flux-kustomization.yaml     # Flux Kustomization (interval: 2m, prune: true)
 │   └── kustomization.yaml          # Kustomize-referanse
 └── <kluster>/
@@ -101,32 +101,29 @@ tenants/<tenant>/
 Service account `<tenant>-azure` opprettes av plattformteamet med Workload Identity-annotasjoner.
 Service account `flux-reconciler` brukes av Flux for å applye tenant-ressurser.
 
-**`entra-access-rolebinding.yaml`** (observert i de fleste tenant-baser per april 2026) — RoleBinding som gir en Entra ID-gruppe en ClusterRole avgrenset til tenant-namespacet (`cluster-admin` for eldre tenanter, `skybert:tenant-admin` for migrerte — se «Aggregert tenant-admin RBAC» nedenfor). Observert bootstrap-mønster tyder på at denne gruppen kobles til access packages i MyAccess, men dette er ikke eksplisitt dokumentert i kilderepoene.
+**`entra-access-rolebinding.yaml`** (finnes i de fleste katalog-baserte tenant-baser; enkelte eldre baser mangler den, se Merk under) — RoleBinding som gir en Entra ID-gruppe en ClusterRole avgrenset til tenant-namespacet. I alle baser som har filen, bindes den mot `skybert:tenant-admin` (verifisert per 2026-06-18 — se «Aggregert tenant-admin RBAC» nedenfor). Observert bootstrap-mønster tyder på at denne gruppen kobles til access packages i MyAccess, men dette er ikke eksplisitt dokumentert i kilderepoene.
 
 > **Merk:** Eldre tenanter kan fortsatt bruke `serviceaccount.yaml` (entall) og mangle `entra-access-rolebinding.yaml`. Begge layouter er gyldige.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/tenants/fida-stat19core/base/kustomization.yaml
 
 Tenant-baser kan ha to separate RoleBindings:
-- **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) til en `ClusterRole` innen tenant-namespacet, brukt av plattformen til å reconcile og provisjonere ressurser. Både rolle og subjects varierer per tenant: `tsd-gateway` binder `cluster-admin` med kun `flux-reconciler` som subject, `fida-stat19` er migrert til least-privilege `skybert:tenant-flux-reconciler` (kun `flux-reconciler`), og eldre `fida-stat19core` inkluderer fortsatt `crossplane`-SA-en (fra `crossplane`-namespace) som ekstra subject mot `cluster-admin`. Den separate ResourceSet-bootstrappen (se nedenfor) genererer fortsatt `cluster-admin` med begge subjects.
-- **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til en ClusterRole innen tenant-namespacet. Gir kubectl-tilgang for utviklere. **Under utrulling:** migrerte tenanter binder mot den kuraterte `skybert:tenant-admin` (least-privilege, f.eks. `fida-stat19`), mens eldre tenanter og mal-tenanten `exempl` binder mot `cluster-admin`. Minst to nye tenant-baser lagt til i juni 2026 (`fida-evergreen`, `oslo-exempl`) binder også mot `cluster-admin` — hvilken rolle en tenant har kan altså ikke utledes av når den ble opprettet.
+- **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) til `skybert:tenant-flux-reconciler` innen tenant-namespacet, brukt av plattformen til å reconcile og provisjonere ressurser. Alle katalog-baserte baser er migrert til denne least-privilege-rollen (per 2026-06-18), og `crossplane`-SA-en er fjernet som subject. Den separate ResourceSet-bootstrappen (se nedenfor) genererer fortsatt `cluster-admin` med både `flux-reconciler` og `crossplane` som subjects.
+- **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til `skybert:tenant-admin` innen tenant-namespacet. Gir kubectl-tilgang for utviklere. Alle katalog-baserte baser binder nå mot denne kuraterte least-privilege-rollen (per 2026-06-18); `cluster-admin`-bindinger finnes kun via ResourceSet-bootstrappen (se nedenfor).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/fida-stat19/base/rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/fida-stat19core/base/rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/tenants/tsd-gateway/base/rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/infra/tenant-bootstrap/base/resourceset.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/tenants/fida-stat19/base/entra-access-rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/3e3d50b/tenants/fida-evergreen/base/entra-access-rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/entra-access-rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/tenant-bootstrap/base/resourceset.yaml
 
 #### Aggregert tenant-admin RBAC (ny modell)
 
 Menneskelig tenant-admin-tilgang er nå modellert som aggregerte ClusterRole-fragmenter i `infra/skybert-system/base/tenant-admin-clusterroles/` (erstatter den fjernede `tenant-namespace-admin-clusterrole.yaml`):
 
-- **`skybert:tenant-admin:core`** — baseline namespaced rettigheter uten wildcards (workloads, services, ingresses, configmaps, secrets, PVC, HPA, PDB, namespaced RBAC uten `bind`/`escalate`, native + Calico NetworkPolicies, cert-manager, Gateway API-ruter, external-secrets, Crossplane-claims, metrics, policy-rapport-innsyn). Aggregeres inn i miljøspesifikke roller via labels (`aggregate-to-tenant-admin-{red-prod,red-test,yellow-prod,green-prod,test-sandbox}`).
+- **`skybert:tenant-admin:core`** — baseline namespaced rettigheter uten wildcards (workloads, services, ingresses, configmaps, secrets, PVC, HPA, PDB, namespaced RBAC uten `bind`/`escalate`, native + Calico NetworkPolicies, cert-manager, Gateway API-ruter, external-secrets, Crossplane-claims, Flux Kustomizations (suspend/resume — get/list/watch/patch/update, ikke create/delete), Flux notification alerts/providers, metrics, policy-rapport-innsyn). Aggregeres inn i miljøspesifikke roller via labels (`aggregate-to-tenant-admin-{red-prod,red-test,yellow-prod,green-prod,test-sandbox}`).
 - **`skybert:tenant-admin:test-sandbox:runtime-access`** — legger til runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral). Aggregeres **kun** via `test-sandbox`-labelen → gjelder green-test, yellow-test-02, ops-test og sandbox. **Ikke** `aks-red-test-01`, som derfor mangler runtime-RBAC. I prod blokkeres runtime-tilgang i tillegg av Kyverno (`deny-tenant-runtime-access`); i red-test blokkerer Kyverno (`restrict-tenant-runtime-access`) port-forward/attach/proxy, men ikke exec — om exec fungerer der avhenger av RBAC/tilgang. Dette forklarer hvorfor interaktiv debugging oppfører seg ulikt per miljø.
-- **`skybert:tenant-flux-reconciler`** — egen aggregering for Flux-rekonsiliering.
+- **`skybert:tenant-flux-reconciler`** — egen aggregering for Flux-rekonsiliering. Aggregerer samme core-fragment som `skybert:tenant-admin`, pluss `skybert:tenant-flux-reconciler:eso` som gir `create`/`update`/`patch` på external-secrets `pushsecrets`. `skybert:tenant-admin` og workload-SA-er får ikke disse verbene. Kildekommentaren begrunner eksplisitt avgrensningen for workload-SA-er (for å hindre at en kompromittert workload lager pushsecrets dynamisk).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/01abbad/infra/skybert-system/base/tenant-admin-clusterroles/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/skybert-system/base/tenant-admin-clusterroles/
 
 ### ResourceSet-basert bootstrap (ny mekanisme)
 

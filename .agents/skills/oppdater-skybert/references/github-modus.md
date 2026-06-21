@@ -167,7 +167,7 @@ scripts/lib/grafana/*.sh
 # tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk.
 ```
 
-**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, `infra/tenant-repositories/`, øvrige drifts-scripts.
+**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, `infra/traefik/`, `infra/tenant-repositories/`, øvrige drifts-scripts.
 
 **Ny tenant vs. innholdsendring:** `infra/tenant-repositories/base/ocirepos/*.yaml` (OCIRepository pr. tenant) og `infra/grafana/*/patch-orgs.yaml` (Entra-gruppe→org-mapping) endres typisk når en **ny tenant** legges til. Da følger de et allerede dokumentert mønster og gir normalt ingen skill-endring — og UUID-er/Entra-gruppe-IDer i `patch-orgs.yaml` filtreres bort per sikkerhetsreglene. Behandle dem kun som skill-relevante hvis selve mønsteret endres (nytt felt, ny provider, endret URL-konvensjon), ikke når en ny tenant-instans tilføyes.
 
@@ -177,6 +177,9 @@ Disse mappene skal IKKE dypleses, men skannes for tenant-impact i discovery pass
 - `infra/ingress-nginx/` — ingress-klasser, annotasjoner og TLS-oppsett som påvirker tenant-ingress
 - `infra/grafana/`, `infra/loki/`, `infra/mimir/`, `infra/alloy/` — datasource-navn, retention, label-konvensjoner som påvirker observability-veiledningen
 - `infra/cert-manager/` — issuer-navn og sertifikatflyt
+- `infra/traefik/` — ingress-klasse (`ingressClassName: traefik`) og om Gateway API er aktivert, som påvirker tenant-ingress
+
+Toppnivå-mappen `manifests/` (migreringsplaner og frittstående manifester) skannes for tenant-impact: dokumenter med konkrete tenant-steg (f.eks. `httproute-migration.md` med `httpRoute.enabled`/`ingress.enabled`) er skill-relevante; rene plattform-runbooks er støy.
 
 Ren driftskonfigurasjon (replicas, resources, intern tuning) i disse mappene er støy og hoppes over.
 

@@ -211,6 +211,14 @@ kubectl port-forward <pod-name> 8080:8080 -n tn-<tenant>
 kubectl exec -it <pod-name> -n tn-<tenant> -- /bin/sh
 ```
 
+**Suspend/resume egen Flux Kustomization** (RBAC tillater `patch`/`update`, ikke `create`/`delete`):
+```powershell
+kubectl -n tn-<tenant> patch kustomization <navn> --type merge -p '{"spec":{"suspend":true}}'
+# resume: sett "suspend":false (eller bruk `flux resume kustomization <navn>` med flux-CLI)
+```
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
+
 ## k9s - Terminal UI for Kubernetes
 
 k9s er et kraftig terminal-basert UI som gjør det enklere å navigere og administrere Kubernetes-ressurser.
