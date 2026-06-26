@@ -23,6 +23,13 @@ Følgende regler gjelder alle Ingress-ressurser:
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/kyverno-policies/base/policies-green/ingress-security.yaml
 
+### Ingress-controller: nginx og Traefik (under utrulling per 2026-06)
+
+> **Under utrulling:** Green-clustere får en Traefik ingress-controller med egen `ingressClassName: traefik`, parallelt med eksisterende `nginx`. I base kjører Traefik som ren ingress-controller — Gateway API (`gatewayClass`/`gateway`) er **deaktivert**. En migrering til Gateway API (`HTTPRoute` mot en sentral `traefik/traefik`-gateway) er beskrevet som plan i infra (`manifests/httproute-migration.md`), men er ikke aktivert ennå. Tenant-steget i planen er å sette `httpRoute.enabled: true` + `ingress.enabled: false` i Helm-values; dette gjelder ikke før plattformteamet melder migreringen klar. Inntil videre: fortsett med `ingressClassName: nginx` med mindre plattformteamet sier noe annet for ditt cluster.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/traefik/base/traefik-40.3.0-values.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/manifests/httproute-migration.md
+
 ## Nettverkspolicyer
 
 Et farget (color) klusterpar (test + prod) deler samme nettverksregler — test er ment å oppføre seg identisk med prod slik at det ikke blir overraskelser ved promotion.

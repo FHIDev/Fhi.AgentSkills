@@ -6,12 +6,12 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 schema_version=2
 docs_repo=FHISkybert/Fhi.Skybert.Docs
 docs_branch=main
-docs_commit=7d22ad5687944fa35224f16f97df5b71a9f896e7
-docs_commit_date=2026-06-12
+docs_commit=c9c6de036884b5a318f0d40f6cf8c83674700801
+docs_commit_date=2026-06-16
 infra_repo=FHISkybert/Fhi.Skybert.Infra
 infra_branch=main
-infra_commit=f9d7cc36e9f8e50abe39234495debcebc8bf3332
-infra_commit_date=2026-06-12
+infra_commit=8aa3d7a71eb1209962ff3769a00a169cb3caec8e
+infra_commit_date=2026-06-18
 last_fullscan_date=2026-06-03
 -->
 
@@ -19,7 +19,7 @@ last_fullscan_date=2026-06-03
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-06-14
+> **Sist verifisert mot offisiell docs:** 2026-06-21
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -367,26 +367,25 @@ spec:
 
 ### RoleBinding (namespace-tilgang)
 
-Gi brukere/grupper tilgang til namespace:
+Plattformen provisjonerer normalt namespace-tilgang ved å binde tenantens Entra-gruppe til den kuraterte ClusterRole-en `skybert:tenant-admin`. Ikke opprett en egen binding til `cluster-admin` — tenant-admin holder ikke lenger den rollen, og Kubernetes' escalation-prevention vil avvise et forsøk på å binde den (du kan kun delegere et subsett av egne rettigheter).
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: rb-<tenant>-admins
+  name: entra-access
   namespace: tn-<tenant>
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: skybert:tenant-admin
 subjects:
-  - kind: User
-    name: "user@fhi.no"
-    apiGroup: rbac.authorization.k8s.io
-  - kind: Group
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
     name: "<entra-group-id>"
-    apiGroup: rbac.authorization.k8s.io
 ```
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/entra-access-rolebinding.yaml
 
 ## Ingress-hostnavn
 

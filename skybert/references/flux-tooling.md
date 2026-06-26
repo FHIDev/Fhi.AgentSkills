@@ -12,7 +12,7 @@ Web-basert UI per kluster. Pålogging via FHI Entra ID.
 - Se reconciliation-status for alle Kustomizations i klusteret
 - Se feilmeldinger ved feilet rekonsiliering
 - Trigge manuell rekonsiliering (umiddelbar sync uten å vente på 2-min-intervallet)
-- **Suspend / resume** Kustomizations — nyttig for korte in-cluster eksperimenter:
+- **Suspend / resume** eksisterende Kustomizations i ditt eget namespace — tenant-admin har lese-, patch- og update-rettigheter (`get`/`list`/`watch`/`patch`/`update`), men ikke create/delete:
   1. Suspend din Kustomization
   2. Endre direkte med `kubectl` (env-var, resource-limit, image-tag …)
   3. Observer
@@ -21,6 +21,8 @@ Web-basert UI per kluster. Pålogging via FHI Entra ID.
 - Pin favoritter for raske snarveier
 
 > **Husk å resume.** Suspended Kustomizations stopper drift-deteksjon. Endringer pushet til GitOps-repoet køes opp og applies først ved resume.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
 
 ### URL-er per kluster
 

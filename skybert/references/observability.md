@@ -81,9 +81,16 @@ Alloy bruker `internalTrafficPolicy: Local` slik at OTLP-trafikk havner på Allo
 
 ## Metrics med Mimir
 
-**Status per 2026-05-09:** Cluster- og infrastrukturmetrics scrapes automatisk. **Custom application metrics scrapes nå plattformmessig** — legg `prometheus.io/scrape: "true"` + `prometheus.io/port` på pod-template (eller bruk `metrics`-feltet i SkybertApp). Alloy oppdager annoterte pods og remote-writer til Mimir via cortex-tenant-proxy som setter `X-Scope-OrgID` basert på namespace, slik at metrics isoleres per tenant.
+**Status per 2026-05-09:** Cluster- og infrastrukturmetrics scrapes automatisk. **Custom application metrics scrapes nå plattformmessig** — legg `prometheus.io/scrape: "true"` + `prometheus.io/port` på pod-template (eller bruk `metrics`-feltet i SkybertApp). Alloy oppdager annoterte pods og remote-writer til Mimir via `cortex-tenant`, som velger `X-Scope-OrgID` slik:
+
+1. en eksplisitt `tenant`-label vinner
+2. ellers brukes `namespace`-labelen
+3. mangler begge, havner serien i `cluster_metrics`
+
+Labelene beholdes på serien (`label_remove: false`). For tenant-metrics er `namespace` normalt `tn-<tenant>`; mangler både `tenant`- og `namespace`-label, havner serien i `cluster_metrics` — utenfor tenantens Grafana-org.
 
 > Kilde: https://docs.sky.fhi.no/observability/metrics/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/mimir/base/cortex-tenant-0.8.0-values.yaml
 
 ### Eksporter Prometheus-metrics på `/metrics`
 

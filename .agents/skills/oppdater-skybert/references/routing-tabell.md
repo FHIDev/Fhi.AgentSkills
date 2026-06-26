@@ -30,6 +30,7 @@
 | `docs/auth/workload-identity.md` | `references/security.md` |
 | `docs/persistence/*.md` | `SKILL.md` |
 | `docs/observability/**/*.md` | `references/observability.md` |
+| `docs/internal/observability/*.md` | `references/observability.md`, eventuelt `references/platform-architecture.md` — selektivt, merk plattformintern drift |
 | `docs/miscellaneous/vault_secrets.md` | `references/secrets.md` |
 | `docs/miscellaneous/publicCA.md` | `references/security.md` |
 | `docs/miscellaneous/access-packages.md` | `SKILL.md` |
@@ -68,6 +69,8 @@
 | `infra/flux-operator/base/*.yaml` | `references/platform-architecture.md` |
 | `infra/flux-system/*/flux-instance.yaml` | `references/platform-architecture.md` |
 | `infra/globalnetworkpolicies/base/policies-red/*.yaml` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
+| `infra/traefik/**` | `references/hostnames-and-networking.md`, `references/platform-architecture.md` |
+| `manifests/*.md` | VURDER — migreringsplaner, ikke auto-route (hent kun tenant-impact med konkrete tenant-steg) |
 
 ---
 
