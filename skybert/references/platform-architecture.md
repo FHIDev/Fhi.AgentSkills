@@ -15,6 +15,24 @@
 | Git | GitHub (FHIDev org) | Kildekode og CI/CD |
 | Container registry | Azure Container Registry (`crfhiskybert.azurecr.io`) | Image-lagring |
 
+## Komponentkart for tenant-utviklere
+
+De fleste team trenger bare Git/GitOps, SkybertApp og Grafana i starten. Andre komponenter dukker opp som ressurser i namespace, events eller feilmeldinger:
+
+| Komponent | Tenant-relevans |
+|-----------|-----------------|
+| Flux | GitOps-motoren som applyer tenantens manifester. Tenant-admin kan bruke Flux `Kustomization`, notifications og Flux Web UI innen eget namespace. |
+| External Secrets | Synker Azure Key Vault-secrets til Kubernetes `Secret`. SkybertApp oppretter `ExternalSecret`/`SecretStore` automatisk ved inline secrets. |
+| cert-manager | Utsteder og fornyer TLS-sertifikater. Automatisk for vanlige SkybertApp-hostnames; avanserte oppsett kan bruke `Certificate`/`Issuer`. |
+| Envoy Gateway / Gateway API | Tenant-facing for Gateway API-ressurser (`HTTPRoute`/`ListenerSet`) der plattformen har aktivert dette. Under utrulling — dagens SkybertApp-composition rendrer fortsatt `Ingress`. Se [Hostnavn og nettverk](hostnames-and-networking.md). |
+| External DNS | Oppretter DNS-records for hostnames. Vanligvis usynlig når SkybertApp eller plattformoppsett håndterer ruten. |
+| Kyverno | Policy engine. Tenanter kan lese `PolicyReport`, men ikke endre cluster-policyer. |
+| Grafana, Loki, Mimir, Tempo, Alloy | Observability-stakk. Grafana er brukerflaten; Alloy samler telemetri. |
+| Workload Identity | Passordløs Azure-autentisering. Automatisk for SkybertApp, manuelt via label/`serviceAccountName` for raw Deployments. |
+| Trust Manager, Reloader, Replicator, Trident, MetalLB, Blob/Secrets Store CSI, Metrics Server, kube-state-metrics | Plattformkomponenter som normalt ikke konfigureres av tenant-utviklere, men kan dukke opp i events, logs eller arkitekturdiagrammer. |
+
+> Kilde: https://docs.sky.fhi.no/explanations/tools-and-components/
+
 ## Klustere og miljøer
 
 > Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/
@@ -119,11 +137,14 @@ Tenant-baser kan ha to separate RoleBindings:
 
 Menneskelig tenant-admin-tilgang er nå modellert som aggregerte ClusterRole-fragmenter i `infra/skybert-system/base/tenant-admin-clusterroles/` (erstatter den fjernede `tenant-namespace-admin-clusterrole.yaml`):
 
-- **`skybert:tenant-admin:core`** — baseline namespaced rettigheter uten wildcards (workloads, services, ingresses, configmaps, secrets, PVC, HPA, PDB, namespaced RBAC uten `bind`/`escalate`, native + Calico NetworkPolicies, cert-manager, Gateway API-ruter, external-secrets, Crossplane-claims, Flux Kustomizations (suspend/resume — get/list/watch/patch/update, ikke create/delete), Flux notification alerts/providers, metrics, policy-rapport-innsyn). Aggregeres inn i miljøspesifikke roller via labels (`aggregate-to-tenant-admin-{red-prod,red-test,yellow-prod,green-prod,test-sandbox}`).
+- **`skybert:tenant-admin:core`** — baseline namespaced rettigheter uten wildcards (workloads, services, ingresses, configmaps, secrets, PVC, HPA, PDB, namespaced RBAC uten `bind`/`escalate`, native + Calico NetworkPolicies, cert-manager, Gateway API-ruter, external-secrets, Crossplane-claims, Flux Kustomizations (get/list/watch/patch/update/create/delete — patch for suspend/resume, create/delete for egne ekstra Kustomizations), Flux OCIRepositories (get/list/watch/patch/update, ikke create/delete — plattform-bootstrappet), Flux notification alerts/providers, metrics, policy-rapport-innsyn). Aggregeres inn i miljøspesifikke roller via labels (`aggregate-to-tenant-admin-{red-prod,red-test,yellow-prod,green-prod,test-sandbox}`).
 - **`skybert:tenant-admin:test-sandbox:runtime-access`** — legger til runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral). Aggregeres **kun** via `test-sandbox`-labelen → gjelder green-test, yellow-test-02, ops-test og sandbox. **Ikke** `aks-red-test-01`, som derfor mangler runtime-RBAC. I prod blokkeres runtime-tilgang i tillegg av Kyverno (`deny-tenant-runtime-access`); i red-test blokkerer Kyverno (`restrict-tenant-runtime-access`) port-forward/attach/proxy, men ikke exec — om exec fungerer der avhenger av RBAC/tilgang. Dette forklarer hvorfor interaktiv debugging oppfører seg ulikt per miljø.
 - **`skybert:tenant-flux-reconciler`** — egen aggregering for Flux-rekonsiliering. Aggregerer samme core-fragment som `skybert:tenant-admin`, pluss `skybert:tenant-flux-reconciler:eso` som gir `create`/`update`/`patch` på external-secrets `pushsecrets`. `skybert:tenant-admin` og workload-SA-er får ikke disse verbene. Kildekommentaren begrunner eksplisitt avgrensningen for workload-SA-er (for å hindre at en kompromittert workload lager pushsecrets dynamisk).
+- **`skybert:tenant-admin:flux-web-ui`** — egne *Flux Web UI-affordanser* aggregert inn i `skybert:tenant-admin` (ikke i `skybert:tenant-flux-reconciler`). Ikke K8s API-verb, men custom verb som Web UI sjekker via SubjectAccessReview for å vise/skjule knapper: `reconcile`/`suspend`/`resume`/`download` på Kustomizations/OCIRepositories og `restart` på deployments/statefulsets/daemonsets/cronjobs/jobs. Gir også `get` på Flux `ResourceSet` for namespace-filteret i UI-dropdownen. Der en handling faktisk endrer en ressurs, må tenant-admin også ha de ordinære native rettighetene fra core-fragmentet — custom-verbene autoriserer bare UI-knappen, ikke selve endringen.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/skybert-system/base/tenant-admin-clusterroles/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/flux-web-ui-access.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/
 
 ### ResourceSet-basert bootstrap (ny mekanisme)
 

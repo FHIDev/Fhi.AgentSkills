@@ -211,13 +211,13 @@ kubectl port-forward <pod-name> 8080:8080 -n tn-<tenant>
 kubectl exec -it <pod-name> -n tn-<tenant> -- /bin/sh
 ```
 
-**Suspend/resume egen Flux Kustomization** (RBAC tillater `patch`/`update`, ikke `create`/`delete`):
+**Suspend/resume egen Flux Kustomization** (suspend/resume via `patch`; RBAC tillater også `create`/`delete` for egne ekstra Kustomizations):
 ```powershell
 kubectl -n tn-<tenant> patch kustomization <navn> --type merge -p '{"spec":{"suspend":true}}'
 # resume: sett "suspend":false (eller bruk `flux resume kustomization <navn>` med flux-CLI)
 ```
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
 
 ## k9s - Terminal UI for Kubernetes
 

@@ -10,6 +10,7 @@
 | `docs/explanations/what-is-skybert.md` | `SKILL.md` |
 | `docs/explanations/what-is-a-tenant.md` | `SKILL.md` |
 | `docs/explanations/under-the-hood.md` | `references/platform-architecture.md` |
+| `docs/explanations/tools-and-components.md` | `references/platform-architecture.md`, eventuelt `SKILL.md` (kort komponentoversikt) |
 | `docs/explanations/blaloypa.md` | `SKILL.md` |
 | `docs/explanations/shared-responsibilities.md` | `SKILL.md` |
 | `docs/get-started/blaloypa.md` | `SKILL.md` |
@@ -46,7 +47,8 @@
 | `docs/internal/managing-clusters.md` | VURDER — plattformintern, ikke auto-route |
 | `docs/internal/replace-cluster-in-place.md` | VURDER — plattformintern runbook; hent kun tenant-impact (federated credentials / Workload Identity-konsekvenser ved cluster-bytte) |
 | `docs/internal/component-versions.md` | VURDER — versjonsmatrise, endres hyppig; vurder lenking framfor kopiering |
-| `docs/internal/decisions/gatewayapi.md` | VURDER — ADR, historisk beslutning; auto-route hvis implementert i `docs/build/` e.l. |
+| `docs/internal/decisions/gatewayapi.md` | `references/hostnames-and-networking.md` — selektivt (Gateway API-retning); kombiner med `infra/envoy/` før konkrete påstander |
+| `docs/internal/migrate-ingress-to-traefik.md` | `references/hostnames-and-networking.md` — selektivt, merk som intern beredskap, kun tenant-impact (Traefik backup på green) |
 | `docs/miscellaneous/fhi-felles-cryptography.md` | VURDER — målgruppe (tenant-utviklere vs. plattform) må avklares |
 
 ### Infra-repo
@@ -70,6 +72,7 @@
 | `infra/flux-system/*/flux-instance.yaml` | `references/platform-architecture.md` |
 | `infra/globalnetworkpolicies/base/policies-red/*.yaml` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
 | `infra/traefik/**` | `references/hostnames-and-networking.md`, `references/platform-architecture.md` |
+| `infra/envoy/**` | `references/hostnames-and-networking.md`, `references/platform-architecture.md` (Gateway API/Envoy-status, kun tenant-impact) |
 | `manifests/*.md` | VURDER — migreringsplaner, ikke auto-route (hent kun tenant-impact med konkrete tenant-steg) |
 
 ---
