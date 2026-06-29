@@ -2,17 +2,17 @@
 name: designsystem
 description: Ekspert på FHI Designsystem (@folkehelseinstituttet/designsystem). Bruk ved installasjon eller oppsett av designsystemet, bruk av FHI-komponenter (fhi-button, fhi-text-input, fhi-checkbox, etc.), bruk av FHI design tokens (farger, typografi, spacing), ikoner, eller rammeverk-integrasjon (React, Angular, Blazor).
 ---
-<!-- Basert på @folkehelseinstituttet/designsystem v0.35.0 -->
+<!-- Basert på @folkehelseinstituttet/designsystem v0.40.0 -->
 
 # FHI Designsystem — Brukerveiledning
 
 Bruk FHI Designsystem i egne prosjekter. Designsystemet er basert på standard web components og fungerer i alle rammeverk.
 
-> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.35.0 — latest)
+> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.40.0 — latest)
 > **Dokumentasjon:** https://designsystem.fhi.no/
 > **GitHub:** https://github.com/FHIDev/Fhi.Designsystem
 > **Figma:** https://www.figma.com/design/VgQG6XeEbFOmHIrxyAOACR/FHI-Designsystem
-> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.35.0` (2026-05-10)
+> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.40.0` (2026-06-28)
 > **Støttepolicy:** Latest + 9 tidligere minor (totalt 10 minor). Se [`versions/INDEX.md`](versions/INDEX.md) for støttede versjoner.
 >
 > **Versjonsbehandling:**
@@ -110,6 +110,9 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 | Visuell | [`fhi-tag`](references/components/fhi-tag.md) | Status-/kategorimerke |
 | Visuell | [`fhi-tooltip`](references/components/fhi-tooltip.md) | Tooltip med auto-posisjonering |
 | Visuell | [`fhi-modal-dialog`](references/components/fhi-modal-dialog.md) | Modal dialog |
+| Data | [`fhi-data-table`](references/components/fhi-data-table.md) | Tabell-container (caption, striped) — fra v0.37.0 |
+| Data | [`fhi-data-table-row`](references/components/fhi-data-table.md) | Tabellrad (`variant` header/body) |
+| Data | [`fhi-data-table-cell`](references/components/fhi-data-table.md) | Tabellcelle |
 | Typografi | [`fhi-display`](references/components/fhi-display.md) | Display-tekst (stor, fremtredende) |
 | Typografi | [`fhi-title`](references/components/fhi-title.md) | Tittel-tekst |
 | Typografi | [`fhi-headline`](references/components/fhi-headline.md) | Overskrift (h1-h6) |
@@ -155,3 +158,9 @@ Før merge av endringer, kjør følgende sjekker:
   # Sammenlign manuelt mot komponenttabellen i SKILL.md
   ```
 - Sjekk at relative markdown-lenker peker til eksisterende filer
+
+> **Publiserte artefakter (fra v0.36.0+):** Pakken inneholder nå `ai-tooling/SKILL.md`
+> (upstreams egen, mer overordnede agent-skill) og per-komponent `*.manifest.json` i tarballen.
+> Merk: manifestfilene er **ikke** egne exports — kun `./custom-elements.json` og
+> komponent-/ikon-entrypoints er deklarert i `package.json` `exports`. Denne repo-skillen
+> er fortsatt den lokale, mer detaljerte kilden; upstream-skillen erstatter den ikke.

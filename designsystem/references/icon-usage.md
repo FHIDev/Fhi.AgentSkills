@@ -105,7 +105,7 @@ Se [`fhi-text-input`](components/fhi-text-input.md) for runtime-validering og fa
 
 ## Tilgjengelige ikoner
 
-> **Vedlikeholdsnote:** Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.35.0` (ikon-entrypoint-listen er uendret fra v0.34.0).
+> **Vedlikeholdsnote:** Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.40.0` (`file-text` lagt til i v0.38.0; ellers uendret fra v0.34.0).
 > For å oppdatere listen ved ny release:
 > ```bash
 > # List alle ikon-entrypoints i publisert pakke
@@ -133,4 +133,6 @@ Alle importeres som `@folkehelseinstituttet/designsystem/fhi-icon-{navn}` og bru
 `bell` `mail` `message` `phone` `printer`
 
 ### Objekter og figurer
-`calendar` `calendar-clock` `clock` `circle` `ellipsis` `ellipsis-vertical` `eye` `eye-off` `file` `folder` `gear` `grid-9-dots` `history` `map-pin` `menu` `square` `user`
+`calendar` `calendar-clock` `clock` `circle` `ellipsis` `ellipsis-vertical` `eye` `eye-off` `file` `file-text` `folder` `gear` `grid-9-dots` `history` `map-pin` `menu` `square` `user`
+
+> `file-text` ble lagt til i v0.38.0. I v0.35.0–v0.37.0 finnes kun `file`.

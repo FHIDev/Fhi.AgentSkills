@@ -80,6 +80,31 @@ Dette er en midlertidig løsning inntil komponentene er fullt typesatt.
 
 ---
 
+## SSR (Next.js og andre server-rammeverk)
+
+Komponentene er web components og forventer et nettlesermiljø: modulene må
+importeres/registreres på klienten, ikke på serveren. Upstream-docs
+(`faq/server-side-rendering.mdx`) anbefaler derfor å la `fhi-*`-komponentene
+lastes og rendres på klientsiden i SSR-rammeverk.
+
+**Next.js:**
+
+```tsx
+// Last komponenten kun på klienten
+import dynamic from 'next/dynamic';
+
+// Alternativ 1: dynamic import med ssr: false
+// './ClientButton' er en egen klientkomponent som importerer fhi-* (placeholder-sti)
+const ClientOnlyButton = dynamic(() => import('./ClientButton'), { ssr: false });
+
+// Alternativ 2: 'use client' øverst i komponentfilen som importerer fhi-*
+```
+
+For andre SSR-rammeverk: følg rammeverkets egen mekanisme for klient-only kode,
+slik at `fhi-*`-komponentene rendres i nettleseren mens resten av appen beholder SSR.
+
+---
+
 ## Angular
 
 ### Oppsett
