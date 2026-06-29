@@ -11,7 +11,7 @@ import '@folkehelseinstituttet/designsystem/fhi-body';
 | Property | Attributt | Type | Default | Beskrivelse |
 |----------|-----------|------|---------|-------------|
 | `size` | `size` | `'large' \| 'medium' \| 'small'` | `'medium'` | Skriftstørrelse |
-| `color` | `color` | `string` | `var(--fhi-color-neutral-text-default)` | CSS-farge |
+| `color` | `color` | `string` | `currentcolor` | CSS-farge (bruk design tokens). Default `currentcolor` arver tekstfarge fra forelder (endret i v0.39.0; CSS-keyword er case-insensitivt) |
 
 ## Eksempler
 

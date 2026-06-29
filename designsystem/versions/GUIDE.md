@@ -49,10 +49,10 @@ npm ls @folkehelseinstituttet/designsystem
 
 | Input | Matcher |
 |-------|---------|
-| `0.30.2` | `v0.30.x.md` |
-| `^0.30.0` | `v0.30.x.md` |
-| `0.30` | `v0.30.x.md` |
-| `~0.28.3` | `v0.28.x.md` |
+| `0.39.2` | `v0.39.x.md` |
+| `^0.31.0` | `v0.31.x.md` |
+| `0.31` | `v0.31.x.md` |
+| `~0.38.5` | `v0.38.x.md` |
 
 Match alltid på minor-versjon. Patch-versjoner dokumenteres i delta-filen under "Patch notes med API-impact" kun hvis de har API-atferdsendringer.
 
@@ -73,8 +73,9 @@ ukjent med mindre det er eksplisitt dokumentert.
 **Konsekvens for oppdateringsworkflow:** Når en ny latest-versjon publiseres, opprettes **kun én ny delta-fil**
 for forrige latest-versjon. Eksisterende delta-filer for eldre støttede versjoner trenger **ikke** å regenereres —
 **unntatt** hvis ny latest har lagt til nye public komponenter eller nye public features (slots, attributter,
-events, methods) på eksisterende komponenter: disse skal da noteres eksplisitt som "Missing" i alle eksisterende
-delta-filer som ikke allerede nevner dem.
+events, methods) på eksisterende komponenter: disse skal da noteres eksplisitt som "Missing" i alle **støttede**
+delta-filer (de som er listet som Supported i INDEX.md) som ikke allerede nevner dem. Delta-filer for versjoner
+utenfor støttevinduet beholdes på disk, men vedlikeholdes ikke med nye Missing-notater.
 
 ---
 
