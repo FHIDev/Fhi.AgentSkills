@@ -1,17 +1,24 @@
 {
   "schemaVersion": 2,
-  "updatedAt": "2026-06-21T13:01:41Z",
+  "updatedAt": "2026-06-28T17:24:29Z",
   "mode": "github",
   "github": {
     "docs": {
       "repo": "FHISkybert/Fhi.Skybert.Docs",
       "branch": "main",
-      "commit": "c9c6de036884b5a318f0d40f6cf8c83674700801"
+      "commit": "004f468ba372c6cfc8173f9d05ec5bc5a85ae5ba"
     },
     "infra": {
       "repo": "FHISkybert/Fhi.Skybert.Infra",
       "branch": "main",
-      "commit": "8aa3d7a71eb1209962ff3769a00a169cb3caec8e"
+      "commit": "c31fccc2ab593ffdbf523b14b20677aba4db8fd5"
     }
-  }
+  },
+  "openVurder": [
+    {
+      "id": "gateway-api-tenant-bruk",
+      "summary": "Skal skillen gi konkret tenant-veiledning for Gateway API (Gateway/HTTPRoute/ListenerSet) nå, eller vente til docs har stabil veiledning? Eksemplene i tenants/sindre-exempl er eksperimentelle (PLACEHOLDER-hostname, aktiveres via overlay) og motsier docs-modellen (ListenerSet mot delt Gateway vs. egen Gateway).",
+      "firstSeen": "2026-06-28"
+    }
+  ]
 }

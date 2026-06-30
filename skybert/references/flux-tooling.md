@@ -12,17 +12,19 @@ Web-basert UI per kluster. Pålogging via FHI Entra ID.
 - Se reconciliation-status for alle Kustomizations i klusteret
 - Se feilmeldinger ved feilet rekonsiliering
 - Trigge manuell rekonsiliering (umiddelbar sync uten å vente på 2-min-intervallet)
-- **Suspend / resume** eksisterende Kustomizations i ditt eget namespace — tenant-admin har lese-, patch- og update-rettigheter (`get`/`list`/`watch`/`patch`/`update`), men ikke create/delete:
+- **Suspend / resume** eksisterende Kustomizations i ditt eget namespace — suspend/resume gjøres med `patch`. Tenant-admin har `get`/`list`/`watch`/`patch`/`update`/`create`/`delete` på Kustomizations (create/delete for å legge til egne ekstra Kustomizations). Flux `OCIRepositories` er derimot plattform-bootstrappet: kun `get`/`list`/`watch`/`patch`/`update` (ingen create/delete):
   1. Suspend din Kustomization
   2. Endre direkte med `kubectl` (env-var, resource-limit, image-tag …)
   3. Observer
   4. Resume — Flux reverterer til GitOps-state
+- **Reconcile / restart-knapper** i Web UI styres av egne SubjectAccessReview-verb (`reconcile`/`suspend`/`resume`/`download`/`restart`) via ClusterRole `skybert:tenant-admin:flux-web-ui`. Dette er UI-affordanser, ikke kubectl-verb — der en knapp faktisk endrer en ressurs, krever det at tenant-admin også har de ordinære native rettighetene fra core-fragmentet.
 - Søk og filter på navn/namespace/status
 - Pin favoritter for raske snarveier
 
 > **Husk å resume.** Suspended Kustomizations stopper drift-deteksjon. Endringer pushet til GitOps-repoet køes opp og applies først ved resume.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/flux-web-ui-access.yaml
 
 ### URL-er per kluster
 

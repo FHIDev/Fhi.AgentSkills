@@ -86,17 +86,19 @@ Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per milj
 - **Namespaced RBAC:** `roles`/`rolebindings` (uten `bind`/`escalate` — du kan kun delegere et subsett av egne rettigheter)
 - **NetworkPolicies:** native (`networking.k8s.io`) og Calico (`crd.projectcalico.org`)
 - **Sertifikater:** cert-manager `certificates`/`certificaterequests`/`issuers` og trust-manager `bundles`
-- **Gateway API-ruter:** `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes`, `udproutes`
+- **Gateway API:** `listenersets`, `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes`, `udproutes` (Envoy Gateway-implementasjon — se [Hostnavn og nettverk](hostnames-and-networking.md))
 - **Secrets:** external-secrets `externalsecrets`/`secretstores` (+ `secretproviderclasses`, deprecated)
 - **Crossplane-claims:** alt i API-gruppen `skybert.fhi.no` (f.eks. SkybertApp)
-- **Flux:** lese og patche egne `Kustomizations` (`kustomize.toolkit.fluxcd.io`) for suspend/resume — `get`/`list`/`watch`/`patch`/`update`, **ikke** `create`/`delete` (plattform-bootstrappet). Også Flux notification `alerts`/`providers`.
+- **Flux Kustomizations** (`kustomize.toolkit.fluxcd.io`): `get`/`list`/`watch`/`patch`/`update`/`create`/`delete` — patch for suspend/resume, create/delete for å legge til egne ekstra Kustomizations.
+- **Flux OCIRepositories** (`source.toolkit.fluxcd.io`): `get`/`list`/`watch`/`patch`/`update`, **ikke** `create`/`delete` (plattform-bootstrappet).
+- **Flux notification** `alerts`/`providers`: full CRUD i eget namespace.
 - **Innsyn:** `kubectl top pods` (metrics), lesing av policy-rapporter, read-only på ResourceQuota/LimitRange (plattformstyrt)
 
 Runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral) er kun med i `test-sandbox`-aggregeringen — altså green-test, yellow-test-02, ops-test og sandbox. Prod og `aks-red-test-01` mangler denne fragmenten. I prod blokkeres runtime-tilgang i tillegg av Kyverno (`deny-tenant-runtime-access`). I red-test blokkerer Kyverno (`restrict-tenant-runtime-access`) port-forward/attach/proxy, men ikke exec — om exec fungerer der avhenger av RBAC/tilgang; `skybert:tenant-admin` har ikke runtime-fragmentet for red-test. Se [kubectl-tilgang](kubectl-access.md) og [Kyverno-policier](kyverno-policies.md).
 
 > **Merk:** RBAC gir *adgang* til ressurstypene over, men Kyverno-policyer kan fortsatt begrense hva som faktisk godtas. F.eks. i rød sone blokkeres native `NetworkPolicy` (kun Calico tillatt), og Calico-egress styres sentralt. Se [Kyverno-policier](kyverno-policies.md).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
 
 ## Obligatorisk sikkerhetskonfigurasjon
 

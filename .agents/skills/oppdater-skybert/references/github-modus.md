@@ -157,6 +157,10 @@ infra/tenant-bootstrap/base/tenants/*.yaml
 infra/flux-operator/base/*.yaml
 infra/flux-system/*/flux-instance.yaml
 
+# Envoy Gateway / Gateway API (ingress-migrering)
+infra/envoy/base/*.yaml
+infra/envoy/*/kustomization.yaml
+
 # Tenant-scripts (normativ bootstrap-logikk)
 scripts/tenant--*.sh
 # Hjelpebibliotek sourcet av tenant-scriptene — bærer avledede fakta (f.eks.
