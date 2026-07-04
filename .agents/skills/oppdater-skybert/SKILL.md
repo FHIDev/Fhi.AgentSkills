@@ -61,45 +61,24 @@ Runtime-cache (opprettes, ikke committet):
 
 ---
 
-## Metadata-kontrakt
+## State-kontrakt
 
-### Rask NO-OP-sjekk (metadata-kommentar i skybert/SKILL.md)
-
-Metadata lagres som HTML-kommentar i `skybert/SKILL.md`, rett etter frontmatter.
-
-**GitHub-modus** (multi-linje, ett `nokkel=verdi`-par per linje):
-
-```html
-<!-- Oppdater-skybert-state:
-schema_version=2
-docs_repo=FHISkybert/Fhi.Skybert.Docs
-docs_branch=main
-docs_commit=<sha>
-docs_commit_date=<dato>
-infra_repo=FHISkybert/Fhi.Skybert.Infra
-infra_branch=main
-infra_commit=<sha>
-infra_commit_date=<dato>
-last_fullscan_date=<dato>
--->
-```
-
-Parseren skal akseptere både multi-linje (kanonisk) og én-linjes variant med mellomrom-separerte par.
-
-**Web-scraping-modus:** `<!-- Kilde-hash: <globalHash> last_fullscan_date=<dato> -->`
-
-### Persistent state for inkrementell oppdatering (skybert/.oppdater-state.json)
-
-`skybert/.oppdater-state.json` committes sammen med skybert-filene og gir detaljert per-fil/per-side informasjon for inkrementell analyse i begge moduser.
+All persistent state bor i **én** fil: `skybert/.oppdater-state.json` (committes sammen
+med skybert-filene). `skybert/SKILL.md` skal **ikke** inneholde noen state-HTML-kommentar.
+Linjen «Sist verifisert mot offisiell docs» i `skybert/SKILL.md` er ren visning for
+mennesker: den genereres fra `sistVerifisert`-feltet i state-filen i steg 9 og skal aldri
+redigeres manuelt eller brukes som maskinlesbar kilde.
 
 ```json
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "updatedAt": "<ISO-8601>",
   "mode": "github|webscraping",
+  "lastFullscanDate": "<ISO-dato>",
+  "sistVerifisert": "<ISO-dato>",
   "github": {
-    "docs": { "repo": "FHISkybert/Fhi.Skybert.Docs", "branch": "main", "commit": "<sha>" },
-    "infra": { "repo": "FHISkybert/Fhi.Skybert.Infra", "branch": "main", "commit": "<sha>" }
+    "docs": { "repo": "FHISkybert/Fhi.Skybert.Docs", "branch": "main", "commit": "<sha>", "commitDate": "<ISO-dato>" },
+    "infra": { "repo": "FHISkybert/Fhi.Skybert.Infra", "branch": "main", "commit": "<sha>", "commitDate": "<ISO-dato>" }
   },
   "webscraping": {
     "source": "docs.sky.fhi.no",
@@ -108,22 +87,39 @@ Parseren skal akseptere både multi-linje (kanonisk) og én-linjes variant med m
       { "location": "skybertapp/", "title": "SkybertApp", "hash": "<per-side sha256>" }
     ]
   },
-  "openVurder": [
-    { "id": "<kort-slug>", "summary": "<beslutningssporsmal>", "firstSeen": "<ISO-dato>" }
+  "openItems": [
+    {
+      "id": "<kort-slug>",
+      "status": "deferred|partial|failed-verification",
+      "category": "NY|UTVID|KORRIGER|OMSTRUKTURER|FORBEDRING|FJERN|VURDER",
+      "target": "<målfil i skybert/>",
+      "source": "<kildereferansen som utløste posten>",
+      "summary": "<kort beskrivelse / beslutningsspørsmål>",
+      "firstSeen": "<ISO-dato>",
+      "lastSeen": "<ISO-dato>"
+    }
   ]
 }
 ```
 
-Kun ett av `github`/`webscraping`-feltene er populert per kjøring (avhengig av modus).
-
-`openVurder` er valgfritt (bakoverkompatibelt innenfor schemaVersion 2) og lagrer `VURDER`-poster brukeren ikke avklarte i steg 7, slik at de gjentas i neste plan i stedet for å forsvinne med `.tmp/`. Se [analyseregler.md](references/analyseregler.md).
+- Kun ett av `github`/`webscraping`-feltene populeres per kjøring. I web-scraping-modus
+  beholdes `github`-feltet uendret (kan ikke verifiseres i den modusen).
+- `openItems` lagrer **alle** endringsposter som ikke nådde fullført tilstand — ikke bare
+  utsatte `VURDER`-poster. Se [analyseregler.md](references/analyseregler.md) for
+  status-verdiene og livssyklusen.
 
 ### Regler
 
-- Metadata-kommentar og state-fil oppdateres kun etter vellykket Apply (steg 9)
-- `last_fullscan_date` oppdateres kun ved FULL-modus (begge moduser)
-- Gammelt `<!-- Kilde-hash: ... -->`-format uten `last_fullscan_date` → behandle som FULL modus
-- State-fil mangler men metadata finnes → FULL modus (med migrasjonsmelding)
+- State-filen oppdateres kun etter vellykket Apply (steg 9)
+- `lastFullscanDate` oppdateres kun ved FULL-modus (begge moduser)
+- **Migrering fra eldre format:**
+  - Finnes en gammel state-HTML-kommentar (`<!-- Oppdater-skybert-state: ... -->` eller
+    `<!-- Kilde-hash: ... -->`) i `skybert/SKILL.md` → parse den én gang, flytt verdiene
+    inn i state-filen (schemaVersion 3), og fjern kommentaren i samme Apply.
+  - State-fil med `schemaVersion: 2` → migrer: hent `last_fullscan_date` fra kommentaren
+    (finnes den ikke → kjør FULL), konverter `openVurder`-poster til `openItems` med
+    `status: "deferred"`, `category: "VURDER"`.
+  - Verken state-fil eller kommentar → FULL (første kjøring).
 
 ---
 
@@ -148,10 +144,11 @@ gh api repos/FHISkybert/Fhi.Skybert.Docs/commits/main --jq '.sha'
 - **Suksess** → GitHub-modus. Les [github-modus.md](references/github-modus.md).
 - **403/404** og ingen lokal klon → Web-scraping-modus. Les [webscraping-modus.md](references/webscraping-modus.md).
 
-### 1c. Les metadata fra skybert/SKILL.md
+### 1c. Les state fra skybert/.oppdater-state.json
 
-Parse `<!-- Oppdater-skybert-state: ... -->`-kommentaren. Ekstraher alle felter.
-Hvis kommentaren har gammelt format eller mangler → marker som "metadata mangler".
+Les og parse `skybert/.oppdater-state.json`. Hvis filen mangler eller er ugyldig: sjekk om
+`skybert/SKILL.md` har en gammel state-HTML-kommentar (migreringstilfelle — se
+State-kontrakt). Finnes ingen av delene → behandle som første kjøring.
 
 ### 1d. Bestem kjoringsmodus
 
@@ -159,11 +156,11 @@ Betingelsene evalueres ovenfra og ned — første treff vinner:
 
 | Betingelse | Modus |
 |-----------|-------|
-| Metadata mangler / ugyldig / gammelt format | **FULL** |
-| State-fil mangler men metadata finnes | **FULL** (med migrasjonsmelding) |
-| `last_fullscan_date` > 30 dager gammel | **FULL** — kjøres selv om SHAs/hash er uendret |
-| SHAs/hash uendret fra lagret metadata | **NO-OP** — rapporter "ingen endringer" og stopp |
-| SHA/hash endret + state-fil finnes | **INKREMENTELL** (begge moduser) |
+| State-fil mangler / ugyldig (ev. kun gammel HTML-kommentar finnes) | **FULL** (med migrering til schemaVersion 3) |
+| State-fil har `schemaVersion: 2` | Migrer til 3 (se State-kontrakt), fortsett deretter med radene under |
+| `lastFullscanDate` > 30 dager gammel | **FULL** — kjøres selv om SHAs/hash er uendret |
+| SHAs/hash uendret fra state | **NO-OP** — rapporter "ingen endringer" og stopp. Har state-filen åpne `openItems`, skal de likevel listes for brukeren med `firstSeen`-dato |
+| SHA/hash endret | **INKREMENTELL** (begge moduser) |
 
 Periodisk FULL ved uendrede kilder er ikke bortkastet: det er mekanismen som fanger akkumulert drift fra inkrementelle kjøringer (delvis godkjente planer, avledede påstander som ble oversett) og re-validerer dekningsmatrisene og selve denne skillen.
 
@@ -215,7 +212,7 @@ Sammenlign kildeinnhold med eksisterende skybert/-filer. Bruk routing fra [routi
 
 Kategoriser hver endring som: `NY`, `UTVID`, `KORRIGER`, `OMSTRUKTURER`, `FORBEDRING`, `FJERN` eller `VURDER`.
 
-**Ved INKREMENTELL:** Routing-tabellen er ikke nok — utfør også konsekvenssjekken beskrevet i [github-modus.md](references/github-modus.md) (søk i hele `skybert/` etter avledede påstander som berøres av endrede nøkkelverdier). Inkluder uavklarte `VURDER`-poster fra `openVurder` i state-filen i planen på nytt.
+**Ved INKREMENTELL:** Routing-tabellen er ikke nok — utfør også konsekvenssjekken beskrevet i [github-modus.md](references/github-modus.md) (søk i hele `skybert/` etter avledede påstander som berøres av endrede nøkkelverdier). Inkluder alle åpne poster fra `openItems` i state-filen i planen på nytt (utsatte, delvis implementerte og poster som feilet verifikasjon).
 
 ---
 
@@ -256,18 +253,28 @@ Implementer kun eksplisitt godkjente endringer. Se [implementeringsregler.md](re
 
 ---
 
-## Steg 9 — Oppdater metadata og state-fil
+## Steg 9 — Oppdater state-fil
 
-Oppdater metadata-kommentaren i `skybert/SKILL.md` med nye SHAs/hash og datoer. Ved FULL modus: oppdater også `last_fullscan_date`. Oppdater `Sist verifisert mot offisiell docs:` med dagens dato.
-
-Skriv/oppdater `skybert/.oppdater-state.json` med detaljert state:
-- **GitHub-modus:** Lagre commit SHAs for begge repoer
+Skriv/oppdater `skybert/.oppdater-state.json` (eneste maskinlesbare state):
+- **GitHub-modus:** Lagre commit SHAs og `commitDate` for begge repoer
 - **Web-scraping-modus:** Lagre `globalHash` og per-side hashes fra `search_index.json`
-- **Begge moduser:** Ajourfør `openVurder` — legg til `VURDER`-poster brukeren utsatte i steg 7, fjern poster som ble avklart
+  (rør ikke `github`-feltet)
+- **Begge moduser:** Sett `sistVerifisert` til dagens dato. Ved FULL modus: oppdater også
+  `lastFullscanDate`.
+- **Ajourfør `openItems`:**
+  - Legg til poster brukeren utsatte/avviste ikke-endelig i steg 7 (`status: "deferred"`)
+  - Legg til godkjente poster som bare ble delvis implementert i steg 8 (`status: "partial"`)
+  - Legg til poster der et kontrollpunkt i steg 8/9 slo feil (`status: "failed-verification"`)
+  - Oppdater `lastSeen` på poster som ble tatt inn i planen på nytt
+  - Fjern poster som ble avklart/fullført
+
+Deretter: regenerer visningslinjen `> **Sist verifisert mot offisiell docs:** <dato>` i
+`skybert/SKILL.md` fra `sistVerifisert`-feltet (dette er den eneste state-avledede teksten
+i SKILL.md — aldri skriv noen HTML-state-kommentar).
 
 Begge filer (`skybert/SKILL.md` og `skybert/.oppdater-state.json`) committes sammen.
 
-**Kontrakt:** Metadata og state-fil oppdateres KUN etter vellykket Apply.
+**Kontrakt:** State-filen oppdateres KUN etter vellykket Apply.
 
 ---
 
@@ -281,7 +288,7 @@ Ved **INKREMENTELL** modus trigges selvoppdatering når compare-output inneholde
 
 1. **Routing-tabellen** — Nye docs-filer eller infra-mapper som ikke er mappet? Nye målfiler i `skybert/` uten routing-rad?
 2. **Sti-baserte filtermoenstre** — Har mappestrukturen endret seg?
-3. **Metadata-format** — Er `schema_version` konsistent?
+3. **State-format** — Er `schemaVersion` i `.oppdater-state.json` konsistent med State-kontrakten? Har `skybert/SKILL.md` fått en state-kommentar den ikke skal ha?
 4. **Nye emner** — Nye dokumentasjonsomrader uten dekning i routing eller filstruktur?
 5. **Forutsetninger-treet** — Stemmer det med faktisk filliste i `skybert/` (fra steg 3)?
 
@@ -302,7 +309,7 @@ Rapporteres som egen seksjon i UPDATE-PLAN.md med per-endring: fil, type (routin
 | Normativ fil 404 (XRD, compositions) | Stopp, rapporter (kun GitHub-modus) |
 | Ikke-kritisk fil 404 | Logg som manglende, fortsett |
 | SHA-compare feiler | Fall tilbake til FULL modus |
-| Metadata ugyldig | Behandle som forste kjoring (FULL) |
+| State-fil ugyldig/uparsebar | Behandle som forste kjoring (FULL); migrer fra ev. gammel HTML-kommentar |
 | WIP/placeholder docs-side | `VURDER`, aldri bruk til å fjerne eksisterende |
 | Sensitiv info oppdaget | Ekskluder per sikkerhetsfiltreringsreglene |
 | Nye/ukjente filtyper i repoene | Les og vurder relevans via discovery pass |

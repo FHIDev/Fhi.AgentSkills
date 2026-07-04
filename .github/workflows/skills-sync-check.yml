@@ -1,0 +1,21 @@
+name: Skills sync check
+
+# .claude/skills er kanonisk kilde; .agents/skills skal være en identisk
+# kompatibilitetskopi (se CLAUDE.md). Drift her er en stille feil — denne
+# sjekken gjør den synlig og blokkerende.
+#
+# Sjekkene er definert ETT sted: .claude/skills/oppdater-skybert/scripts/validate.sh
+# (speiling + state-schema + statiske kopier + lenker + evals-format).
+# Samme script kjøres lokalt før PR.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify-skills-invariants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run skills validate script
+        run: bash .claude/skills/oppdater-skybert/scripts/validate.sh

@@ -242,19 +242,9 @@ Eksempel: endres rekonsilieringsintervallet i `flux-instance.yaml`, berører det
 
 ### State-fil etter vellykket Apply
 
-Etter vellykket implementering (steg 9) oppdateres `skybert/.oppdater-state.json` med nye commit SHAs:
-
-```json
-{
-  "schemaVersion": 2,
-  "updatedAt": "<ISO-8601>",
-  "mode": "github",
-  "github": {
-    "docs": { "repo": "FHISkybert/Fhi.Skybert.Docs", "branch": "main", "commit": "<ny sha>" },
-    "infra": { "repo": "FHISkybert/Fhi.Skybert.Infra", "branch": "main", "commit": "<ny sha>" }
-  }
-}
-```
+Etter vellykket implementering (steg 9) oppdateres `skybert/.oppdater-state.json` med nye
+commit SHAs og `commitDate` for begge repoer, `sistVerifisert`, ev. `lastFullscanDate`
+(kun FULL) og ajourført `openItems` — se State-kontrakt i SKILL.md for komplett schema.
 
 Den varige staten er i `.oppdater-state.json` — `changed-files.json` i `.tmp/` er kun runtime-cache.
 
@@ -271,7 +261,7 @@ spec:
       referenceable: true
 ```
 
-Parse `spec.versions[].name` der `served: true` og `referenceable: true`. Sammenlign med metadata i `skybert/SKILL.md`.
+Parse `spec.versions[].name` der `served: true` og `referenceable: true`. Sammenlign med API-versjonen dokumentert i `skybert/SKILL.md` og `references/skybertapp-crd.md` (f.eks. `apiVersion: skybert.fhi.no/v1alpha1` i eksemplene).
 
 Ved endring (f.eks. v1alpha1 → v1beta1):
 - Opprett endringspost med `crd-versjon`-flagg

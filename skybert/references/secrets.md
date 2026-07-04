@@ -26,7 +26,7 @@ spec:
 
 ## Manuell: SecretStore + ExternalSecret (ESO)
 
-External Secrets Operator (ESO) er standard mekanisme for secrets-håndtering utenfor SkybertApp. Påkrevet for raw Kubernetes deployments eller spesielle behov.
+External Secrets Operator (ESO) er standard mekanisme for secrets-håndtering utenfor SkybertApp. Påkrevet for raw Kubernetes deployments, legacy `WebApp` CRD, eller spesielle behov.
 
 ### SecretStore
 
@@ -71,7 +71,7 @@ spec:
 
 Key Vault-navnet oppgis av plattformteamet ved onboarding. Det finnes ingen fast navnekonvensjon - bruk det faktiske vault-navnet du har fått tildelt.
 
-**RBAC-krav:** SecretStore bruker plattformens SA (`<tenant>-azure`) og den tilknyttede managed identity-en for å hente secrets fra Key Vault. Tenanten må selv gi denne managed identity-en `Key Vault Secrets User`-rollen på sin Key Vault. Uten dette feiler ExternalSecrets med 403. Administrer dette via Terraform eller `az role assignment create`.
+**RBAC-krav:** SecretStore bruker plattformens SA (`<tenant>-azure`) og dets tilhørende managed identity for å aksessere Key Vault. Denne identiteten provisjoneres av plattformteamet, men **tenanten må selv gi den `Key Vault Secrets User`-rollen** på sin Key Vault. Uten denne rollen feiler alle ExternalSecrets med `403 ForbiddenByRbac`. Administrer dette via Terraform eller `az role assignment create`.
 
 ## Rotasjon og oppdatering
 

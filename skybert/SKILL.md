@@ -2,19 +2,6 @@
 name: skybert
 description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bruk ved arbeid med Skybert GitOps, SkybertApp CRD, Azure Workload Identity, Flux, eller Skybert-relaterte oppgaver. Hjelper med onboarding, konfigurasjon, deployment og feilsøking.
 ---
-<!-- Oppdater-skybert-state:
-schema_version=2
-docs_repo=FHISkybert/Fhi.Skybert.Docs
-docs_branch=main
-docs_commit=004f468ba372c6cfc8173f9d05ec5bc5a85ae5ba
-docs_commit_date=2026-06-25
-infra_repo=FHISkybert/Fhi.Skybert.Infra
-infra_branch=main
-infra_commit=c31fccc2ab593ffdbf523b14b20677aba4db8fd5
-infra_commit_date=2026-06-26
-last_fullscan_date=2026-06-03
--->
-
 # Skybert Platform Skill
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.

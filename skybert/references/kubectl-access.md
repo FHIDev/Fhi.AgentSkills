@@ -49,6 +49,13 @@ kubectl get pods -n tn-<tenant>
 >
 > Kilde (autoritativ kluster-liste): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/scripts/lib/clusters.sh
 
+Totalt 10 klustere er registrert i `scripts/lib/clusters.sh`. I den autoritative
+`COLOR_GROUP_CLUSTERS`-mappingen er `aks-yellow-test-02` aktivt testkluster for
+yellow-lanen. `aks-yellow-test-01` er fortsatt registrert, men inngår ikke i
+yellow-lanen og er under utfasing.
+
+> Kilde (autoritativ kluster-mapping): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/scripts/lib/clusters.sh
+
 ### Sandbox
 
 | Kluster | Resource Group | Subscription ID |

@@ -44,7 +44,28 @@
 2. **Anbefaling med begrunnelse** — agentens beste forslag, ikke bare «usikkert».
 3. **Konsekvens av å utsette** — hva forblir feil/udekket i skillen hvis posten ikke avklares nå.
 
-**Persistens:** `VURDER`-poster brukeren ikke avklarer i steg 7 lagres i `openVurder` i `skybert/.oppdater-state.json` (id, beslutningsspørsmål, `firstSeen`-dato). Ved neste kjøring tas de inn i planen på nytt, med `firstSeen` synlig — en post som har stått åpen over flere kjøringer skal fremheves øverst i planen. Avklarte poster fjernes fra `openVurder` i steg 9.
+## Persistens av uferdige poster (`openItems`)
+
+Ingen endringspost skal kunne forsvinne stille mellom kjøringer. Alle poster som ikke når
+fullført tilstand lagres i `openItems` i `skybert/.oppdater-state.json` (schema: se
+State-kontrakt i SKILL.md) med en av tre statusverdier:
+
+| Status | Betyr |
+|--------|-------|
+| `deferred` | Brukeren utsatte/avviste posten ikke-endelig i steg 7 (inkl. uavklarte `VURDER`) |
+| `partial` | Posten ble godkjent, men bare delvis implementert i steg 8 |
+| `failed-verification` | Posten ble implementert, men et kontrollpunkt i steg 8/9 slo feil |
+
+Livssyklus:
+- Poster skrives til `openItems` i steg 9 med `id`, `status`, `category`, `target`,
+  `source`, `summary`, `firstSeen`, `lastSeen`.
+- Ved neste kjøring (uansett modus) tas alle åpne poster inn i planen på nytt, med
+  `firstSeen` synlig — en post som har stått åpen over flere kjøringer fremheves øverst i
+  planen. `lastSeen` oppdateres.
+- En post fjernes først når den er avklart (brukerbeslutning tatt) eller fullført
+  implementert og verifisert.
+- Endelig avvisning fra brukeren («dropp denne permanent») fjerner posten — noter
+  beslutningen i planen, ikke i state.
 
 ---
 
@@ -65,19 +86,20 @@
 
 ## Konfliktløsning (Docs vs Infra)
 
-- **Normative tekniske forhold** (CRD-felter, defaults, security contexts, policier): Infra vinner.
-- **Konsept/veiledning/onboarding**: Docs supplerer.
-- **Uoppløselig konflikt**: `VURDER` med begge kilder sitert.
+Kildeautoritet, konfliktregler og domeneeksempler er definert ett sted:
+se «Kildeautoritet og konfliktregel» i [hovedprinsipper.md](hovedprinsipper.md).
+Kortversjon: Infra vinner for normative tekniske forhold, Docs for konsept/veiledning;
+uoppløselig konflikt → `VURDER` med begge kilder sitert.
 
-**Domeneeksempler:**
-| Emne | Autoritativ kilde |
-|------|-------------------|
-| CRD-feltdefinisjoner, defaults, security contexts | Infra |
-| Kyverno-policier og deres effekt | Infra |
-| Onboarding-veiledning, Blåløypa-steg | Docs |
-| Konseptforklaring av tenant-modellen | Docs |
-| Faktisk tenant-bootstrap-logikk | Infra |
-| Arbeidsflyt-anbefalinger (CI/CD) | Docs |
+---
+
+## Regler for dekningsgrad (matrise A, begge moduser)
+
+- `Delvis` er ugyldig uten konkret innhold i «Hva mangler»-kolonnen — det skal stå *hvilke*
+  opplysninger fra siden som ikke er representert, ikke bare at noe mangler. Hver mangel
+  skal ha en tilhørende endringspost (eller eksplisitt begrunnelse for hvorfor den droppes).
+- `Komplett` for normative sider (CRD-referanser, policy-oversikter) krever felt-/regel-
+  nivå-verifikasjon — ikke bare at temaet er omtalt.
 
 ---
 

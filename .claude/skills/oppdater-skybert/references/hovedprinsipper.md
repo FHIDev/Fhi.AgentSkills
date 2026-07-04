@@ -67,10 +67,6 @@ Merk tydelig forskjell mellom disse tre typene i UPDATE-PLAN.md og i skillfiler 
 | **Utledet mønster** | Observert fra kode/konfigurasjon, ikke eksplisitt dokumentert | Bootstrap-rekkefølge utledet fra scripts |
 | **Operasjonell antakelse** | Lokal/erfaringsbasert kunnskap uten kilde i repoene | Feilsøkingstips fra plattformteam |
 
-## Kildehenvisningsformat (differensiert per type)
+## Kildehenvisningsformat
 
-- **Docs-basert innhold:** `> Kilde: https://docs.sky.fhi.no/<sti>/`
-- **Infra-basert innhold (fil):** `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/<commit>/<filbane>`
-- **Infra-basert innhold (katalog):** `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/<commit>/<katalogbane>/`
-- **Kombinert innhold:** Oppgi begge kilder.
-- **Innhold uten kilde i repoene:** Ingen ny kilde-referanse — behold eksisterende referanser.
+Definert ett sted: se «Kildereferanse-format» i [implementeringsregler.md](implementeringsregler.md).

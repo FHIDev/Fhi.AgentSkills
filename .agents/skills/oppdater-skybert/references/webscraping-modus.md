@@ -42,11 +42,14 @@ Bygg per-side map: `{ [location]: { title, hash: sha256(location+title+text_norm
 
 ## Steg 3 — Sammenlign med forrige hash
 
-Les `<!-- Kilde-hash: ... -->`-kommentaren fra `skybert/SKILL.md`.
+Les `webscraping.globalHash` og `lastFullscanDate` fra `skybert/.oppdater-state.json`
+(migrering fra gammel `<!-- Kilde-hash: ... -->`-kommentar: se State-kontrakt i SKILL.md).
 
-**Periodisk FULL:** Hvis `last_fullscan_date` mangler i kommentaren eller er > 30 dager gammel → kjør FULL modus selv om `globalHash` er uendret (samme regel som steg 1d i SKILL.md).
+**Periodisk FULL:** Hvis `lastFullscanDate` mangler eller er > 30 dager gammel → kjør FULL
+modus selv om `globalHash` er uendret (samme regel som steg 1d i SKILL.md).
 
-**No-op:** Ellers, hvis `globalHash == previousGlobalHash` → rapporter "ingen endringer" og stopp.
+**No-op:** Ellers, hvis `globalHash == previousGlobalHash` → rapporter "ingen endringer"
+og stopp (list ev. åpne `openItems`).
 
 ## Steg 4 — Hent HTML-sider
 
@@ -82,7 +85,7 @@ Lagre til `.tmp/oppdater-skybert/pages/<sidenavn>.html`.
 
 ### FULL modus (uten eksisterende state)
 
-Hent `search_index.json`, beregn alle per-side hashes, hent HTML for alle sider i scope, analyser alt. Kjøres når `skybert/.oppdater-state.json` mangler eller ikke har `webscraping`-felt, eller når `last_fullscan_date` mangler / er > 30 dager gammel (periodisk FULL, se steg 3).
+Hent `search_index.json`, beregn alle per-side hashes, hent HTML for alle sider i scope, analyser alt. Kjøres når `skybert/.oppdater-state.json` mangler eller ikke har `webscraping`-felt, eller når `lastFullscanDate` mangler / er > 30 dager gammel (periodisk FULL, se steg 3).
 
 ### INKREMENTELL modus (med eksisterende state i skybert/.oppdater-state.json)
 
@@ -111,32 +114,24 @@ Denne modusen kan IKKE verifisere innhold som har infra-repoet som kilde (kilder
 
 - Foreslå ALDRI `KORRIGER` eller `FJERN` av infra-basert innhold i web-scraping-modus — selv om publisert docs ser ut til å motsi det. Bruk `VURDER` med begge kilder sitert.
 - Merk alle infra-baserte seksjoner i UPDATE-PLAN.md som **«ikke verifisert i denne kjøringen»** — planen skal ikke gi inntrykk av at hele skillen er validert.
-- Rør aldri infra-feltene i metadata-kommentaren eller `.oppdater-state.json` (`infra_commit` osv. beholdes uendret).
+- Rør aldri `github`-feltet i `.oppdater-state.json` (commit SHAs og datoer for docs/infra beholdes uendret).
 - De statiske kopiene i `references/skybertapp/` kan ikke oppdateres i denne modusen — noter alder (provenance-dato i `skybertapp-render.md`) i planen hvis den er over 30 dager gammel.
 
 ---
 
-## Forenklet metadata-kontrakt
+## State i web-scraping-modus
 
-### Rask NO-OP-sjekk (metadata-kommentar)
-
-I web-scraping-modus skrives en forenklet metadata-kommentar (uten infra-felter):
-
-```html
-<!-- Kilde-hash: <globalHash> last_fullscan_date=<dato> -->
-```
-
-`last_fullscan_date` oppdateres kun ved FULL-modus og driver den periodiske FULL-sjekken i steg 3. Gammelt format uten `last_fullscan_date` → behandle som FULL modus.
-
-### Persistent state for inkrementell (skybert/.oppdater-state.json)
-
-`skybert/.oppdater-state.json` lagrer per-side hashes for inkrementell sammenligning mellom kjøringer:
+All state bor i `skybert/.oppdater-state.json` (se State-kontrakt i SKILL.md — det skrives
+**ingen** HTML-kommentar i `skybert/SKILL.md`). Web-scraping-modus populerer
+`webscraping`-feltet:
 
 ```json
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "updatedAt": "<ISO-8601>",
   "mode": "webscraping",
+  "lastFullscanDate": "<ISO-dato>",
+  "sistVerifisert": "<ISO-dato>",
   "webscraping": {
     "source": "docs.sky.fhi.no",
     "globalHash": "<sha256>",
@@ -147,7 +142,10 @@ I web-scraping-modus skrives en forenklet metadata-kommentar (uten infra-felter)
 }
 ```
 
-Metadata-kommentaren brukes for rask NO-OP-sjekk (globalHash uendret → stopp). State-filen gir detaljert per-side info for å identifisere hvilke sider som faktisk endret seg ved INKREMENTELL modus.
+`globalHash` brukes for rask NO-OP-sjekk (uendret → stopp). Per-side hashes identifiserer
+hvilke sider som faktisk endret seg ved INKREMENTELL modus. `github`-feltet (fra tidligere
+GitHub-kjøringer) beholdes uendret. Migrering fra gammel `<!-- Kilde-hash: ... -->`-
+kommentar: se State-kontrakt i SKILL.md.
 
 ---
 
