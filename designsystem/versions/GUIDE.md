@@ -21,9 +21,12 @@ npm ls @folkehelseinstituttet/designsystem
 
 ### Eksisterende app — versjon oppgitt
 
+0. **Fast path:** Hvis versjonen matcher latest (Latest-raden i INDEX.md /
+   `<!-- Basert på ... -->` i SKILL.md) → bruk SKILL.md uten delta, med mindre
+   spørsmålet gjelder migrering, eldre versjoner eller støttepolicy.
 1. Slå opp versjon i [`versions/INDEX.md`](INDEX.md)
 2. Les SKILL.md (latest) som baseline
-3. Les tilhørende delta-fil
+3. Les [`FEATURES.md`](FEATURES.md) og tilhørende delta-fil
 4. Overstyr/supplement SKILL.md med delta-informasjonen (delta vinner ved konflikt)
 5. Gi svar basert på den sammensatte informasjonen
 
@@ -58,36 +61,49 @@ Match alltid på minor-versjon. Patch-versjoner dokumenteres i delta-filen under
 
 ---
 
-## Kumulativ delta-modell
+## To kilder: FEATURES.md + delta-filer
+
+Versjonsavvik dokumenteres i to komplementære kilder som **leses sammen**:
+
+- [`FEATURES.md`](FEATURES.md) svarer på **«hva finnes ikke i din versjon?»** —
+  én rad per public feature med innføringsversjon. Filtrer på `Introduced > din versjon`.
+- **Delta-filen** for din versjon svarer på **«hva oppfører seg annerledes?»** —
+  atferdsforskjeller, legacy-only, patch-notes og migreringstips.
+
+**Merk dekningsgrensen i FEATURES.md** (deklarert øverst i filen): features innført
+*før* grensen står i delta-filenes «Missing vs latest»-seksjoner, ikke i tabellen.
+For eldre versjoner må derfor **begge** kilder konsulteres.
+
+### Kumulativ delta-modell (for innhold før dekningsgrensen)
 
 Delta-filer dokumenterer **eksplisitte avvik**: en delta som er "skrevet mot v0.31.0" er like gyldig når latest er v0.32.0,
 fordi eksplisitt dokumenterte avvik (f.eks. "fhi-modal-dialog mangler i v0.28.x") forblir gyldige frem til den eldre
 versjonen oppgraderes — uavhengig av ny latest.
 
-**Viktig begrensning:** Delta-filer fanger **ikke** automatisk opp nye public komponenter eller nye public
-features (f.eks. nye attributter, slots, events eller methods på eksisterende komponenter) lagt til i nyere
-latest-versjoner. Hvis v0.32.0 legger til `fhi-wizard`, eller v0.35.0 legger til en ny slot på `fhi-text-input`,
-vil eldre delta-filer ikke nevne at disse mangler i v0.28.x — og verifiseringsstatus for slike nye tillegg er
-ukjent med mindre det er eksplisitt dokumentert.
-
-**Konsekvens for oppdateringsworkflow:** Når en ny latest-versjon publiseres, opprettes **kun én ny delta-fil**
-for forrige latest-versjon. Eksisterende delta-filer for eldre støttede versjoner trenger **ikke** å regenereres —
-**unntatt** hvis ny latest har lagt til nye public komponenter eller nye public features (slots, attributter,
-events, methods) på eksisterende komponenter: disse skal da noteres eksplisitt som "Missing" i alle **støttede**
-delta-filer (de som er listet som Supported i INDEX.md) som ikke allerede nevner dem. Delta-filer for versjoner
-utenfor støttevinduet beholdes på disk, men vedlikeholdes ikke med nye Missing-notater.
+**Konsekvens for oppdateringsworkflow:** Når en ny latest-versjon publiseres, opprettes
+**én ny delta-fil** for forrige latest-versjon, og nye public features registreres som
+rader i `FEATURES.md`. Eksisterende delta-filer regenereres eller backfylles **ikke**.
+Delta-filer for versjoner utenfor støttevinduet beholdes på disk, men vedlikeholdes ikke.
 
 ---
 
 ## Hvordan bruke delta-filer
 
 1. Les SKILL.md som baseline
-2. Les delta-filen for aktuell versjon
-3. Der delta sier noe annet enn SKILL.md → **delta vinner**
-4. Der delta er stille → SKILL.md gjelder
+2. Les [`FEATURES.md`](FEATURES.md) og filtrer på `Introduced > aktuell versjon`
+3. Les delta-filen for aktuell versjon
+4. Der delta sier noe annet enn SKILL.md → **delta vinner**
+5. Der delta er stille → SKILL.md gjelder
 
-> ⚠️ **Presisering til regel 4:** Gjelder kun for features som fantes i SKILL.md da delta ble skrevet.
-> For nye komponenter/features lagt til latest **etter** at delta ble skrevet: verifiseringsstatus er ukjent.
+Delta-filer lister kun seksjoner med reelle avvik. Områder som er kontrollert og
+funnet uendret oppsummeres i én seksjon, «Verifisert uendret vs latest» — fravær av
+en seksjon betyr altså *verifisert uendret* når området er nevnt der, og *ukjent*
+ellers.
+
+> ⚠️ **Presisering til regel 5:** Gjelder kun for features som fantes i SKILL.md da delta ble skrevet.
+> For nye features lagt til latest **etter** at delta ble skrevet: slå opp i FEATURES.md
+> (fra og med dekningsgrensen); før grensen er verifiseringsstatus ukjent med mindre
+> delta-filen nevner det eksplisitt.
 
 ---
 
