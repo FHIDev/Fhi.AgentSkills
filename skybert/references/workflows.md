@@ -11,6 +11,38 @@ OCI-artifacts med navn `gitops_<env>`. Mappenavn styrer artifact-navn, så ikke 
 > Kilde: https://docs.sky.fhi.no/build/
 > Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/
 
+## Påkrevde GitHub Repository-variabler og secrets
+
+Før workflows kan kjøre, må disse **variablene** konfigureres (brukes med `vars.*` i workflows):
+
+| Variabel | Beskrivelse |
+|----------|-------------|
+| `AZURE_CLIENT_ID` | Managed Identity client ID for ACR push |
+| `AZURE_TENANT_ID` | Azure AD tenant ID |
+| `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
+| `GITOPS_REPO` | GitOps-repository (f.eks. `FHIDev/Fhi.Exempl.Gitops`) |
+
+I tillegg trengs disse **secrets** (brukes med `secrets.*`):
+
+| Secret | Beskrivelse |
+|--------|-------------|
+| `GH_PAT` | Personal Access Token for workflow chaining i GitOps-repo |
+| `GITOPS_PAT` | Personal Access Token for repository_dispatch på tvers av repoer |
+
+**For å verifisere variabler og secrets:**
+```bash
+gh variable list --repo <owner>/<repo>
+gh secret list --repo <owner>/<repo>
+```
+
+**For å sette variabler** (krever admin-tilgang til repoet):
+```bash
+gh variable set AZURE_CLIENT_ID --body "<verdi>"
+gh variable set AZURE_TENANT_ID --body "<verdi>"
+gh variable set AZURE_SUBSCRIPTION_ID --body "<verdi>"
+gh variable set GITOPS_REPO --body "FHIDev/Fhi.<Tenant>.GitOps"
+```
+
 ---
 
 ## Komplett CI/CD Flyt
@@ -223,6 +255,10 @@ Eksempler:
 
 ## update-tag.yaml - Automatisk tag-oppdatering
 
+Hvert miljø har sin egen pinned tag i GitOps-repoet. App-repoets build-workflow sender
+`repository_dispatch` til GitOps-repoet, som kjører `update-tag.yaml` og committer
+tag-oppdateringen i target-miljøets mappe.
+
 Trigger denne via `repository_dispatch` med event-type `update_tag`. Payload-format:
 ```json
 {
@@ -236,6 +272,39 @@ Trigger denne via `repository_dispatch` med event-type `update_tag`. Payload-for
 **Regler:**
 - Ett `env` per kall (ett miljø av gangen)
 - Flere repositories kan oppdateres i samme kall via `updates[]`
+- `repository` skal være GitHub repo-navnet (ikke ACR-pathen). Primærkilden og andre
+  `update-tag.yaml`-varianter bruker feltet for å velge riktig manifest; default-varianten
+  nedenfor leser kun `env` og `tag` og bytter alle `tag:`-linjer i en fast fil. Send
+  GitHub repo-navnet for å være kompatibel med begge.
+
+**Dispatch med rå curl (alternativ til peter-evans-action):**
+```bash
+# I app-repoets build-workflow, som bash-step. ${{ ... }} er GitHub Actions-uttrykk.
+curl -X POST \
+  -H "Authorization: Bearer ${{ secrets.GITOPS_PAT }}" \
+  "https://api.github.com/repos/${{ vars.GITOPS_REPO }}/dispatches" \
+  -d '{"event_type":"update_tag","client_payload":{
+    "env": "test",
+    "updates": [{"repository": "${{ github.event.repository.name }}", "tag": "abc1234"}]
+  }}'
+```
+
+### Hvor tag-en havner
+
+`update-tag.yaml` oppdaterer `tag:`-linjer i filer under `${ENV}/`-mappen i GitOps-repoet.
+Default-varianten nedenfor kjører `sed` på `${ENV}/skybertapp.yaml`, men GitOps-repoer kan
+ha egne varianter som håndterer andre filstrukturer (Helm values, Kustomize, osv.). Sjekk
+den konkrete `update-tag.yaml` i GitOps-repoet for å se hva som faktisk skjer.
+
+Uavhengig av filstruktur:
+- Tag-verdien for et miljø må ligge i en fil under `${ENV}/`-mappen. Tags utenfor (f.eks. i `base/`) blir ikke oppdatert av dispatch.
+- Ikke sett en fallback-tag som `latest` i delte baseline-filer. Det maskerer feilet promotion med stille deploy av vilkårlig siste push — la manglende tag feile høyt i stedet.
+
+### Promotion til neste miljø
+
+Promotion-flyten er `sandbox → test → prod` og er **manuell** — send en ny
+`repository_dispatch` med ønsket `env` og tag. Kan gjøres via `workflow_dispatch`, CLI,
+eller en dedikert promotion-workflow.
 
 **Eksempel: trigger prod-oppdatering fra app-repo:**
 ```yaml

@@ -1,5 +1,38 @@
 # Feilsøking
 
+## Verifisere deployment etter push
+
+Etter push til `main`, følg disse stegene for å verifisere deployment.
+
+**Viktig:** Du har kun tilgang til ressurser i ditt eget namespace (`tn-<tenant>`). Flux system-ressurser og rekonsiliering krever plattformteam-tilgang.
+
+**1. Sjekk GitHub Workflow:**
+```bash
+# List nylige workflow-kjøringer
+gh run list
+
+# Følg med på fullførelse (kjører på nytt hvert 5. sekund)
+watch -n 5 'gh run list --limit 3'
+
+# Se logger for en spesifikk kjøring
+gh run view <run-id> --log
+```
+
+**2. Vent på Flux-rekonsiliering:** Flux rekonsilerer automatisk (se
+[Plattformarkitektur](platform-architecture.md#rekonsilieringsintervall) — hvert 2. minutt).
+Etter at GitHub workflow lykkes, vent opptil 2 minutter for at endringer skal vises i klusteret.
+
+**3. Sjekk applikasjonsressurser:**
+```bash
+kubectl get all -n tn-<tenant>
+kubectl get pods -n tn-<tenant>
+kubectl logs -n tn-<tenant> <pod-name>
+kubectl describe pod <pod-name> -n tn-<tenant>
+kubectl get events -n tn-<tenant> --sort-by='.lastTimestamp'
+```
+
+**4. Sjekk External Secrets:** se problem 3 nedenfor.
+
 ## Vanlige problemer
 
 ### 1. Pod starter ikke (ImagePullBackOff)

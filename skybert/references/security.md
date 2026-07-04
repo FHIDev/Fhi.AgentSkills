@@ -100,6 +100,28 @@ Runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral) er kun me
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
 
+### RoleBinding for namespace-tilgang (Entra-gruppe)
+
+Plattformen provisjonerer normalt namespace-tilgang ved å binde tenantens Entra-gruppe til den kuraterte ClusterRole-en `skybert:tenant-admin`. Ikke opprett en egen binding til `cluster-admin` — tenant-admin holder ikke lenger den rollen, og Kubernetes' escalation-prevention vil avvise et forsøk på å binde den (du kan kun delegere et subsett av egne rettigheter).
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: entra-access
+  namespace: tn-<tenant>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: skybert:tenant-admin
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: "<entra-group-id>"
+```
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/entra-access-rolebinding.yaml
+
 ## Obligatorisk sikkerhetskonfigurasjon
 
 ```yaml

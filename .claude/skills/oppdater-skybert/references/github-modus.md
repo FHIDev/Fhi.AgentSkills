@@ -191,16 +191,9 @@ Ren driftskonfigurasjon (replicas, resources, intern tuning) i disse mappene er 
 
 ## Sikkerhetsfiltreringsregler
 
-| Kategori | Handling |
-|----------|----------|
-| **ALDRI inkluder** | Credentials, tokens, connection strings, passord |
-| **ALDRI inkluder** | Spesifikke IP-adresser for interne systemer |
-| **ALDRI inkluder** | Azure tenant IDs, subscription IDs som ikke allerede er i skillen |
-| **ALDRI inkluder** | Service principal secrets eller certificate thumbprints |
-| **VURDER med forsiktighet** | Interne hostnavn, DNS-oppføringer, ACR-URLer |
-| **OK å inkludere** | Arkitekturmønstre, navnekonvensjoner, generelle strukturer, CRD-skjemaer, arbeidsflyter |
-
-Azure Subscription IDs og kluster-IP-ranges anonymiseres med plassholdere (`<subscription-id>`, `<ip-range>`) med mindre de allerede er i eksisterende skillfiler. Tenant-navn fra `tenants/`-mappen brukes som eksempler.
+Definert ett sted: se «Anonymisering / sikkerhetsfiltreringsregler» i
+[analyseregler.md](analyseregler.md). Reglene gjelder alt innhold hentet i denne modusen —
+spesielt infra-repoet (subscription IDs, IP-ranges, Entra-gruppe-IDer).
 
 ---
 
@@ -242,19 +235,9 @@ Eksempel: endres rekonsilieringsintervallet i `flux-instance.yaml`, berører det
 
 ### State-fil etter vellykket Apply
 
-Etter vellykket implementering (steg 9) oppdateres `skybert/.oppdater-state.json` med nye commit SHAs:
-
-```json
-{
-  "schemaVersion": 2,
-  "updatedAt": "<ISO-8601>",
-  "mode": "github",
-  "github": {
-    "docs": { "repo": "FHISkybert/Fhi.Skybert.Docs", "branch": "main", "commit": "<ny sha>" },
-    "infra": { "repo": "FHISkybert/Fhi.Skybert.Infra", "branch": "main", "commit": "<ny sha>" }
-  }
-}
-```
+Etter vellykket implementering (steg 9) oppdateres `skybert/.oppdater-state.json` med nye
+commit SHAs og `commitDate` for begge repoer, `sistVerifisert`, ev. `lastFullscanDate`
+(kun FULL) og ajourført `openItems` — se State-kontrakt i SKILL.md for komplett schema.
 
 Den varige staten er i `.oppdater-state.json` — `changed-files.json` i `.tmp/` er kun runtime-cache.
 
@@ -271,7 +254,7 @@ spec:
       referenceable: true
 ```
 
-Parse `spec.versions[].name` der `served: true` og `referenceable: true`. Sammenlign med metadata i `skybert/SKILL.md`.
+Parse `spec.versions[].name` der `served: true` og `referenceable: true`. Sammenlign med API-versjonen dokumentert i `skybert/SKILL.md` og `references/skybertapp-crd.md` (f.eks. `apiVersion: skybert.fhi.no/v1alpha1` i eksemplene).
 
 Ved endring (f.eks. v1alpha1 → v1beta1):
 - Opprett endringspost med `crd-versjon`-flagg
@@ -325,9 +308,7 @@ Disse kopiene skal ALDRI drifte stille: ved FULL modus sammenlignes de alltid mo
 
 Hver docs-side MÅ finnes i denne tabellen. Ingen side skal mangle.
 
-**Regler for dekningsgrad:**
-- `Delvis` er ugyldig uten konkret innhold i «Hva mangler»-kolonnen — det skal stå *hvilke* opplysninger fra siden som ikke er representert, ikke bare at noe mangler. Hver mangel skal ha en tilhørende endringspost (eller eksplisitt begrunnelse for hvorfor den droppes).
-- `Komplett` for normative sider (CRD-referanser, policy-oversikter) krever felt-/regel-nivå-verifikasjon — ikke bare at temaet er omtalt.
+**Regler for dekningsgrad:** se «Regler for dekningsgrad» i [analyseregler.md](analyseregler.md).
 
 ### Del B — Infra repo signal inventory
 
