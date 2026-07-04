@@ -1,0 +1,15 @@
+{
+  "package": "@folkehelseinstituttet/designsystem",
+  "version": "0.40.0",
+  "gitTag": "v0.40.0",
+  "tarballUrl": "https://registry.npmjs.org/@folkehelseinstituttet/designsystem/-/designsystem-0.40.0.tgz",
+  "distIntegrity": "sha512-b6zwSKvqiS1k0TO3RAjh6hY77lKv5/qxA+z9KMlakj9BWX1rTjNlBfa1KYruxUyzPY0c9LZf0uGEI0p4yBhA2g==",
+  "verifiedDate": "2026-07-03",
+  "archivedArtifacts": [
+    "package.json",
+    "custom-elements.json",
+    "web-types.json",
+    "ai-tooling/SKILL.md",
+    "tarball-files.txt"
+  ]
+}

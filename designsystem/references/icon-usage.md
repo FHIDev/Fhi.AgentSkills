@@ -105,15 +105,8 @@ Se [`fhi-text-input`](components/fhi-text-input.md) for runtime-validering og fa
 
 ## Tilgjengelige ikoner
 
-> **Vedlikeholdsnote:** Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.40.0` (`file-text` lagt til i v0.38.0; ellers uendret fra v0.34.0).
-> For å oppdatere listen ved ny release:
-> ```bash
-> # List alle ikon-entrypoints i publisert pakke
-> npm pack @folkehelseinstituttet/designsystem --dry-run --json \
->   | jq -r '.[0].files[].path' \
->   | grep 'fhi-icon-' | sed 's/fhi-icon-//;s/\.js//' | sort
-> # Sammenlign output mot kategoriene nedenfor og oppdater ved diff
-> ```
+> Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.40.0`
+> (`file-text` lagt til i v0.38.0; ellers uendret fra v0.34.0).
 
 Alle importeres som `@folkehelseinstituttet/designsystem/fhi-icon-{navn}` og brukes som `<fhi-icon-{navn}>`.
 

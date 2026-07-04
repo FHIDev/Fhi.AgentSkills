@@ -14,7 +14,7 @@ import '@folkehelseinstituttet/designsystem/fhi-button';
 | `variant` | `variant` | `'strong' \| 'subtle' \| 'outlined' \| 'text'` | `'strong'` | Visuell stil |
 | `size` | `size` | `'large' \| 'medium' \| 'small'` | `'medium'` | Størrelse |
 | `disabled` | `disabled` | `boolean` | `false` | Deaktiverer knappen |
-| `iconOnly` | `icon-only` | `boolean` | `false` | **Deprecated siden v0.31.0** — Knappen detekterer automatisk om den kun inneholder et ikon. Vil fjernes i en fremtidig versjon. |
+| `iconOnly` | `icon-only` | `boolean` | `false` | **Deprecated siden v0.31.0** — Knappen detekterer automatisk om den kun inneholder et ikon. Vil fjernes i en fremtidig versjon. I v0.22–v0.30 var attributtet støttet (ikke deprecated) — se `versions/`. |
 | `type` | `type` | `'button' \| 'submit' \| 'reset'` | `'submit'` | HTML button-type; styrer form-oppførsel |
 
 ## Events
@@ -48,6 +48,11 @@ import '@folkehelseinstituttet/designsystem/fhi-icon-search';
 
 <!-- Kun ikon (icon-only oppdages automatisk) -->
 <fhi-button variant="subtle" color="neutral">
+  <fhi-icon-search></fhi-icon-search>
+</fhi-button>
+
+<!-- Deprecated i v0.31+ (ikke bruk): -->
+<fhi-button icon-only variant="subtle" color="neutral">
   <fhi-icon-search></fhi-icon-search>
 </fhi-button>
 

@@ -17,15 +17,8 @@ Støttepolicy: Latest + 9 tidligere minor (totalt 10 minor).
 | 0.31.x  | Supported   | Robustere håndtering av null-/ugyldige verdier i latest; inkl. nyere 0.35–0.40-avvik | [v0.31.x.md](v0.31.x.md) |
 | < 0.31  | Ikke støttet | Best effort, anbefal oppgradering                | —               |
 
-## Matching-regler
-
-- Match på minor: `0.39.*` → `v0.39.x.md`
-- Semver-range `^0.31.0` → `v0.31.x.md`
-- Bare minor `0.31` (uten patch) → `v0.31.x.md`
-
-## Patch-policy
-
-Patch-versjoner følger nærmeste minor-delta, med mindre release notes indikerer event-/API-atferdsendring. Da dokumenteres det under "Patch notes med API-impact" i den aktuelle minor-deltaen.
+Matching- og patch-regler: se [GUIDE.md](GUIDE.md).
+Innføringsversjoner for nye features (fra og med v0.41): se [FEATURES.md](FEATURES.md).
 
 ## Kilder
 

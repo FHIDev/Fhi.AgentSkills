@@ -1,0 +1,20 @@
+{
+  "skill_name": "designsystem",
+  "description": "Trigger-evals: verifiserer at skill-beskrivelsen i frontmatter trigger på realistiske brukerprompts. Brukes når beskrivelsen endres (se kontraktsjekker.md). Kan kjøres med skill-creators beskrivelse-optimalisering.",
+  "evals": [
+    { "query": "lag et registreringsskjema med FHI-komponenter — navn, e-post og en send-knapp", "should_trigger": true },
+    { "query": "hvordan setter jeg opp designsystemet til folkehelseinstituttet i en Blazor-app?", "should_trigger": true },
+    { "query": "hvilken css-variabel skal jeg bruke for feilmeldingstekst? vi bruker fhi designsystem", "should_trigger": true },
+    { "query": "fhi-button vises helt uten styling hos oss, hva mangler?", "should_trigger": true },
+    { "query": "finnes det en datepicker på designsystem.fhi.no jeg kan bruke?", "should_trigger": true },
+    { "query": "jeg så i Storybook at fhi-text-input har ikon-slots — hvordan bruker jeg dem?", "should_trigger": true },
+    { "query": "kan jeg bruke teal-paletten fra fhi direkte i css-en min eller må jeg bruke semantiske tokens?", "should_trigger": true },
+    { "query": "vi skal oppgradere appen fra designsystem 0.34 til nyeste versjon, hva må endres?", "should_trigger": true },
+    { "query": "hvordan oppdaterer jeg designsystem-skillen i dette repoet mot ny kildekode?", "should_trigger": false },
+    { "query": "lag en knapp og et modalvindu med Bootstrap 5", "should_trigger": false },
+    { "query": "hva er FHIs visuelle profil for logo og farger i PowerPoint-presentasjoner?", "should_trigger": false },
+    { "query": "sett opp Material UI med dark mode i React-appen vår", "should_trigger": false },
+    { "query": "skriv en ny skill for skybert-plattformen", "should_trigger": false },
+    { "query": "hvilke design tokens bruker Designsystemet til Digdir (Designsystemet.no)?", "should_trigger": false }
+  ]
+}

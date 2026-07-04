@@ -1,0 +1,55 @@
+{
+  "skill_name": "designsystem",
+  "description": "Svar-evals: regresjonstest for designsystem-skillen. Kjøres som del av steg 9 i oppdater-designsystem (se kontraktsjekker.md). Les skillen slik en agent ville gjort (følg versjonsrutingen i SKILL.md) og sammenlign svaret med expected_output. Fasit er skrevet mot v0.40.0-baseline — hvis en ny versjon endrer riktig svar, oppdater fasiten og begrunn hvorfor.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "ikon-i-tekstfelt-latest",
+      "prompt": "Hvordan legger jeg et søkeikon inni et fhi-text-input-felt? Vi bruker siste versjon av designsystemet.",
+      "expected_output": "Bruk slottene `start` eller `end` med en fhi-icon-komponent, f.eks. <fhi-icon-search slot=\"end\">. Skal nevne at ikonet er visuelt (pointer-events: none) og at både fhi-text-input og ikonet må importeres. Skal IKKE be om å lese versions/-filer (fast path for latest).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "ikon-i-tekstfelt-v0.34",
+      "prompt": "Hvordan legger jeg et søkeikon inni et fhi-text-input-felt? Vi bruker @folkehelseinstituttet/designsystem 0.34.0.",
+      "expected_output": "Skal svare at start/end-slottene IKKE finnes i v0.34.x (innført i v0.35.0), at ikon-markering må håndteres utenfor komponenten i 0.34, og anbefale oppgradering. Krever at agenten fulgte versjonsrutingen til versions/v0.34.x.md.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "semantisk-token-for-feiltekst",
+      "prompt": "Hvilken CSS-variabel bruker jeg for rød feilmeldingstekst i appen vår som bruker FHI-designsystemet?",
+      "expected_output": "Skal svare `var(--fhi-color-danger-text-default)`. Skal IKKE foreslå hex-verdier eller primitive tokens (--fhi-red-*), og bør forklare at semantiske tokens alltid brukes i egen CSS.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "komponenter-uten-styling",
+      "prompt": "fhi-button og fhi-text-input rendres helt uten styling i appen vår. Hva er galt?",
+      "expected_output": "Skal identifisere at theme-filen mangler: `import '@folkehelseinstituttet/designsystem/theme/default.css'` må importeres før komponentene brukes — uten den mangler alle design tokens.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "blazor-oppsett",
+      "prompt": "Sett opp FHI Designsystem i Blazor-appen vår.",
+      "expected_output": "Skal hente veiledningen fra references/framework-setup.md (Blazor-seksjonen) og gi konkrete oppsettssteg for Blazor, ikke generiske web component-råd.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "utenfor-support-window",
+      "prompt": "Vi sitter på @folkehelseinstituttet/designsystem 0.28.0 — hvordan bruker jeg fhi-modal-dialog?",
+      "expected_output": "Skal identifisere at 0.28 er utenfor støttevinduet (< eldste støttede versjon i INDEX.md), gi best effort-svar, og eksplisitt anbefale oppgradering til latest.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "versjonsspesifikk-feature-tag-bordered",
+      "prompt": "Kan jeg bruke variant=\"bordered\" på fhi-tag? package.json sier \"@folkehelseinstituttet/designsystem\": \"^0.39.0\".",
+      "expected_output": "Skal svare nei for 0.39.x — variant-attributtet med 'bordered' ble innført i v0.40.0. Skal bruke standard svarformat for versjonsspørsmål (For din versjon / I latest / Oppgraderingsnotat).",
+      "files": []
+    }
+  ]
+}

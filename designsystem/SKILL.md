@@ -1,6 +1,6 @@
 ---
 name: designsystem
-description: Ekspert på FHI Designsystem (@folkehelseinstituttet/designsystem). Bruk ved installasjon eller oppsett av designsystemet, bruk av FHI-komponenter (fhi-button, fhi-text-input, fhi-checkbox, etc.), bruk av FHI design tokens (farger, typografi, spacing), ikoner, eller rammeverk-integrasjon (React, Angular, Blazor).
+description: Ekspert på FHI Designsystem (@folkehelseinstituttet/designsystem, designsystem.fhi.no). Bruk ved installasjon eller oppsett av designsystemet, bruk av FHI-komponenter (fhi-button, fhi-text-input, fhi-checkbox, etc.), bruk av FHI design tokens (farger, typografi, spacing), ikoner, rammeverk-integrasjon (React, Angular, Blazor), eller spørsmål om komponenter brukeren har sett i designsystemets Storybook. Gjelder også når brukeren sier «FHI-komponent» eller bygger skjema/UI i en FHI-app uten å nevne designsystemet eksplisitt.
 ---
 <!-- Basert på @folkehelseinstituttet/designsystem v0.40.0 -->
 
@@ -16,11 +16,10 @@ Bruk FHI Designsystem i egne prosjekter. Designsystemet er basert på standard w
 > **Støttepolicy:** Latest + 9 tidligere minor (totalt 10 minor). Se [`versions/INDEX.md`](versions/INDEX.md) for støttede versjoner.
 >
 > **Versjonsbehandling:**
-> - **Sjekk alltid prosjektets `package.json` for `@folkehelseinstituttet/designsystem` FØR du svarer.** Gi ikke detaljert API-råd før versjon er fastslått.
-> - Versjon funnet i `package.json` → les [`versions/INDEX.md`](versions/INDEX.md), finn tilhørende delta-fil og les den. Delta-fil overstyrer motstridende informasjon i dette dokumentet.
-> - Kun hvis `package.json` ikke er tilgjengelig → be brukeren oppgi versjon.
-> - Versjon oppgitt → les [`versions/INDEX.md`](versions/INDEX.md), finn tilhørende delta-fil og les den. Delta-fil overstyrer motstridende informasjon i dette dokumentet.
-> - Versjon utenfor support window → best effort, anbefal oppgradering.
+> - **Sjekk alltid prosjektets `package.json` for `@folkehelseinstituttet/designsystem` FØR du svarer.** Gi ikke detaljert API-råd før versjon er fastslått. Kun hvis `package.json` ikke er tilgjengelig → be brukeren oppgi versjon.
+> - **Fast path (latest):** Hvis versjonen matcher versjonen i `<!-- Basert på ... -->` øverst → svar direkte fra dette dokumentet og referansefilene. Ikke les `versions/`. Unntak: spørsmål som eksplisitt gjelder migrering, eldre versjoner eller støttepolicy — da leses [`versions/INDEX.md`](versions/INDEX.md) og [`versions/GUIDE.md`](versions/GUIDE.md) uansett.
+> - **Eldre versjon:** Les [`versions/INDEX.md`](versions/INDEX.md), finn tilhørende delta-fil og les den. Delta-fil overstyrer motstridende informasjon i dette dokumentet.
+> - **Versjon utenfor support window:** Best effort, anbefal oppgradering.
 > - Se [`versions/GUIDE.md`](versions/GUIDE.md) for fullstendig beslutningsflyt og svarformat.
 
 ---
@@ -80,21 +79,7 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 
 **VIKTIG**: Ikoner importeres som egne komponenter: `import '.../fhi-icon-search'`, ikke som en samlet ikonpakke.
 
-**DEPRECATED (v0.31.0)**: `icon-only`-attributtet (kebab-case) på `fhi-button` er deprecated. Knappen detekterer automatisk om den kun inneholder et ikon.
-
-```html
-<!-- Deprecated i v0.31+: -->
-<fhi-button icon-only variant="subtle" color="neutral">
-  <fhi-icon-search></fhi-icon-search>
-</fhi-button>
-
-<!-- Anbefalt mønster (v0.31+): bruk ikon som eneste child uten attributtet -->
-<fhi-button variant="subtle" color="neutral">
-  <fhi-icon-search></fhi-icon-search>
-</fhi-button>
-```
-
-**Merk:** `icon-only` var støttet (og ikke deprecated) i v0.22–v0.30. Se delta-filer under `versions/` for versjonsinfo.
+**DEPRECATED (v0.31.0)**: `icon-only`-attributtet på `fhi-button` er deprecated — knappen detekterer automatisk om den kun inneholder et ikon. Se [`fhi-button`](references/components/fhi-button.md) for anbefalt mønster og versjonsinfo.
 
 ---
 
@@ -113,11 +98,11 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 | Data | [`fhi-data-table`](references/components/fhi-data-table.md) | Tabell-container (caption, striped) — fra v0.37.0 |
 | Data | [`fhi-data-table-row`](references/components/fhi-data-table.md) | Tabellrad (`variant` header/body) |
 | Data | [`fhi-data-table-cell`](references/components/fhi-data-table.md) | Tabellcelle |
-| Typografi | [`fhi-display`](references/components/fhi-display.md) | Display-tekst (stor, fremtredende) |
-| Typografi | [`fhi-title`](references/components/fhi-title.md) | Tittel-tekst |
-| Typografi | [`fhi-headline`](references/components/fhi-headline.md) | Overskrift (h1-h6) |
-| Typografi | [`fhi-body`](references/components/fhi-body.md) | Brødtekst |
-| Typografi | [`fhi-label`](references/components/fhi-label.md) | Label-tekst |
+| Typografi | [`fhi-display`](references/components/typography.md) | Display-tekst (stor, fremtredende) |
+| Typografi | [`fhi-title`](references/components/typography.md) | Tittel-tekst |
+| Typografi | [`fhi-headline`](references/components/typography.md) | Overskrift (h1-h6) |
+| Typografi | [`fhi-body`](references/components/typography.md) | Brødtekst |
+| Typografi | [`fhi-label`](references/components/typography.md) | Label-tekst |
 | Layout | [`fhi-flex`](references/components/fhi-flex.md) | Flexbox-container |
 | Layout | [`fhi-grid`](references/components/fhi-grid.md) | CSS Grid-container |
 | Ikoner | [`fhi-icon-{navn}`](references/icon-usage.md) | Ikoner basert på Lucide Icons (se [ikonlisten](references/icon-usage.md)) |
@@ -130,37 +115,17 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 | [Form-bruk](references/form-usage.md) | FormData, reset, submit |
 | [Design tokens](references/design-tokens.md) | Farger, typografi, spacing, border, motion |
 | [Versjonsindeks](versions/INDEX.md) | Støttede versjoner og nøkkelavvik vs latest |
+| [Feature-historikk](versions/FEATURES.md) | Når public features ble innført (fra og med v0.41) |
 | [Versjonsguide](versions/GUIDE.md) | Beslutningsflyt og svarformat for versjonsspørsmål |
 
 ---
 
 ## Instruksjoner for Claude
 
-1. **Versjon**: Sjekk alltid prosjektets `package.json` for `@folkehelseinstituttet/designsystem` FØR du svarer. Finn versjon → les [`versions/INDEX.md`](versions/INDEX.md) og tilhørende delta-fil. Kun hvis `package.json` ikke er tilgjengelig → be brukeren oppgi versjon. Gi IKKE detaljert API-råd før versjon er fastslått. Se [`versions/GUIDE.md`](versions/GUIDE.md) for fullstendig beslutningsflyt.
+1. **Versjon**: Følg **Versjonsbehandling** øverst i dokumentet (fast path for latest; delta-fil for eldre versjoner).
 2. **Komponent**: Les referansefilen under `references/components/` for den aktuelle komponenten.
 3. **Forms**: Les [Form-bruk](references/form-usage.md) for FormData-integrasjon.
 4. **Design tokens**: Les [Design tokens](references/design-tokens.md) for riktige token-navn.
 5. **Ikoner**: Les [Ikonbruk](references/icon-usage.md) for import-mønster og tilgjengelige ikoner.
 
----
-
-## Vedlikehold av denne skillen
-
-Før merge av endringer, kjør følgende sjekker:
-- `npm view @folkehelseinstituttet/designsystem version` — sjekk siste publiserte versjon
-- Sammenlign komponenttabellen i SKILL.md mot publisert pakke:
-  ```bash
-  # List alle entrypoints i publisert pakke (unntatt ikoner og theme)
-  npm pack @folkehelseinstituttet/designsystem --dry-run --json \
-    | jq -r '.[0].files[].path' \
-    | grep -E '^fhi-[^i]' | grep -v 'fhi-icon' | sort
-  # Forventet: én linje per komponent (fhi-body.js, fhi-button.js, osv.)
-  # Sammenlign manuelt mot komponenttabellen i SKILL.md
-  ```
-- Sjekk at relative markdown-lenker peker til eksisterende filer
-
-> **Publiserte artefakter (fra v0.36.0+):** Pakken inneholder nå `ai-tooling/SKILL.md`
-> (upstreams egen, mer overordnede agent-skill) og per-komponent `*.manifest.json` i tarballen.
-> Merk: manifestfilene er **ikke** egne exports — kun `./custom-elements.json` og
-> komponent-/ikon-entrypoints er deklarert i `package.json` `exports`. Denne repo-skillen
-> er fortsatt den lokale, mer detaljerte kilden; upstream-skillen erstatter den ikke.
+> Vedlikehold av denne skillen gjøres med `oppdater-designsystem`-skillen i dette repoet.
