@@ -191,4 +191,3 @@ images:
     newName: crfhiskybert.azurecr.io/<tenant>_test
     newTag: latest
 ```
-
