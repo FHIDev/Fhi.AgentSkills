@@ -16,5 +16,5 @@ Eldre delta-filer skal **ikke** backfylles.
 
 | Feature | Introduced | Type | Scope | Source |
 |---------|------------|------|-------|--------|
-
-_Tabellen er foreløpig tom — første rader kommer med oppdateringen til v0.41._
+| Ny komponent `fhi-select` (nedtrekksliste, form-assosiert) med entrypoint `./fhi-select` | 0.41.0 | Komponent + entrypoint | `fhi-select` | `custom-elements.json` og `package.json` (exports) i tarball v0.41.2; upstream PR #434 |
+| Ny komponent `fhi-select-item` (alternativ i `fhi-select`) med entrypoint `./fhi-select-item` | 0.41.0 | Komponent + entrypoint | `fhi-select-item` | `custom-elements.json` og `package.json` (exports) i tarball v0.41.2; upstream PR #434 |

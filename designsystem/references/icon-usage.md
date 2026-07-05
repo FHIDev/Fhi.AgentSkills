@@ -105,7 +105,7 @@ Se [`fhi-text-input`](components/fhi-text-input.md) for runtime-validering og fa
 
 ## Tilgjengelige ikoner
 
-> Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.40.0`
+> Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.41.2`
 > (`file-text` lagt til i v0.38.0; ellers uendret fra v0.34.0).
 
 Alle importeres som `@folkehelseinstituttet/designsystem/fhi-icon-{navn}` og brukes som `<fhi-icon-{navn}>`.

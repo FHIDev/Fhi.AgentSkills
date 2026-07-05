@@ -2,17 +2,17 @@
 name: designsystem
 description: Ekspert på FHI Designsystem (@folkehelseinstituttet/designsystem, designsystem.fhi.no). Bruk ved installasjon eller oppsett av designsystemet, bruk av FHI-komponenter (fhi-button, fhi-text-input, fhi-checkbox, etc.), bruk av FHI design tokens (farger, typografi, spacing), ikoner, rammeverk-integrasjon (React, Angular, Blazor), eller spørsmål om komponenter brukeren har sett i designsystemets Storybook. Gjelder også når brukeren sier «FHI-komponent» eller bygger skjema/UI i en FHI-app uten å nevne designsystemet eksplisitt.
 ---
-<!-- Basert på @folkehelseinstituttet/designsystem v0.40.0 -->
+<!-- Basert på @folkehelseinstituttet/designsystem v0.41.2 -->
 
 # FHI Designsystem — Brukerveiledning
 
 Bruk FHI Designsystem i egne prosjekter. Designsystemet er basert på standard web components og fungerer i alle rammeverk.
 
-> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.40.0 — latest)
+> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.41.2 — latest)
 > **Dokumentasjon:** https://designsystem.fhi.no/
 > **GitHub:** https://github.com/FHIDev/Fhi.Designsystem
 > **Figma:** https://www.figma.com/design/VgQG6XeEbFOmHIrxyAOACR/FHI-Designsystem
-> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.40.0` (2026-06-28)
+> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.41.2` (2026-07-05)
 > **Støttepolicy:** Latest + 9 tidligere minor (totalt 10 minor). Se [`versions/INDEX.md`](versions/INDEX.md) for støttede versjoner.
 >
 > **Versjonsbehandling:**
@@ -75,7 +75,7 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 
 **KRITISK**: Bruk alltid **semantiske design tokens** i egen CSS. Aldri bruk hardkodede farge- eller størrelsesverdier. Bruk `var(--fhi-color-accent-base-default)`, ikke `#2a76c6`.
 
-**KRITISK**: Form-komponenter (fhi-text-input, fhi-checkbox, fhi-radio, fhi-date-input) deltar automatisk i native HTML `<form>` via ElementInternals. Sett `name`-attributt for FormData-deltakelse.
+**KRITISK**: Form-komponenter (fhi-text-input, fhi-checkbox, fhi-radio, fhi-date-input, fhi-select) deltar automatisk i native HTML `<form>` via ElementInternals. Sett `name`-attributt for FormData-deltakelse.
 
 **VIKTIG**: Ikoner importeres som egne komponenter: `import '.../fhi-icon-search'`, ikke som en samlet ikonpakke.
 
@@ -92,6 +92,8 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 | Form | [`fhi-date-input`](references/components/fhi-date-input.md) | Datofelt med kalender (YYYY-MM-DD) |
 | Form | [`fhi-checkbox`](references/components/fhi-checkbox.md) | Avkrysningsboks |
 | Form | [`fhi-radio`](references/components/fhi-radio.md) | Radioknapp (grupper med felles `name`) |
+| Form | [`fhi-select`](references/components/fhi-select.md) | Nedtrekksliste — fra v0.41.0 |
+| Form | [`fhi-select-item`](references/components/fhi-select.md) | Alternativ i `fhi-select` |
 | Visuell | [`fhi-tag`](references/components/fhi-tag.md) | Status-/kategorimerke |
 | Visuell | [`fhi-tooltip`](references/components/fhi-tooltip.md) | Tooltip med auto-posisjonering |
 | Visuell | [`fhi-modal-dialog`](references/components/fhi-modal-dialog.md) | Modal dialog |

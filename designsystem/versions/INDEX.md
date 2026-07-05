@@ -1,11 +1,12 @@
 # Versjonsindeks
 
-Baseline er alltid SKILL.md (latest v0.40.0).
+Baseline er alltid SKILL.md (latest v0.41.2).
 Støttepolicy: Latest + 9 tidligere minor (totalt 10 minor).
 
 | Versjon | Status      | Nøkkelavvik vs latest                             | Delta-fil       |
 |---------|-------------|---------------------------------------------------|-----------------|
-| 0.40.x  | Latest      | —                                                 | —               |
+| 0.41.x  | Latest      | —                                                 | —               |
+| 0.40.x  | Supported   | Mangler `fhi-select`/`fhi-select-item` (se FEATURES.md); patch-avvik i 0.40.0–0.40.6 (font, typografi-color) | [v0.40.x.md](v0.40.x.md) |
 | 0.39.x  | Supported   | `fhi-tag` mangler `variant="bordered"`            | [v0.39.x.md](v0.39.x.md) |
 | 0.38.x  | Supported   | `fhi-tag` mangler `bordered`; typografi-default ≠ `currentcolor` | [v0.38.x.md](v0.38.x.md) |
 | 0.37.x  | Supported   | Mangler `fhi-tag` `bordered` og `fhi-icon-file-text`; typografi-default ≠ `currentcolor` | [v0.37.x.md](v0.37.x.md) |
@@ -14,8 +15,7 @@ Støttepolicy: Latest + 9 tidligere minor (totalt 10 minor).
 | 0.34.x  | Supported   | `fhi-text-input` mangler `start`/`end` ikon-slots; eldre input-width-atferd; inkl. nyere 0.35–0.40-avvik | [v0.34.x.md](v0.34.x.md) |
 | 0.33.x  | Supported   | Mangler publiserte `exports`/`.d.ts` for import-intellisense; inkl. nyere 0.35–0.40-avvik | [v0.33.x.md](v0.33.x.md) |
 | 0.32.x  | Supported   | `fhi-grid` mangler `rows`-property; inkl. nyere 0.35–0.40-avvik | [v0.32.x.md](v0.32.x.md) |
-| 0.31.x  | Supported   | Robustere håndtering av null-/ugyldige verdier i latest; inkl. nyere 0.35–0.40-avvik | [v0.31.x.md](v0.31.x.md) |
-| < 0.31  | Ikke støttet | Best effort, anbefal oppgradering                | —               |
+| < 0.32  | Ikke støttet | Best effort, anbefal oppgradering                | —               |
 
 Matching- og patch-regler: se [GUIDE.md](GUIDE.md).
 Innføringsversjoner for nye features (fra og med v0.41): se [FEATURES.md](FEATURES.md).
