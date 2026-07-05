@@ -78,7 +78,10 @@ Denne symlink-løsningen er bevisst valgt for å unngå duplisering, men har for
 GitHub Actions-workflowen
 [`validate-codex-plugins.yml`](../.github/workflows/validate-codex-plugins.yml)
 sjekker at git-modus for alle lenker under `plugins/codex/*/skills/` er `120000` (symlink),
-og feiler ellers. Sjekken leser git-treet, ikke arbeidskopien, så den fanger opp en
+og feiler ellers. I tillegg valideres hver marketplace-entry mot manifestet sitt:
+`<source.path>/.codex-plugin/plugin.json` må finnes med samsvarende `name`,
+`skills: "./skills"` og et `version`-felt, minst én `skills/*/SKILL.md` må være nåbar via
+plugin-stien, og plugin-mapper som ikke er registrert i marketplace gir feil. Sjekken leser git-treet, ikke arbeidskopien, så den fanger opp en
 Windows-checkout som har staget en symlink som vanlig fil. For at dette skal *hindre* merge
 til `main`, må sjekken være påkrevd status-check i repoets ruleset (workflowen kjører derfor
 uten path-filter på pull requests).

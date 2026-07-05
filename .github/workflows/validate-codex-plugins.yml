@@ -71,31 +71,62 @@ jobs:
           except Exception as e:
               sys.exit(f"Ugyldig JSON i {MARKETPLACE}: {e}")
 
+          def resolve_link(p):
+              # Paa Linux materialiseres symlinken (isdir); en Windows-checkout
+              # uten symlink-stoette har i stedet en vanlig fil med lenkemaalet.
+              if os.path.isfile(p):
+                  target = open(p).read().strip()
+                  return os.path.normpath(os.path.join(os.path.dirname(p), target))
+              return p
+
           paths = set()
           for p in mp.get("plugins", []):
               name = p.get("name")
               path = (p.get("source") or {}).get("path")
-              if not path:
-                  errors.append(f"Entry '{name}' mangler source.path")
+              ctx = f"entry '{name}' (path: {path})"
+              if not name or not path:
+                  errors.append(f"Entry mangler name/source.path: {p}")
                   continue
               paths.add(path)
               # source.path loeses relativt til repo-roten
               if not os.path.isdir(path):
-                  errors.append(f"Entry '{name}': source.path '{path}' finnes ikke")
+                  errors.append(f"{ctx}: source.path finnes ikke")
+                  continue
+
+              manifest = os.path.join(path, ".codex-plugin", "plugin.json")
+              if not os.path.isfile(manifest):
+                  errors.append(f"{ctx}: mangler {manifest}")
+              else:
+                  try:
+                      m = json.load(open(manifest))
+                  except Exception as e:
+                      errors.append(f"{ctx}: ugyldig JSON i {manifest}: {e}")
+                  else:
+                      if m.get("name") != name:
+                          errors.append(f"{ctx}: name i {manifest} er '{m.get('name')}', forventet '{name}'")
+                      if m.get("skills") != "./skills":
+                          errors.append(f"{ctx}: skills i {manifest} er '{m.get('skills')}', forventet './skills'")
+                      # Codex-manifester versjoneres eksplisitt (se docs/codex-plugins.md)
+                      if not m.get("version"):
+                          errors.append(f"{ctx}: mangler version i {manifest}")
+
+              # Minst en skill maa vaere naabar via pluginens skills/-mappe
+              skills = glob.glob(os.path.join(path, "skills", "*"))
+              if not any(os.path.isfile(os.path.join(resolve_link(s), "SKILL.md")) for s in skills):
+                  errors.append(f"{ctx}: ingen lesbar skills/*/SKILL.md under {path}")
+
+              if not errors:
+                  print(f"OK {ctx}")
 
           missing = REQUIRED_PATHS - paths
           if missing:
               errors.append(f"Forventede plugin-stier mangler i {MARKETPLACE}: {sorted(missing)}")
 
-          manifests = glob.glob("plugins/codex/*/.codex-plugin/plugin.json")
-          if not manifests:
-              errors.append("Fant ingen plugin.json under plugins/codex/*/.codex-plugin/")
-          for manifest in manifests:
-              try:
-                  json.load(open(manifest))
-                  print(f"OK gyldig JSON: {manifest}")
-              except Exception as e:
-                  errors.append(f"Ugyldig JSON i {manifest}: {e}")
+          # Fang ogsaa opp plugin-mapper som ikke er registrert i marketplace
+          for manifest in glob.glob("plugins/codex/*/.codex-plugin/plugin.json"):
+              plugin_dir = "./" + os.path.dirname(os.path.dirname(manifest)).replace(os.sep, "/")
+              if plugin_dir not in paths:
+                  errors.append(f"{manifest} er ikke registrert i {MARKETPLACE}")
 
           if errors:
               print("\n".join(f"FEIL: {e}" for e in errors))
