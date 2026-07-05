@@ -169,9 +169,14 @@ scripts/tenant--*.sh
 scripts/lib/grafana/*.sh
 # Andre scripts/lib/*.sh leses selektivt bare når de sources av en endret
 # tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk.
+
+# sk8 Go-CLI (intern-merket i docs, men tenant-nyttig): kun README og innebygd
+# klusterregister er signal. Publisert register: docs-repoets docs/sk8/clusters.json.
+utils/sk8/README.md
+utils/sk8/data/clusters.json
 ```
 
-**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, `infra/traefik/`, `infra/tenant-repositories/`, øvrige drifts-scripts.
+**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, `infra/traefik/`, `infra/tenant-repositories/`, øvrige drifts-scripts, samt `utils/**` utover sk8-filene i mønsteret over (Go-kildekode, `utils/version-checker/`, `utils/grafana-airgapped/`) og `.github/workflows/utils-sk8-*.yaml`.
 
 **Ny tenant vs. innholdsendring:** `infra/tenant-repositories/base/ocirepos/*.yaml` (OCIRepository pr. tenant) og `infra/grafana/*/patch-orgs.yaml` (Entra-gruppe→org-mapping) endres typisk når en **ny tenant** legges til. Da følger de et allerede dokumentert mønster og gir normalt ingen skill-endring — og UUID-er/Entra-gruppe-IDer i `patch-orgs.yaml` filtreres bort per sikkerhetsreglene. Behandle dem kun som skill-relevante hvis selve mønsteret endres (nytt felt, ny provider, endret URL-konvensjon), ikke når en ny tenant-instans tilføyes.
 

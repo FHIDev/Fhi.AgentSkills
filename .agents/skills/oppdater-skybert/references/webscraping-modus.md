@@ -159,9 +159,7 @@ I web-scraping-modus utføres kun **Del A — Docs coverage-matrise**:
 | `auth/workload-identity/` | WI | `references/security.md` | Delvis | Federated credential-oppsett, token-utløp | -- |
 | `new-topic/` | Nytt emne | Ikke dekket | Fraværende | Alt | ny `references/new-topic.md` |
 
-**Regler for dekningsgrad:**
-- `Delvis` er ugyldig uten konkret innhold i «Hva mangler»-kolonnen — det skal stå *hvilke* opplysninger fra siden som ikke er representert, ikke bare at noe mangler. Hver mangel skal ha en tilhørende endringspost (eller eksplisitt begrunnelse for hvorfor den droppes).
-- `Komplett` for normative sider (CRD-referanser, policy-oversikter) krever felt-/regel-nivå-verifikasjon — ikke bare at temaet er omtalt.
+**Regler for dekningsgrad:** se «Regler for dekningsgrad» i [analyseregler.md](analyseregler.md).
 
 Del B (infra signal inventory) og Del C (innhold uten kilde) kan ikke utføres uten repo-tilgang.
 

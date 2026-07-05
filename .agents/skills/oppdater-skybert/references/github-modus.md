@@ -169,9 +169,14 @@ scripts/tenant--*.sh
 scripts/lib/grafana/*.sh
 # Andre scripts/lib/*.sh leses selektivt bare når de sources av en endret
 # tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk.
+
+# sk8 Go-CLI (intern-merket i docs, men tenant-nyttig): kun README og innebygd
+# klusterregister er signal. Publisert register: docs-repoets docs/sk8/clusters.json.
+utils/sk8/README.md
+utils/sk8/data/clusters.json
 ```
 
-**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, `infra/traefik/`, `infra/tenant-repositories/`, øvrige drifts-scripts.
+**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, `infra/traefik/`, `infra/tenant-repositories/`, øvrige drifts-scripts, samt `utils/**` utover sk8-filene i mønsteret over (Go-kildekode, `utils/version-checker/`, `utils/grafana-airgapped/`) og `.github/workflows/utils-sk8-*.yaml`.
 
 **Ny tenant vs. innholdsendring:** `infra/tenant-repositories/base/ocirepos/*.yaml` (OCIRepository pr. tenant) og `infra/grafana/*/patch-orgs.yaml` (Entra-gruppe→org-mapping) endres typisk når en **ny tenant** legges til. Da følger de et allerede dokumentert mønster og gir normalt ingen skill-endring — og UUID-er/Entra-gruppe-IDer i `patch-orgs.yaml` filtreres bort per sikkerhetsreglene. Behandle dem kun som skill-relevante hvis selve mønsteret endres (nytt felt, ny provider, endret URL-konvensjon), ikke når en ny tenant-instans tilføyes.
 
@@ -191,16 +196,9 @@ Ren driftskonfigurasjon (replicas, resources, intern tuning) i disse mappene er 
 
 ## Sikkerhetsfiltreringsregler
 
-| Kategori | Handling |
-|----------|----------|
-| **ALDRI inkluder** | Credentials, tokens, connection strings, passord |
-| **ALDRI inkluder** | Spesifikke IP-adresser for interne systemer |
-| **ALDRI inkluder** | Azure tenant IDs, subscription IDs som ikke allerede er i skillen |
-| **ALDRI inkluder** | Service principal secrets eller certificate thumbprints |
-| **VURDER med forsiktighet** | Interne hostnavn, DNS-oppføringer, ACR-URLer |
-| **OK å inkludere** | Arkitekturmønstre, navnekonvensjoner, generelle strukturer, CRD-skjemaer, arbeidsflyter |
-
-Azure Subscription IDs og kluster-IP-ranges anonymiseres med plassholdere (`<subscription-id>`, `<ip-range>`) med mindre de allerede er i eksisterende skillfiler. Tenant-navn fra `tenants/`-mappen brukes som eksempler.
+Definert ett sted: se «Anonymisering / sikkerhetsfiltreringsregler» i
+[analyseregler.md](analyseregler.md). Reglene gjelder alt innhold hentet i denne modusen —
+spesielt infra-repoet (subscription IDs, IP-ranges, Entra-gruppe-IDer).
 
 ---
 
@@ -315,9 +313,7 @@ Disse kopiene skal ALDRI drifte stille: ved FULL modus sammenlignes de alltid mo
 
 Hver docs-side MÅ finnes i denne tabellen. Ingen side skal mangle.
 
-**Regler for dekningsgrad:**
-- `Delvis` er ugyldig uten konkret innhold i «Hva mangler»-kolonnen — det skal stå *hvilke* opplysninger fra siden som ikke er representert, ikke bare at noe mangler. Hver mangel skal ha en tilhørende endringspost (eller eksplisitt begrunnelse for hvorfor den droppes).
-- `Komplett` for normative sider (CRD-referanser, policy-oversikter) krever felt-/regel-nivå-verifikasjon — ikke bare at temaet er omtalt.
+**Regler for dekningsgrad:** se «Regler for dekningsgrad» i [analyseregler.md](analyseregler.md).
 
 ### Del B — Infra repo signal inventory
 

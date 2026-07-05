@@ -43,11 +43,19 @@ kubectl get pods -n tn-<tenant>
 
 ## Tilgjengelige klustere
 
-> **Sist oppdatert 2026-06-03.** Se offisiell docs for løpende oppdaterte verdier: https://docs.sky.fhi.no/get-started/connectedk8s/
+> **Sist oppdatert 2026-07-04.** Se offisiell docs for løpende oppdaterte verdier: https://docs.sky.fhi.no/get-started/connectedk8s/
 >
 > Infra-repoets `scripts/lib/clusters.sh` er autoritativt metadataregister (navn, resource group, subscription ID). Ved tvil, slå opp der.
 >
+> **Maskinlesbart register:** Plattformen publiserer klusterregisteret som JSON på
+> **https://docs.sky.fhi.no/sk8/clusters.json** — per kluster: `name`, `resourceGroup`,
+> `subscription`, `oidcIssuerUrl` og `needsPim`. Nyttig for oppslag/automatisering uten repo-tilgang.
+> Registeret bekrefter tabellene under, inkludert PIM-regelen (`needsPim: true` for alle
+> prod-klustere og `aks-red-test-01`). Det publiserte registeret inneholder fortsatt
+> `aks-yellow-test-01` (under utfasing).
+>
 > Kilde (autoritativ kluster-liste): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/scripts/lib/clusters.sh
+> Kilde (publisert register): https://docs.sky.fhi.no/sk8/clusters.json
 
 Totalt 10 klustere er registrert i `scripts/lib/clusters.sh`. I den autoritative
 `COLOR_GROUP_CLUSTERS`-mappingen er `aks-yellow-test-02` aktivt testkluster for
@@ -101,6 +109,7 @@ az login
 ```
 
 > Kilde: https://docs.sky.fhi.no/miscellaneous/PIM/
+> Kilde (needsPim per kluster): https://docs.sky.fhi.no/sk8/clusters.json
 
 ### OIDC issuer URL-er
 
@@ -185,6 +194,33 @@ az connectedk8s proxy --resource-group rg-fhi-aks-yellow-prod-weu-01 --name aks-
 ```powershell
 az connectedk8s proxy --resource-group rg-fhi-aks-red-prod-weu-01 --name aks-red-prod-01 --subscription 88fde73a-d4a6-4aab-b8be-31810fcd7116
 ```
+
+## sk8 CLI — automatisert PIM + proxy
+
+> **Intern (plattformteam):** `sk8` vedlikeholdes i infra-repoet og releases der
+> (`sk8/v*`-tags) — tilgang til releases krever tilgang til `FHISkybert/Fhi.Skybert.Infra`.
+> Funksjonaliteten er nyttig for alle med kubectl-tilgang, men verktøyet er merket internt i docs.
+
+Go-basert CLI som automatiserer tilkoblingsflyten over:
+
+- **`sk8 cluster [navn]`** — velg kluster (interaktiv picker eller fuzzy-match på delnavn),
+  aktiver PIM om nødvendig (`--justification`, `--duration-hours`), og start
+  `az connectedk8s proxy` i bakgrunnen. Kjøres den på nytt mens en proxy allerede kjører,
+  kan den bytte kubectl-context i stedet. `sk8 cluster list` viser registeret.
+- **`sk8 status --tenant <tenant>`** — mini-dashboard som sammenligner siste commit i
+  GitOps-repoet (`FHIDev/Fhi.<Tenant>.GitOps`, via `gh`) med det Flux faktisk har deployet
+  (`Kustomization.status.lastAppliedOriginRevision` + readiness), og skanner `tn-<tenant>`
+  for suspenderte Kustomizations, crash-loops, image pull-feil og deployments uten klare replikaer.
+
+Klusterregisteret hentes fra `https://docs.sky.fhi.no/sk8/clusters.json` (med lokal cache og
+innebygd fallback). Forutsetninger: `az` (med `connectedk8s`-extension), `kubectl`, `gh`.
+
+> **Merk:** Docs-siden `internal/sk8-cli.md` beskriver en eldre `sk8` — en script-dispatcher
+> (`scripts/sk8`) som mapper `sk8 tenant new` → `scripts/tenant--new.sh` osv. Begge finnes i
+> infra-repoet; Go-CLI-en over er den nye binæren i `utils/sk8/`.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/utils/sk8/README.md
+> Kilde: https://docs.sky.fhi.no/internal/sk8-cli/
 
 ## Nyttige kubectl-kommandoer
 

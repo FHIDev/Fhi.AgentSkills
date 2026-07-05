@@ -33,7 +33,7 @@ skybert/
 ├── .claude-plugin/plugin.json               (plugin-manifest — vedlikeholdes IKKE av denne skillen)
 └── references/
     ├── skybertapp-crd.md                    (SkybertApp XRD-spec)
-    ├── webapp-crd.md                        (legacy WebApp XRD, migreringsguide)
+    ├── legacy-webapp-csi.md                 (legacy WebApp CRD + CSI driver, migreringsguide)
     ├── configuration.md                     (deployment-metoder)
     ├── secrets.md                           (secrets-moenstre)
     ├── security.md                          (Workload Identity, sikkerhet)

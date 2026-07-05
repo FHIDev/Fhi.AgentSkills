@@ -117,7 +117,7 @@ podDisruptionBudget:
 | `metrics.path` | string | `/metrics` | Path til metrics-endepunkt |
 | `metrics.scheme` | string | `http` | `http` eller `https` |
 
-Når `metrics` er satt, legger composition automatisk til `prometheus.io/scrape: "true"`, `prometheus.io/port`, ev. `prometheus.io/path` og `prometheus.io/scheme` på pod-template. Metrics filtreres til `tn-<tenant>` i Mimir via cortex-tenant-proxy. Se [Observability](observability.md).
+Når `metrics` er satt, legger composition automatisk til `prometheus.io/scrape: "true"`, `prometheus.io/port`, ev. `prometheus.io/path` og `prometheus.io/scheme` på pod-template. Metrics filtreres til `tn-<tenant>` i Mimir via cortex-tenant-proxy. I Grafana finner du appens metrics ved å filtrere på labelen `app=<metadata.name>`. Se [Observability](observability.md).
 
 ```yaml
 metrics:
@@ -203,6 +203,7 @@ secrets:
 | `initContainers[].image.repository` | string | **påkrevet** | Image repository |
 | `initContainers[].image.tag` | string | **påkrevet** | Image tag |
 | `initContainers[].command` | string[] | — | Kommando å kjøre |
+| `initContainers[].args` | string[] | — | Argumenter til kommandoen |
 | `initContainers[].resources.cpu` | string | `150m` | CPU request |
 | `initContainers[].resources.memory` | string | `256Mi` | Memory request/limit |
 | `initContainers[].readOnlyRootFilesystem` | boolean | `false` | Read-only root filesystem |
@@ -216,6 +217,7 @@ secrets:
 | `sidecarContainers[].image.repository` | string | **påkrevet** | Image repository |
 | `sidecarContainers[].image.tag` | string | **påkrevet** | Image tag |
 | `sidecarContainers[].command` | string[] | — | Kommando å kjøre |
+| `sidecarContainers[].args` | string[] | — | Argumenter til kommandoen |
 | `sidecarContainers[].resources.cpu` | string | `150m` | CPU request |
 | `sidecarContainers[].resources.memory` | string | `256Mi` | Memory request/limit |
 | `sidecarContainers[].readOnlyRootFilesystem` | boolean | `false` | Read-only root filesystem |

@@ -61,7 +61,9 @@ Typiske bruksområder:
 
 Skybert leverer to typer managed identities per tenant:
 
-- **ACR-push identity** — brukes av GitHub Actions-workflows for å pushe images til ACR. Én per tenant.
+- **ACR-push identity** (`tn-<tenant>-acr-push`) — brukes av GitHub Actions-workflows for å pushe images til ACR. Én per tenant, federert til GitOps-repoet ved onboarding. Plattformteamet kan federere flere app-repoer til samme identitet (per branch `refs/heads/main` eller per GitHub environment). GitOps-malen `FHISkybert/Fhi.Skybert.Template.GitOps` viser workflow-oppsettet.
+
+  > Kilde (intern): https://docs.sky.fhi.no/internal/attach-application-repo/
 - **Workload Identities per miljø** — én per miljø (`sandbox`, `test`, `prod`) etter mønsteret `tn-<tenant>-skybert-sa-<env>`. Disse kobles mot Kubernetes service account `<tenant>-azure` i det respektive miljø-klusteret via OIDC federation, slik at applikasjonen får passordløs tilgang til Azure-ressurser.
 
 Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per miljø (least-privilege). Client ID-ene for workload identities er synlige på Kubernetes service accounts som annotasjoner.
