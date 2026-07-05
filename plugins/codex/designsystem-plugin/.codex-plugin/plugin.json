@@ -1,0 +1,10 @@
+{
+  "name": "designsystem-plugin",
+  "version": "0.1.0",
+  "description": "Codex-plugin med Designsystem-skill.",
+  "skills": "./skills",
+  "author": {
+    "name": "Folkehelseinstituttet"
+  },
+  "repository": "https://github.com/FHIDev/Fhi.AgentSkills"
+}

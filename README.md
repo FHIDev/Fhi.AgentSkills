@@ -32,20 +32,22 @@ Disse skillene brukes til å holde domenekunnskap-skillene i dette repoet oppdat
 
 ## Plugin
 
-`skybert` er også tilgjengelig som plugin, som alternativ til symlink-oppsettet under.
+`skybert` og `designsystem` er også tilgjengelige som plugins, som alternativ til
+symlink-oppsettet under.
 
-**Claude Code** – distribueres direkte fra `skybert/` via en marketplace i repoet:
+**Claude Code** – distribueres direkte fra skill-mappene via en marketplace i repoet:
 
 ```text
 /plugin marketplace add FHIDev/Fhi.AgentSkills
 /plugin install skybert-plugin@fhi-agent-skills
+/plugin install designsystem-plugin@fhi-agent-skills
 ```
 
-Se [docs/claude-plugin-skybert.md](docs/claude-plugin-skybert.md) for detaljer.
+Se [docs/claude-plugins.md](docs/claude-plugins.md) for detaljer.
 
-**Codex** – en egen Codex-plugin under `plugins/codex/skybert-plugin/` lenker til `skybert/`
-via en symlink (ingen kopi), med marketplace i `.agents/plugins/marketplace.json`. Se
-[docs/codex-plugin-skybert.md](docs/codex-plugin-skybert.md) for detaljer og forbehold.
+**Codex** – egne Codex-plugins under `plugins/codex/` lenker til skill-mappene
+via symlinks (ingen kopi), med marketplace i `.agents/plugins/marketplace.json`. Se
+[docs/codex-plugins.md](docs/codex-plugins.md) for detaljer og forbehold.
 
 ## Installasjon
 
