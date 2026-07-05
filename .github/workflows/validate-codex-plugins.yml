@@ -1,0 +1,104 @@
+name: Validate Codex plugins
+
+# Validerer Codex-pluginene. Skillene lenkes via symlink fra
+# plugins/codex/<plugin>/skills/<skill> -> <skill-mappe i repo-roten>, saa det
+# finnes ingen kopi aa bygge - kun validering, inkludert en vakt mot at
+# symlinkene blir oedelagt (f.eks. staget som vanlig fil fra en
+# Windows-checkout uten symlink-stoette).
+#
+# Kjoerer uten path-filter paa pull_request fordi jobben er paakrevd
+# status-check paa main: med path-filter ville PR-er som ikke roerer
+# plugin-filene aldri faa checken og bli umulige aa merge.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Symlink-vakt for alle skill-lenker
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          links=(plugins/codex/*/skills/*)
+          [ ${#links[@]} -gt 0 ] || { echo "Fant ingen skill-lenker under plugins/codex/*/skills/"; exit 1; }
+          for link in "${links[@]}"; do
+            # Les git-treet (ikke arbeidskopien) -> OS-uavhengig sjekk
+            mode=$(git ls-files -s "$link" | awk '{print $1}')
+            if [ "$mode" != "120000" ]; then
+              echo "Symlinken $link er oedelagt (mode '$mode', forventet '120000')."
+              echo "En Windows-checkout kan ha staget den som vanlig fil. Gjenopprett symlinken."
+              exit 1
+            fi
+            echo "OK symlink $link (mode 120000), peker paa: $(git cat-file -p "$(git rev-parse :"$link")")"
+
+            # Paa Linux materialiseres symlinken, saa SKILL.md skal vaere lesbar via den
+            [ -f "$link/SKILL.md" ] || { echo "Naar ikke $link/SKILL.md via symlinken"; exit 1; }
+            echo "OK SKILL.md naas via $link"
+          done
+
+      - name: Valider manifester og marketplace-stier
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import glob, json, os, sys
+
+          MARKETPLACE = ".agents/plugins/marketplace.json"
+          # Vakt mot at en plugin fjernes ved et uhell:
+          REQUIRED_PATHS = {
+              "./plugins/codex/skybert-plugin",
+              "./plugins/codex/designsystem-plugin",
+          }
+
+          errors = []
+
+          try:
+              mp = json.load(open(MARKETPLACE))
+          except Exception as e:
+              sys.exit(f"Ugyldig JSON i {MARKETPLACE}: {e}")
+
+          paths = set()
+          for p in mp.get("plugins", []):
+              name = p.get("name")
+              path = (p.get("source") or {}).get("path")
+              if not path:
+                  errors.append(f"Entry '{name}' mangler source.path")
+                  continue
+              paths.add(path)
+              # source.path loeses relativt til repo-roten
+              if not os.path.isdir(path):
+                  errors.append(f"Entry '{name}': source.path '{path}' finnes ikke")
+
+          missing = REQUIRED_PATHS - paths
+          if missing:
+              errors.append(f"Forventede plugin-stier mangler i {MARKETPLACE}: {sorted(missing)}")
+
+          manifests = glob.glob("plugins/codex/*/.codex-plugin/plugin.json")
+          if not manifests:
+              errors.append("Fant ingen plugin.json under plugins/codex/*/.codex-plugin/")
+          for manifest in manifests:
+              try:
+                  json.load(open(manifest))
+                  print(f"OK gyldig JSON: {manifest}")
+              except Exception as e:
+                  errors.append(f"Ugyldig JSON i {manifest}: {e}")
+
+          if errors:
+              print("\n".join(f"FEIL: {e}" for e in errors))
+              sys.exit(1)
+          print("OK Codex-manifester og marketplace validert")
+          PY

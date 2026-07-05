@@ -1,0 +1,92 @@
+name: Validate Claude plugins
+
+# Validerer plugin- og marketplace-manifestene for alle Claude Code-plugins.
+# Skillene distribueres direkte som plugins (marketplace source peker paa
+# skill-mappene), saa det finnes ingen generert kopi aa bygge - kun validering.
+#
+# Kjoerer uten path-filter paa pull_request fordi jobben er paakrevd
+# status-check paa main: med path-filter ville PR-er som ikke roerer
+# plugin-filene aldri faa checken og bli umulige aa merge.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Valider marketplace og alle plugin-entries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, re, sys
+
+          MARKETPLACE = ".claude-plugin/marketplace.json"
+          # Vakt mot at en plugin fjernes ved et uhell:
+          REQUIRED_SOURCES = {"./skybert", "./designsystem"}
+
+          errors = []
+
+          try:
+              mp = json.load(open(MARKETPLACE))
+          except Exception as e:
+              sys.exit(f"Ugyldig JSON i {MARKETPLACE}: {e}")
+
+          plugins = mp.get("plugins", [])
+          if not plugins:
+              errors.append(f"{MARKETPLACE} har ingen plugins")
+
+          sources = {p.get("source") for p in plugins}
+          missing = REQUIRED_SOURCES - sources
+          if missing:
+              errors.append(f"Forventede plugin-sources mangler i {MARKETPLACE}: {sorted(missing)}")
+
+          for p in plugins:
+              name, src = p.get("name"), p.get("source")
+              ctx = f"plugin '{name}' (source: {src})"
+              if not name or not src:
+                  errors.append(f"Entry mangler name/source: {p}")
+                  continue
+              if not os.path.isdir(src):
+                  errors.append(f"{ctx}: source-mappa finnes ikke")
+                  continue
+              manifest = os.path.join(src, ".claude-plugin", "plugin.json")
+              if not os.path.isfile(manifest):
+                  errors.append(f"{ctx}: mangler {manifest}")
+              else:
+                  try:
+                      m = json.load(open(manifest))
+                      if m.get("name") != name:
+                          errors.append(f"{ctx}: name i {manifest} er '{m.get('name')}', forventet '{name}'")
+                  except Exception as e:
+                      errors.append(f"{ctx}: ugyldig JSON i {manifest}: {e}")
+              skill = os.path.join(src, "SKILL.md")
+              if not os.path.isfile(skill):
+                  errors.append(f"{ctx}: mangler {skill}")
+              else:
+                  # Frontmatter maa ha name: - ellers faar skillen ustabilt navn
+                  # (install-katalognavnet) ved marketplace-install.
+                  text = open(skill, encoding="utf-8").read()
+                  fm = re.match(r"\A---\r?\n(.*?)\r?\n---", text, re.S)
+                  if not fm or not re.search(r"^name:\s*\S+", fm.group(1), re.M):
+                      errors.append(f"{ctx}: {skill} mangler 'name:' i YAML-frontmatter")
+              if not errors:
+                  print(f"OK {ctx}")
+
+          if errors:
+              print("\n".join(f"FEIL: {e}" for e in errors))
+              sys.exit(1)
+          print(f"OK {len(plugins)} plugin(s) validert")
+          PY

@@ -1,0 +1,8 @@
+{
+  "name": "designsystem-plugin",
+  "description": "Designsystem-skill: FHI Designsystem (@folkehelseinstituttet/designsystem) – komponenter, design tokens, ikoner og rammeverk-integrasjon.",
+  "author": {
+    "name": "Folkehelseinstituttet"
+  },
+  "repository": "https://github.com/FHIDev/Fhi.AgentSkills"
+}
