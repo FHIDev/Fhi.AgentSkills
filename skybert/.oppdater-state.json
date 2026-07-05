@@ -1,33 +1,33 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-06-28T17:24:29Z",
+  "updatedAt": "2026-07-04T18:45:30Z",
   "mode": "github",
-  "lastFullscanDate": "2026-06-03",
-  "sistVerifisert": "2026-06-28",
+  "lastFullscanDate": "2026-07-04",
+  "sistVerifisert": "2026-07-04",
   "github": {
     "docs": {
       "repo": "FHISkybert/Fhi.Skybert.Docs",
       "branch": "main",
-      "commit": "004f468ba372c6cfc8173f9d05ec5bc5a85ae5ba",
-      "commitDate": "2026-06-25"
+      "commit": "c0d4e7d710e87ace56ac05b10932255ede27b4d5",
+      "commitDate": "2026-06-29"
     },
     "infra": {
       "repo": "FHISkybert/Fhi.Skybert.Infra",
       "branch": "main",
-      "commit": "c31fccc2ab593ffdbf523b14b20677aba4db8fd5",
-      "commitDate": "2026-06-26"
+      "commit": "0c766cae1b41d7633f29b30f6fd211501515953d",
+      "commitDate": "2026-07-03"
     }
   },
   "openItems": [
     {
-      "id": "gateway-api-tenant-bruk",
+      "id": "fhi-felles-cryptography-dekning",
       "status": "deferred",
       "category": "VURDER",
-      "target": "references/hostnames-and-networking.md",
-      "source": "docs/internal/decisions/gatewayapi.md + tenants/sindre-exempl (infra)",
-      "summary": "Skal skillen gi konkret tenant-veiledning for Gateway API (Gateway/HTTPRoute/ListenerSet) nå, eller vente til docs har stabil veiledning? Eksemplene i tenants/sindre-exempl er eksperimentelle (PLACEHOLDER-hostname, aktiveres via overlay) og motsier docs-modellen (ListenerSet mot delt Gateway vs. egen Gateway).",
-      "firstSeen": "2026-06-28",
-      "lastSeen": "2026-06-28"
+      "target": "references/configuration.md",
+      "source": "docs/miscellaneous/fhi-felles-cryptography.md",
+      "summary": "Eneste udekkede docs-side. Skal skillen nevne Fhi.Felles.Cryptography (DPAPI-fri bruk på Linux, nøkler i Key Vault), eller droppes siden permanent som bibliotekdokumentasjon utenfor plattform-scope? Anbefaling: dropp.",
+      "firstSeen": "2026-07-04",
+      "lastSeen": "2026-07-04"
     }
   ]
 }

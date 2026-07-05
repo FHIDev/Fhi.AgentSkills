@@ -24,7 +24,7 @@ Rendering skjer lokalt via `crossplane render`, uten kluster-tilgang.
 
 **Kilde og provenance:**
 - Repo: `FHISkybert/Fhi.Skybert.Infra`
-- Commit: `a16a243` (main, 2026-05-08)
+- Verifisert mot commit: `0c766cae1b41d7633f29b30f6fd211501515953d` (main, 2026-07-03)
 - Opprinnelige filer:
   - `infra/crossplane/base/compositions/skybertapp.yaml` (sist endret: `696acda`, 2026-04-30)
   - `infra/crossplane/base/xrds/skybertapp.yaml` (sist endret: `c2a5888`, 2026-04-30)

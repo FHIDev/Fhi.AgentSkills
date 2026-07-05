@@ -43,6 +43,9 @@ Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle ten
 | Policy | Hva blokkeres |
 |--------|---------------|
 | `ingress-security` | Ingress uten TLS-match, uten ingressClassName, med wildcard-hosts |
+| `deny-flambert-hostnames-in-tenant-namespaces` | Hostnames `*.flambert` og `*.flambert.fhi.no` i `tn-*` — håndheves på `Ingress`, `HTTPRoute`/`TLSRoute`/`GRPCRoute` og `ListenerSet` (alle klustere) |
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/infra/kyverno-policies/base/policies-green/deny-flambert-hostnames.yaml
 
 ### Service-typer (alle klustere)
 
@@ -107,11 +110,11 @@ I green-test, yellow-test-02, ops-test og sandbox (kun `policies-green`) er diss
 
 PolicyExceptions er sentralt styrt av plattformteamet i `kyverno`-namespacet. Tenanter kan ikke self-serve unntak.
 
-Tenant-rettede unntak er sjeldne, men eksisterer: f.eks. har `tn-sindre-exempl` unntak fra `disallow-nodeport-loadbalancer-services` (LoadBalancer-services tillatt). Slike unntak opprettes etter avtale med plattformteamet.
+Tenant-rettede unntak er sjeldne, men kan opprettes etter avtale med plattformteamet. (Et tidligere tenant-eksempel — LoadBalancer-unntak for `tn-sindre-exempl` — er fjernet fra infra; det tilsvarende unntaket fra `disallow-nodeport-loadbalancer-services` gjelder nå plattform-namespacet `envoy-gateway-system`.)
 
 Plattformkomponenter har bredere unntak: f.eks. har `azure-arc-containerstorage`-namespacet unntak fra privileged containers, host-path, capabilities og flere andre policier — fordi plattformkomponenter har andre krav enn tenantworkloads.
 
 **Praktisk:** Hvis du trenger unntak fra en policy, kontakt plattformteamet. Forklar brukstilfelle og krav.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/kyverno-policies/base/policy-exceptions/arc-containerstorage.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bdd8bf05fade7c7e1aba534b75e64f6e46b0e22f/infra/kyverno-policies/base/policy-exceptions/envoy-sindre-exempl.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/infra/kyverno-policies/base/policy-exceptions/envoy.yaml

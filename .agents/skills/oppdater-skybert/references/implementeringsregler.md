@@ -85,7 +85,7 @@ Etter implementering, verifiser:
 7. Alle `OMSTRUKTURER`-endringer har beholdt alle detaljer fra opprinnelig plassering.
 8. Statiske kopier i `references/skybertapp/` er synkronisert hvis XRD/composition/functions ble endret, og provenance-blokken i `skybertapp-render.md` er oppdatert (gjelder kun GitHub-modus).
 9. Routing-tabellen har rad(er) for alle nye målfiler som ble opprettet.
-10. `openVurder` i `skybert/.oppdater-state.json` er ajourført: utsatte poster lagt til, avklarte fjernet.
+10. `openItems` i `skybert/.oppdater-state.json` er ajourført: utsatte (`deferred`), delvis implementerte (`partial`) og verifikasjonsfeilede (`failed-verification`) poster lagt til/oppdatert, avklarte/fullførte fjernet. Se [analyseregler.md](analyseregler.md).
 
 ---
 

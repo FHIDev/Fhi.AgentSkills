@@ -42,7 +42,9 @@
 | `docs/internal/flux.md` | `references/platform-architecture.md` (NB: kan motsi infra-repo — markeres som kildekonflikt) |
 | `docs/internal/service-mesh.md` | `references/hostnames-and-networking.md` |
 | `docs/internal/global-network-policies.md` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
-| `docs/internal/sk8-cli.md` | VURDER — plattformintern, ikke auto-route |
+| `docs/internal/sk8-cli.md` | `references/kubectl-access.md` — intern-merket (dekker både script-dispatcheren `scripts/sk8` og Go-CLI-en i `utils/sk8/`) |
+| `docs/sk8/clusters.json` | `references/kubectl-access.md` (publisert maskinlesbart klusterregister) |
+| `docs/internal/attach-application-repo.md` | `references/security.md`, ev. `references/workflows.md` — selektiv intern (ACR-push-identitet, federering av app-repoer) |
 | `docs/internal/helm-and-crds.md` | VURDER — plattformintern, ikke auto-route |
 | `docs/internal/managing-clusters.md` | VURDER — plattformintern, ikke auto-route |
 | `docs/internal/replace-cluster-in-place.md` | VURDER — plattformintern runbook; hent kun tenant-impact (federated credentials / Workload Identity-konsekvenser ved cluster-bytte) |
@@ -56,9 +58,9 @@
 | Kildesti | Primær målfil |
 |----------|--------------|
 | `infra/crossplane/base/xrds/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/skybertapp/xrd.yaml` (statisk kopi) |
-| `infra/crossplane/base/xrds/webapp.yaml` | `references/webapp-crd.md` |
+| `infra/crossplane/base/xrds/webapp.yaml` | `references/legacy-webapp-csi.md` |
 | `infra/crossplane/base/compositions/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/platform-architecture.md`, `references/skybertapp/composition.yaml` (statisk kopi) |
-| `infra/crossplane/base/compositions/webapp.yaml` | `references/webapp-crd.md` |
+| `infra/crossplane/base/compositions/webapp.yaml` | `references/legacy-webapp-csi.md` |
 | `infra/crossplane/base/functions.yaml` | `references/skybertapp/functions.yaml` (kopi med xpkg-omskriving), `references/skybertapp-render.md` (provenance) |
 | `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
 | `infra/skybert-system/base/tenant-admin-clusterroles/*.yaml` | `references/platform-architecture.md`, `references/security.md`, `references/kyverno-policies.md` |
@@ -74,6 +76,7 @@
 | `infra/traefik/**` | `references/hostnames-and-networking.md`, `references/platform-architecture.md` |
 | `infra/envoy/**` | `references/hostnames-and-networking.md`, `references/platform-architecture.md` (Gateway API/Envoy-status, kun tenant-impact) |
 | `manifests/*.md` | VURDER — migreringsplaner, ikke auto-route (hent kun tenant-impact med konkrete tenant-steg) |
+| `utils/sk8/README.md`, `utils/sk8/data/clusters.json` | `references/kubectl-access.md` — intern-merket (sk8 Go-CLI + innebygd klusterregister). Øvrig `utils/**` (Go-kode, `version-checker/`, `grafana-airgapped/`) er lavprioritet/støy |
 
 ---
 
@@ -95,7 +98,7 @@ Brukes når agenten ikke har filsti-tilgang, kun emnenavn fra docs-sider.
 | Plattformarkitektur, Flux, Crossplane, OCI-flyt, tenant-bootstrap | `references/platform-architecture.md` |
 | Kyverno-policier, mutating/validating webhooks | `references/kyverno-policies.md` |
 | Domener, TLS, ingress, hostnames, nettverksregler | `references/hostnames-and-networking.md` |
-| WebApp CRD (legacy), migrering | `references/webapp-crd.md` |
+| WebApp CRD (legacy), CSI driver, migrering | `references/legacy-webapp-csi.md` |
 
 ---
 

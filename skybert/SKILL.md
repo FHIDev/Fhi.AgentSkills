@@ -6,7 +6,7 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-06-28
+> **Sist verifisert mot offisiell docs:** 2026-07-04
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -36,7 +36,11 @@ Skybert er en Kubernetes-basert applikasjonsplattform hos FHI, bygget på:
 ## Nøkkelkonsepter
 
 ### Tenant
-En **Tenant** er den grunnleggende organisasjonsenheten i Skybert - et mellomnivå mellom team og applikasjon. Hver tenant har sitt eget Kubernetes namespace (`tn-<tenant>`) med isolerte ressurser og administreres via GitOps. Tenant-navnet tildeles av plattformteamet.
+En **Tenant** er den grunnleggende organisasjonsenheten i Skybert - et mellomnivå mellom team og applikasjon. Hver tenant har sitt eget Kubernetes namespace (`tn-<tenant>`) med isolerte ressurser og administreres via GitOps.
+
+**Bestilling og navneregler:** Tenant bestilles via skjemaet **Bertil** (https://bertil.sky.fhi.no). Teamet velger selv tenant-navn innenfor navnereglene: kun små bokstaver, tall og bindestrek, maks **38 tegn**, og navnet kan ikke inneholde ordet «skybert». Velg med omhu — navnet blir namespace (`tn-<navn>`), GitOps-repo-navn m.m. Plattformteamet provisjonerer deretter tenanten (GitOps-repo, managed identities, namespace, tilgangspakke).
+
+> Kilde: https://docs.sky.fhi.no/get-started/
 
 **Organisasjonsmodeller:**
 1. **Standard** (vanligst): Ett team, én tenant, én applikasjon
@@ -136,7 +140,7 @@ Blåløypa er den anbefalte veien for å komme i gang på Skybert.
 - Kjør `az logout && az login` etter tilgangsendringer
 
 **Steg-for-steg (Blåløypa):**
-1. **Onboarding med plattformteamet**: Tenant, namespace og tilganger etableres
+1. **Bestill tenant via Bertil** (https://bertil.sky.fhi.no): Plattformteamet provisjonerer tenant, GitOps-repo, managed identities, namespace og tilgangspakke — du varsles når det er klart
 2. **Søk tilgang via MyAccess**: Teammedlemmer søker riktig access package (f.eks. `FHI - Skybert - <Tenant>-Test-Yellow`)
    - Access package-tilgang er tidsbegrenset (typisk 1 år) og må fornyes
    - Én av tenantens approvere må godkjenne søknader i access package-flyten
@@ -292,7 +296,7 @@ Bruk `base/` + miljø-mønsteret med Helm charts.
 
 ## Navnekonvensjoner
 
-Tenant-navnet tildeles av plattformteamet. Bruk disse mønstrene:
+Tenant-navnet velges av teamet i Bertil-skjemaet innenfor navnereglene (små bokstaver/tall/bindestrek, maks 38 tegn, ikke ordet «skybert» — se [Tenant](#tenant)). Bruk disse mønstrene:
 
 | Ressurs | Mønster | Eksempel |
 |---------|---------|----------|
@@ -302,7 +306,7 @@ Tenant-navnet tildeles av plattformteamet. Bruk disse mønstrene:
 
 **Utlede tenant-navn fra repository** (ett eksempel):
 - Repository: `Fhi.Fida.MyApp.GitOps`
-- Tenant-navn kan f.eks. være: `fida-myapp`, `fida`, eller annet format tildelt av plattformteamet
+- Tenant-navn kan f.eks. være: `fida-myapp`, `fida`, eller annet format valgt ved bestilling
 - Namespace: `tn-<tenant>`
 
 ## Vanlige ressurser
@@ -474,7 +478,14 @@ Cert-manager cluster-issuere per domene:
 - **Azure public cloud** (for grønn/gul data)
 - **NHN Datacenter** (for rød data eller strengere krav)
 
-Plattformen planlegger å tilby tre StorageClass-nivåer med ulike nivåer av redundans, snapshot-retensjon og backup. Nåværende planlagte løsning er **ikke egnet for IO-intensive workloads** som aktive databaser.
+**In-cluster lagring:** To StorageClasses er tilgjengelige på alle klustere:
+
+| StorageClass | Type | Access mode | Backup | Bruk |
+|--------------|------|-------------|--------|------|
+| default | Lokal node-storage | ReadWriteOnce (bundet til én node) | Ingen | Cache, midlertidige data, single-replica-workloads som trenger rask lokal disk |
+| `ontap-nas` | NFS (NetApp ONTAP) | ReadWriteMany (alle noder) | **Ingen** — datatap er ditt ansvar | Delt fillagring, statiske assets, volumer med multi-pod-tilgang |
+
+`ontap-nas` er NFS-basert og **ikke egnet for transaksjonssensitive workloads** som databaser — NFS gir ikke konsistensgarantiene databaser krever. Block storage med backup/snapshot-støtte er planlagt, men uten ETA — kontakt `#ext-fhi-skybert` hvis dette er kritisk for dere.
 
 > Kilde: https://docs.sky.fhi.no/persistence/
 
@@ -641,7 +652,7 @@ Dette gir AI-agenten kontekst for å generere korrekte konfigurasjoner uten å g
 | [Sikkerhet](references/security.md) | Workload Identity, sikkerhet, nettverkspolicyer |
 | [Observability](references/observability.md) | Logging, metrics, Grafana |
 | [Feilsøking](references/troubleshooting.md) | Feilsøking og debug-kommandoer |
-| [WebApp CRD (utdatert)](references/webapp-crd.md) | Legacy WebApp-referanse og migreringsguide |
+| [Legacy: WebApp CRD og CSI driver (utdatert)](references/legacy-webapp-csi.md) | Legacy WebApp-referanse, migreringsguide og CSI driver-eksempler |
 | [Plattformarkitektur](references/platform-architecture.md) | Flux, Crossplane, OCI-flyt, tenant-bootstrap |
 | [Kyverno-policier](references/kyverno-policies.md) | Sikkerhetspolicier som påvirker tenanter |
 | [Hostnavn og nettverk](references/hostnames-and-networking.md) | Domener, TLS, ingress-regler, nettverkspolicyer |

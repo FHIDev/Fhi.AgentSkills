@@ -104,25 +104,34 @@ Følgende regler gjelder alle Ingress-ressurser:
 - **IngressClassName påkrevet**: Alle Ingress-ressurser må ha `spec.ingressClassName` satt
 - **Wildcards blokkert**: Wildcard-hosts (f.eks. `*.skytest.fhi.no`) er ikke tillatt
 - **SSL-redirect**: Kyverno setter automatisk `ssl-redirect: true` og `force-ssl-redirect: true`
+- **flambert-hostnames blokkert**: Hostnames `*.flambert` og `*.flambert.fhi.no` avvises (Enforce) i `tn-*`-namespaces — gjelder både `Ingress` og Gateway API-ressurser (`HTTPRoute`/`TLSRoute`/`GRPCRoute` og `ListenerSet`). Håndheves på alle klustere (del av `policies-green` som er base overalt).
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/kyverno-policies/base/policies-green/ingress-security.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/infra/kyverno-policies/base/policies-green/deny-flambert-hostnames.yaml
 
 ### Ingress: nginx i dag, Gateway API (Envoy Gateway) under utrulling
 
-> **Status per 2026-06:** Dagens SkybertApp-composition rendrer fortsatt Kubernetes `Ingress` med `ingressClassName: nginx`, og `ingress-nginx` er fortsatt produksjonsveien. Ikke migrer eksisterende SkybertApp-hostnames til Gateway API uten eksplisitt beskjed fra plattformteamet.
+> **Status per 2026-07:** Dagens SkybertApp-composition rendrer fortsatt Kubernetes `Ingress` med `ingressClassName: nginx`, og `ingress-nginx` er fortsatt produksjonsveien. Ikke migrer eksisterende SkybertApp-hostnames til Gateway API uten eksplisitt beskjed fra plattformteamet.
 
 **Retning (plattformbeslutning):** Plattformen har besluttet å migrere fra `ingress-nginx` til **Gateway API**, implementert av **Envoy Gateway**.
 
-**Faktisk aktiveringsstatus (infra per 2026-06):** Envoy Gateway (v1.8.0) er aktivert i de fleste klusteroverlays — men **ikke i green-test og green-prod**, som fortsatt bare kjører Envoy-namespacet og bruker `ingress-nginx`. Der Envoy er aktivert, definerer plattformen delte `Gateway`-objekter og `GatewayClass`-er (`fhinett`, `helsenett`, `internett`), og tenant-rettet bruk skjer via `HTTPRoute`/`ListenerSet` (RBAC tillater disse — se [Sikkerhet](security.md)). At Gateway API er valgt retning og aktivert i flere clustere betyr **ikke** at SkybertApp-hostnames allerede bruker det — composition rendrer fortsatt `Ingress`.
+**Faktisk aktiveringsstatus (infra per 2026-07):** Envoy Gateway (v1.8.2) er aktivert i de fleste klusteroverlays — men **ikke i green-test og green-prod**, som fortsatt bare kjører Envoy-namespacet og bruker `ingress-nginx`. Der Envoy er aktivert, definerer plattformen delte `Gateway`-objekter og `GatewayClass`-er. Utrullingen varierer per kluster (utledet fra `infra/envoy/*/kustomization.yaml`):
+
+| Ressurs | Aktivert hvor |
+|---------|---------------|
+| GatewayClass `fhinett` + `helsenett`, Gateway `helsenett`, `gateway-proxyprotocol` | Alle klustere med Envoy aktivert (ops-test, sandbox, yellow-test/prod, red-test/prod, norsyss) |
+| GatewayClass `internett` + Gateway `internett` | Kun ops-test, sandbox og yellow-test/prod — **ikke** red-klusterne eller norsyss |
+
+**Tenant-mønsteret (dokumentert i docs):** Offisiell docs beskriver nå tenant-rettet bruk slik: plattformen kjører delte `Gateway`-objekter; tenanter knytter til seg listeners og TLS via **`ListenerSet`**-ressurser i eget namespace, og ruter trafikk til sine Services med **`HTTPRoute`**. RBAC-rollen `skybert:tenant-admin` tillater disse ressurstypene (se [Sikkerhet](security.md)). Merk at dette beskriver retningen — SkybertApp-hostnames bruker fortsatt `Ingress`, og hostname-reglene (inkl. flambert-blokkeringen over) håndheves også på Gateway API-ruter.
 
 > **Intern (plattformdrift):** For green-test og green-prod er **Traefik** forhåndsdeployert som nød-fallback sommeren 2026 i tilfelle en alvorlig `ingress-nginx`-CVE. Ved en slik hendelse kan plattformteamet bytte ingress-controller (og patche `ingressClassName` for skybertapp-tenanter); interne ingresser kan forbli på nginx. Dette er en beredskapsmekanisme, ikke en tenant-oppgave.
 
 > Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/
 > Kilde: https://docs.sky.fhi.no/explanations/tools-and-components/
 > Kilde: https://docs.sky.fhi.no/internal/migrate-ingress-to-traefik/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/envoy/aks-yellow-test-02/kustomization.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/envoy/aks-green-prod-02/kustomization.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/infra/envoy/aks-yellow-test-02/kustomization.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/infra/envoy/aks-green-prod-02/kustomization.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/infra/crossplane/base/compositions/skybertapp.yaml
 
 ## Nettverkspolicyer
 

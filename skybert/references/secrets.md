@@ -76,8 +76,9 @@ Key Vault-navnet oppgis av plattformteamet ved onboarding. Det finnes ingen fast
 ## Rotasjon og oppdatering
 
 Når en secret endres i Azure Key Vault, oppdateres mountede secret-filer automatisk i containeren.
-Hvis applikasjonen ikke leser filendringer fortløpende, vurder reloader-mønster som restarter
-pod ved secret-endring.
+Hvis applikasjonen ikke leser filendringer fortløpende, kan **Reloader** (plattformkomponent,
+installert på alle klustere) restarte poden automatisk når den monterte secreten endres —
+docs omtaler dette som å «enable reloader» på workloaden.
 
 > Kilde: https://docs.sky.fhi.no/miscellaneous/vault_secrets/
 
