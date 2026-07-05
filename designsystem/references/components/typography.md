@@ -30,10 +30,16 @@ Alle fem har `size` og `color`. De tre overskriftskomponentene (`fhi-display`,
 |----------|-----------|------|---------|---------|-------------|
 | `level` | `level` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | (påkrevd) | display, title, headline | Semantisk overskriftsnivå |
 | `size` | `size` | `'large' \| 'medium' \| 'small'` | `'medium'` | alle | Visuell størrelse |
-| `color` | `color` | `string` | `currentcolor` | alle | CSS-farge (bruk design tokens). Default `currentcolor` arver tekstfarge fra forelder (endret i v0.39.0; CSS-keyword er case-insensitivt) |
+| `color` | `color` | `string \| undefined` | `undefined` | alle | CSS-farge (bruk design tokens). Uten `color` arver komponenten tekstfarge fra forelder (`currentcolor` via komponentens CSS — arv-atferden kom i v0.39.0) |
 
 `level` og `size` er uavhengige: `level` styrer semantikken (hvilket
 overskriftsnivå skjermlesere og dokumentstruktur ser), `size` styrer det visuelle.
+
+**Farge via ekstern CSS (fra v0.40.7):** Når `color`-attributtet ikke er satt, setter
+komponenten ingen inline-style, så vanlig CSS fungerer som fallback
+(f.eks. `fhi-body { color: var(--fhi-color-neutral-text-subtle); }`).
+I v0.39.0–v0.40.6 var property-defaulten strengen `'currentcolor'` som alltid ble satt
+som inline-style.
 
 ## Eksempler
 

@@ -1,6 +1,6 @@
 # Bruk i HTML forms
 
-Alle form-komponenter (fhi-button, fhi-text-input, fhi-date-input, fhi-checkbox, fhi-radio) deltar automatisk i native HTML `<form>` via ElementInternals API.
+Alle form-komponenter (fhi-button, fhi-text-input, fhi-date-input, fhi-checkbox, fhi-radio, fhi-select fra v0.41.0) deltar automatisk i native HTML `<form>` via ElementInternals API.
 
 ## FormData
 
@@ -9,6 +9,8 @@ import '@folkehelseinstituttet/designsystem/fhi-text-input';
 import '@folkehelseinstituttet/designsystem/fhi-date-input';
 import '@folkehelseinstituttet/designsystem/fhi-checkbox';
 import '@folkehelseinstituttet/designsystem/fhi-radio';
+import '@folkehelseinstituttet/designsystem/fhi-select';
+import '@folkehelseinstituttet/designsystem/fhi-select-item';
 import '@folkehelseinstituttet/designsystem/fhi-button';
 ```
 
@@ -18,6 +20,10 @@ import '@folkehelseinstituttet/designsystem/fhi-button';
   <fhi-checkbox label="Aktiv" name="active" value="yes" checked></fhi-checkbox>
   <fhi-radio name="role" value="admin" label="Admin" checked></fhi-radio>
   <fhi-radio name="role" value="user" label="Bruker"></fhi-radio>
+  <fhi-select label="Fylke" name="county">
+    <fhi-select-item value="03" selected>Oslo</fhi-select-item>
+    <fhi-select-item value="50">Trøndelag</fhi-select-item>
+  </fhi-select>
   <fhi-button type="submit">Send inn</fhi-button>
 </form>
 
@@ -26,7 +32,7 @@ import '@folkehelseinstituttet/designsystem/fhi-button';
     e.preventDefault();
     const data = new FormData(e.target);
     console.log(Object.fromEntries(data));
-    // { name: "Ola Nordmann", active: "yes", role: "admin" }
+    // { name: "Ola Nordmann", active: "yes", role: "admin", county: "03" }
   });
 </script>
 ```

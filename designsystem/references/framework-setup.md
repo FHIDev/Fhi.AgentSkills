@@ -261,6 +261,12 @@ direktivene — komponentene fungerer direkte.
 
 Kopier designsystem-filene fra `node_modules` til `wwwroot` (f.eks. via MSBuild-target eller manuelt), og legg til CSS og script i `index.html` eller `_Host.cshtml`.
 
+**Font-fil (fra v0.40.2):** `theme/default.css` refererer fonten som egen fil
+(`url('../fonts/RobotoFlex.ttf')`) i stedet for å ha den innbakt. Kopier derfor også
+`fonts/`-mappen fra pakken, slik at den ligger som søskenmappe til `theme/`
+(f.eks. `wwwroot/designsystem/theme/default.css` + `wwwroot/designsystem/fonts/RobotoFlex.ttf`).
+Uten font-filen faller tekst tilbake til systemfont.
+
 **Velg én av to strategier — ikke begge:**
 
 **Alternativ A: Last alle komponenter (enkelt, større bundle)**
