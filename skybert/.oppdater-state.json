@@ -1,33 +1,33 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-07-04T18:45:30Z",
+  "updatedAt": "2026-08-15T19:30:00Z",
   "mode": "github",
-  "lastFullscanDate": "2026-07-04",
-  "sistVerifisert": "2026-07-04",
+  "lastFullscanDate": "2026-08-15",
+  "sistVerifisert": "2026-08-15",
   "github": {
     "docs": {
       "repo": "FHISkybert/Fhi.Skybert.Docs",
       "branch": "main",
-      "commit": "c0d4e7d710e87ace56ac05b10932255ede27b4d5",
-      "commitDate": "2026-06-29"
+      "commit": "acde93e01f4af673da8bc737622d161017cf23c9",
+      "commitDate": "2026-08-13"
     },
     "infra": {
       "repo": "FHISkybert/Fhi.Skybert.Infra",
       "branch": "main",
-      "commit": "0c766cae1b41d7633f29b30f6fd211501515953d",
-      "commitDate": "2026-07-03"
+      "commit": "a1ce34539f1b10f06fb5112e319ec57f11da30b0",
+      "commitDate": "2026-08-14"
     }
   },
   "openItems": [
     {
-      "id": "fhi-felles-cryptography-dekning",
+      "id": "dev-gatewayapi-wip",
       "status": "deferred",
       "category": "VURDER",
-      "target": "references/configuration.md",
-      "source": "docs/miscellaneous/fhi-felles-cryptography.md",
-      "summary": "Eneste udekkede docs-side. Skal skillen nevne Fhi.Felles.Cryptography (DPAPI-fri bruk på Linux, nøkler i Key Vault), eller droppes siden permanent som bibliotekdokumentasjon utenfor plattform-scope? Anbefaling: dropp.",
-      "firstSeen": "2026-07-04",
-      "lastSeen": "2026-07-04"
+      "target": "references/hostnames-and-networking.md",
+      "source": "docs/internal/dev-gatewayapi.md",
+      "summary": "Ny docs-side er en WIP-skisse (brødtekst: «Tester mermaid, ser shit ut i dark mode») med ett mermaid-diagram over ListenerSet-topologi. Besluttet 2026-08-15: ingen endring nå — topologien er allerede dekket i hostnames-and-networking.md. Revurderes når siden får reelt innhold.",
+      "firstSeen": "2026-08-15",
+      "lastSeen": "2026-08-15"
     }
   ]
 }

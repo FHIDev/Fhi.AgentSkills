@@ -136,6 +136,13 @@ infra/crossplane/base/xrds/webapp.yaml
 infra/crossplane/base/compositions/skybertapp.yaml
 infra/crossplane/base/compositions/webapp.yaml
 
+# Crossplane kluster-overlays — XRD-/composition-varianter som IKKE ligger i base.
+# Her rulles nye API-versjoner ut først (f.eks. skybertapp-beta.yaml med gruppe
+# skybert-beta.fhi.no/v1beta1 på aks-ops-test-01). Uten disse mønstrene fanges de
+# kun i FULL-modus, aldri i INKREMENTELL.
+infra/crossplane/*/xrds/*.yaml
+infra/crossplane/*/compositions/*.yaml
+
 # Kyverno-policier som påvirker tenanter
 infra/kyverno-policies/base/policies-*/**/*.yaml
 # + relevante overlays per kluster der de avviker fra base
@@ -186,6 +193,8 @@ Disse mappene skal IKKE dypleses, men skannes for tenant-impact i discovery pass
 - `infra/ingress-nginx/` — ingress-klasser, annotasjoner og TLS-oppsett som påvirker tenant-ingress
 - `infra/grafana/`, `infra/loki/`, `infra/mimir/`, `infra/alloy/` — datasource-navn, retention, label-konvensjoner som påvirker observability-veiledningen
 - `infra/cert-manager/` — issuer-navn og sertifikatflyt
+- `infra/goldilocks/` — VPA-modus (`updater`/`admissionController` av eller på avgjør om anbefalinger er rådgivende eller håndhevende), hvilke controller-kinds som er unntatt, og hvilken ressurs `targetRef` peker på
+- `infra/cloudnative-pg/` — om Postgres-operatoren er aktivert på klusteret, og hvilke `postgresql.cnpg.io`-CRD-er tenanter dermed kan bruke
 - `infra/traefik/` — ingress-klasse (`ingressClassName: traefik`) og om Gateway API er aktivert, som påvirker tenant-ingress
 
 Toppnivå-mappen `manifests/` (migreringsplaner og frittstående manifester) skannes for tenant-impact: dokumenter med konkrete tenant-steg (f.eks. `httproute-migration.md` med `httpRoute.enabled`/`ingress.enabled`) er skill-relevante; rene plattform-runbooks er støy.
@@ -244,7 +253,9 @@ Etter vellykket implementering (steg 9) oppdateres `skybert/.oppdater-state.json
 commit SHAs og `commitDate` for begge repoer, `sistVerifisert`, ev. `lastFullscanDate`
 (kun FULL) og ajourført `openItems` — se State-kontrakt i SKILL.md for komplett schema.
 
-Den varige staten er i `.oppdater-state.json` — `changed-files.json` i `.tmp/` er kun runtime-cache.
+Den varige staten er i de to committede filene `skybert/.oppdater-state.json` (kjøringsstate) og
+`skybert/.oppdater-coverage.json` (bevart matrise A) — se State-kontrakten i SKILL.md.
+`changed-files.json` i `.tmp/` er kun runtime-cache.
 
 ---
 

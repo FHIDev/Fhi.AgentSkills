@@ -17,6 +17,7 @@
 > - **Prod-klustere** (inkluderer `policies-prod`): Kyverno `deny-tenant-runtime-access` blokkerer (Enforce) `kubectl exec`, `port-forward`, `attach`, API-`proxy` (pod og service) og ephemeral debug-containere i `tn-*`.
 > - **`aks-red-test-01`** (inkluderer ikke lenger `policies-prod`, fjernet juni 2026): Kyverno `restrict-tenant-runtime-access` blokkerer `port-forward`, `attach` og API-`proxy`. Kyverno blokkerer **ikke** exec der; om exec fungerer avhenger av RBAC/tilgang — `skybert:tenant-admin` har ikke runtime-fragmentet for red-test.
 > - **Hva du gjør i stedet:** Bruk green-test, yellow-test-02, ops-test eller sandbox for interaktiv debugging (runtime-tilgang via fragmentet `skybert:tenant-admin:test-sandbox:runtime-access`); feilsøk prod/red-test via logger/metrics/Grafana.
+> - **`aks-norsyss-prod-01` (unntak):** `tn-norsyss` har fått **port-forward** åpnet — både via PolicyException fra `deny-pod-portforward` og ClusterRole-fragmentet `skybert:tenant-admin:norsyss:runtime-access`. `exec`, `attach` og API-`proxy` er fortsatt blokkert. Se [Kyverno-policier](kyverno-policies.md#produksjon--runtime-restriksjoner).
 >
 > Se [Kyverno-policier](kyverno-policies.md#produksjon--runtime-restriksjoner).
 
@@ -211,15 +212,23 @@ Go-basert CLI som automatiserer tilkoblingsflyten over:
   GitOps-repoet (`FHIDev/Fhi.<Tenant>.GitOps`, via `gh`) med det Flux faktisk har deployet
   (`Kustomization.status.lastAppliedOriginRevision` + readiness), og skanner `tn-<tenant>`
   for suspenderte Kustomizations, crash-loops, image pull-feil og deployments uten klare replikaer.
+- **`sk8 policies --tenant <tenant>`** — viser ressursanbefalinger og policy-brudd for tenanten på
+  gjeldende kubectl-context. Output grupperes på melding (ikke på policy-regelnavn), og hvert punkt
+  merkes **Recommendation** eller **Planned enforced** med berørte workloads under. Dette er
+  raskeste vei til Goldilocks/VPA-anbefalingene — se
+  [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa). Krever samme
+  proxy/context som `sk8 status`. Sist brukte tenant huskes.
 
 Klusterregisteret hentes fra `https://docs.sky.fhi.no/sk8/clusters.json` (med lokal cache og
 innebygd fallback). Forutsetninger: `az` (med `connectedk8s`-extension), `kubectl`, `gh`.
 
-> **Merk:** Docs-siden `internal/sk8-cli.md` beskriver en eldre `sk8` — en script-dispatcher
-> (`scripts/sk8`) som mapper `sk8 tenant new` → `scripts/tenant--new.sh` osv. Begge finnes i
-> infra-repoet; Go-CLI-en over er den nye binæren i `utils/sk8/`.
+> **Merk:** Docs-siden `internal/sk8-cli.md` beskriver en eldre script-dispatcher. Den er per
+> 2026-08-14 **omdøpt fra `scripts/sk8` til `scripts/ska`** i infra-repoet (`ska tenant new` →
+> `scripts/tenant--new.sh` osv.), for å unngå navnekollisjon med Go-CLI-en. Docs-siden er ikke
+> oppdatert og bruker fortsatt det gamle navnet. Begge verktøyene finnes i infra-repoet; Go-CLI-en
+> `sk8` i `utils/sk8/` er den som er relevant for utviklere.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/utils/sk8/README.md
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/utils/sk8/README.md
 > Kilde: https://docs.sky.fhi.no/internal/sk8-cli/
 
 ## Nyttige kubectl-kommandoer

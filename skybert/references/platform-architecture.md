@@ -11,9 +11,17 @@
 | GitOps | Flux v2 | Deklarativ konfigurasjon |
 | Infrastruktur som kode | Crossplane | CRD-er (SkybertApp, WebApp) |
 | Policy | Kyverno | Sikkerhetshåndhevelse |
+| Ressursanbefalinger | Goldilocks + VPA (recommend-only) | Oppretter VPA-objekter i alle `tn-*`. Endrer ikke requests automatisk i dagens oppsett — `updater` og `admissionController` er slått av. Aktivert via kluster-overlay på samtlige ni klustere per 2026-08-14 |
+| Database (under utrulling) | CloudNativePG + plugin-barman-cloud | Postgres-operator i `cnpg-system`. Kun `aks-ops-test-01` per 2026-08-14; tenant-RBAC finnes, men aktiveres per kluster |
 | Cloud | Azure | Underliggende infrastruktur |
 | Git | GitHub (FHIDev org) | Kildekode og CI/CD |
 | Container registry | Azure Container Registry (`crfhiskybert.azurecr.io`) | Image-lagring |
+
+> Kilde (Goldilocks VPA-modus): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/goldilocks/base/goldilocks-10.4.1-values.yaml
+> Kilde (aktivering per kluster — én overlay-mappe per kluster): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/goldilocks/
+> Kilde (Flux-utrulling): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/flux-system/base/kustomizations-infra/goldilocks.yaml
+> Kilde (CloudNativePG-radene): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/cloudnative-pg/base/
+> Kilde (CNPG tenant-RBAC): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/skybert-system/base/tenant-admin-clusterroles/cnpg-access-rules.yaml
 
 ## Komponentkart for tenant-utviklere
 
@@ -27,6 +35,8 @@ De fleste team trenger bare Git/GitOps, SkybertApp og Grafana i starten. Andre k
 | Envoy Gateway / Gateway API | Tenant-facing for Gateway API-ressurser (`HTTPRoute`/`ListenerSet`) der plattformen har aktivert dette. Under utrulling — dagens SkybertApp-composition rendrer fortsatt `Ingress`. Se [Hostnavn og nettverk](hostnames-and-networking.md). |
 | External DNS | Oppretter DNS-records for hostnames. Vanligvis usynlig når SkybertApp eller plattformoppsett håndterer ruten. |
 | Kyverno | Policy engine. Tenanter kan lese `PolicyReport`, men ikke endre cluster-policyer. |
+| Goldilocks / VPA | Beregner anbefalte CPU/memory-requests for workloadene dine. Objektene dukker opp i namespacet, men endrer ingenting av seg selv — `updater` og `admissionController` er slått av. Lesetilgang for tenant. Se [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa). |
+| CloudNativePG | Postgres-operator, **under utrulling** (kun `aks-ops-test-01`). Der den er aktivert, kan tenanten opprette `Cluster`, `Backup`, `Pooler` m.m. i `postgresql.cnpg.io`. Se [Konfigurasjon](configuration.md#postgres-i-klusteret-cloudnativepg--under-utrulling). |
 | Grafana, Loki, Mimir, Tempo, Alloy | Observability-stakk. Grafana er brukerflaten; Alloy samler telemetri. |
 | Workload Identity | Passordløs Azure-autentisering. Automatisk for SkybertApp, manuelt via label/`serviceAccountName` for raw Deployments. |
 | Trust Manager, Reloader, Replicator, Trident, MetalLB, Blob/Secrets Store CSI, Metrics Server, kube-state-metrics | Plattformkomponenter som normalt ikke konfigureres av tenant-utviklere, men kan dukke opp i events, logs eller arkitekturdiagrammer. |

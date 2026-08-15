@@ -62,6 +62,10 @@
 | `infra/crossplane/base/compositions/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/platform-architecture.md`, `references/skybertapp/composition.yaml` (statisk kopi) |
 | `infra/crossplane/base/compositions/webapp.yaml` | `references/legacy-webapp-csi.md` |
 | `infra/crossplane/base/functions.yaml` | `references/skybertapp/functions.yaml` (kopi med xpkg-omskriving), `references/skybertapp-render.md` (provenance) |
+| `infra/crossplane/*/xrds/skybertapp-*.yaml` (kluster-overlays, f.eks. `-alpha`/`-beta`) | `references/skybertapp-crd.md` |
+| `infra/crossplane/*/compositions/*.yaml` (kluster-overlays) | `references/skybertapp-crd.md` |
+| `infra/goldilocks/base/*-values.yaml` | `references/kyverno-policies.md`, `references/observability.md`, `references/platform-architecture.md` |
+| `infra/cloudnative-pg/base/*` | `references/configuration.md`, `references/platform-architecture.md` |
 | `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
 | `infra/skybert-system/base/tenant-admin-clusterroles/*.yaml` | `references/platform-architecture.md`, `references/security.md`, `references/kyverno-policies.md` |
 | `tenants/*/base/*.yaml` | `references/platform-architecture.md`, `SKILL.md` |

@@ -24,6 +24,27 @@ spec:
       mountAsEnv: false
 ```
 
+### Navn på genererte secrets
+
+Uten `secrets[].name` heter den genererte Kubernetes-secreten
+`<vault-lowercase>-secret-<index>-<app-navn>`, og ExternalSecret-ressursen
+`<vault-lowercase>-es-<index>-<app-navn>`. `<app-navn>` er `metadata.name` på SkybertApp-en.
+
+Suffikset kom til 2026-08-14 for å unngå navnekollisjon mellom to SkybertApps i samme namespace
+som bruker samme vault. **Skal andre ressurser referere til secreten ved navn — sett `name`
+eksplisitt.** Da er du uavhengig av composition-versjonen:
+
+```yaml
+secrets:
+  - name: my-app-secrets     # stabilt navn, uavhengig av composition
+    vault: my-keyvault
+    keys:
+      - remote: database-password
+        local: DB_PASSWORD
+```
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/crossplane/base/compositions/skybertapp.yaml
+
 ## Manuell: SecretStore + ExternalSecret (ESO)
 
 External Secrets Operator (ESO) er standard mekanisme for secrets-håndtering utenfor SkybertApp. Påkrevet for raw Kubernetes deployments, legacy `WebApp` CRD, eller spesielle behov.

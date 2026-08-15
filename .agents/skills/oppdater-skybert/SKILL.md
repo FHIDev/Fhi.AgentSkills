@@ -30,6 +30,7 @@ Skybert-skill (oppdateres):
 skybert/
 ├── SKILL.md                                 (onboarding, konsepter, Blaloypa, navnekonvensjoner)
 ├── .oppdater-state.json                     (persistent state for inkrementell oppdatering)
+├── .oppdater-coverage.json                  (bevart matrise A; skrives først ved en komplett FULL — fravær er ikke strukturdrift)
 ├── .claude-plugin/plugin.json               (plugin-manifest — vedlikeholdes IKKE av denne skillen)
 └── references/
     ├── skybertapp-crd.md                    (SkybertApp XRD-spec)
@@ -63,8 +64,15 @@ Runtime-cache (opprettes, ikke committet):
 
 ## State-kontrakt
 
-All persistent state bor i **én** fil: `skybert/.oppdater-state.json` (committes sammen
-med skybert-filene). `skybert/SKILL.md` skal **ikke** inneholde noen state-HTML-kommentar.
+Persistent state ligger i **nøyaktig to** committede filer, med hvert sitt ansvar:
+
+| Fil | Innhold | Skrives |
+|-----|---------|---------|
+| `skybert/.oppdater-state.json` | Kjøringsstate: modus, SHA-er, datoer, `openItems` | Ved hver vellykket Apply |
+| `skybert/.oppdater-coverage.json` | Bevart matrise A (dekning per docs-side) | Kun når matrise A er komplett |
+
+Ingen annen persistent state finnes. `.tmp/oppdater-skybert/` er runtime-cache og skal aldri
+leses som state. `skybert/SKILL.md` skal **ikke** inneholde noen state-HTML-kommentar.
 Linjen «Sist verifisert mot offisiell docs» i `skybert/SKILL.md` er ren visning for
 mennesker: den genereres fra `sistVerifisert`-feltet i state-filen i steg 9 og skal aldri
 redigeres manuelt eller brukes som maskinlesbar kilde.
@@ -108,10 +116,60 @@ redigeres manuelt eller brukes som maskinlesbar kilde.
   utsatte `VURDER`-poster. Se [analyseregler.md](references/analyseregler.md) for
   status-verdiene og livssyklusen.
 
+### Dekningsmatrise-fil: `skybert/.oppdater-coverage.json`
+
+Bevart matrise A, committet sammen med skybert-filene. Eneste gyldige grunnlag for videreført
+dekning (se «Videreført dekning i FULL-modus» i steg 4).
+
+```json
+{
+  "schemaVersion": 1,
+  "generatedAt": "<ISO-8601>",
+  "docsCommit": "<sha for docs-repo da matrisen ble laget>",
+  "skillContentHash": "<sha256 over skybert/-innholdet, se under>",
+  "pages": [
+    {
+      "path": "docs/get-started/index.md",
+      "topic": "Onboarding",
+      "coveredIn": ["SKILL.md#blåløypa-golden-path"],
+      "coverage": "komplett|delvis|fraværende|utenfor-scope",
+      "missing": "<hva som ev. mangler, ellers tom streng>"
+    }
+  ]
+}
+```
+
+- `docsCommit` og `skillContentHash` er det som gjør videreføring **reproduserbar**: neste kjøring
+  sammenligner mot nøyaktig disse, ikke mot `lastFullscanDate` eller state-SHA-ene.
+- **`skillContentHash` er en innholdshash, ikke en commit-SHA.** En commit-SHA ville vært umulig:
+  hashen lagres i en fil som selv inngår i commit-en, så verdien ville endret commit-SHA-en den
+  peker på. Innholdshashen beregnes derfor over selve skill-innholdet, og eksplisitt **uten** de
+  tre stiene som ikke er skill-innhold (`.oppdater-state.json`, `.oppdater-coverage.json`,
+  `.claude-plugin/`) — de to første endres ved hver kjøring, og den tredje vedlikeholdes ikke av
+  denne skillen:
+
+  ```bash
+  find skybert -type f \
+    ! -path 'skybert/.oppdater-state.json' \
+    ! -path 'skybert/.oppdater-coverage.json' \
+    ! -path 'skybert/.claude-plugin/*' \
+    | sort \
+    | while read -r f; do printf '%s %s\n' "$f" "$(git hash-object "$f")"; done \
+    | sha256sum | cut -d' ' -f1
+  ```
+
+  Kommandoen bruker git sine egne blob-hasher over arbeidstreet, så den kan kjøres når som helst
+  — før commit, etter commit, eller ved neste kjørings verifikasjonssteg — og gir samme verdi så
+  lenge innholdet er likt. `sort` gjør resultatet uavhengig av filsystemets rekkefølge.
+- Hver docs-side i scope MÅ ha en rad. Sider bevisst utenfor scope føres med
+  `coverage: "utenfor-scope"` og begrunnelse i `missing`, slik at de ikke dukker opp som åpne
+  spørsmål ved hver kjøring.
+
 ### Regler
 
 - State-filen oppdateres kun etter vellykket Apply (steg 9)
-- `lastFullscanDate` oppdateres kun ved FULL-modus (begge moduser)
+- `lastFullscanDate` oppdateres kun ved FULL-modus, og kun når matrise A faktisk er komplett
+  (se steg 4). Ufullstendig gjennomgang → la `lastFullscanDate` stå urørt
 - **Migrering fra eldre format:**
   - Finnes en gammel state-HTML-kommentar (`<!-- Oppdater-skybert-state: ... -->` eller
     `<!-- Kilde-hash: ... -->`) i `skybert/SKILL.md` → parse den én gang, flytt verdiene
@@ -184,7 +242,7 @@ Hent og les alle relevante kildefiler basert på tilgangsmodus.
 
 ## Steg 3 — Les eksisterende skybert/-filer
 
-Enumerér ALLE filer under `skybert/` rekursivt — inkludert undermapper og ikke-markdown-filer (f.eks. de statiske YAML-kopiene i `references/skybertapp/`). Unnta kun `.claude-plugin/` (plugin-manifest) og `.oppdater-state.json`. Les deretter alt.
+Enumerér ALLE filer under `skybert/` rekursivt — inkludert undermapper og ikke-markdown-filer (f.eks. de statiske YAML-kopiene i `references/skybertapp/`). Unnta kun `.claude-plugin/` (plugin-manifest), `.oppdater-state.json` og `.oppdater-coverage.json`. Les deretter alt.
 
 Sammenlign den faktiske fillisten med Forutsetninger-treet i denne filen — avvik gir selvoppdaterings-post.
 
@@ -203,6 +261,34 @@ Utfor dekningsanalyse basert på tilgangsmodus:
 
 - **GitHub-modus:** 3 obligatoriske matriser (A: docs side-for-side, B: infra signal inventory, C: skill-innhold uten kilde). Se [github-modus.md](references/github-modus.md).
 - **Web-scraping-modus:** Kun matrise A (docs coverage). Se [webscraping-modus.md](references/webscraping-modus.md).
+
+### Videreført dekning i FULL-modus
+
+Ved FULL kan docs-sider som er **beviselig uendret** siden forrige fullscan videreføre forrige
+dekningsvurdering i matrise A i stedet for å leses på nytt. Alle fire forutsetningene må være
+oppfylt — er én av dem brutt, skal sidene leses på nytt:
+
+1. **`skybert/.oppdater-coverage.json` finnes og er gyldig.** Uten bevart matrise finnes det ikke
+   noe å videreføre *fra*: `openItems` sier bare hva som var udekket, ikke hvilke sider som var
+   komplette eller hvor de var dekket. Mangler filen → full side-for-side-gjennomgang, og skriv
+   matrisen ved denne kjøringens Apply.
+2. **Kildesiden er verifisert uendret** med `gh api .../compare/<coverage.docsCommit>...<ny-sha>`,
+   der `docsCommit` leses fra coverage-filen — ikke fra state.
+3. **Målsiden er verifisert uendret:** innholdshashen beregnet med kommandoen i State-kontrakten
+   skal være nøyaktig `coverage.skillContentHash`. Er skill-filene endret i mellomtiden, er
+   dekningen ikke lenger kjent.
+4. **Videreføringen merkes eksplisitt i planen** med hvilke commits sammenligningen ble gjort mot.
+
+**Unntak som alltid leses på nytt:** endrede sider, nye sider, og sider med en åpen post i
+`openItems`.
+
+Matrise B og C, XRD-feltdekningssjekken, sammenligning av statiske kopier og re-validering av
+operasjonelle antakelser kjøres uansett i full bredde — de er ikke omfattet av videreføringen.
+
+**`lastFullscanDate` settes kun når matrise A faktisk er komplett** for alle docs-sider — enten
+lest på nytt eller gyldig videreført etter reglene over. Er gjennomgangen ufullstendig, skal
+`lastFullscanDate` stå urørt og `sistVerifisert` + kilde-SHA-ene oppdateres alene. Da forblir
+dekningsgjelden synlig, og neste kjøring trigger FULL på nytt.
 
 ---
 
@@ -255,12 +341,19 @@ Implementer kun eksplisitt godkjente endringer. Se [implementeringsregler.md](re
 
 ## Steg 9 — Oppdater state-fil
 
-Skriv/oppdater `skybert/.oppdater-state.json` (eneste maskinlesbare state):
+Skriv/oppdater `skybert/.oppdater-state.json` (kjøringsstate — den andre state-filen,
+`.oppdater-coverage.json`, dekkes av punktet nederst i dette steget):
 - **GitHub-modus:** Lagre commit SHAs og `commitDate` for begge repoer
 - **Web-scraping-modus:** Lagre `globalHash` og per-side hashes fra `search_index.json`
   (rør ikke `github`-feltet)
 - **Begge moduser:** Sett `sistVerifisert` til dagens dato. Ved FULL modus: oppdater også
-  `lastFullscanDate`.
+  `lastFullscanDate` — men **kun hvis matrise A er komplett** for alle docs-sider (se steg 4).
+  Ble gjennomgangen ufullstendig, la `lastFullscanDate` stå urørt og opprett en `openItems`-post
+  som beskriver dekningsgjelden.
+- **Skriv `skybert/.oppdater-coverage.json`** når matrise A er komplett: alle sider, `docsCommit`
+  = docs-SHA fra denne kjøringen, `skillContentHash` = hashen beregnet etter at alle skill-endringer
+  er implementert (se State-kontrakten for kommandoen). Er matrisen ufullstendig, skal filen ikke
+  skrives — en delvis matrise ville blitt lest som komplett ved neste kjøring.
 - **Ajourfør `openItems`:**
   - Legg til poster brukeren utsatte/avviste ikke-endelig i steg 7 (`status: "deferred"`)
   - Legg til godkjente poster som bare ble delvis implementert i steg 8 (`status: "partial"`)
@@ -272,7 +365,12 @@ Deretter: regenerer visningslinjen `> **Sist verifisert mot offisiell docs:** <d
 `skybert/SKILL.md` fra `sistVerifisert`-feltet (dette er den eneste state-avledede teksten
 i SKILL.md — aldri skriv noen HTML-state-kommentar).
 
-Begge filer (`skybert/SKILL.md` og `skybert/.oppdater-state.json`) committes sammen.
+`skybert/SKILL.md` og `skybert/.oppdater-state.json` committes sammen — og
+`skybert/.oppdater-coverage.json` skal med i samme commit når den er skrevet eller oppdatert i
+denne kjøringen. **Merk at coverage-filen er ny og utracket ved første komplette FULL**, så
+`git commit -am` vil hoppe over den. Bruk eksplisitt `git add skybert/.oppdater-coverage.json`
+(eller `git add skybert/`) før commit, og verifiser med `git status --porcelain skybert/` at
+ingen av de tre står igjen som `??`.
 
 **Kontrakt:** State-filen oppdateres KUN etter vellykket Apply.
 
@@ -291,6 +389,9 @@ Ved **INKREMENTELL** modus trigges selvoppdatering når compare-output inneholde
 3. **State-format** — Er `schemaVersion` i `.oppdater-state.json` konsistent med State-kontrakten? Har `skybert/SKILL.md` fått en state-kommentar den ikke skal ha?
 4. **Nye emner** — Nye dokumentasjonsomrader uten dekning i routing eller filstruktur?
 5. **Forutsetninger-treet** — Stemmer det med faktisk filliste i `skybert/` (fra steg 3)?
+   **Unntak:** manglende `.oppdater-coverage.json` er **ikke** strukturdrift og skal ikke gi
+   selvoppdaterings-post. Filen skrives først ved en komplett FULL (se steg 4/9), så den er
+   forventet fraværende inntil da.
 
 ### Output
 

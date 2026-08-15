@@ -12,6 +12,7 @@ Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle ten
 | `auto-set-seccomp-runtime-default` | Setter `seccompProfile.type: RuntimeDefault` (hvis ikke satt) | Alle pods |
 | `ingress-security` (mutate) | Setter `ssl-redirect: true` og `force-ssl-redirect: true` på alle Ingress | Alle Ingress |
 | `automount-cert-chain-bundle` | Auto-monterer `trust-bundle.pem` til `/etc/ssl/certs/trust-bundle.pem` i alle pods (inkl. init containers) | `tn-*` pods |
+| `enable-goldilocks-tenant-namespaces` | Setter `goldilocks.fairwinds.com/enabled: "true"` på namespacet, slik at VPA-anbefalinger genereres (se [nedenfor](#ressursanbefalinger-goldilocks--vpa)) | `tn-*` namespaces |
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml
 
@@ -72,6 +73,30 @@ Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle ten
 
 > **Merk:** `resource-limits` er i Audit-modus — den blokkerer ikke, men logger advarsler.
 
+## Ressursanbefalinger (Goldilocks / VPA)
+
+Alle `tn-*`-namespaces merkes automatisk av Kyverno slik at Goldilocks-controlleren oppretter
+**VerticalPodAutoscaler-objekter i anbefalingsmodus** for workloadene dine.
+
+**Dette endrer ikke noe i seg selv.** VPA-ens `updater` og `admissionController` er slått av i
+plattformens oppsett — ingen pod restartes, og ingen resource requests overskrives. Objektene
+finnes kun for å beregne hva riktig CPU/memory *ville* vært.
+
+- `Job` og `CronJob` er unntatt.
+- For SkybertApps peker VPA-ens `targetRef` på **SkybertApp-ressursen**, ikke Deployment-en —
+  mulig fordi XRD-en eksponerer `/scale` (se [SkybertApp CRD](skybertapp-crd.md#status-og-scale-subresource)).
+- Du har **lesetilgang** (`kubectl get vpa -n tn-<tenant>`), men kan ikke endre objektene — de er
+  plattformstyrt.
+- `sk8 policies --tenant <tenant>` viser anbefalingene sammen med policy-brudd — se
+  [kubectl-tilgang](kubectl-access.md#sk8-cli--automatisert-pim--proxy).
+- Hvor anbefalingene vises i Grafana: se [Observability](observability.md#ressursanbefalinger-i-grafana).
+
+Anbefalingene er praktiske mot `resource-limits`-policyen over: den krever memory limit og
+memory/CPU requests, med maks 2 CPU og 2Gi memory per container.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/kyverno-policies/base/policies-green/enable-goldilocks-tenant-namespaces.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/goldilocks/base/goldilocks-10.4.1-values.yaml
+
 ## Rød sone — ekstra policier
 
 | Policy | Handling |
@@ -102,6 +127,18 @@ I rød sone er **egress blokkert som default** (base deny-policy). Unntak:
 | `deny-tenant-runtime-access` | `kubectl exec`, `port-forward`, `attach`, API-`proxy` (pod og service) og ephemeral debug-containere i `tn-*` |
 
 I green-test, yellow-test-02, ops-test og sandbox (kun `policies-green`) er disse tillatt. Konsekvens: feilsøk i prod via logger/metrics/Grafana — se [kubectl-tilgang](kubectl-access.md).
+
+**Unntak: `tn-norsyss` på `aks-norsyss-prod-01`.** PolicyException `norsyss-runtime-access` unntar
+namespacet fra regelen `deny-pod-portforward` i `deny-tenant-runtime-access`. Unntaket er avgrenset
+til **port-forward** — `exec`, `attach` og API-`proxy` er fortsatt blokkert der. Tilsvarende gir
+ClusterRole `skybert:tenant-admin:norsyss:runtime-access` `get`/`create` på `pods/portforward`.
+Klusterets `skybert:tenant-admin` er patchet til å aggregere labelen
+`aggregate-to-tenant-admin-yellow-prod`, som er nettopp den fragmentet bærer. Begge deler må være på
+plass: et Kyverno-unntak alene er ikke nok uten RBAC, og motsatt.
+
+> Kilde (PolicyException): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/kyverno-policies/aks-norsyss-prod-01/norsyss-runtime-access.yaml
+> Kilde (ClusterRole-reglene): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/skybert-system/aks-norsyss-prod-01/norsyss-runtime-access.yaml
+> Kilde (aggregationRule-patchen): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/skybert-system/aks-norsyss-prod-01/kustomization.yaml
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/3e3d50b/infra/kyverno-policies/base/policies-prod/deny-tenant-runtime-access.yaml
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/3e3d50b/infra/kyverno-policies/aks-red-test-01/kustomization.yaml

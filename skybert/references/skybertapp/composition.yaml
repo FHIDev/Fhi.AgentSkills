@@ -113,7 +113,7 @@ spec:
                   {{- end }}
                   {{- range $i, $secret := $spec.secrets }}
                   {{- if $secret.mountAsEnv }}
-                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d-%s" ($secret.vault | lower) $i $name) }}
                   - secretRef:
                       name: {{ $secretName }}
                   {{- end }}
@@ -126,7 +126,7 @@ spec:
                   {{- end }}
                   {{- range $i, $secret := $spec.secrets }}
                   {{- if ne $secret.mountAsFiles false }}
-                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d-%s" ($secret.vault | lower) $i $name) }}
                   {{- $mountPath := $secret.mountPath | default (printf "/secrets/%s" $secretName) }}
                   - name: {{ $secretName }}-vol
                     mountPath: {{ $mountPath }}
@@ -178,7 +178,7 @@ spec:
                   {{- end }}
                   {{- range $i, $secret := $spec.secrets }}
                   {{- if $secret.mountAsEnv }}
-                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d-%s" ($secret.vault | lower) $i $name) }}
                   - secretRef:
                       name: {{ $secretName }}
                   {{- end }}
@@ -191,7 +191,7 @@ spec:
                   {{- end }}
                   {{- range $i, $secret := $spec.secrets }}
                   {{- if ne $secret.mountAsFiles false }}
-                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d-%s" ($secret.vault | lower) $i $name) }}
                   {{- $mountPath := $secret.mountPath | default (printf "/secrets/%s" $secretName) }}
                   - name: {{ $secretName }}-vol
                     mountPath: {{ $mountPath }}
@@ -246,7 +246,7 @@ spec:
                   {{- end }}
                   {{- range $i, $secret := $spec.secrets }}
                   {{- if $secret.mountAsEnv }}
-                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d-%s" ($secret.vault | lower) $i $name) }}
                   - secretRef:
                       name: {{ $secretName }}
                   {{- end }}
@@ -259,7 +259,7 @@ spec:
                   {{- end }}
                   {{- range $i, $secret := $spec.secrets }}
                   {{- if ne $secret.mountAsFiles false }}
-                  {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                  {{- $secretName := $secret.name | default (printf "%s-secret-%d-%s" ($secret.vault | lower) $i $name) }}
                   {{- $mountPath := $secret.mountPath | default (printf "/secrets/%s" $secretName) }}
                   - name: {{ $secretName }}-vol
                     mountPath: {{ $mountPath }}
@@ -297,7 +297,7 @@ spec:
                 {{- end }}
                 {{- range $i, $secret := $spec.secrets }}
                 {{- if ne $secret.mountAsFiles false }}
-                {{- $secretName := $secret.name | default (printf "%s-secret-%d" ($secret.vault | lower) $i) }}
+                {{- $secretName := $secret.name | default (printf "%s-secret-%d-%s" ($secret.vault | lower) $i $name) }}
                 - name: {{ $secretName }}-vol
                   secret:
                     secretName: {{ $secretName }}
@@ -497,15 +497,15 @@ spec:
           {{- /* Create ExternalSecrets, referencing the shared SecretStore */ -}}
           {{- range $i, $secret := $spec.secrets }}
           {{- $vaultLower := $secret.vault | lower }}
-          {{- $secretName := $secret.name | default (printf "%s-secret-%d" $vaultLower $i) }}
+          {{- $secretName := $secret.name | default (printf "%s-secret-%d-%s" $vaultLower $i $name) }}
           ---
           apiVersion: external-secrets.io/v1
           kind: ExternalSecret
           metadata:
-            name: {{ $vaultLower }}-es-{{ $i }}
+            name: {{ $vaultLower }}-es-{{ $i }}-{{ $name }}
             namespace: {{ $namespace }}
             annotations:
-              gotemplating.fn.crossplane.io/composition-resource-name: {{ $vaultLower }}-es-{{ $i }}
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $vaultLower }}-es-{{ $i }}-{{ $name }}
               gotemplating.fn.crossplane.io/ready: "True"
           spec:
             secretStoreRef:
@@ -542,7 +542,20 @@ spec:
                 {{- end }}
             {{- end }}
           {{- end }}
-          
+
+          {{- /* Write scale status back onto the composite (no composition-resource-name). */ -}}
+          {{- $depName := printf "%s-deployment" $name }}
+          {{- $replicas := 0 }}
+          {{- with getComposedResource . $depName }}
+            {{- $replicas = dig "status" "readyReplicas" 0 . }}
+          {{- end }}
+          ---
+          apiVersion: skybert.fhi.no/v1alpha1
+          kind: SkybertApp
+          status:
+            replicas: {{ $replicas }}
+            labelSelector: skybert.fhi.no/webapp={{ $name }}
+
   - step: auto-ready
     functionRef:
       name: crossplane-contrib-function-auto-ready

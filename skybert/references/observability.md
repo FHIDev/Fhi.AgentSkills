@@ -57,7 +57,9 @@ Loki kjøres med `auth_enabled: true` — logger er isolert per tenant via heade
 
 > Kilde (X-Scope-OrgID): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/scripts/lib/grafana/datasource.sh
 
-**Loggoppbevaring:** 31 dager.
+**Loggoppbevaring:** 31 dager (`retention_period: 744h` i Loki-oppsettet).
+
+> Kilde: https://docs.sky.fhi.no/internal/observability/loki/
 
 ### Tips for god logging
 - Bruk strukturert logging (JSON)
@@ -128,6 +130,23 @@ Annotasjonene skal stå på pod-template (`.spec.template.metadata.annotations`)
 - `http_request_duration_seconds` - Request latency
 - `http_requests_in_flight` - Pågående requests
 - Applikasjonsspesifikke business metrics
+
+### Ressursanbefalinger i Grafana
+
+Plattformen kjører **Goldilocks med VPA i anbefalingsmodus** i alle `tn-*`-namespaces. Goldilocks'
+eget dashboard er **deaktivert** — anbefalingene eksponeres i stedet gjennom den ordinære
+observability-stacken: kube-state-metrics plukker opp VPA-objektene, og de er søkbare i Grafana på
+linje med andre metrics.
+
+VPA-recommenderen bruker historiske metrics fra Mimir (via en intern `vpa-mimir-proxy`) framfor sitt
+eget checkpoint-lager, slik at anbefalingene bygger på faktisk forbruk over tid og overlever restart
+av recommenderen.
+
+Raskeste vei til anbefalingene er `sk8 policies --tenant <tenant>` — se
+[kubectl-tilgang](kubectl-access.md#sk8-cli--automatisert-pim--proxy). Bakgrunn og hva VPA-objektene
+gjør (og ikke gjør): [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa).
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/goldilocks/base/goldilocks-10.4.1-values.yaml
 
 ### Custom-metrics-HPA (planlagt)
 
