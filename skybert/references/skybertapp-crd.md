@@ -11,6 +11,25 @@ kind: SkybertApp
 
 **Status:** Alpha - kan ha breaking changes.
 
+### Forhåndsvarsel: `skybert-beta.fhi.no/v1beta1`
+
+En **parallell** XRD er under utprøving på `aks-ops-test-01`: gruppe `skybert-beta.fhi.no`, versjon
+`v1beta1`. Det er ikke en versjonsmigrering av `skybert.fhi.no/v1alpha1` — de to eksisterer side om
+side under hvert sitt gruppenavn, og v1alpha1 er fortsatt den du skal bruke.
+
+Schemaet er identisk med v1alpha1 bortsett fra ett nytt felt, som viser hvordan nettverksvalg
+sannsynligvis kommer til å bli eksponert ved Gateway API-migreringen:
+
+```yaml
+network:            # enum: fhinett | hnett | inett — default: fhinett
+                    # hnett = helsenett, inett = internet
+```
+
+Verdiene matcher GatewayClass-navnene som allerede er i bruk — se [Hostnavn og nettverk](hostnames-and-networking.md).
+Ikke tilgjengelig på tenant-klustere per 2026-08-14.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/crossplane/aks-ops-test-01/xrds/skybertapp-beta.yaml
+
 ## Quick Start
 
 ```yaml
@@ -54,6 +73,29 @@ spec:
 | `autoscaling.targetMemory` | integer | `80` | Mål-minneutnyttelse % |
 
 > **Merk:** Å spesifisere `autoscaling` aktiverer HPA (Horizontal Pod Autoscaling). Når `autoscaling` er satt, **overstyres `replicas`-feltet av `autoscaling.minReplicas`** som initial replica count på Deployment.
+
+### Status og scale-subresource
+
+XRD-en eksponerer `/scale` og et `status`-objekt:
+
+| Felt | Type | Beskrivelse |
+|------|------|-------------|
+| `status.replicas` | integer | Observert `readyReplicas` fra den genererte Deployment-en |
+| `status.labelSelector` | string | `skybert.fhi.no/webapp=<navn>` — selector som matcher app-podene |
+
+`kubectl get skybertapp` viser kolonnene **DESIRED** (`.spec.replicas`) og **CURRENT** (`.status.replicas`).
+
+Scale-subresourcen mapper `.spec.replicas` ↔ `.status.replicas` med `.status.labelSelector`. Konsekvenser:
+
+- `kubectl scale skybertapp/<navn> --replicas=N -n tn-<tenant>` fungerer.
+- Autoskalerere kan peke `targetRef` rett på SkybertApp-ressursen i stedet for Deployment-en.
+  Plattformens Goldilocks/VPA gjør nettopp dette — se [Kyverno-policier — ressursanbefalinger](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa).
+
+> **⚠️ `kubectl scale` er ikke en permanent endring.** Replica-antallet er GitOps-styrt; Flux
+> rekonsilerer tilbake til verdien i repoet innen 2 minutter. Bruk det til akutt feilsøking,
+> aldri som varig konfigurasjon — endre `spec.replicas` i GitOps-repoet.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/crossplane/base/xrds/skybertapp.yaml
 
 ### Health Probes
 
@@ -176,7 +218,7 @@ Secrets hentes fra Azure Key Vault og monteres automatisk i alle containere.
 | `secrets[].keys[].remote` | string | **påkrevet** | Nøkkelnavn i Azure Key Vault |
 | `secrets[].keys[].local` | string | samme som `remote` | Nøkkelnavn i Kubernetes secret |
 | `secrets[].keys[].property` | string | — | JSON-egenskap å ekstrahere |
-| `secrets[].name` | string | `<vault-lowercase>-secret-<index>` | Kubernetes secret-navn |
+| `secrets[].name` | string | `<vault-lowercase>-secret-<index>-<app-navn>` | Kubernetes secret-navn |
 | `secrets[].mountAsFiles` | boolean | `true` | Monter som filer |
 | `secrets[].mountAsEnv` | boolean | `false` | Injiser som miljøvariabler |
 | `secrets[].mountPath` | string | `"/secrets/<secret name>"` | Filmonteringsbane |
@@ -347,9 +389,21 @@ SkybertApp oppretter følgende Kubernetes-ressurser:
 | Hoved-container | `<name>-main` |
 | Service Account | `<tenant>-azure` (utledet fra namespace `tn-<tenant>`) |
 | ConfigMap | `<name>-config` |
-| Secret | `<vault-lowercase>-secret-<index>` (hvis ikke spesifisert med `name`) |
+| Secret | `<vault-lowercase>-secret-<index>-<app-navn>` (hvis ikke spesifisert med `name`) |
+| ExternalSecret | `<vault-lowercase>-es-<index>-<app-navn>` |
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a16a243/infra/crossplane/base/compositions/skybertapp.yaml
+> **⚠️ Endret navnekonvensjon (2026-08-14):** Genererte secret- og ExternalSecret-navn har fått
+> `-<app-navn>` som suffiks (`<app-navn>` = `metadata.name` på SkybertApp-en). Refererer du til et
+> auto-generert secret-navn utenfor SkybertApp-en — f.eks. `envFrom.secretRef` i en rå Deployment,
+> eller et volum i en annen ressurs — må referansen oppdateres. Sett `secrets[].name` eksplisitt
+> hvis du vil ha et stabilt navn som ikke avhenger av composition-versjonen. Endringen kom for å
+> unngå navnekollisjon mellom to SkybertApps i samme namespace som bruker samme vault.
+>
+> **Merk at offisiell docs ennå ikke er oppdatert:** [SkybertApp reference](https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/)
+> oppgir fortsatt `<vault-lowercase>-secret-<index>` uten suffiks. Composition-en i infra-repoet er
+> den som faktisk kjører, og er lagt til grunn her.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/crossplane/base/compositions/skybertapp.yaml
 
 ## SkybertApp vs WebApp
 

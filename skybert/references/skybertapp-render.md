@@ -24,12 +24,14 @@ Rendering skjer lokalt via `crossplane render`, uten kluster-tilgang.
 
 **Kilde og provenance:**
 - Repo: `FHISkybert/Fhi.Skybert.Infra`
-- Verifisert mot commit: `0c766cae1b41d7633f29b30f6fd211501515953d` (main, 2026-07-03)
+- Verifisert mot commit: `a1ce34539f1b10f06fb5112e319ec57f11da30b0` (main, 2026-08-14)
 - Opprinnelige filer:
-  - `infra/crossplane/base/compositions/skybertapp.yaml` (sist endret: `696acda`, 2026-04-30)
-  - `infra/crossplane/base/xrds/skybertapp.yaml` (sist endret: `c2a5888`, 2026-04-30)
+  - `infra/crossplane/base/compositions/skybertapp.yaml` (sist endret: `a1ce3453`, 2026-08-14)
+  - `infra/crossplane/base/xrds/skybertapp.yaml` (sist endret: `a1ce3453`, 2026-08-14)
   - `infra/crossplane/base/functions.yaml` — **ikke kopiert som-den-er**;
-    vår `functions.yaml` bruker public xpkg i stedet for ACR-mirroren
+    vår `functions.yaml` bruker public xpkg i stedet for ACR-mirroren.
+    Funksjonsversjonene er uendret ved denne synkroniseringen
+    (go-templating `v0.11.0`, patch-and-transform `v0.8.2`, auto-ready `v0.5.0`)
 
 Disse kopiene kan drifte fra upstream. Se [Refresh](#refresh-av-kopier) nederst.
 
@@ -65,7 +67,7 @@ Forventet output (forkortet) for kodeverk-mcp slik den står i `main`:
 
 | Kind | Navn |
 |------|------|
-| SkybertApp | `kodeverk-mcp` (echo av composite) |
+| SkybertApp | `kodeverk-mcp` (echo av composite, nå med `status.replicas`/`status.labelSelector`) |
 | Deployment | `kodeverk-mcp-deployment` |
 | Ingress | `kodeverk-mcp-ingress` |
 | Service | `kodeverk-mcp-svc` |
@@ -98,13 +100,17 @@ crossplane render \
 
 **Stol på:**
 - Hvilke Kinds som genereres og hvilke betingelser som trigger dem
-- Navnemønstre (`<name>-deployment`, `<vault>-<name>` osv.)
+- Navnemønstre (`<name>-deployment`, `<vault>-secret-<i>-<name>` osv.)
 - Field values som kommer fra XR-et eller XRD-defaults
 - Ingress-issuer-valg basert på hostname-suffiks
+- `status.labelSelector` på composite-echoen — den utledes rent fra navnet (`skybert.fhi.no/webapp=<name>`)
 
 **Ikke stol på:**
 - `ownerReferences.uid` — render skriver alltid `""`
 - `status`-blokken på composite — render stubber den som `Ready=True`
+- `status.replicas` på composite-echoen — composition-en leser `readyReplicas` fra den komponerte
+  Deployment-en via `getComposedResource`, men i render finnes ingen levende Deployment. Verdien
+  blir derfor **alltid `0`**. Det er ikke en feil
 - `metadata.resourceVersion`, `managedFields` osv. — finnes ikke
 - Crossplane-injiserte labels/annotations kan avvike litt fra det
   klusteret faktisk setter

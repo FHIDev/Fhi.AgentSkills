@@ -89,6 +89,8 @@ Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per milj
 - **NetworkPolicies:** native (`networking.k8s.io`) og Calico (`crd.projectcalico.org`)
 - **Sertifikater:** cert-manager `certificates`/`certificaterequests`/`issuers` og trust-manager `bundles`
 - **Gateway API:** `listenersets`, `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes`, `udproutes` (Envoy Gateway-implementasjon — se [Hostnavn og nettverk](hostnames-and-networking.md))
+- **Envoy SecurityPolicy:** `gateway.envoyproxy.io/securitypolicies` med full CRUD. Lar deg definere OIDC-/JWT-autentisering, CORS og ekstern autorisasjon på egne HTTPRoutes der Gateway API er aktivert på klusteret. Kildekommentaren beskriver formålet som «firewalls, oidc, etc». To forbehold: **rate limiting hører til `BackendTrafficPolicy`**, som denne RBAC-endringen *ikke* åpner for, og funksjonen er ikke annonsert som støttet plattformfunksjon i offisiell docs — avklar med `#ext-fhi-skybert` før du bygger på det
+- **Ressursanbefalinger:** `autoscaling.k8s.io/verticalpodautoscalers` (`get`/`list`/`watch`). Objektene opprettes av Goldilocks i anbefalingsmodus — du kan inspisere dem, men ikke endre dem (se [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa))
 - **Secrets:** external-secrets `externalsecrets`/`secretstores` (+ `secretproviderclasses`, deprecated)
 - **Crossplane-claims:** alt i API-gruppen `skybert.fhi.no` (f.eks. SkybertApp)
 - **Flux Kustomizations** (`kustomize.toolkit.fluxcd.io`): `get`/`list`/`watch`/`patch`/`update`/`create`/`delete` — patch for suspend/resume, create/delete for å legge til egne ekstra Kustomizations.
@@ -100,7 +102,7 @@ Runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral) er kun me
 
 > **Merk:** RBAC gir *adgang* til ressurstypene over, men Kyverno-policyer kan fortsatt begrense hva som faktisk godtas. F.eks. i rød sone blokkeres native `NetworkPolicy` (kun Calico tillatt), og Calico-egress styres sentralt. Se [Kyverno-policier](kyverno-policies.md).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
 
 ### RoleBinding for namespace-tilgang (Entra-gruppe)
 

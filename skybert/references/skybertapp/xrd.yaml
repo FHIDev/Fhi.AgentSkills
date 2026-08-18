@@ -12,6 +12,18 @@ spec:
   - name: v1alpha1
     served: true
     referenceable: true
+    additionalPrinterColumns:
+    - jsonPath: .spec.replicas
+      name: DESIRED
+      type: integer
+    - jsonPath: .status.replicas
+      name: CURRENT
+      type: integer
+    subresources:
+      scale:
+        specReplicasPath: .spec.replicas
+        statusReplicasPath: .status.replicas
+        labelSelectorPath: .status.labelSelector
     schema:
       openAPIV3Schema:
         type: object
@@ -460,3 +472,14 @@ spec:
 
             required:
             - image
+
+          status:
+            type: object
+            description: Observed state written by the composition (scale subresource / VPA).
+            properties:
+              replicas:
+                description: Observed ready replica count from the composed Deployment.
+                type: integer
+              labelSelector:
+                description: Serialized label selector matching the app pods (for /scale and VPA).
+                type: string

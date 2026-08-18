@@ -6,7 +6,7 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-07-04
+> **Sist verifisert mot offisiell docs:** 2026-08-15
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -275,6 +275,7 @@ spec:
 - Automatisk **PodDisruptionBudget** når `replicas>1` eller `autoscaling.minReplicas>1` (default `minAvailable: "33%"`)
 - **Prometheus metrics-scraping** via `metrics.port` — annotasjoner settes automatisk
 - **`args`** for argumenter til container-kommandoen
+- **Scale-subresource** — `kubectl scale skybertapp/<navn>` fungerer, `kubectl get skybertapp` viser DESIRED/CURRENT, og autoskalerere kan peke `targetRef` rett på SkybertApp-en. Merk at `kubectl scale` overstyres av Flux ved neste rekonsiliering — se [SkybertApp CRD](references/skybertapp-crd.md#status-og-scale-subresource)
 
 **Begrensninger:**
 - Memory limit er alltid lik request
@@ -495,6 +496,12 @@ Inntil videre skal alle PVCer mot `ontap-nas` opprettes med
 `accessModes: [ReadWriteMany]` (RWX). **Bruk aldri `ReadWriteOnce`
 (RWO)**. Helm-charts som default-er til RWO må overrides.
 
+### Under utrulling: Postgres i klusteret
+
+Plattformen tester **CloudNativePG** (Postgres-operator med backup via barman-cloud) på
+`aks-ops-test-01`. Det er ikke tilgjengelig for tenanter ennå, og anbefalingen om ekstern database
+står uendret. Se [Konfigurasjon — Postgres i klusteret](references/configuration.md#postgres-i-klusteret-cloudnativepg--under-utrulling).
+
 ## Azure Workload Identity
 
 Skybert bruker Azure Workload Identity for passordløs autentisering mot Azure-tjenester (Key Vault, Blob Storage, etc.).
@@ -517,6 +524,12 @@ Skybert bruker Azure Workload Identity for passordløs autentisering mot Azure-t
 Skybert har per nå ingen innebygd funksjonalitet for brukervendt autentisering eller maskin-til-maskin-autentisering for tenants. Bruk standard IAM-prosedyrer med OIDC via EntraID, IDPorten eller HelseID. Unngå legacy AD-autentisering.
 
 > Kilde: https://docs.sky.fhi.no/auth/
+
+> **Merk (per 2026-08-14):** Tenant-admin har nå skrivetilgang til Envoy `SecurityPolicy`
+> (`gateway.envoyproxy.io`) på klustere der Gateway API er aktivert, noe som teknisk muliggjør
+> OIDC-terminering i gateway-laget. Dette er **ikke** annonsert som en støttet plattformfunksjon i
+> offisiell docs — avklar med `#ext-fhi-skybert` før du bygger på det. Rate limiting hører til
+> `BackendTrafficPolicy` og er ikke omfattet. Se [Sikkerhet](references/security.md).
 
 ## Feilsøking av deployments
 

@@ -1,0 +1,659 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-15T19:15:00Z",
+  "docsCommit": "acde93e01f4af673da8bc737622d161017cf23c9",
+  "skillContentHash": "54a33e1c08ff736c4d2e7ed8be3ddf46d41f3c2ed2f2d96cdb5b2010d7f2e4ff",
+  "pages": [
+    {
+      "path": "docs/index.md",
+      "topic": "Forside, navigasjonskort",
+      "coveredIn": [
+        "SKILL.md#om-skybert"
+      ],
+      "coverage": "utenfor-scope",
+      "missing": "Ren navigasjonsside uten faktainnhold."
+    },
+    {
+      "path": "docs/get-started/index.md",
+      "topic": "Onboarding-steg, Bertil, navneregler",
+      "coveredIn": [
+        "SKILL.md#tenant",
+        "SKILL.md#blåløypa-golden-path"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/get-started/prerequisites/index.md",
+      "topic": "Forutsetninger — inngangsside",
+      "coveredIn": [
+        "SKILL.md#blåløypa-golden-path"
+      ],
+      "coverage": "utenfor-scope",
+      "missing": "Navigasjonsside; innholdet ligger i organization.md/application.md."
+    },
+    {
+      "path": "docs/get-started/prerequisites/organization.md",
+      "topic": "Tenant owner-ansvar, ROS, DPIA",
+      "coveredIn": [
+        "SKILL.md#blåløypa-golden-path",
+        "SKILL.md#legal-og-compliance"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/get-started/prerequisites/application.md",
+      "topic": "Applikasjonskrav, Linux, Dockerfile, CI, Azure-subscription",
+      "coveredIn": [
+        "SKILL.md#blåløypa-golden-path"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/get-started/blaloypa.md",
+      "topic": "Blåløypa sjekkliste, klustertabell per farge",
+      "coveredIn": [
+        "SKILL.md#blåløypa-golden-path",
+        "SKILL.md#sikkerhetssoner"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/get-started/gitops-repo.md",
+      "topic": "GitOps-repo, oci-push, update-tag, miljømapper",
+      "coveredIn": [
+        "SKILL.md#repository-oppsett",
+        "references/workflows.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/get-started/connectedk8s.md",
+      "topic": "az connectedk8s proxy, klusterliste med subscriptions",
+      "coveredIn": [
+        "references/kubectl-access.md"
+      ],
+      "coverage": "komplett",
+      "missing": "Docs lister fortsatt aks-yellow-test-01; skillen noterer at den er under utfasing (infra clusters.sh er autoritativ)."
+    },
+    {
+      "path": "docs/explanations/what-is-skybert.md",
+      "topic": "Plattformens formål og designprinsipper",
+      "coveredIn": [
+        "SKILL.md#om-skybert"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/explanations/what-is-a-tenant.md",
+      "topic": "Tenant-modell, organisasjonsmodeller, når splitte",
+      "coveredIn": [
+        "SKILL.md#tenant"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/explanations/under-the-hood.md",
+      "topic": "Arkitektur, miljøer, soner, teknologistack",
+      "coveredIn": [
+        "references/platform-architecture.md",
+        "SKILL.md#miljøer",
+        "SKILL.md#sikkerhetssoner"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/explanations/tools-and-components.md",
+      "topic": "Komponentoversikt, tenant-facing vs plattform-only",
+      "coveredIn": [
+        "references/platform-architecture.md#komponentkart-for-tenant-utviklere"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/explanations/blaloypa.md",
+      "topic": "Blåløypa-konseptet og navnebakgrunn",
+      "coveredIn": [
+        "SKILL.md#blåløypa-golden-path"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/explanations/shared-responsibilities.md",
+      "topic": "Stub som peker til legal/responsibilities.md",
+      "coveredIn": [
+        "SKILL.md#ansvarsfordeling"
+      ],
+      "coverage": "utenfor-scope",
+      "missing": "Tre linjers stub uten eget innhold."
+    },
+    {
+      "path": "docs/build/explanations/gitops.md",
+      "topic": "GitOps-prinsippet, OCI-flyt, Flux",
+      "coveredIn": [
+        "SKILL.md#gitops-flyt",
+        "references/platform-architecture.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/workloads/index.md",
+      "topic": "Workload-typer, native Kubernetes-alternativer",
+      "coveredIn": [
+        "SKILL.md#skybertapp-crd",
+        "references/configuration.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/workloads/jobs.md",
+      "topic": "Job/CronJob — ingen Skybert-wrapper ennå",
+      "coveredIn": [
+        "references/configuration.md#job-og-cronjob"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/workloads/skybertapp/index.md",
+      "topic": "SkybertApp-motivasjon og genererte ressurser",
+      "coveredIn": [
+        "SKILL.md#skybertapp-crd",
+        "references/skybertapp-crd.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/workloads/skybertapp/references/skybertapp.md",
+      "topic": "Full SkybertApp-feltreferanse",
+      "coveredIn": [
+        "references/skybertapp-crd.md"
+      ],
+      "coverage": "komplett",
+      "missing": "KONFLIKT: docs oppgir fortsatt secrets[].name-default uten app-navn-suffiks, og mangler status/scale-subresource. Infra-XRD/composition er lagt til grunn; avviket er dokumentert i skillen."
+    },
+    {
+      "path": "docs/build/index.md",
+      "topic": "Build & deploy, OCI-flyt, promotion, Helm/Kustomize",
+      "coveredIn": [
+        "SKILL.md#image-tag-management-og-promotion",
+        "references/workflows.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/build/environments.md",
+      "topic": "Sandbox/test/prod, nettverksrestriksjoner per farge",
+      "coveredIn": [
+        "SKILL.md#miljøer",
+        "references/hostnames-and-networking.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/build/flux-dashboard.md",
+      "topic": "Flux Web UI, suspend/resume, URL-er per kluster",
+      "coveredIn": [
+        "references/flux-tooling.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/build/flux-mcp.md",
+      "topic": "Flux Operator MCP, oppsett i Cursor/VS Code",
+      "coveredIn": [
+        "references/flux-tooling.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/build/how-to/trigger-gitops-promotion.md",
+      "topic": "repository_dispatch, PAT, payload-format",
+      "coveredIn": [
+        "SKILL.md#dispatch-fra-app-repo",
+        "references/workflows.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/auth/index.md",
+      "topic": "Autentisering — ingen brukervendt støtte",
+      "coveredIn": [
+        "SKILL.md#brukervendt-autentisering"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/auth/workload-identity.md",
+      "topic": "Workload Identity, SA-navn, managed identity-mønster",
+      "coveredIn": [
+        "SKILL.md#azure-workload-identity",
+        "references/security.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/persistence/index.md",
+      "topic": "StorageClasses, ontap-nas, ekstern database anbefalt",
+      "coveredIn": [
+        "SKILL.md#persistence--data-lagring"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/observability/index.md",
+      "topic": "LGTM-oversikt",
+      "coveredIn": [
+        "references/observability.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/observability/logs.md",
+      "topic": "Loki, LogQL, labels, OTLP-ingestion",
+      "coveredIn": [
+        "references/observability.md#logging-med-loki"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/observability/metrics.md",
+      "topic": "Mimir, prometheus.io-annotasjoner, KEDA planlagt",
+      "coveredIn": [
+        "references/observability.md#metrics-med-mimir"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/observability/grafana.md",
+      "topic": "Grafana-URL-er, dashboards, ConfigMap-syncer",
+      "coveredIn": [
+        "references/observability.md#grafana-dashboards"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/observability/tracing.md",
+      "topic": "Tempo planlagt, OpenTelemetry-forberedelse",
+      "coveredIn": [
+        "references/observability.md#tracing-med-tempo"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/miscellaneous/publicCA.md",
+      "topic": "trust-bundle.pem, offentlige og interne CA-er",
+      "coveredIn": [
+        "references/security.md",
+        "references/kyverno-policies.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/miscellaneous/vault_secrets.md",
+      "topic": "Key Vault, SecretStore/ExternalSecret, reloader",
+      "coveredIn": [
+        "references/secrets.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/miscellaneous/PIM.md",
+      "topic": "PIM for prod og red-test",
+      "coveredIn": [
+        "references/kubectl-access.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/miscellaneous/access-packages.md",
+      "topic": "Tilgangspakker, approvere, access review hver 3. mnd",
+      "coveredIn": [
+        "SKILL.md#blåløypa-golden-path"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/miscellaneous/fhi-felles-cryptography.md",
+      "topic": ".NET-bibliotek for kryptering, DPAPI-fri bruk på Linux",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Besluttet 2026-08-15: bibliotekdokumentasjon, ikke plattformmekanisme. Bevisst utelatt — skal ikke reåpnes som åpen post."
+    },
+    {
+      "path": "docs/miscellaneous/probes.md",
+      "topic": "Readiness/liveness, .NET Health Checks, public/private endpoints",
+      "coveredIn": [
+        "references/configuration.md#health-probes-i-net-apper",
+        "references/skybertapp-crd.md#health-probes"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/tags/index.md",
+      "topic": "Auto-generert tag-indeks",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "MkDocs-generert indeksside uten innhold."
+    },
+    {
+      "path": "docs/legal/index.md",
+      "topic": "Sikkerhet og risikostyring — oversikt",
+      "coveredIn": [
+        "SKILL.md#legal-og-compliance"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/legal/app-ros.md",
+      "topic": "Applikasjons-ROS, gjenbruk av plattform-ROS",
+      "coveredIn": [
+        "SKILL.md#legal-og-compliance"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/legal/skybert-ros.md",
+      "topic": "Plattform-ROS — hva den dekker",
+      "coveredIn": [
+        "SKILL.md#legal-og-compliance"
+      ],
+      "coverage": "komplett",
+      "missing": "Siden er selv merket «work in progress»."
+    },
+    {
+      "path": "docs/legal/responsibilities.md",
+      "topic": "HUKI-modell, ansvarsnivåer, kost",
+      "coveredIn": [
+        "SKILL.md#ansvarsfordeling"
+      ],
+      "coverage": "komplett",
+      "missing": "Siden er hovedsakelig bilder og en <elaborate>-placeholder."
+    },
+    {
+      "path": "docs/legal/dpia.md",
+      "topic": "DPIA-ansvar",
+      "coveredIn": [
+        "SKILL.md#legal-og-compliance"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/troubleshooting/non-root.md",
+      "topic": "Kjør som non-root, USER 1000",
+      "coveredIn": [
+        "references/troubleshooting.md",
+        "references/kyverno-policies.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/sk8/clusters.json",
+      "topic": "Publisert klusterregister (name, resourceGroup, needsPim m.m.)",
+      "coveredIn": [
+        "references/kubectl-access.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/internal/index.md",
+      "topic": "Intern inngangsside for plattformteamet",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Navigasjonsside for plattformdrift."
+    },
+    {
+      "path": "docs/internal/sk8-cli.md",
+      "topic": "Script-dispatcher (tidligere scripts/sk8)",
+      "coveredIn": [
+        "references/kubectl-access.md#sk8-cli--automatisert-pim--proxy"
+      ],
+      "coverage": "komplett",
+      "missing": "KONFLIKT: docs bruker fortsatt navnet sk8; infra har omdøpt til scripts/ska. Avviket er dokumentert i skillen."
+    },
+    {
+      "path": "docs/internal/flux.md",
+      "topic": "Flux Operator, multi-tenancy, cross-namespace-patch",
+      "coveredIn": [
+        "references/platform-architecture.md",
+        "references/flux-tooling.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/internal/service-mesh.md",
+      "topic": "Ingen service mesh — Linkerd fjernet",
+      "coveredIn": [
+        "references/hostnames-and-networking.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/internal/global-network-policies.md",
+      "topic": "Calico GNP, order-verdier, NFS-blokkering",
+      "coveredIn": [
+        "references/kyverno-policies.md#rød-sone--ekstra-policier",
+        "references/hostnames-and-networking.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/internal/decisions/gatewayapi.md",
+      "topic": "Beslutning om Gateway API, Traefik som backup i grønn sone",
+      "coveredIn": [
+        "references/hostnames-and-networking.md#ingress-nginx-i-dag-gateway-api-envoy-gateway-under-utrulling"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/internal/decisions/service-mesh.md",
+      "topic": "Begrunnelse for å fjerne Linkerd",
+      "coveredIn": [
+        "references/hostnames-and-networking.md"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/internal/dev-gatewayapi.md",
+      "topic": "WIP-skisse: ListenerSet-topologi (mermaid)",
+      "coveredIn": [
+        "references/hostnames-and-networking.md"
+      ],
+      "coverage": "delvis",
+      "missing": "WIP-side uten brødtekst. Topologien er dekket funksjonelt i skillen. Åpen post dev-gatewayapi-wip; revurderes når siden får innhold."
+    },
+    {
+      "path": "docs/internal/trust-manager-publicCA.md",
+      "topic": "trust-manager-versjon og CA-pakkeimage",
+      "coveredIn": [
+        "references/security.md"
+      ],
+      "coverage": "utenfor-scope",
+      "missing": "Plattformdrift: manuell tag-bump av CA-pakkeimage. Effekten for tenanter (trust-bundle.pem) er dekket via publicCA.md."
+    },
+    {
+      "path": "docs/internal/helm-and-crds.md",
+      "topic": "helm to-yaml, crd extract/diff, build-manifests",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Plattformteamets verktøykjede for å rendre Helm og håndtere CRD-er. Ingen tenant-impact."
+    },
+    {
+      "path": "docs/internal/migrate-ingress-to-traefik.md",
+      "topic": "Nødprosedyre: bytt grønn ingress fra nginx til Traefik",
+      "coveredIn": [
+        "references/hostnames-and-networking.md"
+      ],
+      "coverage": "delvis",
+      "missing": "Skillen dekker at Traefik finnes som backup i grønn sone. Selve cutover-runbooken (IP-swap, MetalLB) er plattformdrift og bevisst utelatt."
+    },
+    {
+      "path": "docs/internal/add-tenant-to-cluster.md",
+      "topic": "Deprecated — flyttet til managing-tenants.md",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Siden er merket deprecated og inneholder kun en videresending."
+    },
+    {
+      "path": "docs/internal/steps-adding-new-tenant.md",
+      "topic": "az identity/federated credential-kommandoer for ny tenant",
+      "coveredIn": [
+        "references/platform-architecture.md#tenant-bootstrap"
+      ],
+      "coverage": "utenfor-scope",
+      "missing": "Plattformteamets provisjoneringskommandoer. Mønsteret (managed identity per tenant, federated credential mot GitOps-repo) er dekket; rå az-kommandoer er ikke tenant-relevante."
+    },
+    {
+      "path": "docs/internal/attach-application-repo.md",
+      "topic": "Federere app-repo mot ACR, gh variable set",
+      "coveredIn": [
+        "SKILL.md#påkrevde-github-repository-variabler-og-secrets"
+      ],
+      "coverage": "komplett",
+      "missing": "Variabelnavnene er dekket; selve az-federeringen utføres av plattformteamet."
+    },
+    {
+      "path": "docs/internal/managing-tenants.md",
+      "topic": "Runbook: opprette/utvide tenant",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Admin-operasjon, eksplisitt ekskludert av seleksjonsreglene."
+    },
+    {
+      "path": "docs/internal/managing-clusters.md",
+      "topic": "Runbook: scaffolde nytt kluster, Azure-provisjonering",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Plattformdrift uten tenant-impact."
+    },
+    {
+      "path": "docs/internal/move-tenant-to-new-cluster.md",
+      "topic": "Runbook: flytte tenant innen samme farge",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Plattformdrift uten tenant-impact."
+    },
+    {
+      "path": "docs/internal/move-tenant-to-new-color.md",
+      "topic": "Runbook: flytte tenant til ny fargesone",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Plattformdrift uten tenant-impact."
+    },
+    {
+      "path": "docs/internal/delete-tenant.md",
+      "topic": "Runbook: slette tenant",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Plattformdrift uten tenant-impact."
+    },
+    {
+      "path": "docs/internal/replace-cluster-in-place.md",
+      "topic": "Runbook: erstatte kluster, OIDC-issuer-bytte",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Plattformdrift uten tenant-impact."
+    },
+    {
+      "path": "docs/internal/limit-prod-access.md",
+      "topic": "Forkastet design: tenant-prod-mgmt ClusterRole + RBAC-policier",
+      "coveredIn": [
+        "references/kubectl-access.md",
+        "references/security.md"
+      ],
+      "coverage": "utenfor-scope",
+      "missing": "Siden er eksplisitt merket «Not in use» — designet ble forkastet til fordel for PIM. Skal IKKE dokumenteres som gjeldende. Skillens PIM-beskrivelse dekker den løsningen som faktisk gjelder."
+    },
+    {
+      "path": "docs/internal/upgrade-component.md",
+      "topic": "Runbook: oppgradere infra-komponent",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Plattformdrift, eksplisitt ekskludert av seleksjonsreglene."
+    },
+    {
+      "path": "docs/internal/component-versions.md",
+      "topic": "Auto-generert versjonstabell (ukentlig CI)",
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Bevisst ikke speilet: tabellen roterer ukentlig og ville gjort skillen permanent utdatert. Brukes som kryssjekk ved oppdatering."
+    },
+    {
+      "path": "docs/internal/observability/alloy.md",
+      "topic": "Alloy DaemonSet, log/OTLP/metrics-pipelines, annotasjonsscraping",
+      "coveredIn": [
+        "references/observability.md#otlp-log-ingestion-eksperimentelt",
+        "references/observability.md#metrics-med-mimir"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/internal/observability/loki.md",
+      "topic": "Loki-oppsett, Azure storage, retention 744h",
+      "coveredIn": [
+        "references/observability.md#loki-multi-tenancy-og-isolasjon"
+      ],
+      "coverage": "komplett",
+      "missing": "Siden er selv merket «Outdated». Retention (31 dager) er bekreftet og kildeført i skillen."
+    },
+    {
+      "path": "docs/internal/observability/mimir.md",
+      "topic": "Mimir-arkitektur, cortex-tenant, X-Scope-OrgID-utledning",
+      "coveredIn": [
+        "references/observability.md#metrics-med-mimir"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/internal/observability/grafana.md",
+      "topic": "Grafana-oppsett, org_mapping mot Entra-grupper",
+      "coveredIn": [
+        "references/observability.md#grafana-multi-tenancy"
+      ],
+      "coverage": "komplett",
+      "missing": "Entra-gruppe-UUID-er i kilden er filtrert bort per sikkerhetsreglene."
+    }
+  ]
+}
