@@ -115,14 +115,74 @@ Følgende regler gjelder alle Ingress-ressurser:
 
 **Retning (plattformbeslutning):** Plattformen har besluttet å migrere fra `ingress-nginx` til **Gateway API**, implementert av **Envoy Gateway**.
 
-**Faktisk aktiveringsstatus (infra per 2026-07):** Envoy Gateway (v1.8.2) er aktivert i de fleste klusteroverlays — men **ikke i green-test og green-prod**, som fortsatt bare kjører Envoy-namespacet og bruker `ingress-nginx`. Der Envoy er aktivert, definerer plattformen delte `Gateway`-objekter og `GatewayClass`-er. Utrullingen varierer per kluster (utledet fra `infra/envoy/*/kustomization.yaml`):
+**Faktisk aktiveringsstatus (infra per 2026-08-27, `449745b`):** Envoy Gateway (v1.8.2) er aktivert i de fleste klusteroverlays — men **ikke i green-test og green-prod**, som fortsatt bare kjører Envoy-namespacet og bruker `ingress-nginx`. Der Envoy er aktivert, definerer plattformen delte `Gateway`-objekter og `GatewayClass`-er. Utrullingen varierer per kluster (utledet fra `infra/envoy/*/kustomization.yaml`):
 
 | Ressurs | Aktivert hvor |
 |---------|---------------|
 | GatewayClass `fhinett` + `helsenett`, Gateway `helsenett`, `gateway-proxyprotocol` | Alle klustere med Envoy aktivert (ops-test, sandbox, yellow-test/prod, red-test/prod, norsyss) |
 | GatewayClass `internett` + Gateway `internett` | Kun ops-test, sandbox og yellow-test/prod — **ikke** red-klusterne eller norsyss |
 
-**Tenant-mønsteret (dokumentert i docs):** Offisiell docs beskriver nå tenant-rettet bruk slik: plattformen kjører delte `Gateway`-objekter; tenanter knytter til seg listeners og TLS via **`ListenerSet`**-ressurser i eget namespace, og ruter trafikk til sine Services med **`HTTPRoute`**. RBAC-rollen `skybert:tenant-admin` tillater disse ressurstypene (se [Sikkerhet](security.md)). Merk at dette beskriver retningen — SkybertApp-hostnames bruker fortsatt `Ingress`, og hostname-reglene (inkl. flambert-blokkeringen over) håndheves også på Gateway API-ruter.
+**Tenant-mønsteret:** plattformen kjører delte `Gateway`-objekter; tenanter knytter til seg listeners og TLS via **`ListenerSet`**-ressurser i eget namespace, og ruter trafikk til sine Services med **`HTTPRoute`**. RBAC-rollen `skybert:tenant-admin` tillater disse ressurstypene (se [Sikkerhet](security.md)). Merk at hostname-reglene (inkl. flambert-blokkeringen over) håndheves også på Gateway API-ruter.
+
+Tenanten har **ikke** `gateways` i RBAC-settet, bare `listenersets` og rutene. `helsenett`- og `internett`-gatewayene ligger i `envoy-gateway-system` med `allowedListeners.namespaces.from: All`. `fhinett` er unntaket: den Gateway-en ligger i tenantens eget namespace og legges inn av plattformteamet under `tenants/<tenant>/base/`, ikke av tenanten selv — be om den i onboardingen hvis appen skal på fhinett.
+
+Tenanten får også `securitypolicies` (`gateway.envoyproxy.io`), som gir OIDC, JWT-validering, ext-auth, CORS og IP-restriksjoner på gateway-nivå.
+
+`ListenerSet` + `HTTPRoute`, slik beta-compositionen rendrer dem. cert-manager-issueren annoteres på `ListenerSet`, ikke på ruten:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: ListenerSet
+metadata:
+  name: listenerset-gw-helsenett
+  namespace: tn-my-tenant
+  annotations:
+    cert-manager.io/cluster-issuer: skytest-fhi-letsencrypt-azuredns-issuer
+spec:
+  parentRef:
+    name: helsenett            # fhinett: bytt namespace til tn-my-tenant
+    namespace: envoy-gateway-system
+    kind: Gateway
+    group: gateway.networking.k8s.io
+  listeners:
+    - name: https
+      hostname: my-app.skytest.fhi.no
+      protocol: HTTPS
+      port: 443
+      allowedRoutes:
+        namespaces:
+          from: Same
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: gw-my-app-helsenett-tls
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: my-app-httproute-gw-helsenett
+  namespace: tn-my-tenant
+spec:
+  parentRefs:
+    - name: listenerset-gw-helsenett
+      kind: ListenerSet
+      group: gateway.networking.k8s.io
+  hostnames:
+    - "my-app.skytest.fhi.no"   # velger riktig listener når flere finnes
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - kind: Service
+          name: my-app-svc
+          port: 8080
+```
+
+`HTTPRoute` gjør path-matching og `URLRewrite` som innebygde filtre. Skal flere komponenter dele ett hostnavn under hver sin path, er dette veien — ikke nginx' rewrite-annotasjoner.
+
+**SkybertApp på Gateway API:** `skybert-beta.fhi.no/v1beta1` (annen API-gruppe enn `skybert.fhi.no/v1alpha1`) rendrer `ListenerSet` + `HTTPRoute` og har et `network`-felt med enum `fhinett` / `helsenett` / `internett`, default `fhinett`. XRD og composition finnes **kun på `aks-ops-test-01`**. Andre steder skriver du ressursene selv.
 
 > **Intern (plattformdrift):** For green-test og green-prod er **Traefik** forhåndsdeployert som nød-fallback sommeren 2026 i tilfelle en alvorlig `ingress-nginx`-CVE. Ved en slik hendelse kan plattformteamet bytte ingress-controller (og patche `ingressClassName` for skybertapp-tenanter); interne ingresser kan forbli på nginx. Dette er en beredskapsmekanisme, ikke en tenant-oppgave.
 
