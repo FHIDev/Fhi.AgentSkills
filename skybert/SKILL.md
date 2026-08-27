@@ -403,12 +403,16 @@ Cert-manager cluster-issuere per domene:
 **ingress-nginx** er produksjonsveien og kjører på alle klustere: `Ingress` med
 `ingressClassName: nginx`. Dette er det `SkybertApp` (`skybert.fhi.no/v1alpha1`) genererer.
 
-**Envoy Gateway / Gateway API** (v1.8.2) er utrullet parallelt på ops-test, sandbox,
-yellow-test/prod, red-test/prod og norsyss — **ikke på green-test og green-prod**, som bare
-har Envoy-namespacet. Tenanter får `httproutes`, `grpcroutes`, `tcp/tls/udproutes`,
-`listenersets` og Envoys `securitypolicies` — men **ikke `gateways`**. Gateway-objektene
-eies av plattformen; tenanten fester en `ListenerSet` (eget hostnavn og sertifikat) til en
-av dem, og henger `HTTPRoute`-er på den.
+**Envoy Gateway** (v1.8.2, Gateway API standard channel) er utrullet parallelt på
+ops-test, sandbox, yellow-test/prod, red-test/prod og norsyss — **ikke på green-test og
+green-prod**, som bare har Envoy-namespacet. Tenanter får `httproutes`, `grpcroutes`,
+`tlsroutes`, `listenersets` og Envoys `securitypolicies` — men **ikke `gateways`**.
+Gateway-objektene eies av plattformen; tenanten fester en `ListenerSet` (eget hostnavn og
+sertifikat) til en av dem, og henger `HTTPRoute`-er på den.
+
+RBAC nevner også `tcproutes` og `udproutes`, men de CRD-ene er ikke installert — standard
+channel har dem ikke. En slik ressurs feiler Flux' dry-run, som da avviser **hele**
+Kustomizationen, ikke bare den ene fila.
 
 Tre nettverk, som avgjør hvem som når appen:
 
@@ -418,15 +422,20 @@ Tre nettverk, som avgjør hvem som når appen:
 | `helsenett` | Aktører på helsenettet — kommuner, HF | Delt Gateway i `envoy-gateway-system` |
 | `internett` | Offentlig eksponering | Delt Gateway, kun ops-test, sandbox og yellow-test/prod |
 
-Velg `helsenett` framfor `internett` når brukerne finnes på helsenettet; det er en kortere
-sikkerhetsgjennomgang.
+Velg `helsenett` framfor `internett` når brukerne finnes på helsenettet.
 
-`SecurityPolicy` (`gateway.envoyproxy.io`) gjør OIDC, JWT-validering, ext-auth og
-IP-restriksjoner på gateway-nivå — nyttig når appen selv mangler god autentisering.
+**Gateway API når ikke tenant-pods i rød sone.** `base-tenant-ingress` (order 1200) slipper
+kun inn trafikk fra `ingress-nginx`-namespacet og denyer resten, og det finnes ingen
+GlobalNetworkPolicy for Envoy. Manifestene applyer fint og serverer ingenting. Bruk
+`Ingress` på rød, eller be `#ext-fhi-skybert` om en åpning.
 
-`SkybertApp` som genererer `HTTPRoute` + `ListenerSet` finnes som
-`skybert-beta.fhi.no/v1beta1` (merk annen API-gruppe), men **kun på `aks-ops-test-01`**. På
-øvrige klustere skriver du Gateway API-ressursene selv.
+Tenanter har også `securitypolicies` (`gateway.envoyproxy.io`) i RBAC-settet — se
+[Sikkerhet](references/security.md) for hva den dekker og forbeholdene som gjelder.
+
+Gateway API-ressursene skriver du selv. `SkybertApp` som genererer `HTTPRoute` +
+`ListenerSet` finnes som `skybert-beta.fhi.no/v1beta1`, men CRD-en er kun på
+`aks-ops-test-01`, **og tenant-RBAC dekker den ikke** — rettighetene er gitt på API-gruppen
+`skybert.fhi.no`, ikke `skybert-beta.fhi.no`. Regn den som plattform-intern inntil videre.
 
 Se [Hostnavn og nettverk](references/hostnames-and-networking.md) for begge mønstrene i sin
 helhet, inkludert external-dns for offentlige IP-er.
@@ -454,15 +463,18 @@ CloudNativePG-operatøren er rullet ut til alle klustere (2026-08-17), og tenant
 til å deklarere `Cluster`, `ScheduledBackup` og barman `ObjectStore` i eget namespace.
 Backup går til Azure Blob med workload identity, uten secret i namespacet.
 
-Operatøren kom før lagringen den trenger: ingen av StorageClassene over duger til PGDATA.
-Den konkrete NFS-fellen er at CloudNativePG ikke støtter NFS for datavolumer, og
-`ontap-nas` monteres med `nolock` — to postmastere kan da åpne samme PGDATA og korrumpere
-databasen. **Avklar med `#ext-fhi-skybert` om klusteret har block storage tenanten kan
-bruke, før du planlegger CNPG i produksjon.** Er svaret nei, er alternativene Azure
+**Bruk aldri `ontap-nas` til PGDATA.** CloudNativePG støtter ikke NFS for datavolumer, og
+klassen monteres med `nolock` — to postmastere kan da åpne samme PGDATA og korrumpere
+databasen.
+
+Hva som da er riktig StorageClass er uavklart: `default` er node-lokal block storage og
+kan være riktig for CNPG med replikering og Blob-backup, men den er ikke deklarert i
+infra-repoet og plattformens egen plan er å erstatte lagringen med ACSA. **Avklar med
+`#ext-fhi-skybert` før du planlegger CNPG i produksjon.** Alternativene ellers er Azure
 Database for PostgreSQL Flexible Server eller VM-Postgres.
 
 Se [CloudNativePG](references/cloudnative-pg.md) for tenant-kontrakten, Azure-forutsetningene
-og opt-in for rød sone.
+og de to labelene rød sone krever.
 
 ### `ontap-nas` accessMode -- bare RWX
 

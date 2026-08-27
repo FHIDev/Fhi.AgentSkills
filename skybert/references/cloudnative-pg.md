@@ -2,9 +2,12 @@
 
 > Verifisert mot `Fhi.Skybert.Infra` @ `449745b`, 2026-08-27.
 
-Operatøren kjører som plattformtjeneste i `cnpg-system` med `config.clusterWide: true`, så
-den ser alle namespaces. Chart `cloudnative-pg` 0.29.0 + plugin `plugin-barman-cloud` 0.7.1.
-CRD-ene ligger i `crds/base/` (`crds.create: false` i chartet).
+Operatøren kjører som plattformtjeneste i `cnpg-system` og ser alle namespaces (chartets
+default — `WATCH_NAMESPACE` settes ikke, og values-fila overstyrer det ikke). Chart
+`cloudnative-pg` 0.29.0 + plugin `plugin-barman-cloud` 0.7.1. CRD-ene ligger i `crds/base/`
+(`crds.create: false` i chartet).
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/449745b/infra/cloudnative-pg/
 
 Utrullet til alle ni klustere 2026-08-17 (#1222). Tenant-RBAC til alle klustere 2026-08-25
 (#1237). **Ingen tenant bruker det ennå** — den første som gjør det er også den første som
@@ -14,7 +17,7 @@ finner problemene.
 
 `ontap-nas` er NFSv3 med `nolock`. PostgreSQL trenger fungerende fillåsing for
 `postmaster.pid`-vakten, og CloudNativePG støtter ikke NFS for datavolumer. I verste fall
-åpner to postmastere samme PGDATA og databasen korrumperes. Det er greit for å røyktest
+åpner to postmastere samme PGDATA og databasen korrumperes. Det er greit for å røykteste
 operatøren, ikke for data vi bryr oss om.
 
 Plattformens plan er å erstatte det med ACSA (Azure Container Storage enabled by Arc).
@@ -28,14 +31,20 @@ alternativene Azure Database for PostgreSQL Flexible Server (Terraform-mønster 
 
 ## Hva tenanten får lov til
 
-`skybert:tenant-admin:cnpg` aggregeres inn i de miljøspesifikke tenant-admin-rollene.
-Bind den med en `RoleBinding` i eget namespace, ikke en `ClusterRoleBinding`.
+`skybert:tenant-admin:cnpg` er en aggregeringskilde, ikke en rolle noen binder direkte.
+Den aggregeres inn i de miljøspesifikke tenant-admin-rollene **og** i
+`skybert:tenant-flux-reconciler` — sistnevnte er det som gjør at en `Cluster` deklarert i
+GitOps-repoet faktisk rekonsileres. Rettighetene kommer med bindingene tenanten allerede
+har; lag ingen ny RoleBinding for dette.
 
 Full skrivetilgang på `postgresql.cnpg.io`: `clusters`, `backups`, `scheduledbackups`,
 `poolers`, `databases`, `databaseroles`, `publications`, `subscriptions`, `imagecatalogs`,
-og på `barmancloud.cnpg.io`: `objectstores`. Status-subresursene er read-only.
+og på `barmancloud.cnpg.io`: `objectstores`. Read-only på `failoverquorums` og på
+status-subresursene til clusters/backups/scheduledbackups/poolers.
 
 `clusterimagecatalogs` er bevisst utelatt — den er cluster-scoped.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/449745b/infra/skybert-system/base/tenant-admin-clusterroles/cnpg-access-rules.yaml
 
 ## Backup: Azure Blob med workload identity
 
@@ -104,7 +113,7 @@ spec:
   instances: 3
   storage:
     size: 20Gi
-    storageClass: <se storage-fellen over>
+    storageClass: ontap-nas          # se storage-fellen over — ikke bruk denne i prod
   inheritedMetadata:
     labels:
       azure.workload.identity/use: "true"
@@ -143,10 +152,19 @@ in-tree-varianten må overrides.
 
 ## Rød sone
 
-Sett namespace-labelen `skybert.fhi.no/needs-cnpg=true` i
-`tenants/<tenant>/base/namespace.yaml`. Den opter inn i tre GlobalNetworkPolicies som
-plattformteamet allerede har lagt inn: ingress fra `cnpg-system` til instanspodene (5432 og
-8000), egress til kube-apiserver, og egress til Azure Blob på 443.
+**To namespace-labels, ikke én.** `skybert.fhi.no/needs-cnpg=true` opter inn i tre
+GlobalNetworkPolicies: ingress fra `cnpg-system` til instanspodene (5432 og 8000), egress
+til kube-apiserver, og egress til Azure Blob på 443.
+
+Token-utvekslingen mot Entra dekkes **ikke** av disse. Den ligger i
+`shared-egress-to-entra`, som velger på `skybert.fhi.no/needs-entra-login=true` — et helt
+separat opt-in. Uten den labelen får `inheritFromAzureAD: true` aldri et token, og både
+base-backup og WAL-arkivering feiler mot en default-deny egress.
+
+Labels i `tn-*` settes av plattformteamet i infra-repoets `tenants/`-katalog, ikke av
+tenanten. Be om **begge** i samme henvendelse til `#ext-fhi-skybert`.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/449745b/infra/globalnetworkpolicies/base/policies-red/cnpg.yaml
 
 CNPGs backup-metrics (9187) scrapes av alloy, og `base-tenant-ingress` blokkerer alloy mot
 `tn-*` på rød. **Backup-metrics er derfor ikke tilgjengelige på rød i dag** — overvåk at

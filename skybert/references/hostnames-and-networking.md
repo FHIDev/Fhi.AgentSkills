@@ -111,7 +111,7 @@ Følgende regler gjelder alle Ingress-ressurser:
 
 ### Ingress: nginx i dag, Gateway API (Envoy Gateway) under utrulling
 
-> **Status per 2026-07:** Dagens SkybertApp-composition rendrer fortsatt Kubernetes `Ingress` med `ingressClassName: nginx`, og `ingress-nginx` er fortsatt produksjonsveien. Ikke migrer eksisterende SkybertApp-hostnames til Gateway API uten eksplisitt beskjed fra plattformteamet.
+> **Status per 2026-08-27:** Dagens SkybertApp-composition rendrer fortsatt Kubernetes `Ingress` med `ingressClassName: nginx`, og `ingress-nginx` er fortsatt produksjonsveien. Ikke migrer eksisterende SkybertApp-hostnames til Gateway API uten eksplisitt beskjed fra plattformteamet.
 
 **Retning (plattformbeslutning):** Plattformen har besluttet å migrere fra `ingress-nginx` til **Gateway API**, implementert av **Envoy Gateway**.
 
@@ -124,9 +124,11 @@ Følgende regler gjelder alle Ingress-ressurser:
 
 **Tenant-mønsteret:** plattformen kjører delte `Gateway`-objekter; tenanter knytter til seg listeners og TLS via **`ListenerSet`**-ressurser i eget namespace, og ruter trafikk til sine Services med **`HTTPRoute`**. RBAC-rollen `skybert:tenant-admin` tillater disse ressurstypene (se [Sikkerhet](security.md)). Merk at hostname-reglene (inkl. flambert-blokkeringen over) håndheves også på Gateway API-ruter.
 
+**Rød sone: Gateway API når ikke fram.** `base-tenant-ingress` (order 1200) tillater kun ingress til `tn-*` fra `ingress-nginx`-namespacet og denyer resten, og det finnes ingen GlobalNetworkPolicy som slipper `envoy-gateway-system` inn. `ListenerSet` og `HTTPRoute` applyer uten feil, men ingen trafikk når podene. På rød er `Ingress` veien — eventuelt en Calico `NetworkPolicy` med `spec.order < 1200` som tillater `envoy-gateway-system` (se [Rød sone](#rød-sone) under), avklart med `#ext-fhi-skybert`.
+
 Tenanten har **ikke** `gateways` i RBAC-settet, bare `listenersets` og rutene. `helsenett`- og `internett`-gatewayene ligger i `envoy-gateway-system` med `allowedListeners.namespaces.from: All`. `fhinett` er unntaket: den Gateway-en ligger i tenantens eget namespace og legges inn av plattformteamet under `tenants/<tenant>/base/`, ikke av tenanten selv — be om den i onboardingen hvis appen skal på fhinett.
 
-Tenanten får også `securitypolicies` (`gateway.envoyproxy.io`), som gir OIDC, JWT-validering, ext-auth, CORS og IP-restriksjoner på gateway-nivå.
+Tenanten får også `securitypolicies` (`gateway.envoyproxy.io`) i RBAC-settet. Se [Sikkerhet](security.md) for hva den dekker — og for forbeholdene: rate limiting ligger i `BackendTrafficPolicy`, som **ikke** er gitt, og funksjonen er ikke annonsert som støttet plattformfunksjon i offisiell docs.
 
 `ListenerSet` + `HTTPRoute`, slik beta-compositionen rendrer dem. cert-manager-issueren annoteres på `ListenerSet`, ikke på ruten:
 
@@ -140,8 +142,8 @@ metadata:
     cert-manager.io/cluster-issuer: skytest-fhi-letsencrypt-azuredns-issuer
 spec:
   parentRef:
-    name: helsenett            # fhinett: bytt namespace til tn-my-tenant
-    namespace: envoy-gateway-system
+    name: helsenett            # fhinett: bytt BÅDE name og namespace
+    namespace: envoy-gateway-system   # fhinett: tn-my-tenant
     kind: Gateway
     group: gateway.networking.k8s.io
   listeners:
@@ -182,7 +184,9 @@ spec:
 
 `HTTPRoute` gjør path-matching og `URLRewrite` som innebygde filtre. Skal flere komponenter dele ett hostnavn under hver sin path, er dette veien — ikke nginx' rewrite-annotasjoner.
 
-**SkybertApp på Gateway API:** `skybert-beta.fhi.no/v1beta1` (annen API-gruppe enn `skybert.fhi.no/v1alpha1`) rendrer `ListenerSet` + `HTTPRoute` og har et `network`-felt med enum `fhinett` / `helsenett` / `internett`, default `fhinett`. XRD og composition finnes **kun på `aks-ops-test-01`**. Andre steder skriver du ressursene selv.
+**SkybertApp på Gateway API:** `skybert-beta.fhi.no/v1beta1` rendrer `ListenerSet` + `HTTPRoute` og har et `network`-felt med enum `fhinett` / `helsenett` / `internett`, default `fhinett`. XRD og composition finnes **kun på `aks-ops-test-01`**.
+
+Regn den som plattform-intern: tenant-RBAC gir `*`/`*` på API-gruppen `skybert.fhi.no`, og beta-CRD-en ligger i `skybert-beta.fhi.no` — en annen gruppe, som ingen tenant-rolle dekker. Skriv Gateway API-ressursene selv til beta eventuelt promoteres.
 
 > **Intern (plattformdrift):** For green-test og green-prod er **Traefik** forhåndsdeployert som nød-fallback sommeren 2026 i tilfelle en alvorlig `ingress-nginx`-CVE. Ved en slik hendelse kan plattformteamet bytte ingress-controller (og patche `ingressClassName` for skybertapp-tenanter); interne ingresser kan forbli på nginx. Dette er en beredskapsmekanisme, ikke en tenant-oppgave.
 
