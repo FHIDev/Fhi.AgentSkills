@@ -7,6 +7,7 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
 > **Sist verifisert mot offisiell docs:** 2026-08-15
+> **Sist verifisert mot `Fhi.Skybert.Infra`:** 2026-08-27 (`449745b`) — CloudNativePG, Gateway API
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -390,88 +391,54 @@ Støttede domener per miljø:
 
 TLS-sertifikater provisjoneres automatisk via cert-manager.
 
-### Public DNS-oppslag (external-dns)
-
-Som standard resolves ingress-hostnavn til interne 10.x-adresser. For at DNS skal peke til en offentlig IP, legg til annotasjonen `external-dns.alpha.kubernetes.io/target` på Ingress-objektet:
-
-| Cluster | Annotation-verdi |
-|---------|-----------------|
-| green-prod | `external-dns.alpha.kubernetes.io/target: 83.118.177.234` |
-| green-test | `external-dns.alpha.kubernetes.io/target: 83.118.177.220` |
-
-**Merk:** SkybertApp CRD eksponerer ikke denne annotasjonen på Ingress-objektet. Du må derfor opprette tre separate objekter: en SkybertApp (uten ingress), en Service, og et raw Ingress-objekt.
-
-Mønsteret er:
-
-1. **SkybertApp** — kun app-definisjon, ingen ingress-konfigurasjon:
-```yaml
-apiVersion: skybert.fhi.no/v1alpha1
-kind: SkybertApp
-metadata:
-  name: my-app
-  namespace: tn-my-tenant
-spec:
-  image:
-    repository: crfhiskybert.azurecr.io/my-app
-    tag: "latest"
-  port: 8080
-  resources:
-    cpu: "500m"
-    memory: "512Mi"
-```
-
-2. **Service** — kobler til SkybertApp sine pods via label `skybert.fhi.no/webapp`:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-app-svc
-  namespace: tn-my-tenant
-spec:
-  type: ClusterIP
-  selector:
-    skybert.fhi.no/webapp: my-app
-  ports:
-    - port: 8080
-      targetPort: 8080
-      protocol: TCP
-```
-
-3. **Ingress** — med external-dns-annotasjon og cert-manager:
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: my-app-ingress
-  namespace: tn-my-tenant
-  annotations:
-    cert-manager.io/cluster-issuer: skytest-fhi-letsencrypt-azuredns-issuer
-    external-dns.alpha.kubernetes.io/target: "83.118.177.234"
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: my-app.skytest.fhi.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: my-app-svc
-                port:
-                  number: 8080
-  tls:
-    - hosts:
-        - my-app.skytest.fhi.no
-      secretName: my-app-tls
-```
-
 Cert-manager cluster-issuere per domene:
 | Domene | Issuer |
 |--------|--------|
 | `*.skytest.fhi.no` | `skytest-fhi-letsencrypt-azuredns-issuer` |
 | `*.fhi-k8s.com` | `fhi-k8s-letsencrypt-azuredns-issuer` |
 | `*.sky.fhi.no` | `sky-fhi-letsencrypt-azuredns-issuer` |
+
+### To veier inn
+
+**ingress-nginx** er produksjonsveien og kjører på alle klustere: `Ingress` med
+`ingressClassName: nginx`. Dette er det `SkybertApp` (`skybert.fhi.no/v1alpha1`) genererer.
+
+**Envoy Gateway** (v1.8.2, Gateway API standard channel) er utrullet parallelt på
+ops-test, sandbox, yellow-test/prod, red-test/prod og norsyss — **ikke på green-test og
+green-prod**, som bare har Envoy-namespacet. Tenanter får `httproutes`, `grpcroutes`,
+`tlsroutes`, `listenersets` og Envoys `securitypolicies` — men **ikke `gateways`**.
+Gateway-objektene eies av plattformen; tenanten fester en `ListenerSet` (eget hostnavn og
+sertifikat) til en av dem, og henger `HTTPRoute`-er på den.
+
+RBAC nevner også `tcproutes` og `udproutes`, men de CRD-ene er ikke installert — standard
+channel har dem ikke. En slik ressurs feiler Flux' dry-run, som da avviser **hele**
+Kustomizationen, ikke bare den ene fila.
+
+Tre nettverk, som avgjør hvem som når appen:
+
+| GatewayClass | Når | Hvor |
+|--------------|-----|------|
+| `fhinett` | FHI-interne brukere (default i beta-CRD-en) | Per-tenant Gateway i `tn-<tenant>`, lagt inn av plattformteamet |
+| `helsenett` | Aktører på helsenettet — kommuner, HF | Delt Gateway i `envoy-gateway-system` |
+| `internett` | Offentlig eksponering | Delt Gateway, kun ops-test, sandbox og yellow-test/prod |
+
+Velg `helsenett` framfor `internett` når brukerne finnes på helsenettet.
+
+**Gateway API når ikke tenant-pods i rød sone.** `base-tenant-ingress` (order 1200) slipper
+kun inn trafikk fra `ingress-nginx`-namespacet og denyer resten, og det finnes ingen
+GlobalNetworkPolicy for Envoy. Manifestene applyer fint og serverer ingenting. Bruk
+`Ingress` på rød, eller be `#ext-fhi-skybert` om en åpning.
+
+Tenanter har også `securitypolicies` (`gateway.envoyproxy.io`) i RBAC-settet — se
+[Sikkerhet](references/security.md) for hva den dekker og forbeholdene som gjelder.
+
+Gateway API-ressursene skriver du selv. `SkybertApp` som genererer `HTTPRoute` +
+`ListenerSet` finnes som `skybert-beta.fhi.no/v1beta1`, men CRD-en er kun på
+`aks-ops-test-01`, **og tenant-RBAC dekker den ikke** — rettighetene er gitt på API-gruppen
+`skybert.fhi.no`, ikke `skybert-beta.fhi.no`. Regn den som plattform-intern inntil videre.
+
+Se [Hostnavn og nettverk](references/hostnames-and-networking.md) for begge mønstrene i sin
+helhet, inkludert external-dns for offentlige IP-er.
 
 ## Persistence / Data lagring
 
@@ -489,6 +456,25 @@ Cert-manager cluster-issuere per domene:
 `ontap-nas` er NFS-basert og **ikke egnet for transaksjonssensitive workloads** som databaser — NFS gir ikke konsistensgarantiene databaser krever. Block storage med backup/snapshot-støtte er planlagt, men uten ETA — kontakt `#ext-fhi-skybert` hvis dette er kritisk for dere.
 
 > Kilde: https://docs.sky.fhi.no/persistence/
+
+### Postgres i klusteret (CloudNativePG)
+
+CloudNativePG-operatøren er rullet ut til alle klustere (2026-08-17), og tenanter har RBAC
+til å deklarere `Cluster`, `ScheduledBackup` og barman `ObjectStore` i eget namespace.
+Backup går til Azure Blob med workload identity, uten secret i namespacet.
+
+**Bruk aldri `ontap-nas` til PGDATA.** CloudNativePG støtter ikke NFS for datavolumer, og
+klassen monteres med `nolock` — to postmastere kan da åpne samme PGDATA og korrumpere
+databasen.
+
+Hva som da er riktig StorageClass er uavklart: `default` er node-lokal block storage og
+kan være riktig for CNPG med replikering og Blob-backup, men den er ikke deklarert i
+infra-repoet og plattformens egen plan er å erstatte lagringen med ACSA. **Avklar med
+`#ext-fhi-skybert` før du planlegger CNPG i produksjon.** Alternativene ellers er Azure
+Database for PostgreSQL Flexible Server eller VM-Postgres.
+
+Se [CloudNativePG](references/cloudnative-pg.md) for tenant-kontrakten, Azure-forutsetningene
+og de to labelene rød sone krever.
 
 ### `ontap-nas` accessMode -- bare RWX
 
@@ -669,6 +655,7 @@ Dette gir AI-agenten kontekst for å generere korrekte konfigurasjoner uten å g
 | [Plattformarkitektur](references/platform-architecture.md) | Flux, Crossplane, OCI-flyt, tenant-bootstrap |
 | [Kyverno-policier](references/kyverno-policies.md) | Sikkerhetspolicier som påvirker tenanter |
 | [Hostnavn og nettverk](references/hostnames-and-networking.md) | Domener, TLS, ingress-regler, nettverkspolicyer |
+| [CloudNativePG](references/cloudnative-pg.md) | Postgres i klusteret: tenant-kontrakt, Blob-backup, storage-fellen |
 | [Flux-verktøy](references/flux-tooling.md) | Flux Dashboard og Flux Operator MCP |
 
 ## Support
