@@ -1,8 +1,39 @@
 # Kyverno-policier som påvirker tenanter
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/3e3d50b/infra/kyverno-policies/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/kyverno-policies/
+> Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/
 
 Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle tenant-namespaces (`tn-*`).
+
+`Enforce` avviser requesten. `Audit` slipper ressursen gjennom og skriver `PolicyReport`.
+Mutate/generate endrer eller oppretter ressurser og har ingen failure action.
+
+**Overlay-modell** (hvilke policy-sett som gjelder hvor):
+
+| Overlay | Klustere |
+|---|---|
+| `policies-green` + `policy-exceptions` | Alle |
+| `policies-not-red` | Alle unntatt `aks-red-test-01`/`aks-red-prod-01` |
+| `policies-red` | `aks-red-test-01`, `aks-red-prod-01` |
+| `policies-prod` | `aks-green-prod-02`, `aks-red-prod-01`, `aks-yellow-prod-01`, `aks-norsyss-prod-01` |
+
+**Øvrige tenant-relevante policyer** (i tillegg til tabellene under):
+
+| Policy | Modus | Effekt |
+|---|---|---|
+| `recommend-network-policy` (`policies-not-red`, ny) | Audit, background-scan (`admission: false`) | Rapporterer `tn-*`-namespaces uten verken Kubernetes- eller Calico-NetworkPolicy. Funn lander i PolicyReport i tenant-namespacet (matcher `default`-SA-en). CIS 5.3.2. På rød dekkes isolasjon av GNP-er i stedet |
+| `limit-calico-netpol-order` (`policies-green`, alle klustere) | Enforce | Calico NetworkPolicy i `tn-*` må ha `spec.order >= 1000` — tenanter kan ikke overstyre plattform-GNP-er (NFS-deny på 900, egress-deny på 800) |
+| `exceptions-in-kyverno-ns` | Enforce | `PolicyException`-objekter tillates kun i `kyverno`-namespacet |
+| `flux-verify-sources` | Enforce | Flux `OCIRepository.spec.url` må være `oci://crfhiskybert.azurecr.io/*` |
+| `flux-verify-images` | Audit | Cosign keyless-verifisering av Flux-controller-images (GitHub OIDC + Rekor) |
+| `rbac-security` | Audit | Ingen `*` i Role-regler i `tn-*`; ingen ClusterRoleBinding til `cluster-admin`; RoleBinding må navngi namespace |
+| `protect-essential-namespaces` | Enforce | Blokkerer DELETE av kritiske plattform-namespaces (kube-system, flux-system, kyverno, cert-manager, envoy-gateway-system m.fl.) |
+
+Den gamle Audit-policyen `require-network-policy` (sjekket kun annotasjonen
+`network-policy: "true"`) er **fjernet** og erstattet av `recommend-network-policy`, som teller
+faktiske NetworkPolicy-ressurser.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/kyverno-policies/base/policies-not-red/recommend-network-policies.yaml
 
 ## Automatiske mutasjoner (Kyverno setter automatisk)
 
@@ -16,7 +47,12 @@ Skybert bruker Kyverno for policy-håndhevelse. Disse policiene gjelder alle ten
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml
 
-> **Praktisk betydning:** Du trenger vanligvis ikke sette `runAsNonRoot`, `runAsUser` eller `seccompProfile` eksplisitt — Kyverno setter fornuftige defaults. Men du **kan ikke** override `runAsNonRoot` til `false`.
+> **Praktisk betydning:** Du trenger vanligvis ikke sette `runAsNonRoot`, `runAsUser` eller
+> `seccompProfile` eksplisitt — Kyverno setter fornuftige defaults. Å sette
+> `runAsNonRoot: false` eksplisitt gir et **Audit-funn** (`prevent-run-as-root-override` mangler
+> `validationFailureAction` og faller tilbake til Audit — poden avvises ikke), men
+> `runAsUser: 0` avvises fortsatt av `require-run-as-non-root-user` (Enforce). Ikke bygg på
+> root-kjøring: Audit-hullet er dokumentert som utilsiktet i kilden.
 
 ## Håndhevede policier (Enforce — avviser pods/ressurser som bryter)
 
@@ -101,7 +137,7 @@ memory/CPU requests, med maks 2 CPU og 2Gi memory per container.
 
 | Policy | Handling |
 |--------|----------|
-| `sub-1200-calico-netpol-in-tenants` | Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt. Calico `NetworkPolicy` (`crd.projectcalico.org/v1`) er tillatt i `tn-*` med to begrensninger: kun `Ingress`-regler (egress styres sentralt via GlobalNetworkPolicy) og `spec.order < 1200` (1200+ reservert for plattform default-deny GNPs). |
+| `sub-1200-calico-netpol-in-tenants` | Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt. Calico `NetworkPolicy` (`crd.projectcalico.org/v1`) er tillatt i `tn-*` med to begrensninger: kun `Ingress`-regler (egress styres sentralt via GlobalNetworkPolicy) og `spec.order` i `[1000, 1200)` — gulvet 1000 håndheves av `limit-calico-netpol-order` (alle klustere, se tabellen øverst), 1200+ er reservert for plattform default-deny GNPs. |
 | `generate-tenant-internal-gnp` | Genererer automatisk GlobalNetworkPolicy per tenant-namespace som tillater intern kommunikasjon |
 | `restrict-tenant-runtime-access` | Blokkerer `kubectl port-forward`, `attach` og API-`proxy` (pod og service) i `tn-*` (Enforce). Blokkerer **ikke** `kubectl exec` eller ephemeral debug-containere |
 

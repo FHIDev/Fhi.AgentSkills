@@ -21,6 +21,7 @@
 | `docs/workloads/skybertapp/index.md` | `references/skybertapp-crd.md` |
 | `docs/workloads/skybertapp/references/skybertapp.md` | `references/skybertapp-crd.md` |
 | `docs/workloads/jobs.md` | `references/configuration.md` |
+| `docs/workloads/resource-sizing.md` | `references/observability.md`, `references/skybertapp-crd.md` |
 | `docs/build/index.md` | `SKILL.md`, `references/workflows.md` |
 | `docs/build/environments.md` | `SKILL.md`, `references/hostnames-and-networking.md` |
 | `docs/build/explanations/gitops.md` | `references/workflows.md` |
@@ -29,7 +30,7 @@
 | `docs/build/flux-mcp.md` | `references/flux-tooling.md` |
 | `docs/auth/index.md` | `references/security.md` |
 | `docs/auth/workload-identity.md` | `references/security.md` |
-| `docs/persistence/*.md` | `SKILL.md` |
+| `docs/persistence/*.md` | `SKILL.md` (sammendrag) + `references/persistence.md` (detaljer, inkl. `postgres.md`) |
 | `docs/observability/**/*.md` | `references/observability.md` |
 | `docs/internal/observability/*.md` | `references/observability.md`, eventuelt `references/platform-architecture.md` — selektivt, merk plattformintern drift |
 | `docs/miscellaneous/vault_secrets.md` | `references/secrets.md` |
@@ -42,7 +43,12 @@
 | `docs/internal/flux.md` | `references/platform-architecture.md` (NB: kan motsi infra-repo — markeres som kildekonflikt) |
 | `docs/internal/service-mesh.md` | `references/hostnames-and-networking.md` |
 | `docs/internal/global-network-policies.md` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
-| `docs/internal/sk8-cli.md` | `references/kubectl-access.md` — intern-merket (dekker både script-dispatcheren `scripts/sk8` og Go-CLI-en i `utils/sk8/`) |
+| `docs/internal/ska-cli.md` | `references/kubectl-access.md` — intern-merket (script-dispatcheren `scripts/ska`; Go-CLI-en i `utils/sk8/` er separat og dekkes av `utils/sk8/`-raden) |
+| `docs/internal/kyverno-policies.md` | `references/kyverno-policies.md` — intern katalogside; feltnivå-sjekk mot skillens policytabeller |
+| `docs/internal/oci-signing.md` | `references/platform-architecture.md` — selektiv intern (Cosign-signering/verifisering av plattform-artifakter; disable-runbook er støy) |
+| `docs/internal/skybert-system.md` | `references/security.md`, `references/platform-architecture.md` — selektiv intern (ACR pull secret, tenant-RBAC-aggregering; Flux-admin/shared-KV/Bertil er støy) |
+| `docs/internal/metallb.md` | VURDER — plattformdrift uten tenant-impact (tenanter kan ikke lage LoadBalancer-Services); normalt utenfor scope |
+| `docs/internal/script-atlas.md`, `docs/internal/skatlas/**` | Støy — generert intern tooling (SKAtlas-UI); ingen routing |
 | `docs/sk8/clusters.json` | `references/kubectl-access.md` (publisert maskinlesbart klusterregister) |
 | `docs/internal/attach-application-repo.md` | `references/security.md`, ev. `references/workflows.md` — selektiv intern (ACR-push-identitet, federering av app-repoer) |
 | `docs/internal/helm-and-crds.md` | VURDER — plattformintern, ikke auto-route |
@@ -65,7 +71,8 @@
 | `infra/crossplane/*/xrds/skybertapp-*.yaml` (kluster-overlays, f.eks. `-alpha`/`-beta`) | `references/skybertapp-crd.md` |
 | `infra/crossplane/*/compositions/*.yaml` (kluster-overlays) | `references/skybertapp-crd.md` |
 | `infra/goldilocks/base/*-values.yaml` | `references/kyverno-policies.md`, `references/observability.md`, `references/platform-architecture.md` |
-| `infra/cloudnative-pg/base/*` | `references/configuration.md`, `references/platform-architecture.md` |
+| `infra/cloudnative-pg/**` | `references/persistence.md`, `references/platform-architecture.md` |
+| `infra/kube-state-metrics/base/*-values.yaml` | `references/observability.md` — CustomResourceState-metrics (VPA-gauges, PolicyReport) er tenant-synlige i Grafana |
 | `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
 | `infra/skybert-system/base/tenant-admin-clusterroles/*.yaml` | `references/platform-architecture.md`, `references/security.md`, `references/kyverno-policies.md` |
 | `tenants/*/base/*.yaml` | `references/platform-architecture.md`, `SKILL.md` |
@@ -97,6 +104,7 @@ Brukes når agenten ikke har filsti-tilgang, kun emnenavn fra docs-sider.
 | kubectl, k9s, az connectedk8s proxy | `references/kubectl-access.md` |
 | Logging, metrics, Grafana, Loki, Mimir, Tempo | `references/observability.md` |
 | Helm, Kustomize, WebApp, Deployment, raw manifests | `references/configuration.md` |
+| Persistence, StorageClasses, PostgreSQL/CloudNativePG | `references/persistence.md` |
 | Feilsøking, diagnostikk | `references/troubleshooting.md` |
 | Onboarding, Blåløypa, tenant-konsept, navnekonvensjoner, ingress, miljøer | `SKILL.md` |
 | Plattformarkitektur, Flux, Crossplane, OCI-flyt, tenant-bootstrap | `references/platform-architecture.md` |

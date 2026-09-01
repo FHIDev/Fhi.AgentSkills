@@ -21,14 +21,15 @@ Schemaet er identisk med v1alpha1 bortsett fra ett nytt felt, som viser hvordan 
 sannsynligvis kommer til å bli eksponert ved Gateway API-migreringen:
 
 ```yaml
-network:            # enum: fhinett | hnett | inett — default: fhinett
-                    # hnett = helsenett, inett = internet
+network:            # enum: fhinett | helsenett | internett — default: fhinett
 ```
 
-Verdiene matcher GatewayClass-navnene som allerede er i bruk — se [Hostnavn og nettverk](hostnames-and-networking.md).
-Ikke tilgjengelig på tenant-klustere per 2026-08-14.
+Verdiene er identiske med GatewayClass-navnene som allerede er i bruk (tidligere forkortelser
+`hnett`/`inett` er forkastet i schemaet; XRD-feltbeskrivelsen nevner fortsatt de gamle navnene,
+men enum + composition er autoritative) — se [Hostnavn og nettverk](hostnames-and-networking.md).
+Ikke tilgjengelig på tenant-klustere per 2026-09-01.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/crossplane/aks-ops-test-01/xrds/skybertapp-beta.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/crossplane/aks-ops-test-01/xrds/skybertapp-beta.yaml
 
 ## Quick Start
 
@@ -55,8 +56,8 @@ spec:
 | `port` | integer | `8080` | Port applikasjonen lytter på |
 | `command` | string[] | — | Overstyr container-kommando |
 | `args` | string[] | — | Argumenter til kommandoen (sendes etter `command`) |
-| `resources.cpu` | string | `150m` | CPU request |
-| `resources.memory` | string | `256Mi` | Memory request og limit |
+| `resources.cpu` | string | `150m` | CPU request — **ingen CPU-limit** settes; containeren kan burste på ledig CPU. Scheduleren pakker noder etter requesten. Se [Ressursanbefalinger](observability.md#ressursanbefalinger-i-grafana) |
+| `resources.memory` | string | `256Mi` | Memory request **og** limit (samme verdi) — cgroupen OOM-killer containeren på limit |
 | `readOnlyRootFilesystem` | boolean | `false` | Monter root-filsystem som read-only |
 | `writableDirs` | string[] | — | Kataloger montert som skrivbare emptyDir-volumer |
 

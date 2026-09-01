@@ -1,21 +1,21 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-08-15T19:30:00Z",
+  "updatedAt": "2026-09-01T13:10:00Z",
   "mode": "github",
   "lastFullscanDate": "2026-08-15",
-  "sistVerifisert": "2026-08-15",
+  "sistVerifisert": "2026-09-01",
   "github": {
     "docs": {
       "repo": "FHISkybert/Fhi.Skybert.Docs",
       "branch": "main",
-      "commit": "acde93e01f4af673da8bc737622d161017cf23c9",
-      "commitDate": "2026-08-13"
+      "commit": "14acbd612b3510e39c4ef68038e035aab2195fe8",
+      "commitDate": "2026-09-01"
     },
     "infra": {
       "repo": "FHISkybert/Fhi.Skybert.Infra",
       "branch": "main",
-      "commit": "a1ce34539f1b10f06fb5112e319ec57f11da30b0",
-      "commitDate": "2026-08-14"
+      "commit": "d3d4e9260b81977d61f57ad231e1c5a9bb3754e0",
+      "commitDate": "2026-08-31"
     }
   },
   "openItems": [
@@ -25,9 +25,9 @@
       "category": "VURDER",
       "target": "references/hostnames-and-networking.md",
       "source": "docs/internal/dev-gatewayapi.md",
-      "summary": "Ny docs-side er en WIP-skisse (brødtekst: «Tester mermaid, ser shit ut i dark mode») med ett mermaid-diagram over ListenerSet-topologi. Besluttet 2026-08-15: ingen endring nå — topologien er allerede dekket i hostnames-and-networking.md. Revurderes når siden får reelt innhold.",
+      "summary": "Ny docs-side er en WIP-skisse (brødtekst: «Tester mermaid, ser shit ut i dark mode») med ett mermaid-diagram over ListenerSet-topologi. Besluttet 2026-08-15: ingen endring nå — topologien er allerede dekket i hostnames-and-networking.md. Uendret per 2026-09-01. Revurderes når siden får reelt innhold.",
       "firstSeen": "2026-08-15",
-      "lastSeen": "2026-08-15"
+      "lastSeen": "2026-09-01"
     }
   ]
 }
