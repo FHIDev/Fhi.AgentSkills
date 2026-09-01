@@ -41,6 +41,7 @@ skybert/
     ├── workflows.md                         (CI/CD)
     ├── kubectl-access.md                    (kubectl, klusterliste)
     ├── observability.md                     (logging, metrics, tracing)
+    ├── persistence.md                       (StorageClasses, databasevalg, CloudNativePG)
     ├── platform-architecture.md             (Flux, Crossplane, OCI-flyt, tenant-bootstrap)
     ├── kyverno-policies.md                  (policier som pavirker tenanter)
     ├── troubleshooting.md                   (feilsoeking)

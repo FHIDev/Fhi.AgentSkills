@@ -44,6 +44,10 @@ kubectl describe pod <pod-name> -n tn-<tenant>
 kubectl get serviceaccount <tenant>-azure -n tn-<tenant> -o yaml
 ```
 
+Plattformen patcher normalt `imagePullSecrets: acr-pull-secret` på SA-er i `tn-*` automatisk — men
+en SA som allerede har egne `imagePullSecrets` røres ikke. Se
+[Sikkerhet — ACR image pull](security.md#acr-image-pull-automatisk-acr-pull-secret).
+
 ### 2. Ingress fungerer ikke
 ```bash
 # Sjekk ingress-status

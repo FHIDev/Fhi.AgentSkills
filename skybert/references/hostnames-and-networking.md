@@ -219,7 +219,7 @@ Eksplisitte unntak:
 - Plattformteamet kan også opprette tenant-spesifikke **ingress**-unntak som GlobalNetworkPolicy når trafikk mellom tenant-namespaces må tillates (f.eks. en tjeneste i ett `tn-*`-namespace som skal nå en tjeneste i et annet). Dette er ikke self-service for tenant-team — kontakt `#ext-fhi-skybert`.
 - NFS egress (port 2049) er blokkert for alle tenanter
 
-**Tenant-NetworkPolicies i rød sone:** Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er fortsatt forbudt. Tenanter kan derimot opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for å finjustere ingress — men kun med `Ingress`-regler og `spec.order < 1200`. Egress styres sentralt via GlobalNetworkPolicy fra plattformteamet (kun IP/CIDR-basert). Kontakt `#ext-fhi-skybert` for egress-unntak.
+**Tenant-NetworkPolicies i rød sone:** Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er fortsatt forbudt. Tenanter kan derimot opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for å finjustere ingress — men kun med `Ingress`-regler og `spec.order` i `[1000, 1200)`. Egress styres sentralt via GlobalNetworkPolicy fra plattformteamet (kun IP/CIDR-basert). Kontakt `#ext-fhi-skybert` for egress-unntak.
 
 **Base GlobalNetworkPolicies (rød sone, plattform-styrt):**
 
@@ -228,11 +228,22 @@ Eksplisitte unntak:
 | `base-tenant-egress` | Egress | 800 | Tillater DNS (UDP 53 til `kube-system`/kube-dns), deretter Deny |
 | `base-tenant-ingress` | Ingress | 1200 | Tillater fra `ingress-nginx`-namespace (TCP), deretter Deny |
 
-Tenant-egne Calico NetworkPolicies må ha `spec.order < 1200` for ikke å konflikte med base-policiene.
+Tenant-egne Calico NetworkPolicies må ligge i `[1000, 1200)` — under 1000 avvises av Kyverno (`limit-calico-netpol-order`, alle klustere), 1200+ er reservert for plattformens default-deny.
 
 **Egress til Entra ID (rød sone):** Plattformen leverer en sentralt forvaltet GlobalNetworkPolicy som tillater 443/TCP til Microsoft Entra ID login-IPer. Konkrete IP-ranges holdes synkron med Microsofts publiserte ranges av plattformteamet.
 
 Apper i rød sone som trenger pålogging mot Entra ID kontakter plattformteamet på `#ext-fhi-skybert`. Plattformen aktiverer unntaket for ditt namespace. Tenanter setter ikke namespace-labels selv.
+
+**CNPG i rød sone (opt-in via label):** Kjører tenanten CloudNativePG, setter plattformteamet
+namespace-labelen `skybert.fhi.no/needs-cnpg=true`, som aktiverer tre GlobalNetworkPolicies
+(order 500): ingress fra `cnpg-system` til 5432/8000 (operator → instans; metrics-porten 9187 er
+bevisst utenfor), egress til kube-apiserver (instance manager), og egress 443 til Azure
+Storage-IP-er (backup/WAL — plattformforvaltet liste; private endpoint er den bedre
+sluttilstanden). Entra-token-utveksling er separat opt-in (`needs-entra-login`). Tenanter setter
+ikke labels selv — meld behov på `#ext-fhi-skybert`. Se
+[Persistence og CloudNativePG](persistence.md).
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/globalnetworkpolicies/base/policies-red/cnpg.yaml
 
 > Kilde: https://docs.sky.fhi.no/build/environments/ | https://docs.sky.fhi.no/internal/global-network-policies/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/globalnetworkpolicies/base/policies-red/
 

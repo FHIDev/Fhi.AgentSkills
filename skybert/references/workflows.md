@@ -26,8 +26,10 @@ I tillegg trengs disse **secrets** (brukes med `secrets.*`):
 
 | Secret | Beskrivelse |
 |--------|-------------|
-| `GH_PAT` | Personal Access Token for workflow chaining i GitOps-repo |
-| `GITOPS_PAT` | Personal Access Token for repository_dispatch på tvers av repoer |
+| `GH_PAT` | Token som GitOps-repoets egen `update-tag.yaml` bruker i checkout for workflow chaining (commits med standard `GITHUB_TOKEN` trigger ikke `oci-push`). Verifiser mot repoets faktiske workflow — mønsteret er fra GitOps-malen, ikke docs |
+| `GITOPS_APP_CLIENT_ID` | Client ID for GitHub App installert på GitOps-repoet (anbefalt for cross-repo dispatch) |
+| `GITOPS_APP_PRIVATE_KEY` | Privat nøkkel-PEM for samme GitHub App (ikke client secret) |
+| `GITOPS_PAT` | Eldre oppsett: PAT for repository_dispatch — fungerer fortsatt, men GitHub App er dokumentert mønster |
 
 **For å verifisere variabler og secrets:**
 ```bash
@@ -179,11 +181,22 @@ jobs:
           git tag -a "${{ steps.version.outputs.version }}" -m "Release ${{ steps.version.outputs.version }}"
           git push origin "${{ steps.version.outputs.version }}"
 
+      - name: Create GitHub app token
+        if: steps.check_tag.outputs.exists != 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: gitops-app-token
+        with:
+          client-id: ${{ secrets.GITOPS_APP_CLIENT_ID }}
+          private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
+          owner: FHIDev
+          repositories: |
+            Fhi.<tenant>.GitOps
+
       - name: Trigger GitOps update
         if: steps.check_tag.outputs.exists != 'true'
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
         with:
-          token: ${{ secrets.GITOPS_PAT }}
+          token: ${{ steps.gitops-app-token.outputs.token }}
           repository: ${{ vars.GITOPS_REPO }}
           event-type: update_tag
           client-payload: '{"env": "test", "updates": [{"repository": "${{ github.event.repository.name }}", "tag": "${{ steps.version.outputs.version }}"}]}'
@@ -272,16 +285,18 @@ Trigger denne via `repository_dispatch` med event-type `update_tag`. Payload-for
 **Regler:**
 - Ett `env` per kall (ett miljø av gangen)
 - Flere repositories kan oppdateres i samme kall via `updates[]`
-- `repository` skal være GitHub repo-navnet (ikke ACR-pathen). Primærkilden og andre
-  `update-tag.yaml`-varianter bruker feltet for å velge riktig manifest; default-varianten
-  nedenfor leser kun `env` og `tag` og bytter alle `tag:`-linjer i en fast fil. Send
-  GitHub repo-navnet for å være kompatibel med begge.
+- `repository` er **image-repository-navnet i GitOps-manifestene** — `<app>`-segmentet i
+  `crfhiskybert.azurecr.io/<tenant>/<app>:<tag>` (docs per 2026-09). Er GitHub repo-navn og
+  image-navn identiske spiller det ingen rolle; avviker de, er det image-navnet
+  `update-tag.yaml` matcher på. Default-varianten nedenfor leser kun `env` og `tag` og bytter
+  alle `tag:`-linjer i en fast fil — sjekk den konkrete `update-tag.yaml` i eget repo.
 
 **Dispatch med rå curl (alternativ til peter-evans-action):**
 ```bash
 # I app-repoets build-workflow, som bash-step. ${{ ... }} er GitHub Actions-uttrykk.
+# Bearer-tokenet er et GitHub App-installasjonstoken (anbefalt), eller GITOPS_PAT i eldre oppsett.
 curl -X POST \
-  -H "Authorization: Bearer ${{ secrets.GITOPS_PAT }}" \
+  -H "Authorization: Bearer ${{ steps.gitops-app-token.outputs.token }}" \
   "https://api.github.com/repos/${{ vars.GITOPS_REPO }}/dispatches" \
   -d '{"event_type":"update_tag","client_payload":{
     "env": "test",
@@ -308,10 +323,20 @@ eller en dedikert promotion-workflow.
 
 **Eksempel: trigger prod-oppdatering fra app-repo:**
 ```yaml
-- name: Trigger GitOps promotion - prod
-  uses: peter-evans/repository-dispatch@v3
+- name: Create GitHub app token
+  uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+  id: gitops-app-token
   with:
-    token: ${{ secrets.GITOPS_PAT }}
+    client-id: ${{ secrets.GITOPS_APP_CLIENT_ID }}
+    private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
+    owner: FHIDev
+    repositories: |
+      Fhi.<tenant>.GitOps
+
+- name: Trigger GitOps promotion - prod
+  uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
+  with:
+    token: ${{ steps.gitops-app-token.outputs.token }}
     repository: ${{ vars.GITOPS_REPO }}
     event-type: update_tag
     client-payload: |
@@ -322,8 +347,6 @@ eller en dedikert promotion-workflow.
         ]
       }
 ```
-
-> **Merk:** PAT bør ha utløpstid på ca. 1 år (ikke "no expiry" og ikke 30 dager).
 
 > Kilde: https://docs.sky.fhi.no/build/how-to/trigger-gitops-promotion/
 
@@ -380,23 +403,23 @@ For commits som krever GPG-signering:
     add: "test/skybertapp.yaml"
 ```
 
-## PAT for repository_dispatch på tvers av repoer
+## GitHub App for repository_dispatch på tvers av repoer
 
-`GITHUB_TOKEN` fungerer ikke for `repository_dispatch` mellom repoer (gir 404-feil). Du må bruke en personlig PAT:
+Standard `GITHUB_TOKEN` i app-repoet kan ikke nå et annet repo eller en annen org. Anbefalt
+metode (docs per 2026-09) er en **GitHub App** installert kun på GitOps-repoet, med
+**Contents: Read and write** (Metadata: Read følger med). Workflowen minter et kortlivet
+installasjonstoken med `actions/create-github-app-token`
+(`@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0`) fra secrets `GITOPS_APP_CLIENT_ID` og
+`GITOPS_APP_PRIVATE_KEY` (Client ID + privat nøkkel-PEM — **ikke** client secret), med
+`owner: FHIDev` og `repositories: Fhi.<tenant>.GitOps`. Dispatch med
+`peter-evans/repository-dispatch` (`@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1`) og
+`event-type: update_tag`. App-oppsett bestilles hos plattformteamet (Hans Løken) på
+`#ext-fhi-skybert` — docs har ferdig meldingsmal.
 
-1. Opprett en PAT med `repo` scope på github.com/settings/tokens
-2. Legg til PAT som repository secret i app-repoet (f.eks. `GITOPS_PAT`)
-3. Bruk denne i workflowen som trigger GitOps-repoet
+### Eldre oppsett: PAT
 
-Eksempel trigger fra app-repo (anbefalt med `peter-evans/repository-dispatch@v3`):
-```yaml
-- name: Trigger GitOps update
-  uses: peter-evans/repository-dispatch@v3
-  with:
-    token: ${{ secrets.GITOPS_PAT }}
-    repository: ${{ vars.GITOPS_REPO }}
-    event-type: update_tag
-    client-payload: '{"env": "test", "updates": [{"repository": "${{ github.event.repository.name }}", "tag": "${{ steps.version.outputs.version }}"}]}'
-```
+Eksisterende repoer kan ha `GITOPS_PAT` (klassisk PAT med `repo`-scope) — det fungerer fortsatt,
+men er ikke lenger dokumentert mønster. Behold utløpsdisiplinen (ca. 1 år) til repoet migreres
+til GitHub App.
 
-*Merk: GitHub har dessverre ikke støtte for service accounts, så PAT er eneste løsning.*
+> Kilde: https://docs.sky.fhi.no/build/how-to/trigger-gitops-promotion/

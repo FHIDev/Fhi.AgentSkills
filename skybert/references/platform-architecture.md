@@ -12,7 +12,7 @@
 | Infrastruktur som kode | Crossplane | CRD-er (SkybertApp, WebApp) |
 | Policy | Kyverno | Sikkerhetshåndhevelse |
 | Ressursanbefalinger | Goldilocks + VPA (recommend-only) | Oppretter VPA-objekter i alle `tn-*`. Endrer ikke requests automatisk i dagens oppsett — `updater` og `admissionController` er slått av. Aktivert via kluster-overlay på samtlige ni klustere per 2026-08-14 |
-| Database (under utrulling) | CloudNativePG + plugin-barman-cloud | Postgres-operator i `cnpg-system`. Kun `aks-ops-test-01` per 2026-08-14; tenant-RBAC finnes, men aktiveres per kluster |
+| Database | CloudNativePG + plugin-barman-cloud | Støttet PostgreSQL-operator i `cnpg-system` på alle ni aktive klustere (Flux-Kustomization med `dependsOn: crds` + `cert-manager`). Tenant-teamet eier database, backupmål og restore-verifikasjon |
 | Cloud | Azure | Underliggende infrastruktur |
 | Git | GitHub (FHIDev org) | Kildekode og CI/CD |
 | Container registry | Azure Container Registry (`crfhiskybert.azurecr.io`) | Image-lagring |
@@ -20,8 +20,9 @@
 > Kilde (Goldilocks VPA-modus): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/goldilocks/base/goldilocks-10.4.1-values.yaml
 > Kilde (aktivering per kluster — én overlay-mappe per kluster): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/goldilocks/
 > Kilde (Flux-utrulling): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/flux-system/base/kustomizations-infra/goldilocks.yaml
-> Kilde (CloudNativePG-radene): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/cloudnative-pg/base/
-> Kilde (CNPG tenant-RBAC): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/skybert-system/base/tenant-admin-clusterroles/cnpg-access-rules.yaml
+> Kilde (CloudNativePG-radene): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/cloudnative-pg/
+> Kilde (CNPG Flux-Kustomization): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/flux-system/base/kustomizations-infra/cloudnative-pg.yaml
+> Kilde (CNPG tenant-RBAC): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/skybert-system/base/tenant-admin-clusterroles/cnpg-access-rules.yaml
 
 ## Komponentkart for tenant-utviklere
 
@@ -36,10 +37,10 @@ De fleste team trenger bare Git/GitOps, SkybertApp og Grafana i starten. Andre k
 | External DNS | Oppretter DNS-records for hostnames. Vanligvis usynlig når SkybertApp eller plattformoppsett håndterer ruten. |
 | Kyverno | Policy engine. Tenanter kan lese `PolicyReport`, men ikke endre cluster-policyer. |
 | Goldilocks / VPA | Beregner anbefalte CPU/memory-requests for workloadene dine. Objektene dukker opp i namespacet, men endrer ingenting av seg selv — `updater` og `admissionController` er slått av. Lesetilgang for tenant. Se [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa). |
-| CloudNativePG | Postgres-operator, **under utrulling** (kun `aks-ops-test-01`). Der den er aktivert, kan tenanten opprette `Cluster`, `Backup`, `Pooler` m.m. i `postgresql.cnpg.io`. Se [Konfigurasjon](configuration.md#postgres-i-klusteret-cloudnativepg--under-utrulling). |
+| CloudNativePG | Støttet PostgreSQL-operator på alle aktive klustere. Tenanten kan administrere namespaced CNPG- og barman-ressurser (`Cluster`, `Backup`, `Pooler`, `ObjectStore` m.m.). Se [Persistence](persistence.md). |
 | Grafana, Loki, Mimir, Tempo, Alloy | Observability-stakk. Grafana er brukerflaten; Alloy samler telemetri. |
 | Workload Identity | Passordløs Azure-autentisering. Automatisk for SkybertApp, manuelt via label/`serviceAccountName` for raw Deployments. |
-| Trust Manager, Reloader, Replicator, Trident, MetalLB, Blob/Secrets Store CSI, Metrics Server, kube-state-metrics | Plattformkomponenter som normalt ikke konfigureres av tenant-utviklere, men kan dukke opp i events, logs eller arkitekturdiagrammer. |
+| Trust Manager, Reloader, Replicator, Trident, MetalLB, Blob/Secrets Store CSI, Metrics Server, kube-state-metrics | Plattformkomponenter som normalt ikke konfigureres av tenant-utviklere, men kan dukke opp i events, logs eller arkitekturdiagrammer. Replicator distribuerer bl.a. `acr-pull-secret` til alle namespaces — se [Sikkerhet — ACR image pull](security.md#acr-image-pull-automatisk-acr-pull-secret). |
 
 > Kilde: https://docs.sky.fhi.no/explanations/tools-and-components/
 
@@ -109,6 +110,15 @@ Kluster <- Flux (hvert 2 min) <- OCIRepository <- ACR
 
 OCI-artifacts navngis: `crfhiskybert.azurecr.io/<tenant>/gitops_<env>:latest`
 
+> **Plattform-artifakter er Cosign-signert (intern):** Infra-repoets `oci-push` signerer hver
+> digest keyless (GitHub OIDC → Fulcio/Rekor), og source-controller verifiserer med
+> `matchOIDCIdentity` mot workflow-identiteten før fetch (`SourceVerified`-condition; siste
+> gyldige artifakt beholdes ved feil). Gjelder plattformens `infra`/`crds`/`tenants`-artifakter —
+> tenant-GitOps-artifakter verifiseres ikke slik i dag (Kyverno `flux-verify-sources` krever kun
+> `oci://crfhiskybert.azurecr.io/*` som kilde).
+>
+> Kilde: https://docs.sky.fhi.no/internal/oci-signing/
+
 ## Tenant-bootstrap
 
 Hver tenant i infra-repoet har følgende struktur:
@@ -136,8 +146,14 @@ Service account `flux-reconciler` brukes av Flux for å applye tenant-ressurser.
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/tenants/fida-stat19core/base/kustomization.yaml
 
 Tenant-baser kan ha to separate RoleBindings:
-- **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) til `skybert:tenant-flux-reconciler` innen tenant-namespacet, brukt av plattformen til å reconcile og provisjonere ressurser. Alle katalog-baserte baser er migrert til denne least-privilege-rollen (per 2026-06-18), og `crossplane`-SA-en er fjernet som subject. Den separate ResourceSet-bootstrappen (se nedenfor) genererer fortsatt `cluster-admin` med både `flux-reconciler` og `crossplane` som subjects.
-- **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til `skybert:tenant-admin` innen tenant-namespacet. Gir kubectl-tilgang for utviklere. Alle katalog-baserte baser binder nå mot denne kuraterte least-privilege-rollen (per 2026-06-18); `cluster-admin`-bindinger finnes kun via ResourceSet-bootstrappen (se nedenfor).
+- **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) til `skybert:tenant-flux-reconciler` innen tenant-namespacet, brukt av plattformen til å reconcile og provisjonere ressurser. De fleste katalog-baserte baser er migrert til denne least-privilege-rollen, og `crossplane`-SA-en er fjernet som subject.
+- **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til `skybert:tenant-admin` innen tenant-namespacet. Gir kubectl-tilgang for utviklere. De fleste katalog-baserte baser binder mot denne kuraterte least-privilege-rollen.
+
+> **Katalogen er ikke konsekvent:** per `d3d4e926` binder fire tenant-baser (`eurl`,
+> `fida-analyserom`, `healthdcat-assistant`, `johan-exempl`) fortsatt begge rollene til
+> `cluster-admin`, og ResourceSet-bootstrappen (se nedenfor) genererer også `cluster-admin` med
+> både `flux-reconciler` og `crossplane` som subjects. Les alltid tenantens faktiske
+> `rolebinding.yaml` og `entra-access-rolebinding.yaml` før du konkluderer om rettigheter.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/rolebinding.yaml
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/entra-access-rolebinding.yaml
@@ -186,10 +202,16 @@ Legacy `tenants/<tenant>/base/`-strukturen finnes fortsatt og begge mønstre bru
 
 > **Intern plattformmekanisme** — gjøres av plattformteamet. Dokumentert her for forståelse av hva som skjer under onboarding.
 
-Plattformteamet bruker `scripts/tenant--new.sh` for å opprette en ny tenant i 4 steg:
+Plattformteamet bruker `ska tenant new` (`scripts/tenant--new.sh`) for å opprette en ny tenant:
 
-1. **Azure-ressurser** — Managed Identity og GitOps-ACR-repo
-2. **GitOps-repo** — GitHub-repo i FHIDev-organisasjonen
+1. **GitOps-repo** — GitHub-repoet opprettes **først** (fra mal). Grunn: GitHub gir repoer
+   opprettet etter 2026-07-15 et OIDC-subject med immutable numeriske ID-er
+   (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`) som ikke finnes før repoet gjør det.
+2. **Azure-ressurser** — Managed Identity `tn-<tenant>-acr-push` med **to** federated
+   credentials: navnebasert (`main-oci-push`) og ID-basert (`main-oci-push-immutable`).
+   Subject matches eksakt uten wildcards — feil format feiler token-utvekslingen med
+   `AADSTS700213`. Scriptet setter også `AZURE_CLIENT_ID`/`AZURE_TENANT_ID`/
+   `AZURE_SUBSCRIPTION_ID` som repo-variabler (flyttet hit fra gitops-scriptet).
 3. **Base-manifester** — namespace, serviceaccounts, rolebinding, Flux Kustomization i infra-repo
 4. **Kluster-onboarding** — kjøres for hvert kluster i valgt sikkerhetssone
 
@@ -209,7 +231,8 @@ tenant--bootstrap--grafana.sh --tenant <tenant>
 
 Entra-gruppe-ID-en leses fra `tenants/<tenant>/base/entra-access-rolebinding.yaml` (ikke et flagg). Målklustere utledes fra overlay-katalogene under `tenants/<tenant>/`, eller angis eksplisitt med `-c/--cluster` (repeterbar). Kjøres via `az connectedk8s proxy + kubectl`. Oppretter per kluster: Grafana-org, Loki-datasource og Mimir-datasource (begge filtrert til `tn-<tenant>` via `X-Scope-OrgID`), og oppdaterer `infra/grafana/<cluster>/patch-orgs.yaml` med Entra-gruppekobling.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/6a94bd896a89599f7a257e15106ea8a5b6ef749b/scripts/tenant--new.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/scripts/tenant--new.sh
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/scripts/tenant--bootstrap--azure.sh
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/scripts/tenant--bootstrap--grafana.sh
 
 ### Sentralisert kluster-register

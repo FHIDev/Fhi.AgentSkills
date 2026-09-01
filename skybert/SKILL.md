@@ -6,8 +6,8 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-08-15
-> **Sist verifisert mot `Fhi.Skybert.Infra`:** 2026-08-27 (`449745b`) — CloudNativePG, Gateway API
+> **Sist verifisert mot offisiell docs:** 2026-09-01
+> **Sist verifisert mot `Fhi.Skybert.Infra`:** 2026-09-01 (`d3d4e926`) — CloudNativePG, Gateway API
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/
 > **Fallback-dokumentasjon**: https://skybert.fhi.no/
 > Denne skillen er en kuratert oppsummering for AI-agenter. For fullstendig dokumentasjon, se offisiell wiki.
@@ -27,7 +27,7 @@ Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din op
 ## Om Skybert
 
 Skybert er en Kubernetes-basert applikasjonsplattform hos FHI, bygget på:
-- **Kubernetes** via Azure Arc-connected Kubernetes (IKKE vanlig AKS)
+- **Kubernetes** — AKS på Azure Local, koblet til Azure med Azure Arc (ikke Azure-hostet managed AKS)
 - **GitOps** med Flux for deklarativ konfigurasjon
 - **Azure-integrasjon** (Workload Identity, Key Vault, ACR)
 - **Observability** (Loki for logging, Mimir for metrics, Tempo for tracing, Grafana for visualisering)
@@ -106,7 +106,7 @@ Sandbox (`aks-sandbox-01`) er et unntak — ett felles kluster delt av alle farg
 - **Default DENY** — all egress-trafikk blokkert som utgangspunkt
 - Kun intern kommunikasjon innenfor eget namespace og DNS er automatisk tillatt
 - Egress til eksterne tjenester krever eksplisitte IP-baserte whitelists (GlobalNetworkPolicy), opprettet av plattformteamet
-- Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt. Tenanter kan derimot opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for ingress-only med `spec.order < 1200`
+- Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt. Tenanter kan derimot opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for ingress-only med `spec.order` i `[1000, 1200)` (gulvet 1000 håndheves på alle klustere av `limit-calico-netpol-order`; taket 1200 av rød sone-policyen)
 - NFS egress (port 2049) er blokkert for alle soner
 
 > Kilde (rød sone-policyer): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a16a243/infra/kyverno-policies/base/policies-red/
@@ -128,9 +128,14 @@ Blåløypa er den anbefalte veien for å komme i gang på Skybert.
 - Tilgang til NHN Slack (#ext-fhi-skybert)
 
 *Applikasjonskrav:*
-- Applikasjon som kan kjøre på Linux (.NET er standard)
-- Azure subscription for Key Vault eller andre Azure-integrasjoner
-- Ekstern database (anbefalt), enten fra NHN Moderne Etatsplattform eller Azure
+- Applikasjon som kan kjøre på Linux — språk og rammeverk er valgfritt
+- En Dockerfile (eller tilsvarende) som pakker appen til container-image
+- En CI-pipeline (GitHub Actions, Azure DevOps e.l.) som bygger og pusher imaget — plattformen
+  setter opp federert tilgang til container-registeret fra pipelinen
+- Azure-subscriptions for Key Vault og andre Azure-integrasjoner (anbefalt: én for test, én for
+  prod). Subscriptions er teamets ansvar — plattformen oppretter dem ikke
+- Database: tre støttede alternativer — Azure managed, NHN Moderne Etatsplattform, eller
+  PostgreSQL in-cluster med CloudNativePG (se [Persistence](references/persistence.md))
 - For rød data: Kontroll av utgående trafikk + risikovurderingsdokumentasjon
 
 *Teknisk:*
@@ -181,8 +186,10 @@ I tillegg trengs disse **secrets** (brukes med `secrets.*`):
 
 | Secret | Beskrivelse |
 |--------|-------------|
-| `GH_PAT` | Personal Access Token for workflow chaining i GitOps-repo |
-| `GITOPS_PAT` | Personal Access Token for repository_dispatch på tvers av repoer |
+| `GH_PAT` | Token GitOps-repoets `update-tag.yaml` bruker for intern workflow chaining — verifiser mot repoets faktiske workflow |
+| `GITOPS_APP_CLIENT_ID` | Client ID for GitHub App installert på GitOps-repoet (anbefalt for cross-repo dispatch) |
+| `GITOPS_APP_PRIVATE_KEY` | Privat nøkkel-PEM for samme GitHub App (ikke client secret) |
+| `GITOPS_PAT` | Eldre oppsett: PAT for repository_dispatch — fungerer fortsatt, men GitHub App er dokumentert mønster |
 
 **For å verifisere variabler og secrets:**
 ```bash
@@ -212,8 +219,10 @@ sandbox → test → prod
 
 ```bash
 # I app-repoets build-workflow, som bash-step. ${{ ... }} er GitHub Actions-uttrykk.
+# Bearer-tokenet er et GitHub App-installasjonstoken (anbefalt — se references/workflows.md),
+# eller GITOPS_PAT i eldre oppsett.
 curl -X POST \
-  -H "Authorization: Bearer ${{ secrets.GITOPS_PAT }}" \
+  -H "Authorization: Bearer ${{ steps.gitops-app-token.outputs.token }}" \
   "https://api.github.com/repos/${{ vars.GITOPS_REPO }}/dispatches" \
   -d '{"event_type":"update_tag","client_payload":{
     "env": "test",
@@ -221,7 +230,7 @@ curl -X POST \
   }}'
 ```
 
-`repository` skal være GitHub repo-navnet (ikke ACR-pathen). Primærkilden og andre `update-tag.yaml`-varianter bruker feltet for å velge riktig manifest; default-varianten dokumentert i `references/workflows.md` leser kun `env` og `tag` og bytter alle `tag:`-linjer i en fast fil. Send GitHub repo-navnet for å være kompatibel med begge. Se `references/workflows.md` for komplett payload-format.
+`repository` er **image-repository-navnet i GitOps-manifestene** — `<app>`-segmentet i `crfhiskybert.azurecr.io/<tenant>/<app>:<tag>` (docs per 2026-09). Er GitHub repo-navn og image-navn identiske spiller det ingen rolle; avviker de, er det image-navnet `update-tag.yaml` matcher på. Default-varianten dokumentert i `references/workflows.md` leser kun `env` og `tag` og bytter alle `tag:`-linjer i en fast fil — sjekk den konkrete `update-tag.yaml` i eget repo. Se `references/workflows.md` for komplett payload-format.
 
 ### Hvor tag-en havner
 
@@ -442,20 +451,20 @@ helhet, inkludert external-dns for offentlige IP-er.
 
 ## Persistence / Data lagring
 
-**Anbefaling:** Hold persistent data utenfor Kubernetes. Avhengig av sikkerhetsklassifisering, lagre data i:
-- **Azure public cloud** (for grønn/gul data)
-- **NHN Datacenter** (for rød data eller strengere krav)
+For databaser finnes tre støttede alternativer på samme nivå: **Azure managed database**,
+**NHN Moderne Etatsplattform**, og **PostgreSQL i klusteret med CloudNativePG** (støttet på alle
+ni aktive klustere — men teamet eier backup, restore-test og Azure Blob-kontoen selv).
 
-**In-cluster lagring:** To StorageClasses er tilgjengelige på alle klustere:
+For volumer finnes sju StorageClasses (`cloud-backed-sc`, `cloud-backed-retain-sc`,
+`unbacked-sc`, `unbacked-retain-sc`, `default`, `ontap-nas`, `blob-fuse`) — `kubectl get sc` på
+eget kluster er autoritativt. **Ingen StorageClass er backup** (ingen volume snapshots på
+klusterne), og **`ontap-nas` (NFS) skal aldri brukes til databaser**.
 
-| StorageClass | Type | Access mode | Backup | Bruk |
-|--------------|------|-------------|--------|------|
-| default | Lokal node-storage | ReadWriteOnce (bundet til én node) | Ingen | Cache, midlertidige data, single-replica-workloads som trenger rask lokal disk |
-| `ontap-nas` | NFS (NetApp ONTAP) | ReadWriteMany (alle noder) | **Ingen** — datatap er ditt ansvar | Delt fillagring, statiske assets, volumer med multi-pod-tilgang |
-
-`ontap-nas` er NFS-basert og **ikke egnet for transaksjonssensitive workloads** som databaser — NFS gir ikke konsistensgarantiene databaser krever. Block storage med backup/snapshot-støtte er planlagt, men uten ETA — kontakt `#ext-fhi-skybert` hvis dette er kritisk for dere.
+Se [Persistence og CloudNativePG](references/persistence.md) for valg, reclaim-policy,
+backup/restore og operative fallgruver.
 
 > Kilde: https://docs.sky.fhi.no/persistence/
+> Kilde: https://docs.sky.fhi.no/persistence/postgres/
 
 ### Postgres i klusteret (CloudNativePG)
 
@@ -475,18 +484,6 @@ Database for PostgreSQL Flexible Server eller VM-Postgres.
 
 Se [CloudNativePG](references/cloudnative-pg.md) for tenant-kontrakten, Azure-forutsetningene
 og de to labelene rød sone krever.
-
-### `ontap-nas` accessMode -- bare RWX
-
-Inntil videre skal alle PVCer mot `ontap-nas` opprettes med
-`accessModes: [ReadWriteMany]` (RWX). **Bruk aldri `ReadWriteOnce`
-(RWO)**. Helm-charts som default-er til RWO må overrides.
-
-### Under utrulling: Postgres i klusteret
-
-Plattformen tester **CloudNativePG** (Postgres-operator med backup via barman-cloud) på
-`aks-ops-test-01`. Det er ikke tilgjengelig for tenanter ennå, og anbefalingen om ekstern database
-står uendret. Se [Konfigurasjon — Postgres i klusteret](references/configuration.md#postgres-i-klusteret-cloudnativepg--under-utrulling).
 
 ## Azure Workload Identity
 
@@ -644,6 +641,7 @@ Dette gir AI-agenten kontekst for å generere korrekte konfigurasjoner uten å g
 |----------|---------|
 | [SkybertApp CRD-spesifikasjon](references/skybertapp-crd.md) | Full SkybertApp felt-referanse |
 | [SkybertApp rendering](references/skybertapp-render.md) | Kjør Composition lokalt med `crossplane render` for å se genererte manifester |
+| [Persistence og CloudNativePG](references/persistence.md) | StorageClasses, databasevalg, CNPG-oppsett, backup/restore og fallgruver |
 | [Secrets-mønstre](references/secrets.md) | SecretStore, ExternalSecret-mønstre |
 | [Workflows](references/workflows.md) | GitHub Actions CI/CD workflows |
 | [kubectl-tilgang](references/kubectl-access.md) | Kubectl-tilgang, k9s, kjøre containers lokalt |
@@ -668,6 +666,14 @@ Kontakt Skybert plattformteam:
 **Skybert (plattformteamet):** Kubernetes-infrastruktur, Flux, Crossplane, Observability, Azure-integrasjoner, plattform-sikkerhet
 
 **Tenant (applikasjonsteam):** Applikasjonskode, GitOps-konfigurasjon, secrets management, applikasjons-ROS, monitorering
+
+**Høy tilgjengelighet er applikasjonsteamets ansvar:** Kubernetes garanterer at *det finnes*
+kjørende pods — ikke at *samme* pod består. Pod-restart og flytting uten forvarsel er normal
+drift. Appen må håndtere brå shutdown korrekt, og kjøre flere identiske replikaer samtidig når
+tilgjengelighetskravet tilsier det — plattformens PDB og autoskalering erstatter ikke
+applikasjonsdesign for failover og reconnect.
+
+> Kilde: https://docs.sky.fhi.no/explanations/what-is-skybert/
 
 ---
 

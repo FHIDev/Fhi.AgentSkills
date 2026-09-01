@@ -196,35 +196,17 @@ images:
     newTag: latest
 ```
 
-## Postgres i klusteret (CloudNativePG) — under utrulling
+## Postgres i klusteret (CloudNativePG)
 
-> **Status per 2026-08-14: kun `aks-ops-test-01`.** Ikke tilgjengelig på tenant-klustere ennå, og
-> ikke omtalt i offisiell docs. Offisiell anbefaling er fortsatt **ekstern database** (Azure managed
-> eller NHN Moderne Etatsplattform). Denne seksjonen finnes for at du skal kjenne retningen, ikke
-> som en oppfordring til å ta det i bruk.
+CloudNativePG med barman-cloud er en **støttet og offisielt dokumentert** PostgreSQL-løsning,
+på linje med Azure managed og NHN — utrullet på alle ni aktive klustere, med tenant-RBAC
+aggregert i alle miljøer (opt-in-mekanismen er fjernet: CRD-ene finnes nå overalt, og opt-in ga
+stille brekkasje — en tenant med `ObjectStore` på et kluster uten opt-in feilet Flux dry-run og
+blokkerte hele Kustomization-en). Plattformen leverer operator, plugin og RBAC; tenant-teamet
+eier Blob-konto, federated credentials, backupstatus og restore-test.
 
-Plattformen har rullet ut **CloudNativePG**-operatoren (chart 0.29.0, operator-image 1.30.0) i
-namespacet `cnpg-system`, med **plugin-barman-cloud** (0.7.1, image v0.14.0) for backup til
-objektlagring.
+Se [Persistence og CloudNativePG](persistence.md) for StorageClass-valg, manifestmønstre, RBAC-
+tabellen og de kritiske fallgruvene.
 
-Der komponenten er aktivert, gir ClusterRole-fragmentet `skybert:tenant-admin:cnpg` tenanten:
-
-| API-gruppe | Ressurser | Tilgang |
-|------------|-----------|---------|
-| `postgresql.cnpg.io` | `clusters`, `backups`, `scheduledbackups`, `poolers`, `databases`, `databaseroles`, `publications`, `subscriptions`, `imagecatalogs` | Full CRUD |
-| `postgresql.cnpg.io` | `failoverquorums`, samt `*/status` for clusters/backups/scheduledbackups/poolers | Kun lesing (operatør-eid) |
-| `barmancloud.cnpg.io` | `objectstores` | Full CRUD |
-
-`clusterimagecatalogs` er bevisst utelatt — den er kluster-scoped, og kluster-scopede ressurser
-inngår ikke i tenant-admin-settet.
-
-Fragmentet er bevisst **ikke** med i katalogens `kustomization.yaml`: hvert kluster må opte inn
-eksplisitt, slik at rettigheter på `postgresql.cnpg.io` ikke deles ut der CRD-ene ikke finnes.
-Aggregeringslabelene er allerede komplette for alle miljøer, så utrulling krever ingen RBAC-endring.
-
-Merk at `ontap-nas` (NFS) uansett er uegnet for databaser — se [Persistence i SKILL.md](../SKILL.md#persistence--data-lagring).
-Hvilken StorageClass en CNPG-`Cluster` skal bruke, avgjøres i tenantens eget `Cluster`-manifest;
-plattformens operator-oppsett fastsetter ingen default for tenant-databaser.
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/skybert-system/base/tenant-admin-clusterroles/cnpg-access-rules.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/cloudnative-pg/base/
+> Kilde: https://docs.sky.fhi.no/persistence/postgres/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/skybert-system/base/tenant-admin-clusterroles/kustomization.yaml
