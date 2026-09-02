@@ -63,6 +63,14 @@ Skybert leverer to typer managed identities per tenant:
 
 - **ACR-push identity** (`tn-<tenant>-acr-push`) — brukes av GitHub Actions-workflows for å pushe images til ACR. Én per tenant, federert til GitOps-repoet ved onboarding. Plattformteamet kan federere flere app-repoer til samme identitet (per branch `refs/heads/main` eller per GitHub environment). GitOps-malen `FHISkybert/Fhi.Skybert.Template.GitOps` viser workflow-oppsettet.
 
+  > **Merk (GitHub OIDC-endring):** Repoer opprettet etter 2026-07-15 presenterer et subject med
+  > immutable numeriske ID-er (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`); eldre repoer bytter
+  > til samme format ved rename/transfer. Subject matches eksakt — en federert credential med feil
+  > format gir `AADSTS700213` ved token-utveksling. Plattformens bootstrap oppretter nå begge
+  > variantene per identitet; ved federering av nye app-repoer må ID-varianten med.
+  >
+  > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/scripts/tenant--bootstrap--azure.sh
+
   > Kilde (intern): https://docs.sky.fhi.no/internal/attach-application-repo/
 - **Workload Identities per miljø** — én per miljø (`sandbox`, `test`, `prod`) etter mønsteret `tn-<tenant>-skybert-sa-<env>`. Disse kobles mot Kubernetes service account `<tenant>-azure` i det respektive miljø-klusteret via OIDC federation, slik at applikasjonen får passordløs tilgang til Azure-ressurser.
 
@@ -75,10 +83,19 @@ Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per milj
 
 ## Tenant-RBAC — hva du kan administrere
 
-> **Tenant-RBAC (oppdatert per 2026-06-18):** Alle katalog-baserte tenant-baser (`tenants/<tenant>/base/`) er migrert vekk fra `cluster-admin`. Menneskelig tilgang (Entra ID-gruppe) bindes til den kuraterte least-privilege ClusterRole `skybert:tenant-admin`, og plattform-rekonsiliering (`flux-reconciler`-SA) bindes til `skybert:tenant-flux-reconciler` — begge via `RoleBinding` avgrenset til tenant-namespacet. `crossplane`-SA-en er fjernet som subject fra disse `rolebinding.yaml`-filene. **Unntak:** den separate ResourceSet-bootstrappen (`infra/tenant-bootstrap/base/resourceset.yaml`) genererer fortsatt `cluster-admin` med både `flux-reconciler` og `crossplane` som subjects — tenanter bootstrappet via den mekanismen kan ha bredere tilgang.
+> **Tenant-RBAC:** De fleste katalog-baserte tenant-baser (`tenants/<tenant>/base/`) binder
+> menneskelig tilgang (Entra-gruppe) til den kuraterte least-privilege ClusterRole
+> `skybert:tenant-admin` og plattform-rekonsiliering (`flux-reconciler`-SA) til
+> `skybert:tenant-flux-reconciler` — begge via `RoleBinding` avgrenset til tenant-namespacet, og
+> `crossplane`-SA-en er fjernet som subject. **Dette er ønsket standard, ikke universelt:** per
+> infra-head `d3d4e926` binder `eurl`, `fida-analyserom`, `healthdcat-assistant` og
+> `johan-exempl` fortsatt både Entra-gruppen og `flux-reconciler` til `cluster-admin` i eget
+> namespace, og ResourceSet-bootstrappen (`infra/tenant-bootstrap/base/resourceset.yaml`)
+> genererer også `cluster-admin`. Behandle tenantens faktiske RoleBindings som autoritative —
+> ikke anta least-privilege ut fra katalogstruktur alene.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/entra-access-rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/tenants/eurl/base/rolebinding.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/tenants/healthdcat-assistant/base/entra-access-rolebinding.yaml
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/tenant-bootstrap/base/resourceset.yaml
 
 `skybert:tenant-admin:core` gir deg eksplisitte rettigheter (uten wildcards) i ditt eget namespace på blant annet:
@@ -151,7 +168,7 @@ securityContext:
 
 I rød sone er default DENY — all trafikk blokkert som utgangspunkt.
 
-**Viktig:** Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt i rød sone — blokkeres av Kyverno-policy `sub-1200-calico-netpol-in-tenants`. Tenanter kan derimot opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for ingress-only med `spec.order < 1200`. Egress styres sentralt — be plattformteamet om GlobalNetworkPolicy-unntak for egress til spesifikke IP-ranges/porter.
+**Viktig:** Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt i rød sone — blokkeres av Kyverno-policy `sub-1200-calico-netpol-in-tenants`. Tenanter kan derimot opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for ingress-only med `spec.order` i `[1000, 1200)`. Egress styres sentralt — be plattformteamet om GlobalNetworkPolicy-unntak for egress til spesifikke IP-ranges/porter.
 
 Se [Hostnavn og nettverkskonfigurasjon](hostnames-and-networking.md#rød-sone) for detaljer om tillatt trafikk og nettverkspolicyer.
 
@@ -187,3 +204,14 @@ Hver sikkerhetssone har egne Azure subscriptions:
 - (tilsvarende for Grønn og Rød sone)
 
 Workflows må bruke riktig `AZURE_SUBSCRIPTION_ID` for miljøet.
+
+## ACR image pull (automatisk `acr-pull-secret`)
+
+Pods puller fra `crfhiskybert.azurecr.io` uten at du konfigurerer noe: plattformen genererer
+`acr-pull-secret` (dockerconfigjson fra shared Key Vault, refresh 24t), replikerer den til alle
+namespaces (kubernetes-replicator), og to Kyverno-ClusterPolicies patcher
+`imagePullSecrets: acr-pull-secret` på ServiceAccounts i `tn-*` (og `default`-SA-en overalt).
+**En SA som allerede har egne `imagePullSecrets` røres ikke** — ved `ImagePullBackOff` mot
+private ACR-images: sjekk både at secreten finnes og at workloadens SA faktisk refererer til den.
+
+> Kilde: https://docs.sky.fhi.no/internal/skybert-system/

@@ -146,7 +146,39 @@ Raskeste vei til anbefalingene er `sk8 policies --tenant <tenant>` — se
 [kubectl-tilgang](kubectl-access.md#sk8-cli--automatisert-pim--proxy). Bakgrunn og hva VPA-objektene
 gjør (og ikke gjør): [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa).
 
+I standard-dashboardet (**Tenant Overview**) viser tabellen **Request vs Recommendation** (under
+Resource requests) én rad per `workload · container` — SkybertApp-rader med composed navn
+`<app>-deployment`; native sidecars inkludert; Jobs/CronJobs får ikke VPA-target.
+`CPU/Mem vs target` er `request ÷ recommendation × 100` (≈100 % = samsvar; manglende requests
+vises som `No request`); `current` er kjørende request, `rec` er VPA-target.
+
+Recommender-gulvet er **15 millicores / 100 MB** — en ny eller lite belastet tjeneste ligger på
+gulvene til den har sett reell last. Anbefalt praksis: start med SkybertApp-defaults (`150m` /
+`256Mi`), kjør **minst en uke under forventet last**, og commit deretter et vurdert target i
+Git (Flux applyer). VPA øker memory-anbefalingen betydelig etter OOM-kill. Anbefalingene er
+**recommend-only** — pods beholder requests fra Git.
+
+*Intern bakgrunn:* recommenderen leser bruks-historikk fra Mimir-orgen `cluster_metrics`
+(cAdvisor dual-writes dit via Alloy), mens Grafana-tabellen leser VPA-gauges fra
+kube-state-metrics i tenant-orgen.
+
+> Kilde: https://docs.sky.fhi.no/workloads/resource-sizing/
+> Kilde: https://docs.sky.fhi.no/observability/grafana/
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/goldilocks/base/goldilocks-10.4.1-values.yaml
+
+### Kyverno PolicyReport som metrics
+
+kube-state-metrics eksponerer Kyverno `PolicyReport` til Mimir via CustomResourceState:
+
+- `kube_policyreport_summary` — antall per result (`pass`, `fail`, `warn`, `error`, `skip`)
+- `kube_policyreport_result_info` — én serie per resultat, med labels som `policy`, `rule`,
+  `result`, `severity` og `message`
+
+Filtrer tenant-visninger med `namespace=~"tn-.*"` (kildekommentaren anbefaler samme filter).
+Dette gjør policy-funn (f.eks. `resource-limits`- og `recommend-network-policy`-audits)
+synlige i Grafana uten kubectl.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/kube-state-metrics/base/kube-state-metrics-7.3.0-values.yaml
 
 ### Custom-metrics-HPA (planlagt)
 
@@ -160,7 +192,10 @@ Distribuert tracing via **Tempo** er **planlagt, foreløpig ikke tilgjengelig** 
 
 ## Grafana Dashboards
 
-Grafana er forhåndskonfigurert med et **standard-dashboard** laget av plattformteamet, som gir innsikt i helsen til applikasjonene og deploymentene dine. Dashboardet vedlikeholdes av plattformteamet og kan bli oppdatert når som helst — endringer du gjør i det via web-UI kan bli overskrevet. Vil du tilpasse det, kopier det til et eget dashboard som du vedlikeholder selv.
+Grafana er forhåndskonfigurert med et **standard-dashboard** laget av plattformteamet. Det dekker
+workload health, Flux, ressursbruk, logger og en **Request vs Recommendation**-tabell som
+sammenligner CPU-/memory-requests med VPA-targets (se
+[Ressursanbefalinger i Grafana](#ressursanbefalinger-i-grafana)). Dashboardet vedlikeholdes av plattformteamet og kan bli oppdatert når som helst — endringer du gjør i det via web-UI kan bli overskrevet. Vil du tilpasse det, kopier det til et eget dashboard som du vedlikeholder selv.
 
 > Kilde: https://docs.sky.fhi.no/observability/grafana/
 

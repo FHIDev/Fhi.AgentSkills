@@ -138,7 +138,7 @@ az connectedk8s show \
   --query oidcIssuerProfile.issuerUrl -o tsv
 ```
 
-**Viktig**: Skybert-klusterne er **AKS on Azure Stack HCI** (Arc-projisert som `microsoft.kubernetes/connectedclusters`), ikke Azure-cloud AKS. Derfor virker **ikke** `az aks show` -- bruk `az connectedk8s show`.
+**Viktig**: Skybert-klusterne er **AKS på Azure Local** (tidligere markedsnavn: Azure Stack HCI; Arc-projisert som `microsoft.kubernetes/connectedclusters`), ikke Azure-cloud AKS. Derfor virker **ikke** `az aks show` -- bruk `az connectedk8s show`.
 
 ### Nyttige felt fra `az connectedk8s show`
 
@@ -222,14 +222,14 @@ Go-basert CLI som automatiserer tilkoblingsflyten over:
 Klusterregisteret hentes fra `https://docs.sky.fhi.no/sk8/clusters.json` (med lokal cache og
 innebygd fallback). Forutsetninger: `az` (med `connectedk8s`-extension), `kubectl`, `gh`.
 
-> **Merk:** Docs-siden `internal/sk8-cli.md` beskriver en eldre script-dispatcher. Den er per
-> 2026-08-14 **omdøpt fra `scripts/sk8` til `scripts/ska`** i infra-repoet (`ska tenant new` →
-> `scripts/tenant--new.sh` osv.), for å unngå navnekollisjon med Go-CLI-en. Docs-siden er ikke
-> oppdatert og bruker fortsatt det gamle navnet. Begge verktøyene finnes i infra-repoet; Go-CLI-en
-> `sk8` i `utils/sk8/` er den som er relevant for utviklere.
+> **To ulike CLI-er:** Den interne script-dispatcheren heter `ska` (`scripts/ska` — f.eks.
+> `ska tenant new` → `scripts/tenant--new.sh`), nå dokumentert på `internal/ska-cli/` (gammel
+> `sk8-cli`-URL redirecter dit). Den er et plattformteam-verktøy. Go-CLI-en **`sk8`** i
+> `utils/sk8/` er en separat, uendret CLI og den som er relevant for utviklere (`cluster`,
+> `status`, `policies`).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/utils/sk8/README.md
-> Kilde: https://docs.sky.fhi.no/internal/sk8-cli/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/utils/sk8/README.md
+> Kilde: https://docs.sky.fhi.no/internal/ska-cli/
 
 ## Nyttige kubectl-kommandoer
 
