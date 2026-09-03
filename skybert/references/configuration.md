@@ -8,7 +8,7 @@ SkybertApp er anbefalt måte å deploye på. GitOps-repoet leveres med `sandbox/
 
 ## Health probes i .NET-apper
 
-Docs' mønster er .NET Health Checks API med `live`-/`ready`-tags mappet til `/liveness` og `/readiness` (Kubernetes-manifestet i docs bruker `/healthz`/`/readyz`), detaljerte private sjekker (DB, avhengigheter) bundet til en intern port med `.RequireHost("*:<port>")` som ingress ikke eksponerer — `.RequireHost()` er bare en applikasjonslag-sjekk — og ingen tunge migreringer eller kompleks logikk i readiness-proben. For SkybertApp settes probes via [`probes`-feltet](skybertapp-crd.md#health-probes); ingen probes er påkrevd.
+Probe-stiene velger du selv, og stien i `SkybertApp.spec.probes` må være den appen faktisk eksponerer — docs' eksempler er ikke samstemte (probes-siden bruker `/liveness`/`/readiness` i appen og `/healthz`/`/readyz` i manifestet; SkybertApp-referansen bruker `/health/live`/`/health/ready`). Docs' .NET-mønster er Health Checks API med `live`-/`ready`-tags, detaljerte private sjekker (DB, avhengigheter) bundet til en intern port med `.RequireHost("*:<port>")` som ingress ikke eksponerer — `.RequireHost()` er bare en applikasjonslag-sjekk — og ingen tunge migreringer eller kompleks logikk i readiness-proben. For SkybertApp settes probes via [`probes`-feltet](skybertapp-crd.md#health-probes); ingen probes er påkrevd.
 
 > Kilde: https://docs.sky.fhi.no/miscellaneous/probes/ · https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/
 

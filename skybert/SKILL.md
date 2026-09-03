@@ -7,7 +7,6 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
 > **Sist verifisert mot offisiell docs:** 2026-09-01
-> **Sist verifisert mot `Fhi.Skybert.Infra`:** 2026-09-01
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/ (samme innhold på https://skybert.fhi.no/)
 > Denne skillen er en kuratert oppsummering for AI-agenter. Hver seksjon har enten en `> Kilde:`-lenke eller er merket `> **Operasjonell antakelse:**` (erfaring uten repo-kilde).
 
@@ -91,7 +90,7 @@ Alle klustere kjører samme Kyverno-grunnpolicyer (`policies-green`); prod-klust
 
 ## GitOps-repo og deployment
 
-Repoet leveres fra plattformens mal og skal ikke endres i `.github/workflows/`:
+Repoet leveres fra plattformens mal; `.github/workflows/` er ferdig konfigurert og trenger normalt ikke endres:
 
 ```
 .github/workflows/

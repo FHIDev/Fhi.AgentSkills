@@ -4,7 +4,7 @@
 
 GitOps-repoet (`Fhi.<Tenant>.GitOps`) leveres med `.github/workflows/oci-push.yaml` og
 `.github/workflows/update-tag.yaml` ferdig konfigurert fra malen, samt miljømappene `sandbox/`, `test/`
-og `prod/` med et eksempel-SkybertApp i hver. Workflow-filene skal ikke endres; `<TENANT>`-placeholderen
+og `prod/` med et eksempel-SkybertApp i hver. Workflow-filene trenger normalt ikke endres; `<TENANT>`-placeholderen
 byttes ut av plattformens bootstrap-script når repoet opprettes.
 
 App-repoet har ingen foreskrevet workflow-fil eller CI-verktøy (GitHub Actions, Azure DevOps o.l.). Det som

@@ -14,8 +14,8 @@ Skybert kjører AKS på **Azure Local**, og StorageClassene kommer fra fire ulik
 | `unbacked-sc` | `wyvern.csi.azure.com` | Delete | RWO | Block-volum kun på Azure Local-klusteret, ingen cloud-kopi |
 | `unbacked-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Samme med Retain |
 | `default` | `disk.csi.akshci.com` | Delete | RWO | Node-lokal disk. Kluster-default, og den svakeste av disse |
-| `ontap-nas` | `csi.trident.netapp.io` | Delete | RWM | NFSv3 på NetApp ONTAP. Delte filer på tvers av pods |
-| `blob-fuse` | `blob.csi.azure.com` | Delete | RWM | Azure Blob montert som filsystem — se advarsel under |
+| `ontap-nas` | `csi.trident.netapp.io` | Delete | RWX | NFSv3 på NetApp ONTAP. Delte filer på tvers av pods |
+| `blob-fuse` | `blob.csi.azure.com` | Delete | RWX | Azure Blob montert som filsystem — se advarsel under |
 
 Alle støtter volume expansion. **Ingen av dem er backup:** det finnes ingen `VolumeSnapshotClass`
 på klusterne — ingen volume snapshots og ingen point-in-time restore. Applikasjonsnivå-backup er
@@ -31,11 +31,13 @@ ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
   trenger — i verste fall åpner to prosesser samme datakatalog — og CNPG støtter ikke NFS for PGDATA.
 - **Cache/scratch:** `unbacked-sc` eller `default`.
 - **Delte filer flere pods:** `ontap-nas` — eneste klasse med `ReadWriteMany` for vanlig filtilgang.
+  Trident-backenden er konfigurert med `accessMode: ReadWriteMany`; bruk `accessModes: [ReadWriteMany]`
+  på PVC-er mot klassen, og overstyr Helm-charts som defaulter til `ReadWriteOnce`.
 - **`blob-fuse` peker på delt konto** definert én gang for hele plattformen (alle klustere og
   tenanter lander samme sted), og har ikke-POSIX-semantikk (ingen locking, ingen partial writes).
   Avklar på `#ext-fhi-skybert` før bruk.
 
-> Kilde: https://docs.sky.fhi.no/persistence/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/nas-sc.yaml
+> Kilde: https://docs.sky.fhi.no/persistence/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/nas-sc.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/ontap-nas-backend.yaml
 
 ## Databasevalg
 
@@ -133,6 +135,11 @@ spec:
       annotations:
         azure.workload.identity/client-id: "<client-id>"
         azure.workload.identity/tenant-id: "<azure-tenant-id>"
+  plugins:                        # uten denne arkiveres ingen WAL — se Backup
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: pg-backup
   postgresql:
     parameters:
       archive_timeout: "300"      # setter tak på RPO — se fellene
@@ -192,6 +199,38 @@ plugin-blokken arkiveres ingen WAL.** Storage-kontoen leses fra `destinationPath
 `ScheduledBackup.schedule` er **seksfelts Go-cron med sekunder først**: `"0 0 3 * * *"` er 03:00.
 Kjør en manuell `Backup` (generateName) rett etter oppsett og verifiser at webhooken injiserte
 `AZURE_FEDERATED_TOKEN_FILE` i barman-sidecaren.
+
+```yaml
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: pg-backup                 # = barmanObjectName i Cluster.spec.plugins
+  namespace: tn-<tenant>
+spec:
+  configuration:
+    destinationPath: https://<konto>.blob.core.windows.net/tn-<tenant>/pg-g1   # siste segment = generasjonsmarkør
+    azureCredentials:
+      inheritFromAzureAD: true
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
+  retentionPolicy: 30d
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: pg-nightly
+  namespace: tn-<tenant>
+spec:
+  schedule: "0 0 3 * * *"         # seks felt, sekunder først
+  backupOwnerReference: self
+  cluster:
+    name: pg
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+```
 
 **Fellene (kan koste data):**
 

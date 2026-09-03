@@ -32,13 +32,7 @@ Kopiene vedlikeholdes av `oppdater-skybert`-skillen; hvilken infra-commit de til
 
 ## Pipeline
 
-```
-helm template (hvis nødvendig)  →  SkybertApp XR  →  crossplane render  →  K8s manifester
-```
-
-Crossplane render kjører Composition-pipen akkurat som i klusteret, men
-uten å faktisk opprette ressursene. Outputen er de samme ressursene som
-Crossplane ville ha applied.
+`crossplane render` kjører Composition-pipen (helm template først hvis manifestet er en Helm-template) og skriver ut ressursene Crossplane ville ha applied, uten å opprette dem.
 
 > **Operasjonell antakelse:** Generell `crossplane render`-semantikk; ikke beskrevet i kildene.
 
