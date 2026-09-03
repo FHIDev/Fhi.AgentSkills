@@ -247,8 +247,9 @@ Routing-tabellen sier hvilke målfiler en endret kildefil *primært* ruter til �
 1. Identifiser **endrede nøkkelverdier**: feltnavn, defaults, enum-verdier, versjonsnumre, hostnames, image-stier, intervaller, namespace-/navnekonvensjoner, policy-navn.
 2. Søk etter hver nøkkelverdi (gammel OG ny form) i **alle** filer under `skybert/` — ikke bare målfilene fra routing.
 3. Hvert treff i en fil utenfor primær-routing vurderes: er påstanden der fortsatt korrekt? Hvis ikke → egen endringspost (`KORRIGER`/`UTVID`) for den filen.
+4. Gir en nøkkelverdi treff i mer enn én skill-fil, er det en duplikat: rett i kanonisk fil (se «Kanonisk plassering for tverrgående fakta» i [routing-tabell.md](routing-tabell.md)) og erstatt de andre forekomstene med kryssreferanse (`OMSTRUKTURER` med `kanonisk:`-flagg) — ikke `KORRIGER` i hver fil.
 
-Eksempel: endres rekonsilieringsintervallet i `flux-instance.yaml`, berører det ikke bare `platform-architecture.md` (routing), men også «Flux rekonsilerer hvert 2. minutt»-påstanden i `SKILL.md`.
+Eksempel: endres rekonsilieringsintervallet i `flux-instance.yaml`, rettes tallet i `platform-architecture.md` (kanonisk). Andre filer skal bare lenke dit; står tallet likevel gjentatt et sted, er det en duplikat som konsolideres.
 
 **Runtime output:** Skriv `.tmp/oppdater-skybert/changed-files.json` (ephemeral):
 ```json
@@ -286,7 +287,7 @@ Parse `spec.versions[].name` der `served: true` og `referenceable: true`. Sammen
 Ved endring (f.eks. v1alpha1 → v1beta1):
 - Opprett endringspost med `crd-versjon`-flagg
 - Inkluder: gammel versjon, ny versjon, alle feltendringer, migreringsveiledning
-- Oppdater alle eksempler i `skybertapp-crd.md` og `SKILL.md`
+- Oppdater eksemplene i kanonisk fil (`skybertapp-crd.md`) og det ene minimale eksemplet i `SKILL.md`
 
 ### Felt-nivå-diff (obligatorisk ved enhver XRD-endring)
 
@@ -316,8 +317,23 @@ Skillen inneholder statiske kopier av infra-filer, brukt av `references/skyberta
 
 Når en kildefil over er endret (compare/discovery):
 1. Opprett endringspost for å oppdatere den statiske kopien (for `functions.yaml`: bevar xpkg-omskrivingen, oppdater bare versjoner/innhold)
-2. Oppdater provenance-blokken i `references/skybertapp-render.md` (commit SHA, dato, per-fil «sist endret»)
-3. Verifiser at eksemplene i `skybertapp-render.md` fortsatt stemmer med ny composition-output
+2. Verifiser at eksemplene i `skybertapp-render.md` fortsatt stemmer med ny composition-output
+
+Provenance for kopiene er `github.infra.commit`/`commitDate` i `skybert/.oppdater-state.json` — kopiene synkes ved hver GitHub-kjøring som berører kildefilene, og state-SHA-en er dermed alltid gyldig for dem. `skybertapp-render.md` skal ikke inneholde SHA, dato eller refresh-kommandoer.
+
+**Refresh-prosedyre** (kjøres av denne skillen, ikke av brukerskillen):
+
+```bash
+RAW=https://raw.githubusercontent.com/FHISkybert/Fhi.Skybert.Infra/main
+SKILL=skybert/references/skybertapp
+curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/compositions/skybertapp.yaml" -o "$SKILL/composition.yaml"
+curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/xrds/skybertapp.yaml"         -o "$SKILL/xrd.yaml"
+# functions.yaml: sammenlign kun spec.package-versjonene og oppdater versjonsnumrene i
+# $SKILL/functions.yaml for hånd — behold xpkg.crossplane.io-prefikset.
+curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/functions.yaml" | grep package:
+grep package: "$SKILL/functions.yaml"
+git diff --stat -- "$SKILL"
+```
 
 Disse kopiene skal ALDRI drifte stille: ved FULL modus sammenlignes de alltid mot kildefilene, uavhengig av om compare viser endring.
 
@@ -347,7 +363,9 @@ Hver docs-side MÅ finnes i denne tabellen. Ingen side skal mangle.
 
 ### Del C — Eksisterende skill-innhold uten kilde i repoene
 
-| Skill-fil | Seksjon/linje | Innhold | Vurdering |
-|---|---|---|---|
-| `SKILL.md` linje 45 | Subscription IDs | Spesifikke Azure-verdier | Beholdes (plattformteam-kunnskap) |
-| `troubleshooting.md` | Pod ImagePullBackOff | Erfaringsbasert | Beholdes |
+| Skill-fil | Seksjon | Innhold | Skybert-spesifikk? | Motsagt av kilde? | Beslutning |
+|---|---|---|---|---|---|
+| `security.md` | Azure Subscriptions per sikkerhetssone | tabell med sonevis subscriptions | Nei — navnene finnes ikke i noen kilde | Ja (`scripts/lib/clusters.sh`) | `FJERN` (`feil`) |
+| `hostnames-and-networking.md` | Calico order-tips | order må være ≥ 1000 | Ja | Nei | Behold → oppgrader til Kilde (`limit-calico-netpol-order`) |
+| `kubectl-access.md` | k9s-tastetabell | tastebindinger | Nei (generisk) | — | `FJERN` (`generisk`) |
+| `kubectl-access.md` | ACR-pull lokalt | `az acr login` + `docker pull` | Ja (registry og tilgangsmodell) | Nei | Behold, merk `Operasjonell antakelse` |

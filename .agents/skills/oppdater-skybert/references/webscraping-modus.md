@@ -78,6 +78,7 @@ Lagre til `.tmp/oppdater-skybert/pages/<sidenavn>.html`.
 **Ekskluder** sider som omhandler:
 - Intern plattform-administrasjon som ikke er relevant for utviklere
 - Utenfor-scope tjenester som ikke er Skybert-spesifikke
+- Generisk Kubernetes/Azure/GitHub-stoff som docs-siden bare gjengir (f.eks. probe-implementasjon i C#) — lenk til siden, ikke kopier
 
 ---
 
@@ -112,10 +113,10 @@ Hent `search_index.json`, beregn alle per-side hashes, hent HTML for alle sider 
 
 Denne modusen kan IKKE verifisere innhold som har infra-repoet som kilde (kildereferanser mot `github.com/FHISkybert/Fhi.Skybert.Infra`). Derfor:
 
-- Foreslå ALDRI `KORRIGER` eller `FJERN` av infra-basert innhold i web-scraping-modus — selv om publisert docs ser ut til å motsi det. Bruk `VURDER` med begge kilder sitert.
+- Foreslå aldri `KORRIGER` eller `FJERN` med grunn `feil`/`utdatert`/`ustøttet` for infra-basert innhold i denne modusen — selv om publisert docs ser ut til å motsi det. Bruk `VURDER` med begge kilder sitert. `FJERN` med grunn `generisk`, `duplikat` eller `meta` krever ingen kildeverifikasjon og er tillatt også her.
 - Merk alle infra-baserte seksjoner i UPDATE-PLAN.md som **«ikke verifisert i denne kjøringen»** — planen skal ikke gi inntrykk av at hele skillen er validert.
 - Rør aldri `github`-feltet i `.oppdater-state.json` (commit SHAs og datoer for docs/infra beholdes uendret).
-- De statiske kopiene i `references/skybertapp/` kan ikke oppdateres i denne modusen — noter alder (provenance-dato i `skybertapp-render.md`) i planen hvis den er over 30 dager gammel.
+- De statiske kopiene i `references/skybertapp/` kan ikke oppdateres i denne modusen — noter alder (`github.infra.commitDate` i state-filen) i planen hvis den er over 30 dager gammel.
 
 ---
 

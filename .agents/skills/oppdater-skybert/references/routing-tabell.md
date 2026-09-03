@@ -4,7 +4,7 @@
 
 ### Docs-repo
 
-| Kildesti | Primær målfil |
+| Kildesti | Kanonisk målfil (første) — øvrige får kun kryssreferanse eller én setning |
 |----------|--------------|
 | `docs/index.md` | `SKILL.md` |
 | `docs/explanations/what-is-skybert.md` | `SKILL.md` |
@@ -37,7 +37,7 @@
 | `docs/miscellaneous/publicCA.md` | `references/security.md` |
 | `docs/miscellaneous/access-packages.md` | `SKILL.md` |
 | `docs/miscellaneous/PIM.md` | `references/kubectl-access.md` |
-| `docs/miscellaneous/probes.md` | `references/configuration.md`, `SKILL.md` |
+| `docs/miscellaneous/probes.md` | `references/configuration.md` |
 | `docs/legal/*.md` | `SKILL.md` (kort omtale) |
 | `docs/troubleshooting/non-root.md` | `references/troubleshooting.md` |
 | `docs/internal/flux.md` | `references/platform-architecture.md` (NB: kan motsi infra-repo — markeres som kildekonflikt) |
@@ -61,7 +61,7 @@
 
 ### Infra-repo
 
-| Kildesti | Primær målfil |
+| Kildesti | Kanonisk målfil (første) — øvrige får kun kryssreferanse eller én setning |
 |----------|--------------|
 | `infra/crossplane/base/xrds/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/skybertapp/xrd.yaml` (statisk kopi) |
 | `infra/crossplane/base/xrds/webapp.yaml` | `references/legacy-webapp-csi.md` |
@@ -71,11 +71,11 @@
 | `infra/crossplane/*/xrds/skybertapp-*.yaml` (kluster-overlays, f.eks. `-alpha`/`-beta`) | `references/skybertapp-crd.md` |
 | `infra/crossplane/*/compositions/*.yaml` (kluster-overlays) | `references/skybertapp-crd.md` |
 | `infra/goldilocks/base/*-values.yaml` | `references/kyverno-policies.md`, `references/observability.md`, `references/platform-architecture.md` |
-| `infra/cloudnative-pg/**` | `references/persistence.md`, `references/platform-architecture.md` |
+| `infra/cloudnative-pg/**` | `references/persistence.md` (kanonisk; `platform-architecture.md` har kun én komponentrad) |
 | `infra/kube-state-metrics/base/*-values.yaml` | `references/observability.md` — CustomResourceState-metrics (VPA-gauges, PolicyReport) er tenant-synlige i Grafana |
 | `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
 | `infra/skybert-system/base/tenant-admin-clusterroles/*.yaml` | `references/platform-architecture.md`, `references/security.md`, `references/kyverno-policies.md` |
-| `tenants/*/base/*.yaml` | `references/platform-architecture.md`, `SKILL.md` |
+| `tenants/*/base/*.yaml` | `references/platform-architecture.md` |
 | `scripts/tenant--*.sh` | `references/platform-architecture.md` |
 | `scripts/lib/grafana/*.sh` | Ikke egen målfil — hjelpebibliotek der avledede fakta (X-Scope-OrgID, org_mapping) havner etter refaktorering. Brukes til provenance-referanser i `references/observability.md` / `references/platform-architecture.md`. Andre `scripts/lib/*.sh` leses bare selektivt når de sources av en endret tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk |
 | `infra/tenant-repositories/base/ocirepos/*.yaml`, `infra/grafana/*/patch-orgs.yaml` | Normalt ingen routing (ny tenant-instans = dokumentert mønster). Kun ved mønsterendring → `references/platform-architecture.md`. Se seleksjonsreglene i [github-modus.md](github-modus.md) |
@@ -90,6 +90,31 @@
 | `utils/sk8/README.md`, `utils/sk8/data/clusters.json` | `references/kubectl-access.md` — intern-merket (sk8 Go-CLI + innebygd klusterregister). Øvrig `utils/**` (Go-kode, `version-checker/`, `grafana-airgapped/`) er lavprioritet/støy |
 
 ---
+
+## Kanonisk plassering for tverrgående fakta
+
+Fakta som berøres av flere kildefiler har én kanonisk fil. Andre filer får kun kryssreferanse
+(`Se [..](<fil>.md#<anker>)`) eller én oppsummerende setning — aldri kopi av YAML, tabell eller
+avsnitt. Tabellen oppdateres i samme kjøring som en kanonisk plassering endres.
+
+| Faktum | Kanonisk fil | Andre filer lenker kun |
+|---|---|---|
+| Tenant-navneregler, Bertil, provisjonering | `SKILL.md` §Tenant | resten av `SKILL.md` |
+| Klustertabell (kort) / full liste m/ subscription-ID | `SKILL.md` §Sikkerhetssoner / `kubectl-access.md` | `platform-architecture.md` |
+| GitOps-flyt, OCI-artefaktnavn, Flux-intervaller | `platform-architecture.md` | `SKILL.md`, `workflows.md`, `troubleshooting.md`, `skybertapp-crd.md`, `flux-tooling.md` |
+| Promotion-payload, GitHub App, `repository`-semantikk | `workflows.md` | `SKILL.md` (kort sammendrag), `troubleshooting.md` |
+| SecretStore/ExternalSecret-YAML, Key Vault-ansvar | `secrets.md` | `SKILL.md`, `security.md` |
+| Workload Identity (automatisk/manuell, SA-navn, MI-navn) | `security.md` | `SKILL.md`, `configuration.md`, `skybertapp-crd.md`, `legacy-webapp-csi.md` |
+| Tenant-RBAC (`skybert:tenant-admin`, cluster-admin-unntak, runtime-fragment) | `platform-architecture.md` | `security.md`, `kubectl-access.md`, `kyverno-policies.md`, `troubleshooting.md` |
+| Runtime-restriksjoner prod/red-test/norsyss | `kyverno-policies.md` | `kubectl-access.md`, `troubleshooting.md`, `security.md` |
+| Rød sone-nettverk (GNP-er, Calico-vindu, NFS, egress-unntak) | `hostnames-and-networking.md` | `SKILL.md`, `kyverno-policies.md`, `security.md` |
+| Gateway API/Envoy, beta-XRD | `hostnames-and-networking.md` | `SKILL.md`, `skybertapp-crd.md` |
+| Issuer-tabell, trust bundle | `hostnames-and-networking.md` | `SKILL.md`, `security.md` |
+| Goldilocks/VPA-mekanisme / Grafana-tabellen | `kyverno-policies.md` / `observability.md` | `platform-architecture.md`, `security.md`, `skybertapp-crd.md` |
+| StorageClasses + CloudNativePG | `persistence.md` | `SKILL.md`, `configuration.md`, `platform-architecture.md`, `hostnames-and-networking.md` |
+| WebApp/CSI-status | `legacy-webapp-csi.md` | `SKILL.md` (én setning), `configuration.md`, `secrets.md`, `security.md`, `skybertapp-crd.md` |
+| Feilsøking, tilkoblingsfeil / ACR-pull lokalt | `troubleshooting.md` / `kubectl-access.md` | `SKILL.md` (prosa, ikke kommandoer) |
+| Minimal SkybertApp | `SKILL.md` + `skybertapp-crd.md` | `configuration.md`, `secrets.md` |
 
 ## Emnebasert routing (web-scraping-modus)
 
@@ -116,7 +141,7 @@ Brukes når agenten ikke har filsti-tilgang, kun emnenavn fra docs-sider.
 
 ## Routing-regler (felles for begge moduser)
 
-- En kildefil/side kan mappe til flere målfiler.
+- En kildefil kan berøre flere målfiler, men hvert faktum fra den har én kanonisk fil: den første i listen, med mindre raden sier annet. Se «Kanonisk plassering for tverrgående fakta» over.
 - Uklar mapping → `VURDER`-kategori i endringsplanen.
 - Nye emner som ikke passer eksisterende filer → foreslå ny fil med `ny-fil`-flagg.
 - Filer i docs-repo som ikke matcher noen rad → vurder om emnet passer en eksisterende målfil eller trenger ny fil.
@@ -128,6 +153,7 @@ Brukes når agenten ikke har filsti-tilgang, kun emnenavn fra docs-sider.
 Tabellen skal holdes i synk med virkeligheten i samme kjøring som avviket oppdages:
 
 - Når en ny målfil opprettes i `skybert/` (godkjent `ny-fil`-post) → legg til routing-rad(er) for kildene som ruter dit.
+- Når kanonisk plassering for et tverrgående faktum endres (ny fil overtar tema) → oppdater tabellen «Kanonisk plassering for tverrgående fakta» og flytt/reduser innhold i andre filer i samme kjøring.
 - Når dekningsmatrise A foreslår målfil for en udekket side → legg til routing-rad når forslaget godkjennes.
 - Når en kildefil er flyttet/omdøpt i kilderepoene (compare viser removed+added) → oppdater raden, ikke la den peke på død sti.
 
