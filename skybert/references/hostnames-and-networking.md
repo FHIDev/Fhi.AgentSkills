@@ -4,131 +4,55 @@
 
 | Miljø | Domener |
 |-------|---------|
-| Test | `*.skytest.fhi.no`, `*.fhi-k8s.com` |
-| Sandbox | `*.skytest.fhi.no` |
+| Test og sandbox | `*.skytest.fhi.no`, `*.fhi-k8s.com` |
 | Produksjon | `*.sky.fhi.no` |
 
-TLS-sertifikater provisjoneres automatisk via cert-manager.
+TLS-sertifikater provisjoneres automatisk via cert-manager. SkybertApp velger issuer ut fra `hostname`; på egne `Ingress`- eller `ListenerSet`-ressurser setter du `cert-manager.io/cluster-issuer` selv:
 
-Cert-manager cluster-issuere per domene:
-
-| Domene | Issuer |
+| Domene | Cluster-issuer |
 |--------|--------|
 | `*.skytest.fhi.no` | `skytest-fhi-letsencrypt-azuredns-issuer` |
 | `*.fhi-k8s.com` | `fhi-k8s-letsencrypt-azuredns-issuer` |
 | `*.sky.fhi.no` | `sky-fhi-letsencrypt-azuredns-issuer` |
 
-**Viktig:** Test og sandbox deler `*.skytest.fhi.no` (på separate clustere). For å unngå DNS-kollisjoner på offentlige hostnavn, må sandbox-tjenester inkludere `-sandbox` i tjenestenavnet. Eksempel: `airflow.skytest.fhi.no` (test) vs `airflow-sandbox.skytest.fhi.no` (sandbox).
+Test-issuerne finnes på alle test-klustere og sandbox; prod-issueren på alle prod-klustere.
+
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/cert-manager/
 
 ## Public DNS-oppslag (external-dns)
 
-Som standard resolves ingress-hostnavn til interne 10.x-adresser. For at DNS skal peke til en offentlig IP, legg til annotasjonen `external-dns.alpha.kubernetes.io/target` på Ingress-objektet:
+SkybertApp eksponerer ingen Ingress-annotasjoner, og docs beskriver ingen tenant-mekanisme for å peke et hostnavn til en offentlig IP. Trenger appen offentlig DNS-oppslag, avklar med plattformteamet på `#ext-fhi-skybert`.
 
-| Cluster | Annotation-verdi |
-|---------|-----------------|
-| green-prod | `external-dns.alpha.kubernetes.io/target: 83.118.177.234` |
-| green-test | `external-dns.alpha.kubernetes.io/target: 83.118.177.220` |
-
-**Merk:** SkybertApp CRD eksponerer ikke denne annotasjonen på Ingress-objektet. Du må derfor opprette tre separate objekter: en SkybertApp (uten ingress), en Service, og et raw Ingress-objekt.
-
-Mønsteret er:
-
-1. **SkybertApp** — kun app-definisjon, ingen ingress-konfigurasjon:
-```yaml
-apiVersion: skybert.fhi.no/v1alpha1
-kind: SkybertApp
-metadata:
-  name: my-app
-  namespace: tn-my-tenant
-spec:
-  image:
-    repository: crfhiskybert.azurecr.io/my-app
-    tag: "latest"
-  port: 8080
-  resources:
-    cpu: "500m"
-    memory: "512Mi"
-```
-
-2. **Service** — kobler til SkybertApp sine pods via label `skybert.fhi.no/webapp`:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-app-svc
-  namespace: tn-my-tenant
-spec:
-  type: ClusterIP
-  selector:
-    skybert.fhi.no/webapp: my-app
-  ports:
-    - port: 8080
-      targetPort: 8080
-      protocol: TCP
-```
-
-3. **Ingress** — med external-dns-annotasjon og cert-manager:
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: my-app-ingress
-  namespace: tn-my-tenant
-  annotations:
-    cert-manager.io/cluster-issuer: skytest-fhi-letsencrypt-azuredns-issuer
-    external-dns.alpha.kubernetes.io/target: "83.118.177.234"
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: my-app.skytest.fhi.no
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: my-app-svc
-                port:
-                  number: 8080
-  tls:
-    - hosts:
-        - my-app.skytest.fhi.no
-      secretName: my-app-tls
-```
+> **Operasjonell antakelse:** Plattformen bruker selv `external-dns.alpha.kubernetes.io/target` på egne Gateway-/Ingress-objekter, men mekanismen er ikke dokumentert for tenanter.
 
 ## Ingress-regler (Kyverno-håndhevet)
 
-Følgende regler gjelder alle Ingress-ressurser:
+Følgende regler gjelder alle Ingress-ressurser på alle klustere:
 
 - **TLS påkrevet**: Alle hosts i `spec.rules[].host` må finnes i `spec.tls[].hosts[]`
 - **IngressClassName påkrevet**: Alle Ingress-ressurser må ha `spec.ingressClassName` satt
 - **Wildcards blokkert**: Wildcard-hosts (f.eks. `*.skytest.fhi.no`) er ikke tillatt
 - **SSL-redirect**: Kyverno setter automatisk `ssl-redirect: true` og `force-ssl-redirect: true`
-- **flambert-hostnames blokkert**: Hostnames `*.flambert` og `*.flambert.fhi.no` avvises (Enforce) i `tn-*`-namespaces — gjelder både `Ingress` og Gateway API-ressurser (`HTTPRoute`/`TLSRoute`/`GRPCRoute` og `ListenerSet`). Håndheves på alle klustere (del av `policies-green` som er base overalt).
+- **flambert-hostnames blokkert**: Hostnames `*.flambert` og `*.flambert.fhi.no` avvises (Enforce) i `tn-*`-namespaces — gjelder både `Ingress` og Gateway API-ressurser (`HTTPRoute`/`TLSRoute`/`GRPCRoute` og `ListenerSet`)
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/kyverno-policies/base/policies-green/ingress-security.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/infra/kyverno-policies/base/policies-green/deny-flambert-hostnames.yaml
+> Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/kyverno-policies/base/policies-green/
 
-### Ingress: nginx i dag, Gateway API (Envoy Gateway) under utrulling
+### Ingress (nginx) og Gateway API (Envoy Gateway)
 
-> **Status per 2026-08-27:** Dagens SkybertApp-composition rendrer fortsatt Kubernetes `Ingress` med `ingressClassName: nginx`, og `ingress-nginx` er fortsatt produksjonsveien. Ikke migrer eksisterende SkybertApp-hostnames til Gateway API uten eksplisitt beskjed fra plattformteamet.
+SkybertApp-compositionen (`skybert.fhi.no/v1alpha1`) rendrer Kubernetes `Ingress` med `ingressClassName: nginx`; `ingress-nginx` er produksjonsveien. Plattformens besluttede retning er **Gateway API**, implementert av **Envoy Gateway**. Docs (`tools-and-components`) merker Envoy Gateway og External DNS som «Handled by SkybertApp»; på `main` er det bare beta-XRD-en (`skybert-beta.fhi.no/v1beta1`, kun `aks-ops-test-01`) som genererer `HTTPRoute`/`ListenerSet` — `v1alpha1`-compositionen rendrer `Ingress`.
 
-**Retning (plattformbeslutning):** Plattformen har besluttet å migrere fra `ingress-nginx` til **Gateway API**, implementert av **Envoy Gateway**.
-
-**Faktisk aktiveringsstatus (infra per 2026-08-27, `449745b`):** Envoy Gateway (v1.8.2) er aktivert i de fleste klusteroverlays — men **ikke i green-test og green-prod**, som fortsatt bare kjører Envoy-namespacet og bruker `ingress-nginx`. Der Envoy er aktivert, definerer plattformen delte `Gateway`-objekter og `GatewayClass`-er. Utrullingen varierer per kluster (utledet fra `infra/envoy/*/kustomization.yaml`):
+**Aktivering per kluster:** Envoy Gateway (v1.8.2) er aktivert på alle klustere unntatt green-test og green-prod, som bare har namespacet og bruker `ingress-nginx`. Der Envoy er aktivert, definerer plattformen delte `Gateway`-objekter og `GatewayClass`-er:
 
 | Ressurs | Aktivert hvor |
 |---------|---------------|
-| GatewayClass `fhinett` + `helsenett`, Gateway `helsenett`, `gateway-proxyprotocol` | Alle klustere med Envoy aktivert (ops-test, sandbox, yellow-test/prod, red-test/prod, norsyss) |
+| GatewayClass `fhinett` + `helsenett`, Gateway `helsenett`, `ClientTrafficPolicy` for proxy protocol | Alle klustere med Envoy (ops-test, sandbox, yellow-test/prod, red-test/prod, norsyss) |
 | GatewayClass `internett` + Gateway `internett` | Kun ops-test, sandbox og yellow-test/prod — **ikke** red-klusterne eller norsyss |
 
-**Tenant-mønsteret:** plattformen kjører delte `Gateway`-objekter; tenanter knytter til seg listeners og TLS via **`ListenerSet`**-ressurser i eget namespace, og ruter trafikk til sine Services med **`HTTPRoute`**. RBAC-rollen `skybert:tenant-admin` tillater disse ressurstypene (se [Sikkerhet](security.md)). Merk at hostname-reglene (inkl. flambert-blokkeringen over) håndheves også på Gateway API-ruter.
+**Tenant-mønsteret:** plattformen kjører delte `Gateway`-objekter (`helsenett`, `internett`) i `envoy-gateway-system` med `allowedListeners.namespaces.from: All`; tenanter knytter til seg listeners og TLS via **`ListenerSet`** i eget namespace og ruter trafikk til sine Services med **`HTTPRoute`**. RBAC-rollen `skybert:tenant-admin` gir `listenersets`, `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes` og `udproutes` — **ikke** `gateways` — samt `securitypolicies` (`gateway.envoyproxy.io`), ikke `backendtrafficpolicies` (se [Sikkerhet](security.md)). Hostname-reglene over (inkl. flambert-blokkeringen) håndheves også på Gateway API-ruter.
 
-**Rød sone: Gateway API når ikke fram.** `base-tenant-ingress` (order 1200) tillater kun ingress til `tn-*` fra `ingress-nginx`-namespacet og denyer resten, og det finnes ingen GlobalNetworkPolicy som slipper `envoy-gateway-system` inn. `ListenerSet` og `HTTPRoute` applyer uten feil, men ingen trafikk når podene. På rød er `Ingress` veien — eventuelt en Calico `NetworkPolicy` med `spec.order < 1200` som tillater `envoy-gateway-system` (se [Rød sone](#rød-sone) under), avklart med `#ext-fhi-skybert`.
+`fhinett` er unntaket: GatewayClass-en finnes på alle Envoy-klustere, men det finnes ingen delt Gateway. Beta-compositionen forventer en Gateway `fhinett` i tenantens eget namespace, og tenant-RBAC gir ikke `gateways` — avklar med plattformteamet (`#ext-fhi-skybert`) før du bruker fhinett.
 
-Tenanten har **ikke** `gateways` i RBAC-settet, bare `listenersets` og rutene. `helsenett`- og `internett`-gatewayene ligger i `envoy-gateway-system` med `allowedListeners.namespaces.from: All`. `fhinett` er unntaket: den Gateway-en ligger i tenantens eget namespace og legges inn av plattformteamet under `tenants/<tenant>/base/`, ikke av tenanten selv — be om den i onboardingen hvis appen skal på fhinett.
-
-Tenanten får også `securitypolicies` (`gateway.envoyproxy.io`) i RBAC-settet. Se [Sikkerhet](security.md) for hva den dekker — og for forbeholdene: rate limiting ligger i `BackendTrafficPolicy`, som **ikke** er gitt, og funksjonen er ikke annonsert som støttet plattformfunksjon i offisiell docs.
+På rød sone når Gateway API-trafikk ikke fram til podene — se [Rød sone](#rød-sone).
 
 `ListenerSet` + `HTTPRoute`, slik beta-compositionen rendrer dem. cert-manager-issueren annoteres på `ListenerSet`, ikke på ruten:
 
@@ -182,94 +106,63 @@ spec:
           port: 8080
 ```
 
-`HTTPRoute` gjør path-matching og `URLRewrite` som innebygde filtre. Skal flere komponenter dele ett hostnavn under hver sin path, er dette veien — ikke nginx' rewrite-annotasjoner.
+**SkybertApp på Gateway API (beta):** `skybert-beta.fhi.no/v1beta1` rendrer `ListenerSet` + `HTTPRoute` i stedet for `Ingress` og har et `network`-felt med enum `fhinett` / `helsenett` / `internett`, default `fhinett`. XRD og composition finnes **kun på `aks-ops-test-01`**. Regn den som plattform-intern: tenant-RBAC gir `*`/`*` på API-gruppen `skybert.fhi.no`, og beta-CRD-en ligger i `skybert-beta.fhi.no` — en annen gruppe, som ingen tenant-rolle dekker. Skriv Gateway API-ressursene selv til beta eventuelt promoteres.
 
-**SkybertApp på Gateway API:** `skybert-beta.fhi.no/v1beta1` rendrer `ListenerSet` + `HTTPRoute` og har et `network`-felt med enum `fhinett` / `helsenett` / `internett`, default `fhinett`. XRD og composition finnes **kun på `aks-ops-test-01`**.
+green-test og green-prod har Traefik forhåndsdeployert som nød-fallback for `ingress-nginx` (plattformdrift, ikke en tenant-oppgave).
 
-Regn den som plattform-intern: tenant-RBAC gir `*`/`*` på API-gruppen `skybert.fhi.no`, og beta-CRD-en ligger i `skybert-beta.fhi.no` — en annen gruppe, som ingen tenant-rolle dekker. Skriv Gateway API-ressursene selv til beta eventuelt promoteres.
-
-> **Intern (plattformdrift):** For green-test og green-prod er **Traefik** forhåndsdeployert som nød-fallback sommeren 2026 i tilfelle en alvorlig `ingress-nginx`-CVE. Ved en slik hendelse kan plattformteamet bytte ingress-controller (og patche `ingressClassName` for skybertapp-tenanter); interne ingresser kan forbli på nginx. Dette er en beredskapsmekanisme, ikke en tenant-oppgave.
-
-> Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/
-> Kilde: https://docs.sky.fhi.no/explanations/tools-and-components/
-> Kilde: https://docs.sky.fhi.no/internal/migrate-ingress-to-traefik/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/infra/envoy/aks-yellow-test-02/kustomization.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/infra/envoy/aks-green-prod-02/kustomization.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/0c766cae1b41d7633f29b30f6fd211501515953d/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/ · https://docs.sky.fhi.no/explanations/tools-and-components/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/aks-ops-test-01/compositions/skybertapp-beta.yaml
 
 ## Nettverkspolicyer
 
 Et farget (color) klusterpar (test + prod) deler samme nettverksregler — test er ment å oppføre seg identisk med prod slik at det ikke blir overraskelser ved promotion.
 
-### Grønn sone
-Ingen restriksjoner. Utgående trafikk er fullt åpen.
+| Sone | Regler |
+|------|--------|
+| Grønn | Ingen restriksjoner. Utgående trafikk er fullt åpen. |
+| Gul | Foreløpig ingen restriksjoner. Utgående trafikk er åpen, men dette kan endre seg etter hvert som plattformen modnes. |
+| Rød | Streng egress-kontroll — se [Rød sone](#rød-sone). |
 
-### Gul sone
-**Foreløpig ingen restriksjoner.** Utgående trafikk er åpen, men dette kan endre seg etter hvert som plattformen modnes.
+Gjelder **alle klustere**, også grønn og gul: GlobalNetworkPolicy `deny-nfs-egress` (order 900) blokkerer TCP 2049 fra `tn-*`-namespaces, slik at tenanter ikke kan montere NFS-sharet selv. Kyverno-policyen `limit-calico-netpol-order` (Enforce) krever `spec.order >= 1000` på Calico `NetworkPolicy` i `tn-*`, slik at tenanter ikke kan overstyre plattformens GNP-er (lavere order vinner).
 
-### Rød sone
+> Kilde: https://docs.sky.fhi.no/build/environments/ · https://docs.sky.fhi.no/internal/global-network-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/globalnetworkpolicies/base/deny-nfs-egress.yaml
+
+## Rød sone
+
 **Streng egress-kontroll.** All utgående trafikk er blokkert som utgangspunkt, og ingress er begrenset til **NHN secure zone**.
 
-Automatisk tillatt:
-- Intern kommunikasjon innenfor eget namespace (`tn-<tenant>`) via auto-generert GlobalNetworkPolicy
-- DNS (UDP port 53 til kube-system)
-
-Eksplisitte unntak:
-- Egress til spesifikke IP-ranges/porter — opprettes av plattformteamet som GlobalNetworkPolicy. **Kun IP/CIDR** støttes (ikke L7/hostname-basert).
-- Plattformteamet kan også opprette tenant-spesifikke **ingress**-unntak som GlobalNetworkPolicy når trafikk mellom tenant-namespaces må tillates (f.eks. en tjeneste i ett `tn-*`-namespace som skal nå en tjeneste i et annet). Dette er ikke self-service for tenant-team — kontakt `#ext-fhi-skybert`.
-- NFS egress (port 2049) er blokkert for alle tenanter
-
-**Tenant-NetworkPolicies i rød sone:** Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er fortsatt forbudt. Tenanter kan derimot opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for å finjustere ingress — men kun med `Ingress`-regler og `spec.order` i `[1000, 1200)`. Egress styres sentralt via GlobalNetworkPolicy fra plattformteamet (kun IP/CIDR-basert). Kontakt `#ext-fhi-skybert` for egress-unntak.
-
-**Base GlobalNetworkPolicies (rød sone, plattform-styrt):**
+**GlobalNetworkPolicies (plattform-styrt):**
 
 | Policy | Type | Order | Effekt |
 |--------|------|-------|--------|
-| `base-tenant-egress` | Egress | 800 | Tillater DNS (UDP 53 til `kube-system`/kube-dns), deretter Deny |
-| `base-tenant-ingress` | Ingress | 1200 | Tillater fra `ingress-nginx`-namespace (TCP), deretter Deny |
+| `<ns>-internal-access` | Ingress + Egress | 600 | Genereres av Kyverno per `tn-*`-namespace: tillater **TCP** innenfor eget namespace (ikke UDP/ICMP) |
+| `base-tenant-egress` | Egress | 800 | Tillater DNS (UDP 53 til kube-dns i `kube-system`), deretter Deny |
+| `deny-nfs-egress` | Egress | 900 | Blokkerer TCP 2049 (alle klustere) |
+| `base-tenant-ingress` | Ingress | 1200 | Tillater TCP fra `ingress-nginx`-namespacet, deretter Deny |
 
-Tenant-egne Calico NetworkPolicies må ligge i `[1000, 1200)` — under 1000 avvises av Kyverno (`limit-calico-netpol-order`, alle klustere), 1200+ er reservert for plattformens default-deny.
+**Unntak opprettes av plattformteamet** som GlobalNetworkPolicy med `order: 500` (evalueres før base-policyene). Ikke self-service — kontakt `#ext-fhi-skybert`:
 
-**Egress til Entra ID (rød sone):** Plattformen leverer en sentralt forvaltet GlobalNetworkPolicy som tillater 443/TCP til Microsoft Entra ID login-IPer. Konkrete IP-ranges holdes synkron med Microsofts publiserte ranges av plattformteamet.
+- **Egress** til spesifikke IP-ranges/porter. **Kun IP/CIDR** støttes (ikke L7/hostname-basert), så tjenester som Microsoft eller GitHub krever store IP-blokker.
+- **Ingress** mellom tenant-namespaces (f.eks. en tjeneste i ett `tn-*`-namespace som skal nå en tjeneste i et annet).
+- **Entra ID-pålogging:** `shared-egress-to-entra` tillater 443/TCP til Entra ID login-ranges for namespaces med labelen `skybert.fhi.no/needs-entra-login=true`. Plattformteamet setter labelen; tenanter setter ikke namespace-labels selv.
+- **CloudNativePG:** namespace-labelen `skybert.fhi.no/needs-cnpg=true` aktiverer GNP-ene operatoren og backup trenger — se [Persistence — Rød sone](persistence.md#rød-sone-globalnetworkpolicies).
 
-Apper i rød sone som trenger pålogging mot Entra ID kontakter plattformteamet på `#ext-fhi-skybert`. Plattformen aktiverer unntaket for ditt namespace. Tenanter setter ikke namespace-labels selv.
+**Tenant-NetworkPolicies i rød sone:** Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt. Tenanter kan opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for å finjustere ingress — kun med `Ingress`-regler og `spec.order` i `[1000, 1200)`: under 1000 avvises av `limit-calico-netpol-order` (alle klustere), 1200 og over av `sub-1200-calico-netpol-in-tenants` (rød). Egress styres kun via GlobalNetworkPolicy fra plattformteamet. Kyverno-policyene står i [Kyverno-policier — Rød sone](kyverno-policies.md#rød-sone--ekstra-policier).
 
-**CNPG i rød sone (opt-in via label):** Kjører tenanten CloudNativePG, setter plattformteamet
-namespace-labelen `skybert.fhi.no/needs-cnpg=true`, som aktiverer tre GlobalNetworkPolicies
-(order 500): ingress fra `cnpg-system` til 5432/8000 (operator → instans; metrics-porten 9187 er
-bevisst utenfor), egress til kube-apiserver (instance manager), og egress 443 til Azure
-Storage-IP-er (backup/WAL — plattformforvaltet liste; private endpoint er den bedre
-sluttilstanden). Entra-token-utveksling er separat opt-in (`needs-entra-login`). Tenanter setter
-ikke labels selv — meld behov på `#ext-fhi-skybert`. Se
-[Persistence og CloudNativePG](persistence.md).
+**Gateway API når ikke fram:** `base-tenant-ingress` tillater kun ingress fra `ingress-nginx`-namespacet, og ingen GNP slipper `envoy-gateway-system` inn. `ListenerSet` og `HTTPRoute` applyer uten feil, men ingen trafikk når podene. På rød er `Ingress` veien — eventuelt en Calico `NetworkPolicy` med `spec.order` i `[1000, 1200)` som tillater ingress fra `envoy-gateway-system`, avklart med `#ext-fhi-skybert`.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/globalnetworkpolicies/base/policies-red/cnpg.yaml
+> **Operasjonell antakelse:** Gateway API-konsekvensen er utledet fra GNP-ene i `policies-red/` (kun `ingress-nginx` er tillatt som kilde); ingen docs-side beskriver Gateway API på rød sone.
 
-> Kilde: https://docs.sky.fhi.no/build/environments/ | https://docs.sky.fhi.no/internal/global-network-policies/ | https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/globalnetworkpolicies/base/policies-red/
+> Kilde: https://docs.sky.fhi.no/build/environments/ · https://docs.sky.fhi.no/internal/global-network-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/globalnetworkpolicies/base/policies-red/
 
 ## Egress-IP (tillatt utgående trafikk fra clusterne)
 
-Når egress er tillatt eller åpnet fra Skybert-clusterne, er trafikken oppgitt å
-gå ut via denne felles egress-IP-en:
+Når egress er tillatt fra Skybert-clusterne, er trafikken oppgitt å gå ut via felles egress-IP `83.118.167.10`. Aktuelt når en ekstern tjeneste skal tillate trafikk fra Skybert (f.eks. Azure SQL-brannmurregler). Bekreft verdien med plattformteamet (`#ext-fhi-skybert`) før den legges i en brannmurregel; rød sone krever i tillegg en GlobalNetworkPolicy før trafikken slipper ut.
 
-| Formål | IP |
-|--------|-----|
-| Skybert cluster egress | `83.118.167.10` |
-
-IP-en kan være aktuell når en ekstern tjeneste skal tillate trafikk fra
-Skybert, for eksempel i Azure SQL-brannmurregler eller mot eksterne API-er.
-Bekreft verdien med plattformteamet (`#ext-fhi-skybert`) før den legges i en
-brannmurregel.
-
-> **Verifikasjonsgrunnlag:** Verdien er oppgitt av bidragsyter basert på
-> intern plattformkunnskap, men ble ikke funnet i Skybert docs eller infra-repo
-> ved kontroll 2026-06-20. Den er derfor et operativt hint, ikke en autoritativ
-> kilde. Rød sone har fortsatt default deny og krever eksplisitte
-> GlobalNetworkPolicy-unntak før trafikk kan gå ut.
+> **Operasjonell antakelse:** Verdien er oppgitt av bidragsyter fra intern plattformkunnskap og finnes verken i docs eller infra-repoet.
 
 ## Service Mesh
 
-Linkerd er **ikke lenger i bruk** (fjernet fra plattformen).
+Skybert kjører **ikke** service mesh. Linkerd er fjernet fra plattformen.
 
 > Kilde: https://docs.sky.fhi.no/internal/service-mesh/
 
@@ -277,9 +170,8 @@ Linkerd er **ikke lenger i bruk** (fjernet fra plattformen).
 
 CA-sertifikater lagres i `/etc/ssl/certs/` i containere. Du er ansvarlig for å holde `ca-certificates`-pakken oppdatert.
 
-**Interne CA-er:** FHI vedlikeholder interne CA-er (`fhi.no` og `red.fhi.sec`) i en `trust-bundle.pem`. Denne filen auto-monteres til `/etc/ssl/certs/trust-bundle.pem` i alle pods i `tn-*` namespaces via Kyverno-policy (`automount-cert-chain-bundle`).
+**Trust bundle:** Plattformen vedlikeholder `trust-bundle.pem` med FHIs interne CA-er (`fhi.no` og `red.fhi.sec`), klusterets selvsignerte rot-CA **og** den vanlige listen av offentlige CA-er. Kyverno-policyen `automount-cert-chain-bundle` monterer den fra ConfigMap `internal-cert-bundle` til `/etc/ssl/certs/trust-bundle.pem` (read-only, `subPath`) i alle containere og init-containere i `tn-*`-pods, med mindre poden allerede har et volum med navn `internal-cert-bundle`.
 
-**Bruk trust-bundle:** Sett `SSL_CERT_FILE=/etc/ssl/certs/trust-bundle.pem` for å bruke den kuraterte listen av CAs i stedet for image-standarder.
+**Bruk trust-bundle:** Sett `SSL_CERT_FILE=/etc/ssl/certs/trust-bundle.pem` (eller tilsvarende for ditt rammeverk) for å bruke den kuraterte listen i stedet for image-standardene. Siden bundelen også har offentlige CA-er, bryter ikke offentlige TLS-kall.
 
-> Kilde: https://docs.sky.fhi.no/miscellaneous/publicCA/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml
+> Kilde: https://docs.sky.fhi.no/miscellaneous/publicCA/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml

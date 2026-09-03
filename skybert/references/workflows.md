@@ -3,186 +3,103 @@
 ## Premade baseline i GitOps-repo
 
 GitOps-repoet (`Fhi.<Tenant>.GitOps`) leveres med `.github/workflows/oci-push.yaml` og
-`.github/workflows/update-tag.yaml` ferdig satt opp, samt miljømappene `sandbox/`, `test/` og `prod/` fra start. Normaltilfellet er å bruke workflows-filene som de er.
+`.github/workflows/update-tag.yaml` ferdig konfigurert fra malen, samt miljømappene `sandbox/`, `test/`
+og `prod/` med et eksempel-SkybertApp i hver. Workflow-filene trenger normalt ikke endres; `<TENANT>`-placeholderen
+byttes ut av plattformens bootstrap-script når repoet opprettes.
 
-**OCI-artifact navngivning:** Miljømapper på repo-roten (`sandbox/`, `test/`, `prod/`) pakkes til
-OCI-artifacts med navn `gitops_<env>`. Mappenavn styrer artifact-navn, så ikke endre dem.
+App-repoet har ingen foreskrevet workflow-fil eller CI-verktøy (GitHub Actions, Azure DevOps o.l.). Det som
+trengs er at CI bygger og pusher imaget til `crfhiskybert.azurecr.io/<tenant>/<app>:<tag>` og deretter
+trigger `update-tag.yaml` i GitOps-repoet (se under).
 
-> Kilde: https://docs.sky.fhi.no/build/
-> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/
+> Kilde: https://docs.sky.fhi.no/build/ · https://docs.sky.fhi.no/get-started/gitops-repo/
 
 ## Påkrevde GitHub Repository-variabler og secrets
 
-Før workflows kan kjøre, må disse **variablene** konfigureres (brukes med `vars.*` i workflows):
+**GitOps-repoet** får `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` og `AZURE_SUBSCRIPTION_ID` satt som
+repository-variabler av plattformteamet ved onboarding. De peker på tenantens managed identity
+`tn-<tenant>-acr-push`, som er federert til GitOps-repoet og brukes av `oci-push.yaml`. Teamet trenger ikke
+sette noe her selv.
 
-| Variabel | Beskrivelse |
-|----------|-------------|
-| `AZURE_CLIENT_ID` | Managed Identity client ID for ACR push |
-| `AZURE_TENANT_ID` | Azure AD tenant ID |
-| `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
-| `GITOPS_REPO` | GitOps-repository (f.eks. `FHIDev/Fhi.Exempl.Gitops`) |
+**App-repoet** konfigureres av teamet (brukes med `vars.*` / `secrets.*`):
 
-I tillegg trengs disse **secrets** (brukes med `secrets.*`):
+| Type | Navn | Beskrivelse |
+|------|------|-------------|
+| Variabel | `GITOPS_REPO` | GitOps-repoet som skal trigges, f.eks. `FHIDev/Fhi.<tenant>.GitOps` |
+| Secret | `GITOPS_APP_CLIENT_ID` | Client ID for GitHub App installert på GitOps-repoet |
+| Secret | `GITOPS_APP_PRIVATE_KEY` | Privat nøkkel (PEM-innhold) for samme GitHub App — ikke client secret |
+| Variabel | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` | Kun hvis app-repoet skal pushe imaget med `tn-<tenant>-acr-push`. Plattformteamet federerer identiteten til app-repoet (branch `main` eller et GitHub environment) og setter variablene — be om dette. Skal være variabler, ikke secrets |
 
-| Secret | Beskrivelse |
-|--------|-------------|
-| `GH_PAT` | Token som GitOps-repoets egen `update-tag.yaml` bruker i checkout for workflow chaining (commits med standard `GITHUB_TOKEN` trigger ikke `oci-push`). Verifiser mot repoets faktiske workflow — mønsteret er fra GitOps-malen, ikke docs |
-| `GITOPS_APP_CLIENT_ID` | Client ID for GitHub App installert på GitOps-repoet (anbefalt for cross-repo dispatch) |
-| `GITOPS_APP_PRIVATE_KEY` | Privat nøkkel-PEM for samme GitHub App (ikke client secret) |
-| `GITOPS_PAT` | Eldre oppsett: PAT for repository_dispatch — fungerer fortsatt, men GitHub App er dokumentert mønster |
-
-**For å verifisere variabler og secrets:**
-```bash
-gh variable list --repo <owner>/<repo>
-gh secret list --repo <owner>/<repo>
-```
-
-**For å sette variabler** (krever admin-tilgang til repoet):
-```bash
-gh variable set AZURE_CLIENT_ID --body "<verdi>"
-gh variable set AZURE_TENANT_ID --body "<verdi>"
-gh variable set AZURE_SUBSCRIPTION_ID --body "<verdi>"
-gh variable set GITOPS_REPO --body "FHIDev/Fhi.<Tenant>.GitOps"
-```
-
----
+> Kilde: https://docs.sky.fhi.no/build/how-to/trigger-gitops-promotion/ · https://docs.sky.fhi.no/internal/attach-application-repo/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--bootstrap--azure.sh
 
 ## Komplett CI/CD Flyt
 
 ```
-App-repo push → build-and-push.yaml → Docker image til ACR
-                                     → webhook til GitOps-repo
-                                     ↓
-GitOps-repo   → update-tag.yaml     → oppdater skybertapp.yaml (med PAT!)
-              → oci-push.yaml       → OCI artifact til ACR
-                                     ↓
-Skybert       → Flux (hvert 2 min)  → deployer til Kubernetes
+App-repo: bygg og push image → repository_dispatch (update_tag) til GitOps-repo
+GitOps-repo: update-tag.yaml committer ny tag i <env>/ → oci-push.yaml pusher gitops_<env> til ACR
+Kluster: Flux henter artefaktet og applyer
 ```
 
-## build-and-push.yaml - App-repo workflow
+Flux-intervaller og hva som skjer i klusteret er beskrevet i
+[Flux GitOps](platform-architecture.md#flux-gitops).
 
-Denne workflowen kjører i **app-repoet** og:
-- Bygger Docker image med semantic versioning
-- Pusher til ACR
-- Trigger GitOps-repo via webhook
+> Kilde: https://docs.sky.fhi.no/build/
+
+## oci-push.yaml - Bygge og pushe til ACR
+
+- Kjører på push til `main` i GitOps-repoet.
+- Pakker den faste listen `sandbox`, `test` og `prod` til ett OCI-artefakt hver. Listen er fast; workflowen
+  oppdager ikke andre mapper.
+- Gjenkjenner Helm (`Chart.yaml`) og Kustomize (`kustomization.yaml`) og kjører `helm template` /
+  `kustomize build` før pakking. Annen YAML pakkes som den er.
+- Pusher med tenantens managed identity via `AZURE_*`-variablene.
+
+> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/
+
+### OCI-artifact navnekonvensjon
+
+Artefaktene pushes til `crfhiskybert.azurecr.io/<tenant>/gitops_<env>:latest`, f.eks.
+`crfhiskybert.azurecr.io/exempl/gitops_prod:latest`. Mappenavn styrer artefaktnavn, så ikke endre dem.
+Plattformens `OCIRepository` for tenanten (én per kluster, i namespace `tenant-repositories`) peker på
+nøyaktig denne URL-en. Kyverno-policyen `flux-verify-sources` (Enforce) tillater bare `OCIRepository`-URL-er
+under `oci://crfhiskybert.azurecr.io/`.
+
+> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/tenant-repositories/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-green/flux-verify-sources.yaml
+
+## update-tag.yaml - Automatisk tag-oppdatering
+
+`update-tag.yaml` trigges av `repository_dispatch` med event-type `update_tag` og oppdaterer image-taggen i
+manifestene under `<env>/` i GitOps-repoet. Committen til `main` trigger `oci-push.yaml`, som pusher nytt
+`gitops_<env>`-artefakt. Payload-format:
+
+```json
+{
+  "env": "prod",
+  "updates": [
+    { "repository": "<app>", "tag": "v1.2.3" }
+  ]
+}
+```
+
+**Regler:**
+- Ett `env` per kall (`sandbox`, `test` eller `prod`).
+- Flere image-repositories kan oppdateres i samme kall via `updates[]`.
+- `repository` er **image-repository-navnet i GitOps-manifestene** — `<app>`-segmentet i
+  `crfhiskybert.azurecr.io/<tenant>/<app>:<tag>` (`spec.image.repository` i SkybertApp). Det er ikke
+  GitHub-repo-navnet, med mindre de tilfeldigvis er like.
+
+Egen POST-request utenfor GitHub Actions (f.eks. fra Azure DevOps) er ikke dokumentert i docs — kontakt
+plattformteamet.
+
+> Kilde: https://docs.sky.fhi.no/build/ · https://docs.sky.fhi.no/build/how-to/trigger-gitops-promotion/
+
+### Promotion til neste miljø
+
+Manifestene flyter `sandbox → test → prod`. Promotion er et nytt `repository_dispatch`-kall med ønsket `env`
+og samme tag, sendt når teamet er trygg på versjonen. Docs' eksempel fra en GitHub-workflow i app-repoet
+(`image_tag` er output fra bygg-jobben):
 
 ```yaml
-name: Build and Push
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: false  # Viktig for semantic versioning
-
-env:
-  REGISTRY: crfhiskybert.azurecr.io
-  IMAGE_NAME: <tenant>/<tenant>_test
-
-jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Trengs for git tags
-
-      - name: Get and bump version
-        id: version
-        run: |
-          # Hent siste semver-tag på gjeldende branch (ikke fra andre branches)
-          LATEST_TAG=$(git describe --tags --abbrev=0 --match '[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo "")
-
-          # Første release: start på 0.0.1 (ikke 1.0.0 selv om gamle commits har semver +major)
-          if [ -z "$LATEST_TAG" ]; then
-            echo "Ingen eksisterende tags - starter på 0.0.1"
-            echo "version=0.0.1" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          echo "Latest tag: $LATEST_TAG"
-
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_TAG"
-          MAJOR=${MAJOR:-0}
-          MINOR=${MINOR:-0}
-          PATCH=${PATCH:-0}
-
-          # Hent full commit-melding inkludert body (%B) siden forrige tag
-          COMMITS=$(git log "$LATEST_TAG"..HEAD --pretty=format:"%B" 2>/dev/null || echo "")
-
-          # Støtter "semver +major" eller "semver +minor" i commit subject eller body
-          if [ -z "$COMMITS" ]; then
-            echo "Ingen nye commits siden $LATEST_TAG - bumper patch"
-            PATCH=$((PATCH + 1))
-          elif echo "$COMMITS" | grep -qiE 'semver\s*\+\s*major'; then
-            echo "Found semver +major"
-            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
-          elif echo "$COMMITS" | grep -qiE 'semver\s*\+\s*minor'; then
-            echo "Found semver +minor"
-            MINOR=$((MINOR + 1)); PATCH=0
-          else
-            echo "Default: bump patch"
-            PATCH=$((PATCH + 1))
-          fi
-
-          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-          echo "New version: $NEW_VERSION"
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Check if tag exists
-        id: check_tag
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-
-          # Sjekk både lokalt og remote for å unngå race condition
-          git fetch --tags --quiet
-
-          if git rev-parse "$VERSION" >/dev/null 2>&1; then
-            echo "Tag $VERSION eksisterer allerede (lokalt)"
-            echo "exists=true" >> $GITHUB_OUTPUT
-          elif git ls-remote --tags origin | grep -q "refs/tags/$VERSION$"; then
-            echo "Tag $VERSION eksisterer allerede (remote)"
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "Tag $VERSION finnes ikke - fortsetter"
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Azure login
-        if: steps.check_tag.outputs.exists != 'true'
-        uses: azure/login@v2
-        with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Login to ACR
-        if: steps.check_tag.outputs.exists != 'true'
-        run: az acr login --name crfhiskybert
-
-      - name: Build and push
-        if: steps.check_tag.outputs.exists != 'true'
-        run: |
-          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} .
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
-
-      - name: Create and push git tag
-        if: steps.check_tag.outputs.exists != 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "${{ steps.version.outputs.version }}" -m "Release ${{ steps.version.outputs.version }}"
-          git push origin "${{ steps.version.outputs.version }}"
-
       - name: Create GitHub app token
-        if: steps.check_tag.outputs.exists != 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         id: gitops-app-token
         with:
@@ -192,234 +109,34 @@ jobs:
           repositories: |
             Fhi.<tenant>.GitOps
 
-      - name: Trigger GitOps update
-        if: steps.check_tag.outputs.exists != 'true'
-        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
+      - name: Trigger GitOps promotion workflow
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 #v4.0.1
         with:
           token: ${{ steps.gitops-app-token.outputs.token }}
           repository: ${{ vars.GITOPS_REPO }}
           event-type: update_tag
-          client-payload: '{"env": "test", "updates": [{"repository": "${{ github.event.repository.name }}", "tag": "${{ steps.version.outputs.version }}"}]}'
+          client-payload: |
+            {"env": "prod", "updates": [{"repository": "<app>", "tag": "${{ needs.build-and-push.outputs.image_tag }}"}]}
 ```
 
-## Viktige robusthetsforbedringer
-
-**1. Hent kun tags fra gjeldende branch:**
-```bash
-git describe --tags --abbrev=0 --match '[0-9]*.[0-9]*.[0-9]*'
-```
-Bruker `git describe` istedenfor `git tag -l` for å unngå at tags fra andre branches blir valgt.
-
-**2. Les full commit-melding (%B):**
-```bash
-git log "$LATEST_TAG"..HEAD --pretty=format:"%B"
-```
-Leser både subject og body, slik at `semver +minor` i PR-beskrivelse eller commit-body fungerer.
-
-**3. Sjekk remote tags:**
-```bash
-git fetch --tags --quiet
-git ls-remote --tags origin | grep -q "refs/tags/$VERSION$"
-```
-Forhindrer race condition hvis to builds kjører samtidig.
-
-**4. HTTP-kode sjekk på curl:**
-```bash
-HTTP_CODE=$(curl -s -o /tmp/response.txt -w "%{http_code}" ...)
-if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
-  exit 1
-fi
-```
-Feiler workflow hvis GitOps-trigger ikke lykkes (401/404).
-
-## Concurrency
-
-For å unngå race conditions ved samtidige pushes, bruk concurrency:
-
-```yaml
-concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: false  # Ikke avbryt pågående builds
-```
-
-Viktig for semantic versioning - sikrer at versjoner bumpes sekvensielt.
-
-## oci-push.yaml - Bygge og pushe til ACR
-
-Denne workflowen:
-- Oppdager automatisk alle miljø-mapper (test/, sandbox/, prod/)
-- Støtter tre konfigurasjonstyper:
-  - **Helm**: Hvis `Chart.yaml` finnes
-  - **Kustomize**: Hvis `kustomization.yaml` finnes
-  - **Plain YAML**: Alle andre YAML-filer kopieres direkte
-- Pusher OCI-artifacts til ACR med Workload Identity
-- Signerer artifacts med Cosign
-- Kjører automatisk på push til main
-
-Viktig: Kun `TENANT` env-variabelen trenger endring.
-
-### OCI-artifact navnekonvensjon
-Workflowen pusher OCI-artifacts til:
-`crfhiskybert.azurecr.io/<tenant>/gitops_<env>:latest`
-
-Eksempler:
-- `crfhiskybert.azurecr.io/grossiststatistikken/gitops_test:latest`
-- `crfhiskybert.azurecr.io/grossiststatistikken/gitops_sandbox:latest`
-
-## update-tag.yaml - Automatisk tag-oppdatering
-
-Hvert miljø har sin egen pinned tag i GitOps-repoet. App-repoets build-workflow sender
-`repository_dispatch` til GitOps-repoet, som kjører `update-tag.yaml` og committer
-tag-oppdateringen i target-miljøets mappe.
-
-Trigger denne via `repository_dispatch` med event-type `update_tag`. Payload-format:
-```json
-{
-  "env": "<miljø>",
-  "updates": [
-    { "repository": "<repo-navn>", "tag": "<versjon>" }
-  ]
-}
-```
-
-**Regler:**
-- Ett `env` per kall (ett miljø av gangen)
-- Flere repositories kan oppdateres i samme kall via `updates[]`
-- `repository` er **image-repository-navnet i GitOps-manifestene** — `<app>`-segmentet i
-  `crfhiskybert.azurecr.io/<tenant>/<app>:<tag>` (docs per 2026-09). Er GitHub repo-navn og
-  image-navn identiske spiller det ingen rolle; avviker de, er det image-navnet
-  `update-tag.yaml` matcher på. Default-varianten nedenfor leser kun `env` og `tag` og bytter
-  alle `tag:`-linjer i en fast fil — sjekk den konkrete `update-tag.yaml` i eget repo.
-
-**Dispatch med rå curl (alternativ til peter-evans-action):**
-```bash
-# I app-repoets build-workflow, som bash-step. ${{ ... }} er GitHub Actions-uttrykk.
-# Bearer-tokenet er et GitHub App-installasjonstoken (anbefalt), eller GITOPS_PAT i eldre oppsett.
-curl -X POST \
-  -H "Authorization: Bearer ${{ steps.gitops-app-token.outputs.token }}" \
-  "https://api.github.com/repos/${{ vars.GITOPS_REPO }}/dispatches" \
-  -d '{"event_type":"update_tag","client_payload":{
-    "env": "test",
-    "updates": [{"repository": "${{ github.event.repository.name }}", "tag": "abc1234"}]
-  }}'
-```
-
-### Hvor tag-en havner
-
-`update-tag.yaml` oppdaterer `tag:`-linjer i filer under `${ENV}/`-mappen i GitOps-repoet.
-Default-varianten nedenfor kjører `sed` på `${ENV}/skybertapp.yaml`, men GitOps-repoer kan
-ha egne varianter som håndterer andre filstrukturer (Helm values, Kustomize, osv.). Sjekk
-den konkrete `update-tag.yaml` i GitOps-repoet for å se hva som faktisk skjer.
-
-Uavhengig av filstruktur:
-- Tag-verdien for et miljø må ligge i en fil under `${ENV}/`-mappen. Tags utenfor (f.eks. i `base/`) blir ikke oppdatert av dispatch.
-- Ikke sett en fallback-tag som `latest` i delte baseline-filer. Det maskerer feilet promotion med stille deploy av vilkårlig siste push — la manglende tag feile høyt i stedet.
-
-### Promotion til neste miljø
-
-Promotion-flyten er `sandbox → test → prod` og er **manuell** — send en ny
-`repository_dispatch` med ønsket `env` og tag. Kan gjøres via `workflow_dispatch`, CLI,
-eller en dedikert promotion-workflow.
-
-**Eksempel: trigger prod-oppdatering fra app-repo:**
-```yaml
-- name: Create GitHub app token
-  uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-  id: gitops-app-token
-  with:
-    client-id: ${{ secrets.GITOPS_APP_CLIENT_ID }}
-    private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
-    owner: FHIDev
-    repositories: |
-      Fhi.<tenant>.GitOps
-
-- name: Trigger GitOps promotion - prod
-  uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
-  with:
-    token: ${{ steps.gitops-app-token.outputs.token }}
-    repository: ${{ vars.GITOPS_REPO }}
-    event-type: update_tag
-    client-payload: |
-      {
-        "env": "prod",
-        "updates": [
-          { "repository": "${{ github.event.repository.name }}", "tag": "${{ steps.version.outputs.version }}" }
-        ]
-      }
-```
+`owner` er organisasjonen som eier GitOps-repoet; `repositories` lister kun repoer der appen er installert.
 
 > Kilde: https://docs.sky.fhi.no/build/how-to/trigger-gitops-promotion/
-
-```yaml
-name: Update Image Tag
-on:
-  repository_dispatch:
-    types: [update_tag]
-
-jobs:
-  update:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_PAT }}  # KRITISK: Må bruke PAT for workflow chaining!
-      - name: Update tag
-        run: |
-          ENV="${{ github.event.client_payload.env }}"
-          NEW_TAG=$(echo '${{ toJson(github.event.client_payload.updates) }}' | jq -r '.[0].tag')
-          sed -i "s/tag: .*/tag: \"$NEW_TAG\"/" "${ENV}/skybertapp.yaml"
-      - name: Commit
-        run: |
-          ENV="${{ github.event.client_payload.env }}"
-          NEW_TAG=$(echo '${{ toJson(github.event.client_payload.updates) }}' | jq -r '.[0].tag')
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "${ENV}/skybertapp.yaml"
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update image tag to $NEW_TAG in $ENV"
-            git push
-          fi
-```
-
-## VIKTIG: Workflow Chaining med PAT
-
-Checkout-steget MÅ bruke `token: ${{ secrets.GH_PAT }}` fordi:
-- GitHub Actions sikkerhet: Commits gjort med standard `GITHUB_TOKEN` kan IKKE trigge andre workflows
-- Uten PAT vil `oci-push.yaml` ALDRI trigges automatisk etter at `update-tag.yaml` oppdaterer skybertapp.yaml
-- PAT må ha både `repo` og `workflow` scopes
-
-## Signerte commits med actions--create-commit
-
-For commits som krever GPG-signering:
-
-```yaml
-- uses: FHISkybert/actions--create-commit@v1
-  with:
-    message: "Deploy version ${{ env.VERSION }}"
-    add: "test/skybertapp.yaml"
-```
 
 ## GitHub App for repository_dispatch på tvers av repoer
 
-Standard `GITHUB_TOKEN` i app-repoet kan ikke nå et annet repo eller en annen org. Anbefalt
-metode (docs per 2026-09) er en **GitHub App** installert kun på GitOps-repoet, med
-**Contents: Read and write** (Metadata: Read følger med). Workflowen minter et kortlivet
-installasjonstoken med `actions/create-github-app-token`
-(`@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0`) fra secrets `GITOPS_APP_CLIENT_ID` og
-`GITOPS_APP_PRIVATE_KEY` (Client ID + privat nøkkel-PEM — **ikke** client secret), med
-`owner: FHIDev` og `repositories: Fhi.<tenant>.GitOps`. Dispatch med
-`peter-evans/repository-dispatch` (`@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1`) og
-`event-type: update_tag`. App-oppsett bestilles hos plattformteamet (Hans Løken) på
-`#ext-fhi-skybert` — docs har ferdig meldingsmal.
+Standard `GITHUB_TOKEN` i app-repoet kan ikke nå et annet repo eller en annen org. Dokumentert mønster er en
+**GitHub App** installert kun på GitOps-repoet, med **Contents: Read and write** (Metadata: Read følger med).
+Workflowen minter et kortlivet installasjonstoken med `actions/create-github-app-token` fra secrets
+`GITOPS_APP_CLIENT_ID` og `GITOPS_APP_PRIVATE_KEY` (Client ID + privat nøkkel-PEM — **ikke** client secret),
+og sender dispatch med `peter-evans/repository-dispatch` (se eksempelet over). App-oppsett bestilles hos
+plattformteamet på NHN-Slack `#ext-fhi-skybert`; docs har ferdig meldingsmal med GitOps-repo, kaller-repo og
+app-navn `<tenant>-gitops-dispatch`.
+
+> Kilde: https://docs.sky.fhi.no/build/how-to/trigger-gitops-promotion/
 
 ### Eldre oppsett: PAT
 
-Eksisterende repoer kan ha `GITOPS_PAT` (klassisk PAT med `repo`-scope) — det fungerer fortsatt,
-men er ikke lenger dokumentert mønster. Behold utløpsdisiplinen (ca. 1 år) til repoet migreres
-til GitHub App.
+Har app-repoet en `GITOPS_PAT` fra før, bytt til GitHub App-mønsteret over.
 
-> Kilde: https://docs.sky.fhi.no/build/how-to/trigger-gitops-promotion/
+> **Operasjonell antakelse:** PAT-oppsettet finnes i eksisterende tenant-repoer, men er ikke beskrevet i docs eller infra.

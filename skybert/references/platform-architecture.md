@@ -1,28 +1,22 @@
 # Plattformarkitektur
 
-> Kilde: https://docs.sky.fhi.no/explanations/under-the-hood/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/crossplane/base/compositions/skybertapp.yaml
+Kanonisk fil for GitOps-flyt, OCI-flyt, Flux-intervaller, tenant-bootstrap og tenant-RBAC. Klusterliste og tilkobling: [kubectl-access](kubectl-access.md#tilgjengelige-klustere).
 
 ## Teknologistakk
 
 | Komponent | Teknologi | Rolle |
 |-----------|-----------|-------|
 | Container-orkestrering | Kubernetes (Azure Arc-connected) | Kjøremiljø |
-| GitOps | Flux v2 | Deklarativ konfigurasjon |
-| Infrastruktur som kode | Crossplane | CRD-er (SkybertApp, WebApp) |
-| Policy | Kyverno | Sikkerhetshåndhevelse |
-| Ressursanbefalinger | Goldilocks + VPA (recommend-only) | Oppretter VPA-objekter i alle `tn-*`. Endrer ikke requests automatisk i dagens oppsett — `updater` og `admissionController` er slått av. Aktivert via kluster-overlay på samtlige ni klustere per 2026-08-14 |
-| Database | CloudNativePG + plugin-barman-cloud | Støttet PostgreSQL-operator i `cnpg-system` på alle ni aktive klustere (Flux-Kustomization med `dependsOn: crds` + `cert-manager`). Tenant-teamet eier database, backupmål og restore-verifikasjon |
+| GitOps | Flux v2 (Flux Operator) | Deklarativ konfigurasjon |
+| Infrastruktur som kode | Crossplane | CRD-er (SkybertApp; WebApp finnes, men er udokumentert i docs) |
+| Policy | Kyverno | Sikkerhetshåndhevelse — se [Kyverno-policier](kyverno-policies.md) |
+| Ressursanbefalinger | Goldilocks + VPA (recommend-only, alle klustere) | Se [Ressursanbefalinger](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa) |
+| Database | CloudNativePG + plugin-barman-cloud (alle klustere) | Se [Persistence](persistence.md#cloudnativepg) |
 | Cloud | Azure | Underliggende infrastruktur |
 | Git | GitHub (FHIDev org) | Kildekode og CI/CD |
-| Container registry | Azure Container Registry (`crfhiskybert.azurecr.io`) | Image-lagring |
+| Container registry | Azure Container Registry (`crfhiskybert.azurecr.io`) | Image- og GitOps-artifact-lagring |
 
-> Kilde (Goldilocks VPA-modus): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/goldilocks/base/goldilocks-10.4.1-values.yaml
-> Kilde (aktivering per kluster — én overlay-mappe per kluster): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/goldilocks/
-> Kilde (Flux-utrulling): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/flux-system/base/kustomizations-infra/goldilocks.yaml
-> Kilde (CloudNativePG-radene): https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/cloudnative-pg/
-> Kilde (CNPG Flux-Kustomization): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/flux-system/base/kustomizations-infra/cloudnative-pg.yaml
-> Kilde (CNPG tenant-RBAC): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/skybert-system/base/tenant-admin-clusterroles/cnpg-access-rules.yaml
+> Kilde: https://docs.sky.fhi.no/explanations/under-the-hood/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/flux-system/base/kustomizations-infra/
 
 ## Komponentkart for tenant-utviklere
 
@@ -30,217 +24,135 @@ De fleste team trenger bare Git/GitOps, SkybertApp og Grafana i starten. Andre k
 
 | Komponent | Tenant-relevans |
 |-----------|-----------------|
-| Flux | GitOps-motoren som applyer tenantens manifester. Tenant-admin kan bruke Flux `Kustomization`, notifications og Flux Web UI innen eget namespace. |
+| Flux | GitOps-motoren som applyer tenantens manifester. Tenant-admin kan bruke Flux `Kustomization`, notifications (`Alert`/`Provider`) og Flux Web UI innen eget namespace. |
 | External Secrets | Synker Azure Key Vault-secrets til Kubernetes `Secret`. SkybertApp oppretter `ExternalSecret`/`SecretStore` automatisk ved inline secrets. |
-| cert-manager | Utsteder og fornyer TLS-sertifikater. Automatisk for vanlige SkybertApp-hostnames; avanserte oppsett kan bruke `Certificate`/`Issuer`. |
-| Envoy Gateway / Gateway API | Tenant-facing for Gateway API-ressurser (`HTTPRoute`/`ListenerSet`) der plattformen har aktivert dette. Under utrulling — dagens SkybertApp-composition rendrer fortsatt `Ingress`. Se [Hostnavn og nettverk](hostnames-and-networking.md). |
-| External DNS | Oppretter DNS-records for hostnames. Vanligvis usynlig når SkybertApp eller plattformoppsett håndterer ruten. |
+| cert-manager | Utsteder og fornyer TLS-sertifikater. Automatisk for SkybertApp-hostnames; avanserte oppsett kan bruke `Certificate`/`Issuer`. |
+| Envoy Gateway / Gateway API | Plattformen kjører delte `Gateway`-objekter; tenanter kan bruke `ListenerSet` og `HTTPRoute` i eget namespace. SkybertApp-compositionen rendrer `Ingress`. Se [Hostnavn og nettverk](hostnames-and-networking.md). |
+| External DNS | Oppretter DNS-records for hostnames. Vanligvis usynlig. |
 | Kyverno | Policy engine. Tenanter kan lese `PolicyReport`, men ikke endre cluster-policyer. |
-| Goldilocks / VPA | Beregner anbefalte CPU/memory-requests for workloadene dine. Objektene dukker opp i namespacet, men endrer ingenting av seg selv — `updater` og `admissionController` er slått av. Lesetilgang for tenant. Se [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa). |
-| CloudNativePG | Støttet PostgreSQL-operator på alle aktive klustere. Tenanten kan administrere namespaced CNPG- og barman-ressurser (`Cluster`, `Backup`, `Pooler`, `ObjectStore` m.m.). Se [Persistence](persistence.md). |
-| Grafana, Loki, Mimir, Tempo, Alloy | Observability-stakk. Grafana er brukerflaten; Alloy samler telemetri. |
-| Workload Identity | Passordløs Azure-autentisering. Automatisk for SkybertApp, manuelt via label/`serviceAccountName` for raw Deployments. |
-| Trust Manager, Reloader, Replicator, Trident, MetalLB, Blob/Secrets Store CSI, Metrics Server, kube-state-metrics | Plattformkomponenter som normalt ikke konfigureres av tenant-utviklere, men kan dukke opp i events, logs eller arkitekturdiagrammer. Replicator distribuerer bl.a. `acr-pull-secret` til alle namespaces — se [Sikkerhet — ACR image pull](security.md#acr-image-pull-automatisk-acr-pull-secret). |
+| Goldilocks / VPA | Recommend-only; anbefalingene leses i Grafana. Se [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa). |
+| CloudNativePG | PostgreSQL-operator på alle klustere; tenanten administrerer namespaced CNPG- og barman-ressurser selv. Se [Persistence](persistence.md#cloudnativepg). |
+| Grafana, Loki, Mimir, Alloy | Observability-stakk. Grafana er brukerflaten; Alloy samler telemetri. Se [Observability](observability.md). |
+| Workload Identity | Passordløs Azure-autentisering. Automatisk for SkybertApp, via label for raw Deployments. Se [Sikkerhet](security.md#azure-workload-identity). |
+
+Øvrige komponenter (Crossplane, Trust Manager, Reloader, Replicator, Trident, MetalLB, CSI-drivere, Metrics Server, kube-state-metrics) er plattformdrevne og konfigureres ikke av tenanter.
 
 > Kilde: https://docs.sky.fhi.no/explanations/tools-and-components/
 
-## Klustere og miljøer
-
-> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/
-
-Namespace-navnet (`tn-<tenant>`) er identisk på tvers av klustere. Det er klusteret man kobler til som bestemmer miljøet, ikke namespace-navnet.
-
-GitOps-mappene (`test/`, `sandbox/`, `prod/`) pakkes som separate OCI-artifacts (`gitops_test`, `gitops_sandbox`, `gitops_prod`) og deployes til sine respektive klustere. `aks-sandbox-01` er et felles sandkassekluster — alle fargesoner deler det.
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/tenant-repositories/aks-sandbox-01/kustomization.yaml
-
-For fullstendig kluster-liste per sikkerhetssone (inkludert sandbox), se [kubectl-access](kubectl-access.md).
-
 ## Flux GitOps
 
-> Kilde: https://docs.sky.fhi.no/internal/flux/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a16a243/infra/flux-system/base/kustomization.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a16a243/infra/flux-system/base/kustomizations-infra/kustomization.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a16a243/infra/flux-system/base/kustomizations-infra/flux-system.yaml
+Flux installeres og oppgraderes via Flux Operator med multi-tenancy aktivert. `FluxInstance`-ressursen (`infra/flux-system/base/flux-instance.yaml`) ligger i base-kustomizationen og gjelder alle klustere; `flux-system`-Kustomizationen har `dependsOn: flux-operator`. Flux Web UI er installert på alle klustere — se [Flux-verktøy](flux-tooling.md).
 
-**Flux Operator er normativ installasjonsmodell:** Flux installeres og oppgraderes via Flux Operator med multi-tenancy aktivert. Operatoren håndterer CRD-livssyklus og oppgraderinger, så manuelt CRD-versjonsarbeid er ikke lenger nødvendig. Operator-versjonen versjonsstyres via Flux selv (samme mønster som andre infra-komponenter).
-
-Flux rulles ut via en `flux-operator`-komponent som er inkludert i standard infra-kustomization (`infra/flux-system/base/kustomizations-infra/`). `flux-system`-Flux-Kustomizationen har eksplisitt `dependsOn: flux-operator`. `FluxInstance`-ressursen (`infra/flux-system/base/flux-instance.yaml`) er listet i base-kustomizationen og trekkes inn av kluster-overlays.
-
-Flux Web UI er installert på alle klustere — se [Flux-verktøy](flux-tooling.md) for utviklerrettet bruk og URL-tabeller per kluster.
+> Kilde: https://docs.sky.fhi.no/internal/flux/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/flux-system/base/
 
 ### Multi-tenancy lockdown
 
-- Alle Flux Kustomizations bruker en namespace-spesifikk ServiceAccount (`flux-reconciler`)
-- Tenanter kan IKKE spesifisere ressurser i andre namespaces
-- Remote bases er deaktivert — all YAML må være i GitOps-repoet
-- OCIRepository-ressurser bruker controller-level Workload Identity (ikke per-tenant)
+`FluxInstance` setter `cluster.multitenant: true` og `cluster.tenantDefaultServiceAccount: flux-reconciler`. Konsekvenser:
 
-Under `FluxInstance`-modellen (der den er i bruk) modelleres multi-tenancy-låsen som:
+- Alle Flux Kustomizations kjører som namespace-lokal ServiceAccount `flux-reconciler`; tenanter kan ikke opprette ressurser i andre namespaces.
+- Remote bases er deaktivert — all YAML må ligge i GitOps-repoet.
+- `OCIRepository`-ressursene ligger i plattform-namespacet `tenant-repositories`, ikke per tenant. Derfor patches `kustomize-controller` og `helm-controller` med `--no-cross-namespace-refs=false`; patchen fjernes når OCIRepositories flyttes til tenant-namespacene.
+- `source-controller` bruker controller-level Workload Identity mot ACR (ikke per-tenant identitet).
 
-- `cluster.multitenant: true`
-- `cluster.tenantDefaultServiceAccount: flux-reconciler`
-- `--no-cross-namespace-refs=false` for `kustomize-controller` og `helm-controller` — dette er en **bevisst patch** av controller-args fordi `OCIRepository`-ressurser ligger i en plattform-managed namespace (`tenant-repositories`), ikke per-tenant. Migrering til per-tenant `OCIRepository` er planlagt — patchen fjernes da.
-- Workload Identity-patch på `source-controller` (for ACR-tilgang)
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a16a243/infra/flux-system/base/flux-instance.yaml
+> Kilde: https://docs.sky.fhi.no/internal/flux/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/flux-system/base/flux-instance.yaml
 
 ### Rekonsilieringsintervall
 
-Flux rekonsilerer hvert **2 minutt** (`interval: 2m` i tenant Kustomization).
-Prune er aktivert (`prune: true`), og force er aktivert (`force: true`).
+- Tenantens Flux `Kustomization`: `interval: 2m`, `prune: true`, `force: true`, `serviceAccountName: flux-reconciler`.
+- Tenantens `OCIRepository` (`infra/tenant-repositories/base/ocirepos/oci-<tenant>.yaml`): `interval: 3m0s`, `provider: azure`, `ref.tag: latest`.
+- Verste fall fra `oci-push` er ferdig til endringen er applyet: inntil ~5 minutter (3 min før ny digest oppdages + 2 min før Kustomization applyer). Tenanten kan trigge rekonsiliering umiddelbart selv via Flux-dashboardet — se [Flux-verktøy](flux-tooling.md).
+
+> Kilde: https://docs.sky.fhi.no/build/flux-dashboard/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/tenants/exempl/base/flux-kustomization.yaml
 
 ### HelmRepository og HelmRelease
 
-Flux støtter HelmRepositories og HelmReleases, men plattformen anbefaler IKKE disse fordi:
+Flux støtter HelmRepositories og HelmReleases, men plattformen anbefaler dem ikke:
 1. Helm-releases pinner ikke alltid dependencies (ikke-deterministisk)
 2. Flux gjenskaper ikke slettede ressurser fra HelmReleases
 
+> Kilde: https://docs.sky.fhi.no/internal/flux/
+
 ## Crossplane
 
-SkybertApp og WebApp CRD-er er implementert som Crossplane CompositeResourceDefinitions (XRDs) med Go Templating-funksjoner i pipeline-modus.
+SkybertApp er en Crossplane CompositeResourceDefinition (XRD) med Composition i pipeline-modus (`function-go-templating`). Tenanter bruker SkybertApp, ikke Crossplane direkte. WebApp (udokumentert i docs): se [Legacy WebApp/CSI](legacy-webapp-csi.md).
+
+> Kilde: https://docs.sky.fhi.no/explanations/tools-and-components/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
 
 ### OCI-artifact flyt
 
 ```
-GitOps-repo push -> oci-push.yaml -> OCI-artifact -> ACR
-                                                       |
-Kluster <- Flux (hvert 2 min) <- OCIRepository <- ACR
+GitOps-repo push (main) -> oci-push.yaml -> OCI-artifact -> ACR
+                                                            |
+Kluster <- Flux Kustomization <- OCIRepository (3m) <- ACR
 ```
 
-OCI-artifacts navngis: `crfhiskybert.azurecr.io/<tenant>/gitops_<env>:latest`
+- `oci-push.yaml` i GitOps-repoet pakker mappene `sandbox/`, `test/` og `prod/` (fast liste) til hver sin artifact `crfhiskybert.azurecr.io/<tenant>/gitops_<env>:latest`. Helm (`Chart.yaml`) og Kustomize (`kustomization.yaml`) rendres med `helm template`/`kustomize build` før pakking.
+- Hvert kluster har sin `OCIRepository` per tenant som peker på artifacten for klusterets miljø (URL patches i `infra/tenant-repositories/<cluster>/kustomization.yaml`).
+- Plattformens egne artifacts (`infra`/`crds`/`tenants`) er Cosign-signert og verifiseres av source-controller (`matchOIDCIdentity`). Tenant-OCIRepositories bootstrappes uten `verify` (unntak: `exempl`); Kyverno `flux-verify-sources` krever bare `oci://crfhiskybert.azurecr.io/*` som kilde.
 
-> **Plattform-artifakter er Cosign-signert (intern):** Infra-repoets `oci-push` signerer hver
-> digest keyless (GitHub OIDC → Fulcio/Rekor), og source-controller verifiserer med
-> `matchOIDCIdentity` mot workflow-identiteten før fetch (`SourceVerified`-condition; siste
-> gyldige artifakt beholdes ved feil). Gjelder plattformens `infra`/`crds`/`tenants`-artifakter —
-> tenant-GitOps-artifakter verifiseres ikke slik i dag (Kyverno `flux-verify-sources` krever kun
-> `oci://crfhiskybert.azurecr.io/*` som kilde).
->
-> Kilde: https://docs.sky.fhi.no/internal/oci-signing/
+> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/ · https://docs.sky.fhi.no/internal/oci-signing/
 
 ## Tenant-bootstrap
 
-Hver tenant i infra-repoet har følgende struktur:
+Hver tenant i infra-repoet har følgende struktur. Namespace-navnet `tn-<tenant>` er likt på alle klustere; klusteret bestemmer miljøet.
 
 ```yaml
 tenants/<tenant>/
 ├── base/
-│   ├── namespace.yaml              # tn-<tenant>
-│   ├── serviceaccounts.yaml        # flux-reconciler + <tenant>-azure (flertall i nyere tenanter)
-│   ├── rolebinding.yaml            # flux-reconciler → skybert:tenant-flux-reconciler (RoleBinding innen namespace)
-│   ├── entra-access-rolebinding.yaml  # Entra ID-gruppe → skybert:tenant-admin (RoleBinding innen namespace)
-│   ├── flux-kustomization.yaml     # Flux Kustomization (interval: 2m, prune: true)
-│   └── kustomization.yaml          # Kustomize-referanse
+│   ├── namespace.yaml                 # tn-<tenant>
+│   ├── serviceaccounts.yaml           # flux-reconciler + <tenant>-azure (noen baser: serviceaccount.yaml)
+│   ├── rolebinding.yaml               # RoleBinding tenant-admins: flux-reconciler -> skybert:tenant-flux-reconciler
+│   ├── entra-access-rolebinding.yaml  # RoleBinding entra-access: Entra-gruppe -> skybert:tenant-admin
+│   ├── flux-kustomization.yaml        # Flux Kustomization (sourceRef: OCIRepository <tenant>-gitops i tenant-repositories)
+│   └── kustomization.yaml
 └── <kluster>/
-    └── kustomization.yaml          # Klusterspesifikk overlay
+    └── kustomization.yaml             # Klusterspesifikk overlay
+infra/tenant-repositories/base/ocirepos/oci-<tenant>.yaml   # OCIRepository-stub; URL patches per kluster
 ```
 
-Service account `<tenant>-azure` opprettes av plattformteamet med Workload Identity-annotasjoner.
-Service account `flux-reconciler` brukes av Flux for å applye tenant-ressurser.
+`<tenant>-azure` får Workload Identity-annotasjoner per kluster ved onboarding. Entra-gruppen i `entra-access-rolebinding.yaml` styres av tenantens access package i MyAccess — det avgjør hvem som får kubectl-tilgang til namespacene og Grafana-orgene.
 
-**`entra-access-rolebinding.yaml`** (finnes i de fleste katalog-baserte tenant-baser; enkelte eldre baser mangler den, se Merk under) — RoleBinding som gir en Entra ID-gruppe en ClusterRole avgrenset til tenant-namespacet. I alle baser som har filen, bindes den mot `skybert:tenant-admin` (verifisert per 2026-06-18 — se «Aggregert tenant-admin RBAC» nedenfor). Observert bootstrap-mønster tyder på at denne gruppen kobles til access packages i MyAccess, men dette er ikke eksplisitt dokumentert i kilderepoene.
+Fire baser (`eurl`, `fida-analyserom`, `healthdcat-assistant`, `johan-exempl`) binder begge RoleBindings til `cluster-admin`, og `scripts/tenant--bootstrap--yaml.sh` genererer fortsatt `cluster-admin` for nye tenanter (RoleBinding-navn `flux-reconciler` og `entra-access`). Les tenantens faktiske `rolebinding.yaml` og `entra-access-rolebinding.yaml` før du konkluderer om rettigheter.
 
-> **Merk:** Eldre tenanter kan fortsatt bruke `serviceaccount.yaml` (entall) og mangle `entra-access-rolebinding.yaml`. Begge layouter er gyldige.
+> Kilde: https://docs.sky.fhi.no/internal/managing-tenants/ · https://docs.sky.fhi.no/get-started/blaloypa/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/tenants/exempl/base/
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/tenants/fida-stat19core/base/kustomization.yaml
+### Tenant-RBAC
 
-Tenant-baser kan ha to separate RoleBindings:
-- **`rolebinding.yaml`** — binder `flux-reconciler` (lokal SA) til `skybert:tenant-flux-reconciler` innen tenant-namespacet, brukt av plattformen til å reconcile og provisjonere ressurser. De fleste katalog-baserte baser er migrert til denne least-privilege-rollen, og `crossplane`-SA-en er fjernet som subject.
-- **`entra-access-rolebinding.yaml`** — binder en Entra ID-gruppe (via gruppe-ID) til `skybert:tenant-admin` innen tenant-namespacet. Gir kubectl-tilgang for utviklere. De fleste katalog-baserte baser binder mot denne kuraterte least-privilege-rollen.
+Tilgang i tenant-namespaces er en allow-list av ClusterRole-fragmenter i `infra/skybert-system/base/tenant-admin-clusterroles/`, aggregert via labels `rbac.skybert.fhi.no/aggregate-to-*` inn i to ClusterRoles som bindes med RoleBinding i `tn-*`:
 
-> **Katalogen er ikke konsekvent:** per `d3d4e926` binder fire tenant-baser (`eurl`,
-> `fida-analyserom`, `healthdcat-assistant`, `johan-exempl`) fortsatt begge rollene til
-> `cluster-admin`, og ResourceSet-bootstrappen (se nedenfor) genererer også `cluster-admin` med
-> både `flux-reconciler` og `crossplane` som subjects. Les alltid tenantens faktiske
-> `rolebinding.yaml` og `entra-access-rolebinding.yaml` før du konkluderer om rettigheter.
+- **`skybert:tenant-admin`** — bindes til tenantens Entra-gruppe. Hvert kluster-overlay i `infra/skybert-system/<kluster>/` patcher aggregation-selectoren til én miljølabel: `red-prod`, `red-test`, `yellow-prod` (yellow-prod-01 og norsyss-prod-01), `green-prod` eller `test-sandbox` (green-test-01, yellow-test-02, ops-test-01, sandbox-01).
+- **`skybert:tenant-flux-reconciler`** — bindes til ServiceAccount `flux-reconciler`. Samme selector (`aggregate-to-tenant-flux-reconciler`) på alle klustere.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/entra-access-rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/tenant-bootstrap/base/resourceset.yaml
+Fragmentene:
 
-#### Aggregert tenant-admin RBAC (ny modell)
+| Fragment | Aggregeres til | Gir |
+|---|---|---|
+| `skybert:tenant-admin:core` | alle miljøroller + flux-reconciler | Namespaced baseline uten wildcards: workloads, services, ingresses, configmaps, secrets, PVC, HPA, PDB, roles/rolebindings, native + Calico NetworkPolicies, cert-manager (`certificates`, `issuers`, `bundles`), Gateway API-ruter og `listenersets`, Envoy `securitypolicies`, `secretproviderclasses`, `externalsecrets`/`secretstores`, alle `skybert.fhi.no`-ressurser, Flux `alerts`/`providers`, Flux `kustomizations` (alle verb — patch for suspend/resume, create/delete for egne ekstra), Flux `ocirepositories` (get/list/watch/patch/update — ikke create/delete, plattform-bootstrappet), `pushsecrets` (kun lese + delete). Lesetilgang: `resourcequotas`, `limitranges`, `verticalpodautoscalers`, `policyreports`, `metrics.k8s.io/pods`, SelfSubjectAccessReview. |
+| `skybert:tenant-admin:cnpg` | alle miljøroller + flux-reconciler | CNPG- og barman-ressurser (`clusters`, `backups`, `scheduledbackups`, `poolers`, `databases`, `objectstores` m.m.), alle klustere. Se [Persistence](persistence.md#cloudnativepg). |
+| `skybert:tenant-admin:test-sandbox:runtime-access` | kun `test-sandbox` | `pods/exec`, `pods/attach`, `pods/portforward`, `pods/proxy`, `services/proxy`, `pods/ephemeralcontainers` (kubectl debug). Gjelder green-test-01, yellow-test-02, ops-test-01 og sandbox-01. `aks-red-test-01` har **ikke** fragmentet: exec feiler der på RBAC selv om Kyverno tillater exec i red-test. |
+| `skybert:tenant-admin:norsyss:runtime-access` | `yellow-prod` + flux-reconciler, kun på `aks-norsyss-prod-01` | `pods/portforward`. |
+| `skybert:tenant-flux-reconciler:eso` | kun flux-reconciler | `create`/`update`/`patch` på `pushsecrets`. Holdes unna tenant-admin og workload-SA-er slik at en kompromittert workload ikke kan lage pushsecrets dynamisk. |
+| `skybert:tenant-admin:flux-web-ui` | alle miljøroller (ikke flux-reconciler) | Custom verb som Flux Web UI sjekker via SubjectAccessReview: `reconcile`/`suspend`/`resume` på `kustomizations`, `reconcile`/`suspend`/`resume`/`download` på `ocirepositories`, `restart` på deployments/statefulsets/daemonsets/cronjobs/jobs, `get` på `resourcesets` (namespace-filter i UI). Selve endringen krever de native verbene fra core. |
 
-Menneskelig tenant-admin-tilgang er nå modellert som aggregerte ClusterRole-fragmenter i `infra/skybert-system/base/tenant-admin-clusterroles/` (erstatter den fjernede `tenant-namespace-admin-clusterrole.yaml`):
+I prod-klustrene blokkerer Kyverno runtime-tilgang i tillegg til RBAC — se [Kyverno-policier](kyverno-policies.md#produksjon--runtime-restriksjoner).
 
-- **`skybert:tenant-admin:core`** — baseline namespaced rettigheter uten wildcards (workloads, services, ingresses, configmaps, secrets, PVC, HPA, PDB, namespaced RBAC uten `bind`/`escalate`, native + Calico NetworkPolicies, cert-manager, Gateway API-ruter, external-secrets, Crossplane-claims, Flux Kustomizations (get/list/watch/patch/update/create/delete — patch for suspend/resume, create/delete for egne ekstra Kustomizations), Flux OCIRepositories (get/list/watch/patch/update, ikke create/delete — plattform-bootstrappet), Flux notification alerts/providers, metrics, policy-rapport-innsyn). Aggregeres inn i miljøspesifikke roller via labels (`aggregate-to-tenant-admin-{red-prod,red-test,yellow-prod,green-prod,test-sandbox}`).
-- **`skybert:tenant-admin:test-sandbox:runtime-access`** — legger til runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral). Aggregeres **kun** via `test-sandbox`-labelen → gjelder green-test, yellow-test-02, ops-test og sandbox. **Ikke** `aks-red-test-01`, som derfor mangler runtime-RBAC. I prod blokkeres runtime-tilgang i tillegg av Kyverno (`deny-tenant-runtime-access`); i red-test blokkerer Kyverno (`restrict-tenant-runtime-access`) port-forward/attach/proxy, men ikke exec — om exec fungerer der avhenger av RBAC/tilgang. Dette forklarer hvorfor interaktiv debugging oppfører seg ulikt per miljø.
-- **`skybert:tenant-flux-reconciler`** — egen aggregering for Flux-rekonsiliering. Aggregerer samme core-fragment som `skybert:tenant-admin`, pluss `skybert:tenant-flux-reconciler:eso` som gir `create`/`update`/`patch` på external-secrets `pushsecrets`. `skybert:tenant-admin` og workload-SA-er får ikke disse verbene. Kildekommentaren begrunner eksplisitt avgrensningen for workload-SA-er (for å hindre at en kompromittert workload lager pushsecrets dynamisk).
-- **`skybert:tenant-admin:flux-web-ui`** — egne *Flux Web UI-affordanser* aggregert inn i `skybert:tenant-admin` (ikke i `skybert:tenant-flux-reconciler`). Ikke K8s API-verb, men custom verb som Web UI sjekker via SubjectAccessReview for å vise/skjule knapper: `reconcile`/`suspend`/`resume`/`download` på Kustomizations/OCIRepositories og `restart` på deployments/statefulsets/daemonsets/cronjobs/jobs. Gir også `get` på Flux `ResourceSet` for namespace-filteret i UI-dropdownen. Der en handling faktisk endrer en ressurs, må tenant-admin også ha de ordinære native rettighetene fra core-fragmentet — custom-verbene autoriserer bare UI-knappen, ikke selve endringen.
+> Kilde: https://docs.sky.fhi.no/internal/skybert-system/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/skybert-system/base/tenant-admin-clusterroles/
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/flux-web-ui-access.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/
+### ResourceSet-basert bootstrap
 
-### ResourceSet-basert bootstrap (ny mekanisme)
+`infra/tenant-bootstrap/` er et proof of concept som bruker Flux `ResourceSet` til å generere tenant-ressurser fra en `ResourceSetInputProvider` per tenant (inputs `tenant`, `entraGroupId`, `wlidClientId`, `ociUrl`). Det er bare aktivert for `exempl` på `aks-ops-test-01`. ResourceSet-en genererer namespace, begge ServiceAccounts, RoleBindings mot `cluster-admin`, en egen `OCIRepository` i `tn-<tenant>` (`interval: 3m0s`) og Flux Kustomization (`interval: 2m`). Alle tenanter under `tenants/` bruker katalogstrukturen over.
 
-> **Intern plattformmekanisme** — denne informasjonen er utledet fra infra-repo og beskriver hvordan plattformteamet provisjonerer tenant-ressurser.
-
-Plattformteamet har introdusert `ResourceSet` (Flux) som en mer deklarativ tilnærming til tenant-bootstrap. En sentral `ResourceSet` i `infra/tenant-bootstrap/` genererer alle nødvendige ressurser per tenant:
-
-- Namespace (`tn-<tenant>`)
-- ServiceAccounts (`flux-reconciler` + `<tenant>-azure` med WI-annotasjoner)
-- RoleBinding for flux-reconciler og crossplane
-- Betinget RoleBinding for Entra-gruppe (hvis `entraGroupId` er satt)
-- OCIRepository for GitOps-manifest (se kobling nedenfor)
-- Flux Kustomization (interval: 2m, prune: true, force: true)
-
-Koblingen mellom tenant-bootstrap og GitOps-artifakter:
-1. `infra/tenant-repositories/base/ocirepos/` inneholder én `OCIRepository`-ressurs per tenant, f.eks. `<tenant>-gitops`
-2. OCIRepository peker til `oci://crfhiskybert.azurecr.io/<tenant>/gitops_<env>` med `provider: azure` og `ref.tag: latest`
-3. `flux-kustomization.yaml` i tenant-bootstrap refererer til denne OCIRepository som kilde
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/tenant-repositories/base/ocirepos/oci-fida-stat19core.yaml
-
-Inputs leveres via `ResourceSetInputProvider` per tenant med parametere: `tenant`, `entraGroupId`, `wlidClientId`, `ociUrl`.
-
-Legacy `tenants/<tenant>/base/`-strukturen finnes fortsatt og begge mønstre brukes parallelt — minst to nye tenant-baser lagt til i juni 2026 (`fida-evergreen`, `oslo-exempl`) bruker legacy-strukturen.
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/infra/tenant-bootstrap/base/resourceset.yaml
+> Kilde: https://docs.sky.fhi.no/internal/flux/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/tenant-bootstrap/base/resourceset.yaml
 
 ### Tenant-onboarding — plattformoperasjon
 
-> **Intern plattformmekanisme** — gjøres av plattformteamet. Dokumentert her for forståelse av hva som skjer under onboarding.
+Plattformteamet oppretter tenanter med `ska tenant new -t <tenant> -c <farge> -g <entra-gruppe>` (`scripts/tenant--new.sh`), idempotent i seks steg:
 
-Plattformteamet bruker `ska tenant new` (`scripts/tenant--new.sh`) for å opprette en ny tenant:
+1. **GitOps-repo** — `Fhi.<Tenant>.GitOps` opprettes fra malen, **før** Azure-steget: GitHub gir repoer opprettet etter 2026-07-15 et OIDC-subject med numeriske ID-er (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`) som ikke finnes før repoet gjør det.
+2. **Azure** — Managed Identity `tn-<tenant>-acr-push` med to federated credentials (`main-oci-push` navnebasert, `main-oci-push-immutable` ID-basert; subject matches eksakt, feil format gir `AADSTS700213`), ACR Repository Writer avgrenset til `<tenant>/`, Reader for Helm-charts, Reader på mgmt-subscription. Setter `AZURE_CLIENT_ID`/`AZURE_TENANT_ID`/`AZURE_SUBSCRIPTION_ID` som repo-variabler i GitOps-repoet.
+3. **Base-manifester** — `tenants/<tenant>/base/` og OCIRepository-stub (`tenant--bootstrap--yaml.sh`).
+4. **Kluster-onboarding** — per kluster i fargegruppen (`COLOR_GROUP_CLUSTERS` i `scripts/lib/clusters.sh`: sandbox + fargens test + prod): Managed Identity `tn-<tenant>-skybert-sa-<env>` med federated credential for Workload Identity, kluster-overlay under `tenants/<tenant>/<kluster>/`, og OCIRepository-referanse + URL-patch i `infra/tenant-repositories/<kluster>/kustomization.yaml` (`tenant--add--to-cluster.sh`).
+5. **Grafana** — per kluster: Grafana-org, Loki- og Mimir-datasource filtrert til `tn-<tenant>` (`X-Scope-OrgID`), og Entra-gruppe → org i `infra/grafana/<kluster>/patch-orgs.yaml` (`tenant--bootstrap--grafana.sh`). Kjøres separat kun når en tenant legges til et nytt kluster.
+6. **PR** — én samlet PR for alle infra-endringer.
 
-1. **GitOps-repo** — GitHub-repoet opprettes **først** (fra mal). Grunn: GitHub gir repoer
-   opprettet etter 2026-07-15 et OIDC-subject med immutable numeriske ID-er
-   (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`) som ikke finnes før repoet gjør det.
-2. **Azure-ressurser** — Managed Identity `tn-<tenant>-acr-push` med **to** federated
-   credentials: navnebasert (`main-oci-push`) og ID-basert (`main-oci-push-immutable`).
-   Subject matches eksakt uten wildcards — feil format feiler token-utvekslingen med
-   `AADSTS700213`. Scriptet setter også `AZURE_CLIENT_ID`/`AZURE_TENANT_ID`/
-   `AZURE_SUBSCRIPTION_ID` som repo-variabler (flyttet hit fra gitops-scriptet).
-3. **Base-manifester** — namespace, serviceaccounts, rolebinding, Flux Kustomization i infra-repo
-4. **Kluster-onboarding** — kjøres for hvert kluster i valgt sikkerhetssone
-
-Color → kluster-mapping ved onboarding:
-
-| Farge | Klustere |
-|-------|---------|
-| `green` | aks-sandbox-01, aks-green-test-01, aks-green-prod-02 |
-| `yellow` | aks-sandbox-01, aks-yellow-test-02, aks-yellow-prod-01 |
-| `red` | aks-sandbox-01, aks-red-test-01, aks-red-prod-01 |
-
-Grafana klargjøres separat med `scripts/tenant--bootstrap--grafana.sh`:
-
-```bash
-tenant--bootstrap--grafana.sh --tenant <tenant>
-```
-
-Entra-gruppe-ID-en leses fra `tenants/<tenant>/base/entra-access-rolebinding.yaml` (ikke et flagg). Målklustere utledes fra overlay-katalogene under `tenants/<tenant>/`, eller angis eksplisitt med `-c/--cluster` (repeterbar). Kjøres via `az connectedk8s proxy + kubectl`. Oppretter per kluster: Grafana-org, Loki-datasource og Mimir-datasource (begge filtrert til `tn-<tenant>` via `X-Scope-OrgID`), og oppdaterer `infra/grafana/<cluster>/patch-orgs.yaml` med Entra-gruppekobling.
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/scripts/tenant--new.sh
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/scripts/tenant--bootstrap--azure.sh
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/scripts/tenant--bootstrap--grafana.sh
-
-### Sentralisert kluster-register
-
-> **Intern plattformmekanisme** — dokumentert her for kontekst om kluster-tilleggsoperasjoner.
-
-`scripts/lib/clusters.sh` er single source of truth for kluster-metadata i infra-repoet. Scripts som trenger kluster-informasjon sourcer denne filen. Registeret inneholder per kluster: navn, resource group, subscription ID, OIDC-issuer URL og PIM-krav. `COLOR_GROUP_CLUSTERS` definerer hvilke klustere som inngår i hvert fargelane (red/yellow/green).
-
-Klustere kan eksistere i registeret uten å tilhøre en fargegruppe. Per juni 2026 bruker `COLOR_GROUP_CLUSTERS["yellow"]` `aks-yellow-test-02` (tidligere `aks-yellow-test-01`) som gul test-kluster, og `aks-norsyss-prod-01` er registrert uten å tilhøre en fargegruppe.
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/scripts/lib/clusters.sh
+> Kilde: https://docs.sky.fhi.no/internal/managing-tenants/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--new.sh

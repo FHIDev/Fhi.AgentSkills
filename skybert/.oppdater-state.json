@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-09-01T13:10:00Z",
+  "updatedAt": "2026-09-03T10:00:00Z",
   "mode": "github",
   "lastFullscanDate": "2026-08-15",
   "sistVerifisert": "2026-09-01",
@@ -28,6 +28,56 @@
       "summary": "Ny docs-side er en WIP-skisse (brødtekst: «Tester mermaid, ser shit ut i dark mode») med ett mermaid-diagram over ListenerSet-topologi. Besluttet 2026-08-15: ingen endring nå — topologien er allerede dekket i hostnames-and-networking.md. Uendret per 2026-09-01. Revurderes når siden får reelt innhold.",
       "firstSeen": "2026-08-15",
       "lastSeen": "2026-09-01"
+    },
+    {
+      "id": "docs-infra-konflikt-exec-rbac",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/kyverno-policies.md",
+      "source": "docs/persistence/postgres.md vs infra/skybert-system/aks-*/kustomization.yaml",
+      "summary": "Docs sier «kubectl exec is not granted to tenants on any cluster»; infra gir pods/exec via test-sandbox-runtime-access.yaml på green-test, yellow-test-02, ops-test og sandbox. Skillen følger infra og nevner konflikten. Revurderes når docs eller infra endres.",
+      "firstSeen": "2026-09-03",
+      "lastSeen": "2026-09-03"
+    },
+    {
+      "id": "docs-infra-konflikt-envoy-skybertapp",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/hostnames-and-networking.md",
+      "source": "docs/explanations/tools-and-components.md vs infra/crossplane/base/compositions/skybertapp.yaml",
+      "summary": "Docs merker Envoy Gateway «Handled by SkybertApp» (ListenerSet/HTTPRoute); composition på main rendrer fortsatt nginx-Ingress, og Gateway API-varianten finnes kun som beta-XRD på aks-ops-test-01. Skillen følger infra. Revurderes når base-composition endres.",
+      "firstSeen": "2026-09-03",
+      "lastSeen": "2026-09-03"
+    },
+    {
+      "id": "docs-konflikt-cortex-tenant-rekkefolge",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/observability.md",
+      "source": "docs/internal/observability/mimir.md (linje ~21 vs ~256)",
+      "summary": "Docs-siden motsier seg selv om cortex-tenant velger namespace- eller tenant-label først; infra (label_list: [namespace, tenant]) og Alloy-kommentar sier namespace først. Skillen følger infra.",
+      "firstSeen": "2026-09-03",
+      "lastSeen": "2026-09-03"
+    },
+    {
+      "id": "docs-infra-konflikt-tempo",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/observability.md",
+      "source": "docs/observability/tracing.md vs infra/tempo/ + infra/flux-system/base/kustomizations-infra/tempo.yaml",
+      "summary": "Docs merker Tempo «Planned — not yet available»; infra har Flux-Kustomization tempo i kustomizations-infra (trukket inn av alle 9 klustere) og et aks-ops-test-01-overlay, mens base kun har namespace + helm-manifest. Skillen følger docs — riktig for tenanter, men utrullingen er i gang. Revurderes når docs oppdateres eller flere kluster-overlays kommer.",
+      "firstSeen": "2026-09-03",
+      "lastSeen": "2026-09-03"
+    },
+    {
+      "id": "coverage-matrise-utdatert",
+      "status": "partial",
+      "category": "OMSTRUKTURER",
+      "target": "skybert/.oppdater-coverage.json",
+      "source": "PR #62 og #63 (restrukturering av 16 skill-filer)",
+      "summary": "Matrise A ble ikke oppdatert da SKILL.md og referansefilene ble restrukturert. docsCommit står på acde93e0 (PR #59) og skillContentHash matcher ikke lenger innholdet, så forutsetning 3 for videreført dekning er brutt — neste FULL leser alle docs-sider på nytt og skriver ny matrise. 13 coveredIn-ankere peker på slettede seksjoner (10 i SKILL.md, bl.a. #legal-og-compliance, #skybertapp-crd, #gitops-flyt). Ankrene rettes ikke manuelt: en ærlig matrise krever full side-for-side-gjennomgang. Lukkes ved neste FULL.",
+      "firstSeen": "2026-09-03",
+      "lastSeen": "2026-09-03"
     }
   ]
 }

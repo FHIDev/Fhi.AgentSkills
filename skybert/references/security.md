@@ -4,14 +4,18 @@
 
 ### Oppsett i applikasjon
 
-Skybert leverer ferdig service account per tenant: `<tenant>-azure`, knyttet til managed
-identity `tn-<tenant>-skybert-sa-<env>` (verifisert mot Azure 2026-04-17).
-Manuell opprettelse eller annotering av service account er ikke nødvendig.
+Hvert tenant-namespace leveres med Kubernetes service account `<tenant>-azure`, bundet (OIDC-federering)
+til managed identity `tn-<tenant>-skybert-sa-<env>` — én identitet per miljø (`sandbox`, `test`, `prod`).
+Client-id og tenant-id ligger som annotasjoner (`azure.workload.identity/client-id`, `.../tenant-id`)
+på service accounten. Du oppretter eller annoterer ikke service accounten selv.
 
-**For SkybertApp:**
-Workload Identity er alltid aktivert. Composition setter automatisk `azure.workload.identity/use: "true"` og `serviceAccountName: <tenant>-azure` på alle pods. Du trenger ikke gjøre noe ekstra.
+Offentlig docs viser identitetsnavnet uten `tn-`-prefiks; infra-scriptet og intern docs bruker prefikset.
 
-**For raw Deployment:**
+**For SkybertApp:** Workload Identity er alltid aktivert. Composition setter
+`azure.workload.identity/use: "true"` og `serviceAccountName: <tenant>-azure` på alle pods.
+
+**For raw Deployment:** sett labelen og service accounten på pod-templaten selv:
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -27,183 +31,91 @@ spec:
       serviceAccountName: <tenant>-azure
 ```
 
-**Hva skjer under panseret:**
-Clusteret kjører en mutating webhook (`azure-wi-webhook`) som del av kontrollplanet.
-Når en pod har labelen `azure.workload.identity/use: "true"`, injiserer webhooken automatisk:
+Podene eksponerer standard Azure Workload Identity-token og miljøvariabler, så .NET
+`DefaultAzureCredential`/`WorkloadIdentityCredential` og `az` CLI autentiserer uten ekstra konfigurasjon.
 
-| Ressurs | Verdi |
-|---|---|
-| Projected token volume | `/var/run/secrets/azure/tokens/azure-identity-token` |
-| `AZURE_CLIENT_ID` | Fra service account annotation |
-| `AZURE_TENANT_ID` | Fra service account annotation |
-| `AZURE_FEDERATED_TOKEN_FILE` | `/var/run/secrets/azure/tokens/azure-identity-token` |
-| `AZURE_AUTHORITY_HOST` | `https://login.microsoftonline.com/` |
-
-Du trenger ikke sette disse manuelt — webhooken gjør det for deg.
-
-**SDK-kompatibilitet:** Workload Identity-autentisering fungerer automatisk (out of the box) uten ekstra konfigurasjon:
-- .NET: `DefaultAzureCredential` og `WorkloadIdentityCredential` plukker opp token og miljøvariabler automatisk
-- Azure CLI: `az` plukker opp Workload Identity-autentisering automatisk i pods
-
-> Kilde: https://docs.sky.fhi.no/auth/workload-identity/
+> Kilde: https://docs.sky.fhi.no/auth/workload-identity/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--add--to-cluster.sh
 
 ### Tilgang til Azure-ressurser
 
-Managed Identity `tn-<tenant>-skybert-sa-<env>` har tilganger satt opp av plattformteamet.
+Plattformen oppretter og federerer `tn-<tenant>-skybert-sa-<env>`, men gir den ingen Azure-tilganger.
+Tenanten tildeler selv Azure RBAC på identiteten — minst mulig, og per miljø — i egne subscriptions
+(anbefalt én for test og én for prod). Azure-subscriptions for applikasjonen er tenantens ansvar;
+plattformen oppretter dem ikke. Det dokumenterte bruksområdet er lesetilgang til tenantens Key Vault
+— se [Secrets-mønstre](secrets.md).
 
-Typiske bruksområder:
-- Azure Storage
-- Azure SQL Database
-- Azure Key Vault
-- Azure Service Bus
+> Kilde: https://docs.sky.fhi.no/get-started/prerequisites/application/
 
 ### Managed Identities (leveres av plattformteamet)
 
-Skybert leverer to typer managed identities per tenant:
+Plattformen leverer to typer managed identities per tenant:
 
-- **ACR-push identity** (`tn-<tenant>-acr-push`) — brukes av GitHub Actions-workflows for å pushe images til ACR. Én per tenant, federert til GitOps-repoet ved onboarding. Plattformteamet kan federere flere app-repoer til samme identitet (per branch `refs/heads/main` eller per GitHub environment). GitOps-malen `FHISkybert/Fhi.Skybert.Template.GitOps` viser workflow-oppsettet.
+- **ACR-push-identitet** `tn-<tenant>-acr-push` — i plattformens management-subscription, med
+  `Container Registry Repository Writer` avgrenset til `<tenant>/`-stier i `crfhiskybert.azurecr.io`,
+  federert til GitOps-repoets `main`-branch ved onboarding. Workflowene i GitOps-malen bruker den.
+  Plattformteamet kan federere app-repoer til samme identitet (subject per branch `refs/heads/main`
+  eller per GitHub environment); app-repoet får da variablene `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` og
+  `AZURE_SUBSCRIPTION_ID` (sistnevnte er management-subscriptionen, uavhengig av miljø).
+- **Workload identities per miljø** `tn-<tenant>-skybert-sa-<env>` — se
+  [Oppsett i applikasjon](#oppsett-i-applikasjon).
 
-  > **Merk (GitHub OIDC-endring):** Repoer opprettet etter 2026-07-15 presenterer et subject med
-  > immutable numeriske ID-er (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`); eldre repoer bytter
-  > til samme format ved rename/transfer. Subject matches eksakt — en federert credential med feil
-  > format gir `AADSTS700213` ved token-utveksling. Plattformens bootstrap oppretter nå begge
-  > variantene per identitet; ved federering av nye app-repoer må ID-varianten med.
-  >
-  > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/scripts/tenant--bootstrap--azure.sh
+> **Merk (GitHub OIDC-subject):** Repoer opprettet etter 2026-07-15 presenterer et subject med
+> immutable numeriske ID-er (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`); eldre repoer bytter
+> til samme format ved rename/transfer. Subject matches eksakt — en federert credential med feil
+> format gir `AADSTS700213` ved token-utveksling. Plattformens bootstrap oppretter begge variantene
+> for GitOps-repoet; ved federering av app-repoer opprettet etter 2026-07-15 (eller renamet/flyttet)
+> må ID-varianten med — docs-siden viser bare navnebasert subject.
 
-  > Kilde (intern): https://docs.sky.fhi.no/internal/attach-application-repo/
-- **Workload Identities per miljø** — én per miljø (`sandbox`, `test`, `prod`) etter mønsteret `tn-<tenant>-skybert-sa-<env>`. Disse kobles mot Kubernetes service account `<tenant>-azure` i det respektive miljø-klusteret via OIDC federation, slik at applikasjonen får passordløs tilgang til Azure-ressurser.
-
-Per-miljø-identiteter gjør at du kan gi minimale Azure RBAC-tilganger per miljø (least-privilege). Client ID-ene for workload identities er synlige på Kubernetes service accounts som annotasjoner.
-
-> **Navnekonvensjon (verifisert mot Azure 2026-04-17):** `tn-`-prefikset er faktisk i bruk — eksempel: `tn-grossiststatistikken-skybert-sa-test`. Merk at offisielle docs (`docs/auth/workload-identity.md`) viser mønsteret uten prefiks (`<tenant>-skybert-sa-<env>`); dette er etterslep i docs. Autoritativ kilde for navnet er infra-scriptet `scripts/tenant--add--to-cluster.sh` samt faktisk Azure-state (oppslag via `az ad sp show --id <client-id>` på annotasjonen `azure.workload.identity/client-id`).
-
-> Kilde (script, autoritativ): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/adef9e78918862cd7fedfc2476242e286aadc992/scripts/tenant--add--to-cluster.sh
-> Kilde (docs, etterslep): https://docs.sky.fhi.no/auth/workload-identity/
+> Kilde: https://docs.sky.fhi.no/internal/attach-application-repo/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--bootstrap--azure.sh
 
 ## Tenant-RBAC — hva du kan administrere
 
-> **Tenant-RBAC:** De fleste katalog-baserte tenant-baser (`tenants/<tenant>/base/`) binder
-> menneskelig tilgang (Entra-gruppe) til den kuraterte least-privilege ClusterRole
-> `skybert:tenant-admin` og plattform-rekonsiliering (`flux-reconciler`-SA) til
-> `skybert:tenant-flux-reconciler` — begge via `RoleBinding` avgrenset til tenant-namespacet, og
-> `crossplane`-SA-en er fjernet som subject. **Dette er ønsket standard, ikke universelt:** per
-> infra-head `d3d4e926` binder `eurl`, `fida-analyserom`, `healthdcat-assistant` og
-> `johan-exempl` fortsatt både Entra-gruppen og `flux-reconciler` til `cluster-admin` i eget
-> namespace, og ResourceSet-bootstrappen (`infra/tenant-bootstrap/base/resourceset.yaml`)
-> genererer også `cluster-admin`. Behandle tenantens faktiske RoleBindings som autoritative —
-> ikke anta least-privilege ut fra katalogstruktur alene.
+Tenantens Entra-gruppe bindes ved bootstrap til ClusterRole `skybert:tenant-admin` via en RoleBinding i
+`tn-<tenant>`; plattformen lager bindingen, du skal ikke lage en egen. Rollen aggregeres av
+rettighetsfragmenter som varierer per kluster (runtime-subressurser som `exec`/`portforward` finnes
+bare i test/sandbox-aggregeringen), og enkelte tenant-baser (inkl. nye generert av bootstrap-scriptet) binder fortsatt `cluster-admin` —
+tenantens faktiske RoleBindings er autoritative. Hva rollen gir, hvordan den aggregeres og
+bootstrap-flyten står i [Plattformarkitektur — Tenant-bootstrap](platform-architecture.md#tenant-bootstrap);
+runtime-restriksjoner per miljø står i [Kyverno-policier](kyverno-policies.md).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/tenants/eurl/base/rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/tenants/healthdcat-assistant/base/entra-access-rolebinding.yaml
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/tenant-bootstrap/base/resourceset.yaml
+`securitypolicies` (`gateway.envoyproxy.io`) er med i RBAC-settet med full CRUD; kildekommentaren
+beskriver formålet som «firewalls, oidc, etc». Andre `gateway.envoyproxy.io`-ressurser er ikke med,
+og `SecurityPolicy` er ikke omtalt i offisiell docs — avklar med plattformteamet før du bygger på den.
 
-`skybert:tenant-admin:core` gir deg eksplisitte rettigheter (uten wildcards) i ditt eget namespace på blant annet:
+> Kilde: https://docs.sky.fhi.no/internal/skybert-system/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
 
-- **Workloads:** pods, deployments, statefulsets, daemonsets, jobs, cronjobs, replicasets (+ scale/rollback)
-- **Nettverk/tilgang:** services, ingresses, configmaps, secrets, serviceaccounts, persistentvolumeclaims, HPA, PDB
-- **Namespaced RBAC:** `roles`/`rolebindings` (uten `bind`/`escalate` — du kan kun delegere et subsett av egne rettigheter)
-- **NetworkPolicies:** native (`networking.k8s.io`) og Calico (`crd.projectcalico.org`)
-- **Sertifikater:** cert-manager `certificates`/`certificaterequests`/`issuers` og trust-manager `bundles`
-- **Gateway API:** `listenersets`, `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes`, `udproutes` (Envoy Gateway-implementasjon — se [Hostnavn og nettverk](hostnames-and-networking.md))
-- **Envoy SecurityPolicy:** `gateway.envoyproxy.io/securitypolicies` med full CRUD. Lar deg definere OIDC-/JWT-autentisering, CORS og ekstern autorisasjon på egne HTTPRoutes der Gateway API er aktivert på klusteret. Kildekommentaren beskriver formålet som «firewalls, oidc, etc». To forbehold: **rate limiting hører til `BackendTrafficPolicy`**, som denne RBAC-endringen *ikke* åpner for, og funksjonen er ikke annonsert som støttet plattformfunksjon i offisiell docs — avklar med `#ext-fhi-skybert` før du bygger på det
-- **Ressursanbefalinger:** `autoscaling.k8s.io/verticalpodautoscalers` (`get`/`list`/`watch`). Objektene opprettes av Goldilocks i anbefalingsmodus — du kan inspisere dem, men ikke endre dem (se [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa))
-- **Secrets:** external-secrets `externalsecrets`/`secretstores` (+ `secretproviderclasses`, deprecated)
-- **Crossplane-claims:** alt i API-gruppen `skybert.fhi.no` (f.eks. SkybertApp)
-- **Flux Kustomizations** (`kustomize.toolkit.fluxcd.io`): `get`/`list`/`watch`/`patch`/`update`/`create`/`delete` — patch for suspend/resume, create/delete for å legge til egne ekstra Kustomizations.
-- **Flux OCIRepositories** (`source.toolkit.fluxcd.io`): `get`/`list`/`watch`/`patch`/`update`, **ikke** `create`/`delete` (plattform-bootstrappet).
-- **Flux notification** `alerts`/`providers`: full CRUD i eget namespace.
-- **Innsyn:** `kubectl top pods` (metrics), lesing av policy-rapporter, read-only på ResourceQuota/LimitRange (plattformstyrt)
+## Anbefalt sikkerhetskonfigurasjon
 
-Runtime-subressurser (`exec`/`attach`/`portforward`/`proxy`/ephemeral) er kun med i `test-sandbox`-aggregeringen — altså green-test, yellow-test-02, ops-test og sandbox. Prod og `aks-red-test-01` mangler denne fragmenten. I prod blokkeres runtime-tilgang i tillegg av Kyverno (`deny-tenant-runtime-access`). I red-test blokkerer Kyverno (`restrict-tenant-runtime-access`) port-forward/attach/proxy, men ikke exec — om exec fungerer der avhenger av RBAC/tilgang; `skybert:tenant-admin` har ikke runtime-fragmentet for red-test. Se [kubectl-tilgang](kubectl-access.md) og [Kyverno-policier](kyverno-policies.md).
+Kyverno håndhever Pod Security Standards på alle klustere. Det som **avvises** (Enforce): `runAsUser: 0`
+(feltet må være tomt eller > 0), `privileged`, `hostPath`, `hostNetwork`/`hostPID`/`hostIPC`, `hostPort`,
+`allowPrivilegeEscalation: true`, `seccompProfile.type: Unconfined` og capabilities utover
+PSS-baseline. Det som **settes automatisk**: `runAsNonRoot: true` og `runAsUser: 1000` (hvis utelatt)
+for pods i `tn-*`, og `seccompProfile.type: RuntimeDefault` (hvis utelatt) for alle pods. Det som bare
+gir **Audit-funn**: manglende `readOnlyRootFilesystem: true` og eksplisitt `runAsNonRoot: false` på
+container — ikke bygg på root-kjøring likevel; `runAsUser: 0` avvises.
 
-> **Merk:** RBAC gir *adgang* til ressurstypene over, men Kyverno-policyer kan fortsatt begrense hva som faktisk godtas. F.eks. i rød sone blokkeres native `NetworkPolicy` (kun Calico tillatt), og Calico-egress styres sentralt. Se [Kyverno-policier](kyverno-policies.md).
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
-
-### RoleBinding for namespace-tilgang (Entra-gruppe)
-
-Plattformen provisjonerer normalt namespace-tilgang ved å binde tenantens Entra-gruppe til den kuraterte ClusterRole-en `skybert:tenant-admin`. Ikke opprett en egen binding til `cluster-admin` — tenant-admin holder ikke lenger den rollen, og Kubernetes' escalation-prevention vil avvise et forsøk på å binde den (du kan kun delegere et subsett av egne rettigheter).
-
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: entra-access
-  namespace: tn-<tenant>
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: skybert:tenant-admin
-subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: Group
-    name: "<entra-group-id>"
-```
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/tenants/exempl/base/entra-access-rolebinding.yaml
-
-## Obligatorisk sikkerhetskonfigurasjon
+Anbefalt for raw Deployment (SkybertApp setter tilsvarende selv; bruk `readOnlyRootFilesystem: true`
+og `writableDirs` i spec):
 
 ```yaml
 securityContext:
-  # Pod-level
   runAsNonRoot: true
   runAsUser: 1000
-  fsGroup: 1000
-
-  # Container-level
   readOnlyRootFilesystem: true
   allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
 ```
 
-> **Merk:** Kyverno setter automatisk `runAsNonRoot: true`, `runAsUser: 1000` (hvis ikke satt),
-> og `seccompProfile.type: RuntimeDefault` (hvis ikke satt) for pods i `tn-*` namespaces.
-> Du trenger vanligvis ikke sette disse eksplisitt. Se [Kyverno-policier](kyverno-policies.md) for detaljer.
+Interne CA-er (`fhi.no`, `red.fhi.sec`) monteres automatisk som `trust-bundle.pem` — se
+[Public CA / Trust Bundle](hostnames-and-networking.md#public-ca--trust-bundle). Full policy-liste:
+[Kyverno-policier](kyverno-policies.md#pod-security-alle-klustere).
+
+> Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-green/psp.yaml
 
 ## Nettverkspolicyer (rød sone)
 
-I rød sone er default DENY — all trafikk blokkert som utgangspunkt.
+Rød sone er default deny inn og ut av tenant-namespacet; native `NetworkPolicy` avvises, ingress åpnes med Calico `NetworkPolicy` (`spec.order` i `[1000, 1200)`), og egress-unntak opprettes bare av plattformteamet. Regler, unntak og eksempler: [Hostnavn og nettverk — Rød sone](hostnames-and-networking.md#rød-sone).
 
-**Viktig:** Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt i rød sone — blokkeres av Kyverno-policy `sub-1200-calico-netpol-in-tenants`. Tenanter kan derimot opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for ingress-only med `spec.order` i `[1000, 1200)`. Egress styres sentralt — be plattformteamet om GlobalNetworkPolicy-unntak for egress til spesifikke IP-ranges/porter.
-
-Se [Hostnavn og nettverkskonfigurasjon](hostnames-and-networking.md#rød-sone) for detaljer om tillatt trafikk og nettverkspolicyer.
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/a16a243/infra/kyverno-policies/base/policies-red/
-
-## Secrets Management
-
-**Aldri** commit secrets til Git. Bruk:
-- **External Secrets Operator (ESO)** (anbefalt) - SecretStore + ExternalSecret
-- **SkybertApp inline secrets** (enklest) - spesifiser vault-navn og nøkler direkte i CRD
-
-**Oppsett av secrets:**
-1. Plattformteamet oppretter Azure Key Vault og gir tilgang til managed identity
-2. Bruk SkybertApp inline secrets eller manuell SecretStore + ExternalSecret
-3. Se [Secrets-mønstre](secrets.md) for detaljer
-
-## Public CA / Trust Bundle
-
-CA-sertifikater lagres i `/etc/ssl/certs/` i containere. Du er ansvarlig for å holde `ca-certificates`-pakken oppdatert i build-prosessen.
-
-**Interne CA-er:** FHI vedlikeholder interne CA-er (`fhi.no` og `red.fhi.sec`) i en `trust-bundle.pem`. Denne filen auto-monteres til `/etc/ssl/certs/trust-bundle.pem` i alle pods i `tn-*` namespaces via Kyverno-policy (`automount-cert-chain-bundle`). Du trenger ikke legge disse til manuelt.
-
-**Bruk trust-bundle:** Sett `SSL_CERT_FILE=/etc/ssl/certs/trust-bundle.pem` for å bruke den kuraterte listen av CAs i stedet for image-standarder.
-
-> Kilde: https://docs.sky.fhi.no/miscellaneous/publicCA/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/e5bbc4b/infra/kyverno-policies/base/policies-green/automount-cert-chain-bundle.yaml
-
-## Azure Subscriptions per Sikkerhetssone
-
-Hver sikkerhetssone har egne Azure subscriptions:
-- **Gul sone test**: FHI-Skybert-Yellow-Test
-- **Gul sone prod**: FHI-Skybert-Yellow-Prod
-- (tilsvarende for Grønn og Rød sone)
-
-Workflows må bruke riktig `AZURE_SUBSCRIPTION_ID` for miljøet.
+> Kilde: https://docs.sky.fhi.no/internal/global-network-policies/
 
 ## ACR image pull (automatisk `acr-pull-secret`)
 
@@ -214,4 +126,4 @@ namespaces (kubernetes-replicator), og to Kyverno-ClusterPolicies patcher
 **En SA som allerede har egne `imagePullSecrets` røres ikke** — ved `ImagePullBackOff` mot
 private ACR-images: sjekk både at secreten finnes og at workloadens SA faktisk refererer til den.
 
-> Kilde: https://docs.sky.fhi.no/internal/skybert-system/
+> Kilde: https://docs.sky.fhi.no/internal/skybert-system/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/sa-patcher-policy.yaml

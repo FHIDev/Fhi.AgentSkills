@@ -1,212 +1,37 @@
 # Konfigurasjonseksempler
 
-## Anbefalt startpunkt: Minimal SkybertApp
+## SkybertApp
 
-Start alltid med minimal SkybertApp i riktig miljømappe — docs anbefaler `sandbox/` som
-første steg (https://docs.sky.fhi.no/build/). Bruk Helm/Kustomize/raw manifests kun når
-behovet tilsier det (komplekse apps, upstream Helm charts, etc.).
+SkybertApp er anbefalt måte å deploye på. GitOps-repoet leveres med `sandbox/`, `test/` og `prod/` som hver inneholder et minimalt SkybertApp-eksempel; start i `sandbox/`, endre image-referansen til `crfhiskybert.azurecr.io/<tenant>/<app>:<tag>`, push og legg til konfigurasjon etter behov. Minimalt manifest og full feltreferanse: se [SkybertApp CRD](skybertapp-crd.md#quick-start). WebApp CRD er udokumentert i docs og ikke anbefalt — se [Legacy: WebApp CRD og CSI driver](legacy-webapp-csi.md).
 
-```yaml
-apiVersion: skybert.fhi.no/v1alpha1
-kind: SkybertApp
-metadata:
-  name: <app-navn>
-  namespace: tn-<tenant>
-spec:
-  image:
-    repository: crfhiskybert.azurecr.io/<tenant>/<app-navn>
-    tag: "<tag>"
-  hostname: <app-navn>.skytest.fhi.no
-```
-
-> Kilde: https://docs.sky.fhi.no/workloads/
-> Kilde: https://docs.sky.fhi.no/build/
+> Kilde: https://docs.sky.fhi.no/build/ · https://docs.sky.fhi.no/workloads/
 
 ## Health probes i .NET-apper
 
-Kubernetes har tre probe-typer:
+Probe-stiene velger du selv, og stien i `SkybertApp.spec.probes` må være den appen faktisk eksponerer — docs' eksempler er ikke samstemte (probes-siden bruker `/liveness`/`/readiness` i appen og `/healthz`/`/readyz` i manifestet; SkybertApp-referansen bruker `/health/live`/`/health/ready`). Docs' .NET-mønster er Health Checks API med `live`-/`ready`-tags, detaljerte private sjekker (DB, avhengigheter) bundet til en intern port med `.RequireHost("*:<port>")` som ingress ikke eksponerer — `.RequireHost()` er bare en applikasjonslag-sjekk — og ingen tunge migreringer eller kompleks logikk i readiness-proben. For SkybertApp settes probes via [`probes`-feltet](skybertapp-crd.md#health-probes); ingen probes er påkrevd.
 
-- **Liveness** — restarter container ved feil. Bruk for hengte prosesser.
-- **Readiness** — fjerner pod fra service-endpoints ved feil. Bruk for traffic gating.
-- **Startup** — gates liveness/readiness mens appen booter. Bruk for sakte-startende apper.
+> Kilde: https://docs.sky.fhi.no/miscellaneous/probes/ · https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/
 
-**Anbefalinger:**
+## Raw Deployment
 
-- Bruk separate, lette endepunkter (`/health/live`, `/health/ready`, `/health/startup`).
-- **Ikke** legg tunge migreringer eller DB-spørringer i readinessProbe — under DB-last vil pods feile readiness og trekkes ut av trafikk selv om appen ellers er frisk.
-- Skill **public** health checks (enkel "appen kjører") fra **private** (DB-konnektivitet og avhengigheter). Public-endepunktet er den eneste som bør være tilgjengelig fra ingress.
+Native Kubernetes-manifester (Deployment, StatefulSet, DaemonSet, Service, Ingress osv.) legges i samme miljømappe som SkybertApp og deployes på samme måte — bruk dem når SkybertApp ikke dekker behovet, f.eks. StatefulSet eller DaemonSet. Det SkybertApp ellers gjør for deg må da gjøres manuelt: Workload Identity aktiveres med label og `serviceAccountName` på pod-template (se [Azure Workload Identity](security.md#azure-workload-identity)), og Key Vault-secrets settes opp med SecretStore/ExternalSecret (se [Secrets-mønstre](secrets.md)).
 
-### .NET Health Checks API
+> Kilde: https://docs.sky.fhi.no/workloads/ · https://docs.sky.fhi.no/auth/workload-identity/
 
-Konfigurer separate "live"- og "ready"-tags og map dem til distinkte endepunkter:
+## Jobs og CronJobs
 
-```csharp
-builder.Services.AddHealthChecks()
-    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "live" })
-    .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-                  tags: new[] { "ready" });
+Det finnes ingen Skybert-CRD for batch- eller planlagt arbeid; bruk Kubernetes' `Job`/`CronJob` som vanlige manifester i miljømappen. Førsteklasses Skybert-ressurser for jobbmønstre er planlagt uten dato — meld konkrete behov på `#ext-fhi-skybert`. Jobs og CronJobs får ingen VPA-anbefaling i Grafana.
 
-app.MapHealthChecks("/liveness", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("live")
-});
+> Kilde: https://docs.sky.fhi.no/workloads/jobs/ · https://docs.sky.fhi.no/workloads/resource-sizing/
 
-app.MapHealthChecks("/readiness", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("ready")
-});
-```
+## Helm og Kustomize
 
-### Public vs private endepunkter
+`oci-push`-workflowen i GitOps-repoet oppdager `Chart.yaml` (Helm) og `kustomization.yaml` (Kustomize) i miljømappen og kjører `helm template` / `kustomize build` før innholdet pakkes til OCI-artefaktet; ingen ekstra konfigurasjon trengs.
 
-Kun en enkel "appen kjører"-sjekk bør eksponeres via offentlig ingress. Detaljerte health checks (DB, intern kø, etc.) bør kun være nåbar fra klusteret.
-
-I .NET kan dette begrenses med `.RequireHost("*:<privat-port>")`:
-
-```csharp
-public static WebApplication MapDefaultEndpoints(this WebApplication app, int? privatePort = null)
-{
-    // Public health endpoint — kun "service kjører", ingen detaljer
-    app.MapHealthChecks(HealthEndpointPath, new HealthCheckOptions
-    {
-        Predicate = healthCheck => healthCheck.Tags.Contains("public")
-    }).RequireHost();
-
-    // Private health endpoints — detaljert status, kun fra klusteret
-    var livenessEndpoint = app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
-    {
-        Predicate = healthCheck => healthCheck.Tags.Contains("private") && healthCheck.Tags.Contains("live")
-    });
-
-    var readinessEndpoint = app.MapHealthChecks(ReadinessEndpointPath, new HealthCheckOptions
-    {
-        Predicate = healthCheck => healthCheck.Tags.Contains("private") && healthCheck.Tags.Contains("ready")
-    });
-
-    if (privatePort.HasValue)
-    {
-        livenessEndpoint.RequireHost($"*:{privatePort}");
-        readinessEndpoint.RequireHost($"*:{privatePort}");
-    }
-
-    return app;
-}
-```
-
-> **⚠️ `.RequireHost()` er kun en applikasjonslag-sjekk.** For at barrieren skal være effektiv, må infrastrukturen også passe på å ikke eksponere den private porten gjennom ingress. Dette er et delt ansvar mellom kode og deployment.
-
-For SkybertApp setter du probes via [`probes`-feltet](skybertapp-crd.md#health-probes) — Composition rendrer ferdig liveness-/readiness-/startup-probe på Deployment.
-
-> Kilde: https://docs.sky.fhi.no/miscellaneous/probes/
-
-## Job og CronJob
-
-Det finnes foreløpig ingen Skybert-CRD for batch-arbeid eller planlagte jobber. Bruk Kubernetes sine innebygde `Job`/`CronJob` som vanlige manifester i miljø-mappen (`test/`, `prod/`, osv.).
-
-Plattformteamet har varslet at **førsteklasses Skybert-ressurser for vanlige jobbmønstre er planlagt**, etter samme prinsipp som SkybertApp (fornuftige defaults, mindre boilerplate). Ingen dato er satt. Har teamet ditt et konkret behov, meld det på `#ext-fhi-skybert` — det påvirker prioriteringen. Inntil videre er mønsteret nedenfor det som gjelder.
-
-> Kilde: https://docs.sky.fhi.no/workloads/jobs/
-
-Samme plattform-konvensjoner gjelder som for øvrige workloads:
-
-- Kjør i eget tenant-namespace (`tn-<tenant>`).
-- Bruk Workload Identity ved å sette `serviceAccountName: <tenant>-azure` og labelen `azure.workload.identity/use: "true"` på pod-template (tilsvarende raw Deployment — se [Sikkerhet](security.md)).
-- Secrets via ExternalSecret/SecretStore — se [Secrets-mønstre](secrets.md).
-
-```yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: <tenant>-daily-job
-  namespace: tn-<tenant>
-spec:
-  schedule: "0 2 * * *"
-  jobTemplate:
-    spec:
-      template:
-        metadata:
-          labels:
-            azure.workload.identity/use: "true"
-        spec:
-          serviceAccountName: <tenant>-azure
-          restartPolicy: OnFailure
-          containers:
-            - name: job
-              image: crfhiskybert.azurecr.io/<tenant>/<job-image>:<tag>
-```
-
-> Kilde: https://docs.sky.fhi.no/workloads/jobs/
-
-## Legacy: WebApp og CSI driver
-
-WebApp CRD og Key Vault CSI driver er utdatert — bruk [SkybertApp](skybertapp-crd.md) og
-ESO/inline secrets (se [Secrets-mønstre](secrets.md)) for alle nye deployments.
-Spesifikasjon, migreringsguide og eksempler for eksisterende workloads (WebApp med
-Workload Identity, CSI driver-Deployment, SecretProviderClass, minimal WebApp) er samlet i
-[Legacy: WebApp CRD og CSI driver](legacy-webapp-csi.md).
-
-## Helm-basert deployment
-
-Struktur:
-```
-test/
-  Chart.yaml
-  values.yaml
-  templates/
-    deployment.yaml
-    service.yaml
-```
-
-`test/Chart.yaml`:
-```yaml
-apiVersion: v2
-name: <tenant>-app
-version: 1.0.0
-appVersion: "1.0.0"
-```
-
-`test/values.yaml`:
-```yaml
-image:
-  repository: crfhiskybert.azurecr.io/<tenant>_test
-  tag: latest
-
-ingress:
-  enabled: true
-  hostname: <tenant>.skytest.fhi.no
-```
-
-## Kustomize-basert deployment
-
-`test/kustomization.yaml`:
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-namespace: tn-<tenant>
-
-resources:
-  - deployment.yaml
-  - service.yaml
-  - ingress.yaml
-
-images:
-  - name: app
-    newName: crfhiskybert.azurecr.io/<tenant>_test
-    newTag: latest
-```
+> Kilde: https://docs.sky.fhi.no/build/ · https://docs.sky.fhi.no/get-started/gitops-repo/
 
 ## Postgres i klusteret (CloudNativePG)
 
-CloudNativePG med barman-cloud er en **støttet og offisielt dokumentert** PostgreSQL-løsning,
-på linje med Azure managed og NHN — utrullet på alle ni aktive klustere, med tenant-RBAC
-aggregert i alle miljøer (opt-in-mekanismen er fjernet: CRD-ene finnes nå overalt, og opt-in ga
-stille brekkasje — en tenant med `ObjectStore` på et kluster uten opt-in feilet Flux dry-run og
-blokkerte hele Kustomization-en). Plattformen leverer operator, plugin og RBAC; tenant-teamet
-eier Blob-konto, federated credentials, backupstatus og restore-test.
+CloudNativePG med barman-cloud er et støttet alternativ på linje med Azure managed databases og NHN, tilgjengelig på alle klustere; plattformen leverer operator, plugin og RBAC, mens tenanten eier backup-lagringskontoen og restore-testen. StorageClass-valg, manifestmønstre, RBAC og fallgruver: se [Persistence og CloudNativePG](persistence.md#cloudnativepg).
 
-Se [Persistence og CloudNativePG](persistence.md) for StorageClass-valg, manifestmønstre, RBAC-
-tabellen og de kritiske fallgruvene.
-
-> Kilde: https://docs.sky.fhi.no/persistence/postgres/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/skybert-system/base/tenant-admin-clusterroles/kustomization.yaml
+> Kilde: https://docs.sky.fhi.no/persistence/postgres/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/cloudnative-pg/

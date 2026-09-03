@@ -1,110 +1,68 @@
 # Observability
 
-Skybert bruker **LGTM-stakken** (Loki, Grafana, Tempo, Mimir) for observability, med **Alloy** som felles collector for logger, metrics og traces. Alloy gjør transformasjoner og videresender telemetri til et sentralt ingestion-kluster. Grafana er inngangspunktet for utviklere — brukes til å utforske logger, metrics, dashboards og alerts.
+Hvert kluster kjører sin egen, komplette LGTM-stack: **Loki** (logger), **Mimir** (metrics) og **Grafana** (UI). **Tempo** (traces) er planlagt, ikke tilgjengelig. **Alloy** kjører som DaemonSet på hvert kluster, samler logger og metrics og skriver dem til Loki og Mimir i samme kluster — det finnes ingen sentral ingestion på tvers av klustere. Grafana er inngangspunktet: Explore, Logs Drilldown, dashboards og alerts.
 
-> Kilde: https://docs.sky.fhi.no/observability/
+> Kilde: https://docs.sky.fhi.no/observability/ · https://docs.sky.fhi.no/internal/observability/alloy/
 
 ## Logging med Loki
 
-Applikasjoner logger til stdout/stderr — Alloy scraper automatisk container-logger og beriker dem med Kubernetes-metadata (namespace, pod, deployment) i Loki/Grafana.
+Applikasjoner logger til stdout/stderr. Alloy scraper container-loggene automatisk og setter labelene `namespace`, `pod`, `container`, `node_name` og `app` (hvis podden har en `app`-label). Loki fungerer best med strukturert JSON til stdout — da kan feltene parses ved spørring (`| json | level="error"`).
 
-Tilgang til Grafana er **per kluster** — hvert kluster eksponerer sin egen Grafana-instans. URL-mønsteret er `https://grafana.<color>-<instance>.<domain>`, der `<domain>` er `skytest.fhi.no` for test og `sky.fhi.no` for prod.
-
-| Kluster | Grafana-URL |
-|---------|-------------|
-| aks-sandbox-01 | `https://grafana.sandbox-01.skytest.fhi.no` |
-| aks-green-test-01 | `https://grafana.green-01.skytest.fhi.no` |
-| aks-green-prod-02 | `https://grafana.green-02.sky.fhi.no` |
-| aks-yellow-test-02 | `https://grafana.yellow-02.skytest.fhi.no` |
-| aks-yellow-prod-01 | `https://grafana.yellow-01.sky.fhi.no` |
-| aks-red-test-01 | `https://grafana.red-01.skytest.fhi.no` |
-| aks-red-prod-01 | `https://grafana.red-01.sky.fhi.no` (kun nåbar fra secure zone) |
-
-> Kilde: https://docs.sky.fhi.no/observability/grafana/
-
-LogQL-query for egne logger:
+LogQL for egne logger:
+```logql
+{namespace="tn-<tenant>"} |= "error"
 ```
-{namespace="tn-<tenant>"}
-```
+
+> Kilde: https://docs.sky.fhi.no/observability/logs/
 
 ### Logs Drilldown og nyttige labels
 
-Grafana eksponerer **Logs Drilldown** som gir label-basert navigasjon uten å måtte skrive LogQL manuelt. Nyttige labels:
+**Logs Drilldown** i Grafana gir label-basert navigasjon uten å skrive LogQL. Nyttige labels:
 
 | Label | Typisk bruk |
 |-------|-------------|
-| `namespace` | Filter til `tn-<tenant>` (automatisk gitt av Grafana-datasourcen) |
+| `namespace` | `tn-<tenant>` — settes av Alloy på hver logglinje; må fortsatt angis i LogQL |
 | `pod` | Isoler én pod |
 | `container` | Filtrer mellom main-container og sidecars |
 | `node_name` | Node-nivå feilsøking |
 
-> Kilde: https://docs.sky.fhi.no/observability/logs/
-
-Eksempel strukturert logging:
-```json
-{
-  "timestamp": "2024-01-15T10:30:00Z",
-  "level": "info",
-  "message": "Request processed",
-  "tenant": "<tenant>",
-  "requestId": "abc-123"
-}
-```
+> Kilde: https://docs.sky.fhi.no/observability/logs/ · https://docs.sky.fhi.no/internal/observability/alloy/
 
 ### Loki multi-tenancy og isolasjon
 
-Loki kjøres med `auth_enabled: true` — logger er isolert per tenant via headeren `X-Scope-OrgID: tn-<tenant>`. Dette settes automatisk av Grafana-datasourcen som er klargjort for deg; du trenger ikke konfigurere det selv.
+Loki kjører med `auth_enabled: true`. Alloy setter Loki-tenant lik `namespace`-labelen på hver logglinje, og Grafana-datasourcen i tenantens org sender headeren `X-Scope-OrgID: tn-<tenant>` — du ser kun egne logger og trenger ikke konfigurere noe selv. Oppbevaring: 31 dager (`retention_period: 744h`).
 
-> Kilde (X-Scope-OrgID): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/scripts/lib/grafana/datasource.sh
-
-**Loggoppbevaring:** 31 dager (`retention_period: 744h` i Loki-oppsettet).
-
-> Kilde: https://docs.sky.fhi.no/internal/observability/loki/
-
-### Tips for god logging
-- Bruk strukturert logging (JSON)
-- Inkluder correlation IDs / request IDs
-- Logg på riktig nivå (debug, info, warn, error)
-- Unngå å logge sensitive data
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/loki/base/loki-18.7.6-values.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/grafana/datasource.sh
 
 ### OTLP log ingestion (eksperimentelt)
 
-> **Advarsel:** OTLP log ingestion er per nå ikke ferdig testet. Kontakt plattformteamet før bruk.
+OTLP log ingestion er ikke ferdig testet — kontakt plattformteamet før bruk.
 
-I tillegg til automatisk scraping fra stdout/stderr, støtter Skybert direkte sending av logger til Alloy via OTLP SDK-er. Alloy beriker loggene med Kubernetes-metadata (namespace, pod, deployment) og sender dem til Loki.
+Logger kan sendes direkte til Alloy via OpenTelemetry-SDK-er. Alloy beriker dem med Kubernetes-metadata (namespace, pod, container, node) og sender dem til Loki med samme namespace-routing som scrapede logger.
 
 **Endepunkter (klusterinternt):**
 - HTTP: `alloy.alloy.svc.cluster.local:4318`
 - gRPC: `alloy.alloy.svc.cluster.local:4317`
 
-Alloy bruker `internalTrafficPolicy: Local` slik at OTLP-trafikk havner på Alloy-instansen på *samme node* som workloaden — nødvendig for at `k8sattributes`-prosessoren skal kunne resolve namespace/pod/deployment fra source-IP. **Konsekvens:** OTLP SDK-en MÅ retry ved feil. Under pod-rescheduling kan den lokale Alloy-instansen være borte kortvarig.
+Alloy-servicen har `internalTrafficPolicy: Local`: OTLP-trafikk havner på Alloy-instansen på *samme node* som workloaden, som er nødvendig for at `k8sattributes` skal kunne slå opp pod-metadata fra source-IP. Er den lokale instansen nede (f.eks. under rollout), feiler requesten. SDK-en må derfor konfigureres til å retry ved feil.
 
-> Kilde: https://docs.sky.fhi.no/observability/logs/
+> Kilde: https://docs.sky.fhi.no/observability/logs/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/alloy/base/alloy-1.2.1-values.yaml
 
 ## Metrics med Mimir
 
-**Status per 2026-05-09:** Cluster- og infrastrukturmetrics scrapes automatisk. **Custom application metrics scrapes nå plattformmessig** — legg `prometheus.io/scrape: "true"` + `prometheus.io/port` på pod-template (eller bruk `metrics`-feltet i SkybertApp). Alloy oppdager annoterte pods og remote-writer til Mimir via `cortex-tenant`, som velger `X-Scope-OrgID` slik:
+Cluster- og infrastrukturmetrics (node, cAdvisor container-CPU/-minne) scrapes automatisk og kan spørres uten instrumentering, f.eks. `container_memory_working_set_bytes{namespace="tn-<tenant>"}`. Applikasjonsmetrics scrapes når podden opt-er inn med Prometheus-annotasjoner (eller `metrics`-feltet i SkybertApp). Alloy oppdager annoterte pods og remote-writer til Mimir via `cortex-tenant`, som setter `X-Scope-OrgID` fra labelene på hver serie, i denne rekkefølgen:
 
-1. en eksplisitt `tenant`-label vinner
-2. ellers brukes `namespace`-labelen
-3. mangler begge, havner serien i `cluster_metrics`
+1. `namespace`-labelen (normalt `tn-<tenant>`)
+2. ellers en eksplisitt `tenant`-label
+3. mangler begge, havner serien i `cluster_metrics` — utenfor tenantens Grafana-org
 
-Labelene beholdes på serien (`label_remove: false`). For tenant-metrics er `namespace` normalt `tn-<tenant>`; mangler både `tenant`- og `namespace`-label, havner serien i `cluster_metrics` — utenfor tenantens Grafana-org.
+Labelene beholdes på serien (`label_remove: false`). Metrics er spørrbare i Grafana etter et par minutter.
 
-> Kilde: https://docs.sky.fhi.no/observability/metrics/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/infra/mimir/base/cortex-tenant-0.8.0-values.yaml
-
-### Eksporter Prometheus-metrics på `/metrics`
-
-```python
-# Python eksempel
-from prometheus_client import Counter, Histogram, generate_latest
-
-request_count = Counter('http_requests_total', 'Total requests')
-request_duration = Histogram('http_request_duration_seconds', 'Request duration')
-```
+> Kilde: https://docs.sky.fhi.no/observability/metrics/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/mimir/base/cortex-tenant-0.8.0-values.yaml
 
 ### Konfigurasjon
+
+Eksponer et Prometheus-kompatibelt `/metrics`-endepunkt med et standard klientbibliotek, og legg annotasjonene på pod-template (`.spec.template.metadata.annotations`), ikke på Deployment-metadata:
 
 ```yaml
 metadata:
@@ -121,88 +79,84 @@ metadata:
 | `prometheus.io/path` | Nei | `/metrics` | Path |
 | `prometheus.io/scheme` | Nei | `http` | `http` eller `https` |
 
-Annotasjonene skal stå på pod-template (`.spec.template.metadata.annotations`), ikke på Deployment-metadata.
+**SkybertApp-snarvei:** sett `metrics.port` (og evt. `path`/`scheme`) i SkybertApp-spec, så legger composition annotasjonene på pod-template. Se [SkybertApp CRD — Metrics](skybertapp-crd.md#metrics).
 
-> **SkybertApp-snarvei:** Sett `metrics.port: 9090` (og evt. `path`/`scheme`) i SkybertApp-spec så legger composition annotasjonene automatisk på pod-template. Se [SkybertApp CRD — Metrics](skybertapp-crd.md#metrics).
+Spørreeksempel fra docs:
+```promql
+rate(http_requests_total{namespace="tn-<tenant>"}[5m])
+```
 
-### Anbefalte metrics
-- `http_requests_total` - Antall requests (med labels for status, method, endpoint)
-- `http_request_duration_seconds` - Request latency
-- `http_requests_in_flight` - Pågående requests
-- Applikasjonsspesifikke business metrics
+> Kilde: https://docs.sky.fhi.no/observability/metrics/ · https://docs.sky.fhi.no/internal/observability/alloy/
 
 ### Ressursanbefalinger i Grafana
 
-Plattformen kjører **Goldilocks med VPA i anbefalingsmodus** i alle `tn-*`-namespaces. Goldilocks'
-eget dashboard er **deaktivert** — anbefalingene eksponeres i stedet gjennom den ordinære
-observability-stacken: kube-state-metrics plukker opp VPA-objektene, og de er søkbare i Grafana på
-linje med andre metrics.
+VPA-anbefalingene leses i standard-dashboardet (**Tenant Overview**), tabellen **Request vs Recommendation** under *Resource requests*. Hvordan VPA-objektene opprettes, og at de aldri endrer pods, står i [Kyverno-policier — Ressursanbefalinger](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa).
 
-VPA-recommenderen bruker historiske metrics fra Mimir (via en intern `vpa-mimir-proxy`) framfor sitt
-eget checkpoint-lager, slik at anbefalingene bygger på faktisk forbruk over tid og overlever restart
-av recommenderen.
+- Én rad per `workload · container`. SkybertApp-rader bruker det composede Deployment-navnet (`<app>-deployment`); native sidecars er med; Jobs og CronJobs har ikke VPA-target.
+- `CPU/Mem vs target` er `request ÷ recommendation × 100` (100 % = samsvar; manglende requests vises som `No request`). `current` er request på kjørende pod, `rec` er VPA-target.
+- Recommenderen går ikke under **15 millicores / 100 MB** — en ny eller lite belastet tjeneste ligger på gulvene til den har sett reell last.
+- Anbefalt praksis: start med SkybertApp-defaults (`150m` / `256Mi`), kjør minst en uke under forventet last, og sett deretter `spec.resources` i Git til targetet (Flux applyer). VPA øker memory-anbefalingen betydelig etter OOM-kill.
 
-Raskeste vei til anbefalingene er `sk8 policies --tenant <tenant>` — se
-[kubectl-tilgang](kubectl-access.md#sk8-cli--automatisert-pim--proxy). Bakgrunn og hva VPA-objektene
-gjør (og ikke gjør): [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa).
+Bakgrunn: recommenderen leser bruks-historikk fra Mimir-orgen `cluster_metrics` (cAdvisor dual-writes dit via Alloy), mens Grafana-tabellen leser VPA-gauges fra kube-state-metrics i tenant-orgen.
 
-I standard-dashboardet (**Tenant Overview**) viser tabellen **Request vs Recommendation** (under
-Resource requests) én rad per `workload · container` — SkybertApp-rader med composed navn
-`<app>-deployment`; native sidecars inkludert; Jobs/CronJobs får ikke VPA-target.
-`CPU/Mem vs target` er `request ÷ recommendation × 100` (≈100 % = samsvar; manglende requests
-vises som `No request`); `current` er kjørende request, `rec` er VPA-target.
-
-Recommender-gulvet er **15 millicores / 100 MB** — en ny eller lite belastet tjeneste ligger på
-gulvene til den har sett reell last. Anbefalt praksis: start med SkybertApp-defaults (`150m` /
-`256Mi`), kjør **minst en uke under forventet last**, og commit deretter et vurdert target i
-Git (Flux applyer). VPA øker memory-anbefalingen betydelig etter OOM-kill. Anbefalingene er
-**recommend-only** — pods beholder requests fra Git.
-
-*Intern bakgrunn:* recommenderen leser bruks-historikk fra Mimir-orgen `cluster_metrics`
-(cAdvisor dual-writes dit via Alloy), mens Grafana-tabellen leser VPA-gauges fra
-kube-state-metrics i tenant-orgen.
-
-> Kilde: https://docs.sky.fhi.no/workloads/resource-sizing/
-> Kilde: https://docs.sky.fhi.no/observability/grafana/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/goldilocks/base/goldilocks-10.4.1-values.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/resource-sizing/ · https://docs.sky.fhi.no/internal/observability/vpa/
 
 ### Kyverno PolicyReport som metrics
 
 kube-state-metrics eksponerer Kyverno `PolicyReport` til Mimir via CustomResourceState:
 
 - `kube_policyreport_summary` — antall per result (`pass`, `fail`, `warn`, `error`, `skip`)
-- `kube_policyreport_result_info` — én serie per resultat, med labels som `policy`, `rule`,
-  `result`, `severity` og `message`
+- `kube_policyreport_result_info` — én serie per resultat, med labels `policy`, `rule`, `result`, `severity`, `category` og `message`
 
-Filtrer tenant-visninger med `namespace=~"tn-.*"` (kildekommentaren anbefaler samme filter).
-Dette gjør policy-funn (f.eks. `resource-limits`- og `recommend-network-policy`-audits)
-synlige i Grafana uten kubectl.
+Filtrer tenant-visninger med `namespace=~"tn-.*"`. Dette gjør policy-funn (f.eks. `resource-limits`- og `recommend-network-policy`-audits) synlige i Grafana uten kubectl.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/kube-state-metrics/base/kube-state-metrics-7.3.0-values.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kube-state-metrics/base/kube-state-metrics-7.3.0-values.yaml
 
 ### Custom-metrics-HPA (planlagt)
 
-Plattformteamet vurderer KEDA for autoskalering basert på request rate, kø-dybde, latens m.m. Kontakt `#ext-fhi-skybert` med use case for å påvirke designet.
+Plattformteamet planlegger autoskalering på egne metrics (request rate, kø-dybde, latens) med KEDA. Meld behov i `#ext-fhi-skybert`.
+
+> Kilde: https://docs.sky.fhi.no/observability/metrics/
 
 ## Tracing med Tempo
 
-Distribuert tracing via **Tempo** er **planlagt, foreløpig ikke tilgjengelig** på plattformen. Forbered appen ved å instrumentere med OpenTelemetry (SDK-er for .NET/Python/Node m.fl.) slik at tracing fungerer den dagen Tempo slås på — men ikke regn med funksjonalitet i dag. Kontakt plattformteamet for oppdatert status.
+Distribuert tracing via **Tempo** er planlagt, ikke tilgjengelig for tenanter. Instrumenter appen med OpenTelemetry (auto-instrumentering for ASP.NET, Spring Boot, Flask m.fl.) så traces fungerer når Tempo slås på, men ikke regn med funksjonalitet i dag. Er tracing viktig for teamet, si fra i `#ext-fhi-skybert`.
 
 > Kilde: https://docs.sky.fhi.no/observability/tracing/
 
-## Grafana Dashboards
+## Grafana
 
-Grafana er forhåndskonfigurert med et **standard-dashboard** laget av plattformteamet. Det dekker
-workload health, Flux, ressursbruk, logger og en **Request vs Recommendation**-tabell som
-sammenligner CPU-/memory-requests med VPA-targets (se
-[Ressursanbefalinger i Grafana](#ressursanbefalinger-i-grafana)). Dashboardet vedlikeholdes av plattformteamet og kan bli oppdatert når som helst — endringer du gjør i det via web-UI kan bli overskrevet. Vil du tilpasse det, kopier det til et eget dashboard som du vedlikeholder selv.
+Hvert kluster har sin egen Grafana-instans. URL-mønsteret er `https://grafana.<color>-<instance>.<domain>`, der `<domain>` er `skytest.fhi.no` for non-prod og `sky.fhi.no` for prod.
+
+| Kluster | Grafana-URL |
+|---------|-------------|
+| aks-sandbox-01 | `https://grafana.sandbox-01.skytest.fhi.no` |
+| aks-green-test-01 | `https://grafana.green-01.skytest.fhi.no` |
+| aks-green-prod-02 | `https://grafana.green-02.sky.fhi.no` |
+| aks-yellow-test-02 | `https://grafana.yellow-02.skytest.fhi.no` |
+| aks-yellow-prod-01 | `https://grafana.yellow-01.sky.fhi.no` |
+| aks-red-test-01 | `https://grafana.red-01.skytest.fhi.no` |
+| aks-red-prod-01 | `https://grafana.red-01.sky.fhi.no` (kun nåbar fra secure zone) |
+
+Du logger inn med FHI-bruker (Entra ID) og lander i Grafana-organisasjonen som tilhører tenanten. Alerts settes opp av tenanten selv i egen org.
 
 > Kilde: https://docs.sky.fhi.no/observability/grafana/
 
-Tilgang dashboards for:
-- Pod-metrics (CPU, minne, nettverk)
-- HTTP-metrics (RPS, latency, errors)
-- Custom app-metrics (eksponer `/metrics` og opt-in via Prometheus-annotasjoner eller SkybertApp `metrics`-feltet — se "Metrics med Mimir" over)
+### Grafana multi-tenancy
+
+Plattformen oppretter ved onboarding (`ska tenant bootstrap grafana`) én **Grafana-organisasjon per tenant per kluster**, med:
+- **Loki-datasource** og **Mimir-datasource** scopet til `tn-<tenant>` via `X-Scope-OrgID` — kun egne logger og metrics er synlige
+- Entra-gruppe → org-mapping (patchet inn per kluster i `infra/grafana/<cluster>/patch-orgs.yaml`)
+
+Målklustere er de tenanten er rullet ut på (utledet fra `tenants/<tenant>/<cluster>/`), eller de plattformteamet angir eksplisitt.
+
+> Kilde: https://docs.sky.fhi.no/internal/managing-tenants/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/scripts/lib/grafana/
+
+### Standard-dashboard
+
+Grafana er forhåndskonfigurert med et standard-dashboard (**Tenant Overview**) fra plattformteamet. Det dekker workload health, Flux, ressursbruk, logger og **Request vs Recommendation**-tabellen (se [Ressursanbefalinger i Grafana](#ressursanbefalinger-i-grafana)). Dashboardet kan bli oppdatert når som helst — endringer du gjør i det via web-UI kan bli overskrevet. Vil du tilpasse det, kopier det til et eget dashboard. Dashboards teamet skal beholde over tid bør eksporteres til JSON og forvaltes via ConfigMap-flyten under.
+
+> Kilde: https://docs.sky.fhi.no/observability/grafana/
 
 ### Dashboards fra GitOps (ConfigMap)
 
@@ -245,45 +199,4 @@ data:
 - **Maks `data.json`: 900 000 bytes** (Kubernetes-ressursgrense). Større payloads avvises ved validering. Kontakt `#ext-fhi-skybert` ved behov.
 - **Metrics i Mimir:** `syncer_dashboard_configmaps` og `syncer_malformed_dashboard_configmaps` (oppdateres hvert minutt).
 
-> Kilde: https://docs.sky.fhi.no/observability/grafana/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/infra/grafana/base/dashboard-syncer.yaml
-
-### PromQL eksempler
-
-```promql
-# Request rate per sekund (5 min gjennomsnitt)
-rate(http_requests_total{namespace="tn-<tenant>"}[5m])
-
-# 95th percentile latency
-histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{namespace="tn-<tenant>"}[5m]))
-
-# Error rate
-sum(rate(http_requests_total{namespace="tn-<tenant>",status=~"5.."}[5m])) / sum(rate(http_requests_total{namespace="tn-<tenant>"}[5m]))
-
-# Memory usage
-container_memory_usage_bytes{namespace="tn-<tenant>"}
-
-# CPU usage
-rate(container_cpu_usage_seconds_total{namespace="tn-<tenant>"}[5m])
-```
-
-### Grafana multi-tenancy
-
-Hver tenant har sin egen **Grafana-organisasjon** med:
-- **Loki-datasource** — filtrert til `tn-<tenant>` (kun egne logger synlig)
-- **Mimir-datasource** — filtrert til `tn-<tenant>` (kun egne metrics synlig)
-- Tilgang gis via Entra ID-gruppe gjennom `org_mapping`-konfigurasjon (satt opp av plattformteamet ved onboarding)
-
-Entra-gruppen mappes inn i Grafana-instansen på alle klustere i fargegruppen din (sandbox, test og prod).
-
-Du logger inn med FHI-bruker. Grafana plasserer deg i riktig organisasjon basert på Entra-gruppemedlemskap via `org_mapping`.
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/f9d7cc36e9f8e50abe39234495debcebc8bf3332/scripts/tenant--bootstrap--grafana.sh
-
-## Alerting
-
-Kontakt Skybert-teamet for å sette opp alerts basert på:
-- Error rates over terskel
-- Latency over SLO
-- Pod restarts
-- Resource usage
+> Kilde: https://docs.sky.fhi.no/observability/grafana/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/grafana/base/dashboard-syncer.yaml

@@ -4,11 +4,11 @@
 
 - **Seksjonsbasert patching** — oppdater kun seksjoner med evidensbasert grunnlag, behold øvrige uendret.
 - Endre kun innhold som er eksplisitt godkjent.
-- Behold eksisterende tekst uendret hvis den er korrekt — selv om du ville formulert det annerledes.
+- Behold eksisterende tekst uendret hvis den er korrekt, Skybert-spesifikk og har Kilde eller Operasjonell antakelse-merke — selv om du ville formulert det annerledes. Regelen verner ikke generisk, duplisert eller umerket kildeløs tekst.
 - Ikke omformuler/omstruktur avsnitt som er faktariktige.
 - Alle endringer begrunnes med konkret observasjon fra kildene.
 - Skill-innhold skrives for AI-agent — presis, unngå tvetydighet.
-- Foretrekk konkrete kodeeksempler fremfor prose.
+- Ett minimalt eksempel per Skybert-spesifikt konsept, i kanonisk fil. Eksempler som viser generisk K8s/Helm/CI-syntaks erstattes med prosa + lenke (hovedregel 8).
 
 ---
 
@@ -17,14 +17,17 @@
 | Kildetype | Format |
 |-----------|--------|
 | Docs-repo | `> Kilde: https://docs.sky.fhi.no/<sti>/` |
-| Infra-repo (fil) | `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/<commit>/<filbane>` |
-| Infra-repo (katalog) | `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/<commit>/<katalogbane>/` |
-| Kombinert | Oppgi begge kilder |
+| Infra-repo (fil) | `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/<filbane>` |
+| Infra-repo (katalog) | `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/<katalogbane>/` |
+| Kombinert | Én linje: `> Kilde: <docs-url> · <infra-url>` |
 | Web-scraping | `> Kilde: https://docs.sky.fhi.no/<sti>/` |
-| Ingen kilde (manuelt kuratert) | Behold eksisterende referanser — legg ikke til ny |
+| Ingen repo-kilde | `> **Operasjonell antakelse:** <én setning om hvorfor den er Skybert-spesifikk>` (se hovedprinsipper.md) |
 
-Referansen plasseres direkte etter avsnittet/seksjonen den gjelder.
-Hvis et avsnitt allerede har en kilde-referanse, oppdater URL-en hvis den har endret seg.
+Regler:
+- Maks én `> Kilde:`-linje per seksjon (H2/H3), plassert sist i seksjonen.
+- Aldri commit-SHA, tag eller dato i lenken. Verifiserings-SHA bor kun i `skybert/.oppdater-state.json`.
+- Migrering: eksisterende SHA-lenker (`blob/<sha>/`, `tree/<sha>/`) skrives om til `main`. Finnes ikke stien lenger på `main` → finn ny sti eller behandle påstanden som `utdatert`.
+- Hvis en seksjon allerede har en kilde-referanse, oppdater URL-en hvis den har endret seg.
 
 ---
 
@@ -45,6 +48,7 @@ Opprettes kun ved godkjente `ny-fil`-poster i endringsplanen. Krav:
 - Standard overskrift med filnavn og emne
 - Kildereferanser for alt innhold
 - Legges til i forutsetninger-treet i `SKILL.md`
+- Ny fil overtar temaet fullstendig: eksisterende omtaler i andre filer reduseres til kryssreferanse i samme kjøring (`OMSTRUKTURER` med `kanonisk:`-flagg), og routing-tabellen får raden pekt til den nye filen. En ny fil skal ikke sameksistere med en eldre fil om samme tema.
 
 ---
 
@@ -59,12 +63,10 @@ Skybert-skillen (`skybert/SKILL.md`) skal inneholde en seksjon som anbefaler bru
 |---------|-------|
 | Tenant | `<tenant-navn>` |
 | Sikkerhetssone | Groenn / Gul / Roed |
-| Test namespace | `tn-<tenant>` |
-| Prod namespace | `tn-<tenant>` |
+| Namespace (alle miljøer) | `tn-<tenant>` |
 | Test hostname | `<app>.skytest.fhi.no` |
 | Prod hostname | `<app>.sky.fhi.no` |
 | ACR image | `crfhiskybert.azurecr.io/<tenant>/<app>` |
-| Deployment | `<app>-deployment` |
 | Azure tenant ID | `<azure-tenant-id>` |
 ```
 
@@ -77,29 +79,43 @@ Ved fullscan: sjekk om `skybert/SKILL.md` inneholder en "Skybert-verdier i CLAUD
 Etter implementering, verifiser:
 
 1. Alle docs-sider fra dekningsmatrisen er nå sporet til et sted i skillen.
-2. Ingen eksisterende skill-seksjon er slettet uten positiv evidens (sjekk bevaringsseksjonen).
+2. Hver `FJERN` har oppgitt grunn; for `duplikat` er kanonisk plassering oppgitt og innholdet verifisert til stede der; for `feil`/`utdatert` er motsigende kilde oppgitt (sjekk seksjonen «Fjernet innhold» i UPDATE-PLAN.md).
 3. Alle nye referansefiler som ble godkjent er opprettet.
 4. Infra-funn som ikke passet eksisterende struktur er enten i ny fil eller eksplisitt droppet med begrunnelse.
 5. Interne temaer er merket som interne.
 6. Ingen sensitiv informasjon fra infra-repo er inkludert.
 7. Alle `OMSTRUKTURER`-endringer har beholdt alle detaljer fra opprinnelig plassering.
-8. Statiske kopier i `references/skybertapp/` er synkronisert hvis XRD/composition/functions ble endret, og provenance-blokken i `skybertapp-render.md` er oppdatert (gjelder kun GitHub-modus).
+8. Statiske kopier i `references/skybertapp/` er synkronisert hvis XRD/composition/functions ble endret; provenance er `github.infra.commit` i state-filen. `skybertapp-render.md` skal ikke inneholde SHA, dato eller refresh-prosedyre (gjelder kun GitHub-modus).
 9. Routing-tabellen har rad(er) for alle nye målfiler som ble opprettet.
 10. `openItems` i `skybert/.oppdater-state.json` er ajourført: utsatte (`deferred`), delvis implementerte (`partial`) og verifikasjonsfeilede (`failed-verification`) poster lagt til/oppdatert, avklarte/fullførte fjernet. Se [analyseregler.md](analyseregler.md).
+11. Ingen `> Kilde:`-lenke inneholder commit-SHA: `git grep -nE '(blob|tree)/[0-9a-f]{7,40}/' -- skybert/` gir null treff. Ingen seksjon har mer enn én Kilde-linje.
+12. Ingen datostempler/historikk i brødtekst: `git grep -nEi '(per |status per |sist oppdatert |verifisert (mot|per) )20[0-9]{2}|ikke lenger|tidligere var|under utrulling' -- skybert ':!*.json'` gir kun treff på «Sist verifisert»-linjene i `skybert/SKILL.md`.
+13. Alle avsnitt uten `> Kilde:` er merket `> **Operasjonell antakelse:**`.
+14. Duplikatsøk: ingen YAML-blokk over 5 linjer og ingen nøkkelverdi-tabell finnes i mer enn én fil.
 
 ---
 
-## Bevaringsseksjon i UPDATE-PLAN.md
+## Operasjonelle antakelser og fjernet innhold i UPDATE-PLAN.md
 
-UPDATE-PLAN.md skal inneholde en egen **Bevaringsseksjon** som dokumenterer all skill-innhold som beholdes selv om det ikke finnes i repoene:
+UPDATE-PLAN.md skal inneholde en seksjon **Operasjonelle antakelser (bevart uten repo-kilde)** som dokumenterer alt skill-innhold som beholdes selv om det ikke finnes i repoene:
 
 ```markdown
-## Bevart innhold uten repo-kilde
+## Operasjonelle antakelser (bevart uten repo-kilde)
 
-| Skill-fil | Seksjon | Innhold (kort) | Begrunnelse for bevaring |
-|-----------|---------|----------------|--------------------------|
-| SKILL.md | Subscription IDs | Azure-verdier | Plattformteam-kunnskap |
-| troubleshooting.md | ImagePullBackOff | Feilsøkingstips | Erfaringsbasert |
+| Skill-fil | Seksjon | Påstand | Hvorfor Skybert-spesifikk | Re-validert mot |
+|-----------|---------|---------|---------------------------|-----------------|
+| kubectl-access.md | ACR-pull lokalt | `az acr login` + `docker pull` mot `crfhiskybert` | Registry og tilgangsmodell er Skybert-spesifikk | `docs/build/index.md` |
 ```
 
-Denne seksjonen sikrer sporbarhet: det er dokumentert *hvorfor* innhold uten kilde beholdes.
+Og en søsterseksjon **Fjernet innhold** som gjør hver `FJERN` sporbar:
+
+```markdown
+## Fjernet innhold
+
+| Skill-fil | Seksjon | Grunn | Motsigende kilde eller kanonisk plassering |
+|-----------|---------|-------|--------------------------------------------|
+| security.md | Azure Subscriptions per sikkerhetssone | feil | `scripts/lib/clusters.sh` (navnene finnes ikke) |
+| kubectl-access.md | k9s-tastetabell | generisk | — |
+```
+
+Seksjonene sikrer sporbarhet: det er dokumentert *hvorfor* innhold uten kilde beholdes, og *hvorfor* innhold ble fjernet.

@@ -1,6 +1,6 @@
 ---
 name: oppdater-skybert
-description: Oppdaterer skybert-skillen basert på kilderepoene FHISkybert/Fhi.Skybert.Docs og FHISkybert/Fhi.Skybert.Infra, eller via web-scraping av docs.sky.fhi.no for de uten repo-tilgang. Sammenligner med alle eksisterende filer i skybert/ og lager en endringsplan til gjennomgang. Bruk denne skillen når skybert-skillen skal synkroniseres med nye kilder, eller når du mistenker at skillen er utdatert eller mangelfull.
+description: Oppdaterer skybert-skillen basert på kilderepoene FHISkybert/Fhi.Skybert.Docs og FHISkybert/Fhi.Skybert.Infra, eller via web-scraping av docs.sky.fhi.no for de uten repo-tilgang. Sammenligner med alle eksisterende filer i skybert/ og lager en endringsplan til gjennomgang. Fjerner innhold som er feil, utdatert, generisk eller duplisert, og merker erfaringsbasert innhold eksplisitt. Bruk denne skillen når skybert-skillen skal synkroniseres med nye kilder, eller når du mistenker at skillen er utdatert eller mangelfull.
 ---
 
 # Oppdater Skybert-skillen
@@ -9,6 +9,8 @@ Denne skillen beskriver arbeidsflyten for å holde `skybert/`-skillen i dette re
 
 - **FHISkybert/Fhi.Skybert.Docs** — MkDocs-basert dokumentasjon (publisert på docs.sky.fhi.no)
 - **FHISkybert/Fhi.Skybert.Infra** — Flux GitOps infra-repo med CRD-definisjoner, Kyverno-policier, tenant-bootstrap
+
+Styrende prinsipp: **repo-basert + bevar korrekt, Skybert-spesifikk erfaring**. Alt i `skybert/` skal enten være sporbart til kildene (`> Kilde:`) eller eksplisitt merket `> **Operasjonell antakelse:**`; generisk kunnskap, duplikater og historikk fjernes. Se [hovedprinsipper.md](references/hovedprinsipper.md).
 
 ## Underdokumenter
 
@@ -47,7 +49,7 @@ skybert/
     ├── troubleshooting.md                   (feilsoeking)
     ├── hostnames-and-networking.md          (domener, TLS, ingress-regler)
     ├── flux-tooling.md                      (Flux dashboard, Flux MCP)
-    ├── skybertapp-render.md                 (lokal rendering med crossplane render)
+    ├── skybertapp-render.md                 (lokal rendering med crossplane render — ingen provenance i filen; synk-SHA i .oppdater-state.json)
     └── skybertapp/                          (STATISKE KOPIER fra infra-repo — se github-modus.md)
         ├── xrd.yaml                         (kopi av infra/crossplane/base/xrds/skybertapp.yaml)
         ├── composition.yaml                 (kopi av infra/crossplane/base/compositions/skybertapp.yaml)
@@ -169,6 +171,7 @@ dekning (se «Videreført dekning i FULL-modus» i steg 4).
 ### Regler
 
 - State-filen oppdateres kun etter vellykket Apply (steg 9)
+- State-filen er eneste sted for SHA-er og verifiseringsdatoer. Brødteksten i `skybert/` skal ikke inneholde dem (kontrollpunkt 11–12 i [implementeringsregler.md](references/implementeringsregler.md))
 - `lastFullscanDate` oppdateres kun ved FULL-modus, og kun når matrise A faktisk er komplett
   (se steg 4). Ufullstendig gjennomgang → la `lastFullscanDate` stå urørt
 - **Migrering fra eldre format:**
@@ -234,10 +237,7 @@ Hent og les alle relevante kildefiler basert på tilgangsmodus.
 - **GitHub-modus:** Se [github-modus.md](references/github-modus.md) for discovery pass, detaljert leserekkefølge, seleksjonsregler og filhenting.
 - **Web-scraping-modus:** Se [webscraping-modus.md](references/webscraping-modus.md) for search_index.json-henting, HTML-ekstraksjon og scope-regler.
 
-**Forste kjoring (migrering fra gammelt format):**
-- ALL eksisterende informasjon i skybert/-filene bevares
-- Manuelt lagt inn informasjon (uten `> Kilde:`-referanse) bevares alltid med mindre den er beviselig feil
-- Nye filer foreslås som `NY`/`ny-fil`-poster i planen — de erstatter ikke eksisterende innhold
+**Første kjøring (uten state-fil):** følger samme regler som FULL; det finnes ingen særvern for eksisterende innhold. Nye filer foreslås som `NY`/`ny-fil`-poster i planen.
 
 ---
 
@@ -250,9 +250,12 @@ Sammenlign den faktiske fillisten med Forutsetninger-treet i denne filen — avv
 For hvert avsnitt:
 - Noter innhold og struktur
 - Identifiser kildereferanser (`> Kilde:`)
-- Identifiser manuelt kuratert innhold (avsnitt uten `> Kilde:`-referanse)
+- Identifiser umerkede avsnitt (verken `> Kilde:` eller `> **Operasjonell antakelse:**`)
+- Noter duplikatkandidater (ordrett like blokker, gjentatte nøkkelverdier eller tabeller på tvers av filer)
+- Noter datostempler og historikk i brødtekst
+- Noter `> Kilde:`-lenker med commit-SHA
 
-For statiske kopier (YAML): noter provenance (commit i `skybertapp-render.md`) og sammenlign med gjeldende kildefil i infra-repo — se «Statiske kopier» i [github-modus.md](references/github-modus.md).
+For statiske kopier (YAML): noter `github.infra.commit` fra state-filen og sammenlign med gjeldende kildefil i infra-repo — se «Statiske kopier» i [github-modus.md](references/github-modus.md).
 
 ---
 
@@ -283,8 +286,8 @@ oppfylt — er én av dem brutt, skal sidene leses på nytt:
 **Unntak som alltid leses på nytt:** endrede sider, nye sider, og sider med en åpen post i
 `openItems`.
 
-Matrise B og C, XRD-feltdekningssjekken, sammenligning av statiske kopier og re-validering av
-operasjonelle antakelser kjøres uansett i full bredde — de er ikke omfattet av videreføringen.
+Matrise B og C, XRD-feltdekningssjekken, sammenligning av statiske kopier, re-validering av
+operasjonelle antakelser samt duplikatsøk og generisk-test (se [analyseregler.md](references/analyseregler.md)) kjøres uansett i full bredde — de er ikke omfattet av videreføringen.
 
 **`lastFullscanDate` settes kun når matrise A faktisk er komplett** for alle docs-sider — enten
 lest på nytt eller gyldig videreført etter reglene over. Er gjennomgangen ufullstendig, skal
@@ -297,7 +300,7 @@ dekningsgjelden synlig, og neste kjøring trigger FULL på nytt.
 
 Sammenlign kildeinnhold med eksisterende skybert/-filer. Bruk routing fra [routing-tabell.md](references/routing-tabell.md) og regler fra [analyseregler.md](references/analyseregler.md).
 
-Kategoriser hver endring som: `NY`, `UTVID`, `KORRIGER`, `OMSTRUKTURER`, `FORBEDRING`, `FJERN` eller `VURDER`.
+Kategoriser hver endring som: `NY`, `UTVID`, `KORRIGER`, `OMSTRUKTURER`, `FORBEDRING`, `FJERN` eller `VURDER`. `FJERN` krever `fjerningsgrunn`-flagg; `duplikat` krever `kanonisk:`-flagg.
 
 **Ved INKREMENTELL:** Routing-tabellen er ikke nok — utfør også konsekvenssjekken beskrevet i [github-modus.md](references/github-modus.md) (søk i hele `skybert/` etter avledede påstander som berøres av endrede nøkkelverdier). Inkluder alle åpne poster fra `openItems` i state-filen i planen på nytt (utsatte, delvis implementerte og poster som feilet verifikasjon).
 
@@ -310,8 +313,10 @@ Skriv `.tmp/oppdater-skybert/UPDATE-PLAN.md` med disse seksjonene:
 1. **Header:** Generert-dato, modus (FULL/INKREMENTELL), tilgangsmodus (GitHub/Web-scraping), kilder med SHA og dato, CRD API-versjon
 2. **Paavirkede filer:** Tabell med fil, antall endringer og kategorier
 3. **Dekningsanalyse:** Matrise A, B, C (se [github-modus.md](references/github-modus.md) / [webscraping-modus.md](references/webscraping-modus.md))
-4. **Endringer:** Per endring: fil, kategori, kilde, informasjonstype (dokumentert fakta / utledet monster / operasjonell antakelse), naavarende tekst, foreslatt tekst, begrunnelse
-5. **Bevart innhold uten repo-kilde:** Se [implementeringsregler.md](references/implementeringsregler.md)
+4. **Endringer:** Per endring: fil, kategori, flagg, kilde, informasjonstype (dokumentert fakta / utledet monster / operasjonell antakelse), naavarende tekst, foreslatt tekst, begrunnelse
+5. **Operasjonelle antakelser (bevart):** Se [implementeringsregler.md](references/implementeringsregler.md)
+6. **Fjernet innhold:** per post: fil, seksjon, grunn, motsigende kilde eller kanonisk plassering
+7. **Hygienesjekk:** antall SHA-lenker funnet/omskrevet, datostempler funnet/fjernet, umerkede avsnitt funnet/håndtert, duplikater funnet/konsolidert
 
 State-informasjon for inkrementell oppdatering skrives til `skybert/.oppdater-state.json` i steg 9.
 
@@ -322,8 +327,9 @@ State-informasjon for inkrementell oppdatering skrives til `skybert/.oppdater-st
 Presenter:
 1. Sammendrag: antall endringer per kategori og per fil
 2. CRD-versjonsstatus (endret/uendret)
-3. Fullstendig endringsplan
-4. Advarsel om `VURDER`-poster
+3. Sammendrag av `FJERN` per grunn, med antall linjer
+4. Fullstendig endringsplan
+5. Advarsel om `VURDER`-poster
 
 Brukeren kan: godkjenne alle, godkjenne delvis, eller avvise alle.
 **Ingen endringer i skybert/-filer uten eksplisitt godkjenning.**
@@ -389,10 +395,11 @@ Ved **INKREMENTELL** modus trigges selvoppdatering når compare-output inneholde
 2. **Sti-baserte filtermoenstre** — Har mappestrukturen endret seg?
 3. **State-format** — Er `schemaVersion` i `.oppdater-state.json` konsistent med State-kontrakten? Har `skybert/SKILL.md` fått en state-kommentar den ikke skal ha?
 4. **Nye emner** — Nye dokumentasjonsomrader uten dekning i routing eller filstruktur?
-5. **Forutsetninger-treet** — Stemmer det med faktisk filliste i `skybert/` (fra steg 3)?
+5. **Forutsetninger-treet** — Stemmer det med faktisk filliste i `skybert/` (fra steg 3)? Filer i `skybert/` som mangler i treet, eller to filer om samme tema, er avvik.
    **Unntak:** manglende `.oppdater-coverage.json` er **ikke** strukturdrift og skal ikke gi
    selvoppdaterings-post. Filen skrives først ved en komplett FULL (se steg 4/9), så den er
    forventet fraværende inntil da.
+6. **Prinsippdrift** — Inneholder `skybert/` igjen `> Kilde:`-lenker med commit-SHA, datostempler i brødtekst, umerkede kildeløse avsnitt, dupliserte blokker eller to filer om samme tema? Det betyr at reglene i denne skillen ikke ble fulgt eller er uklare — rapporter som selvoppdaterings-post med forslag til regelpresisering.
 
 ### Output
 
@@ -412,6 +419,6 @@ Rapporteres som egen seksjon i UPDATE-PLAN.md med per-endring: fil, type (routin
 | Ikke-kritisk fil 404 | Logg som manglende, fortsett |
 | SHA-compare feiler | Fall tilbake til FULL modus |
 | State-fil ugyldig/uparsebar | Behandle som forste kjoring (FULL); migrer fra ev. gammel HTML-kommentar |
-| WIP/placeholder docs-side | `VURDER`, aldri bruk til å fjerne eksisterende |
+| WIP/placeholder docs-side | `VURDER`; aldri bruk som `feil`/`utdatert`-evidens. `generisk`/`duplikat`/`meta` berøres ikke av WIP-status |
 | Sensitiv info oppdaget | Ekskluder per sikkerhetsfiltreringsreglene |
 | Nye/ukjente filtyper i repoene | Les og vurder relevans via discovery pass |
