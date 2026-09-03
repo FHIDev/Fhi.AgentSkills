@@ -1,6 +1,7 @@
 # SkybertApp CRD-spesifikasjon
 
-**Kilde:** https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/
+Kanonisk feltreferanse for `SkybertApp`, med genererte ressurser og navnekonvensjoner. Feltene er
+verifisert mot XRD-en og compositionen i infra-repoet; docs-siden er sekundær der de avviker.
 
 ## API
 
@@ -9,27 +10,13 @@ apiVersion: skybert.fhi.no/v1alpha1
 kind: SkybertApp
 ```
 
-**Status:** Alpha - kan ha breaking changes.
+Namespaced Crossplane XRD (`skybertapps.skybert.fhi.no`), servert på alle klustere. En parallell
+beta-XRD `skybert-beta.fhi.no/v1beta1` med `network`-felt finnes kun på `aks-ops-test-01` — se
+[Ingress (nginx) og Gateway API (Envoy Gateway)](hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway).
+WebApp (`skybert.fhi.no/v1`) er udokumentert i docs; bruk SkybertApp for nye workloads — se
+[Legacy: WebApp CRD og CSI driver](legacy-webapp-csi.md).
 
-### Forhåndsvarsel: `skybert-beta.fhi.no/v1beta1`
-
-En **parallell** XRD er under utprøving på `aks-ops-test-01`: gruppe `skybert-beta.fhi.no`, versjon
-`v1beta1`. Det er ikke en versjonsmigrering av `skybert.fhi.no/v1alpha1` — de to eksisterer side om
-side under hvert sitt gruppenavn, og v1alpha1 er fortsatt den du skal bruke.
-
-Schemaet er identisk med v1alpha1 bortsett fra ett nytt felt, som viser hvordan nettverksvalg
-sannsynligvis kommer til å bli eksponert ved Gateway API-migreringen:
-
-```yaml
-network:            # enum: fhinett | helsenett | internett — default: fhinett
-```
-
-Verdiene er identiske med GatewayClass-navnene som allerede er i bruk (tidligere forkortelser
-`hnett`/`inett` er forkastet i schemaet; XRD-feltbeskrivelsen nevner fortsatt de gamle navnene,
-men enum + composition er autoritative) — se [Hostnavn og nettverk](hostnames-and-networking.md).
-Ikke tilgjengelig på tenant-klustere per 2026-09-01.
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/infra/crossplane/aks-ops-test-01/xrds/skybertapp-beta.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp.yaml
 
 ## Quick Start
 
@@ -45,6 +32,8 @@ spec:
     tag: v1.0.0
 ```
 
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/
+
 ## Spec Reference
 
 ### Container
@@ -56,12 +45,16 @@ spec:
 | `port` | integer | `8080` | Port applikasjonen lytter på |
 | `command` | string[] | — | Overstyr container-kommando |
 | `args` | string[] | — | Argumenter til kommandoen (sendes etter `command`) |
-| `resources.cpu` | string | `150m` | CPU request — **ingen CPU-limit** settes; containeren kan burste på ledig CPU. Scheduleren pakker noder etter requesten. Se [Ressursanbefalinger](observability.md#ressursanbefalinger-i-grafana) |
+| `resources.cpu` | string | `150m` | CPU request — **ingen CPU-limit** settes; containeren kan burste på ledig CPU. Scheduleren pakker noder etter requesten. Se [Ressursanbefalinger i Grafana](observability.md#ressursanbefalinger-i-grafana) |
 | `resources.memory` | string | `256Mi` | Memory request **og** limit (samme verdi) — cgroupen OOM-killer containeren på limit |
 | `readOnlyRootFilesystem` | boolean | `false` | Monter root-filsystem som read-only |
 | `writableDirs` | string[] | — | Kataloger montert som skrivbare emptyDir-volumer |
 
-> **Merk:** Memory limit er alltid lik request.
+Compositionen setter i tillegg fast `allowPrivilegeEscalation: false` og `capabilities.drop: [ALL]`
+på alle containere, og `runAsNonRoot: true`, `runAsUser`/`runAsGroup`/`fsGroup: 1000` og
+`seccompProfile: RuntimeDefault` på poden. Imaget må derfor kunne kjøre som UID 1000.
+
+> Kilde: https://docs.sky.fhi.no/workloads/resource-sizing/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
 
 ### Scaling
 
@@ -73,7 +66,10 @@ spec:
 | `autoscaling.targetCPU` | integer | `80` | Mål-CPU-utnyttelse % |
 | `autoscaling.targetMemory` | integer | `80` | Mål-minneutnyttelse % |
 
-> **Merk:** Å spesifisere `autoscaling` aktiverer HPA (Horizontal Pod Autoscaling). Når `autoscaling` er satt, **overstyres `replicas`-feltet av `autoscaling.minReplicas`** som initial replica count på Deployment.
+Å spesifisere `autoscaling` aktiverer HPA. Da settes Deployment-ens `replicas` til
+`autoscaling.minReplicas`, ikke `spec.replicas`.
+
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
 
 ### Status og scale-subresource
 
@@ -85,20 +81,15 @@ XRD-en eksponerer `/scale` og et `status`-objekt:
 | `status.labelSelector` | string | `skybert.fhi.no/webapp=<navn>` — selector som matcher app-podene |
 
 `kubectl get skybertapp` viser kolonnene **DESIRED** (`.spec.replicas`) og **CURRENT** (`.status.replicas`).
+Scale-subresourcen mapper `.spec.replicas` ↔ `.status.replicas` med `.status.labelSelector`, slik at
+autoskalerere kan peke `targetRef` rett på SkybertApp-ressursen — plattformens VPA gjør det. Se
+[Ressursanbefalinger (Goldilocks / VPA)](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa).
 
-Scale-subresourcen mapper `.spec.replicas` ↔ `.status.replicas` med `.status.labelSelector`. Konsekvenser:
-
-- `kubectl scale skybertapp/<navn> --replicas=N -n tn-<tenant>` fungerer.
-- Autoskalerere kan peke `targetRef` rett på SkybertApp-ressursen i stedet for Deployment-en.
-  Plattformens Goldilocks/VPA gjør nettopp dette — se [Kyverno-policier — ressursanbefalinger](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa).
-
-> **⚠️ `kubectl scale` er ikke en permanent endring.** Replica-antallet er GitOps-styrt; Flux
-> rekonsilerer tilbake til verdien i repoet innen 2 minutter. Bruk det til akutt feilsøking,
-> aldri som varig konfigurasjon — endre `spec.replicas` i GitOps-repoet.
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/crossplane/base/xrds/skybertapp.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp.yaml
 
 ### Health Probes
+
+Ingen probes er påkrevd; hver probe som oppgis krever `path`.
 
 | Felt | Type | Standard | Beskrivelse |
 |------|------|----------|-------------|
@@ -121,8 +112,6 @@ Scale-subresourcen mapper `.spec.replicas` ↔ `.status.replicas` med `.status.l
 | `probes.startup.timeoutSeconds` | integer | `3` | Probe-timeout |
 | `probes.startup.failureThreshold` | integer | `60` | Påfølgende feil før oppstart anses feilet (60×5s = 300s) |
 
-Bruk readiness for traffic gating, liveness for hengte prosesser, og startup for sakte-startende apper.
-
 ```yaml
 probes:
   liveness:
@@ -134,7 +123,9 @@ probes:
     failureThreshold: 60
 ```
 
-For .NET Health Checks API-mønster og separasjon av public/private health endpoints, se [konfigurasjon — Health probes i .NET-apper](configuration.md#health-probes-i-net-apper).
+For docs' .NET Health Checks-mønster, se [Health probes i .NET-apper](configuration.md#health-probes-i-net-apper).
+
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp.yaml
 
 ### Pod Disruption Budget
 
@@ -144,13 +135,16 @@ For .NET Health Checks API-mønster og separasjon av public/private health endpo
 | `podDisruptionBudget.minAvailable` | int eller "X%" | `"33%"` | Minimum tilgjengelige pods under voluntary disruptions |
 | `podDisruptionBudget.maxUnavailable` | int eller "X%" | — | Maksimum utilgjengelige pods |
 
-PDB opprettes automatisk når `replicas > 1` eller `autoscaling.minReplicas > 1`. Sett `podDisruptionBudget.enabled: false` for å deaktivere. `minAvailable` og `maxUnavailable` er gjensidig utelukkende; prosenter rundes opp.
+PDB opprettes automatisk når `replicas > 1` eller `autoscaling.minReplicas > 1`, med mindre
+`enabled` er satt eksplisitt. `minAvailable` og `maxUnavailable` er gjensidig utelukkende.
 
 ```yaml
 replicas: 3
 podDisruptionBudget:
   minAvailable: "33%"
 ```
+
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
 
 ### Metrics
 
@@ -160,24 +154,29 @@ podDisruptionBudget:
 | `metrics.path` | string | `/metrics` | Path til metrics-endepunkt |
 | `metrics.scheme` | string | `http` | `http` eller `https` |
 
-Når `metrics` er satt, legger composition automatisk til `prometheus.io/scrape: "true"`, `prometheus.io/port`, ev. `prometheus.io/path` og `prometheus.io/scheme` på pod-template. Metrics filtreres til `tn-<tenant>` i Mimir via cortex-tenant-proxy. I Grafana finner du appens metrics ved å filtrere på labelen `app=<metadata.name>`. Se [Observability](observability.md).
+Når `metrics` er satt, legger compositionen `prometheus.io/scrape: "true"`, `prometheus.io/port`
+og ev. `prometheus.io/path`/`prometheus.io/scheme` på pod-template. Seriene rutes til tenantens
+Mimir-org av `cortex-tenant` (på `namespace`-labelen). I Grafana finner du appens metrics ved å
+filtrere på labelen `app=<metadata.name>`. Se [Metrics med Mimir](observability.md#metrics-med-mimir).
 
 ```yaml
 metrics:
   port: 9090
 ```
 
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/mimir/base/cortex-tenant-0.8.0-values.yaml
+
 ### Ingress
 
 | Felt | Type | Standard | Beskrivelse |
 |------|------|----------|-------------|
-| `hostname` | string | — | Hostname å eksponere (aktiverer ingress) |
+| `hostname` | string | `""` | Hostname å eksponere (aktiverer ingress) |
 
-**Støttede domener:**
-- Test: `*.skytest.fhi.no` og `*.fhi-k8s.com`
-- Produksjon: `*.sky.fhi.no`
+Støttede domener: test `*.skytest.fhi.no` og `*.fhi-k8s.com`, produksjon `*.sky.fhi.no`.
+Compositionen velger cert-manager-issuer etter domenesuffiks og feiler på andre hostnavn.
+TLS-sertifikat provisjoneres automatisk. Se [Hostnavn og nettverk](hostnames-and-networking.md).
 
-TLS-sertifikater provisjoneres automatisk via cert-manager.
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
 
 ### Configuration
 
@@ -185,7 +184,8 @@ TLS-sertifikater provisjoneres automatisk via cert-manager.
 |------|------|----------|-------------|
 | `config` | object | — | Nøkkel-verdi-par for konfigurasjon |
 
-Config-verdier monteres som filer i `/config` OG injiseres som miljøvariabler i alle containere.
+Config-verdier monteres som filer i `/config` og injiseres som miljøvariabler i alle containere
+(hovedcontainer, init og sidecar).
 
 ```yaml
 config:
@@ -197,20 +197,12 @@ config:
     }
 ```
 
-### Workload Identity
-
-Workload Identity er **alltid aktivert** for SkybertApp. Composition setter automatisk
-`azure.workload.identity/use: "true"` på alle pods og kobler dem til `<tenant>-azure` service account
-(utledet fra namespace `tn-<tenant>`).
-
-Du trenger ikke sette noe felt for dette — det skjer automatisk.
-
-> Kilde: https://docs.sky.fhi.no/auth/workload-identity/
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a16a243/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
 
 ### Secrets
 
-Secrets hentes fra Azure Key Vault og monteres automatisk i alle containere.
+Secrets hentes fra Azure Key Vault via ExternalSecret (ESO) med Workload Identity og monteres
+automatisk i alle containere.
 
 | Felt | Type | Standard | Beskrivelse |
 |------|------|----------|-------------|
@@ -234,9 +226,14 @@ secrets:
   - remote: database-password
     local: DB_PASSWORD
   - remote: api-key
-  mountAsEnv: false
+  mountAsEnv: true
   mountPath: /secrets/db
 ```
+
+Docs-tabellen oppgir standardnavnet uten `-<app-navn>`-suffiks; compositionen er autoritativ.
+Refererer andre ressurser til secreten, sett `secrets[].name` eksplisitt. Se [Secrets-mønstre](secrets.md).
+
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
 
 ### Init Containers
 
@@ -252,6 +249,8 @@ secrets:
 | `initContainers[].readOnlyRootFilesystem` | boolean | `false` | Read-only root filesystem |
 | `initContainers[].writableDirs` | string[] | — | Skrivbare emptyDir-monteringer |
 
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp.yaml
+
 ### Sidecar Containers
 
 | Felt | Type | Standard | Beskrivelse |
@@ -266,155 +265,32 @@ secrets:
 | `sidecarContainers[].readOnlyRootFilesystem` | boolean | `false` | Read-only root filesystem |
 | `sidecarContainers[].writableDirs` | string[] | — | Skrivbare emptyDir-monteringer |
 
-## Komplett eksempel
+Sidecars rendres som native sidecars (under `initContainers` med `restartPolicy: Always`) når `initContainers` også er angitt; uten init-containere rendres de som vanlige containere
+i Deployment-en, og vises slik i `kubectl describe pod`.
 
-```yaml
-apiVersion: skybert.fhi.no/v1alpha1
-kind: SkybertApp
-metadata:
-  name: my-application
-  namespace: tn-mytenant
-spec:
-  image:
-    repository: crfhiskybert.azurecr.io/mytenant/myapp
-    tag: v1.0.0
-
-  port: 8080
-
-  command:
-    - "/bin/sh"
-    - "-c"
-    - "start-app.sh"
-
-  resources:
-    cpu: "150m"
-    memory: "256Mi"
-
-  readOnlyRootFilesystem: true
-  writableDirs:
-    - /tmp
-    - /var/cache
-
-  replicas: 1
-
-  autoscaling:
-    minReplicas: 1
-    maxReplicas: 5
-    targetCPU: 80
-    targetMemory: 80
-
-  hostname: "myapp.skytest.fhi.no"
-
-  config:
-    MY_ENV_VAR: "some-value"
-    ANOTHER_VAR: "another-value"
-    config.json: |
-      {
-        "setting": "value"
-      }
-
-  secrets:
-    - name: my-app-secrets
-      vault: my-keyvault
-      keys:
-        - remote: database-password
-          local: DB_PASSWORD
-        - remote: api-credentials
-          local: API_KEY
-          property: apiKey
-      mountAsEnv: false
-      mountAsFiles: true
-      mountPath: /secrets
-      secretType: "Opaque"
-      labels:
-        custom-label: "value"
-      annotations:
-        custom-annotation: "value"
-
-  initContainers:
-    - name: init-db
-      image:
-        repository: crfhiskybert.azurecr.io/mytenant/init-container
-        tag: v1.0.0
-      command:
-        - "/bin/sh"
-        - "-c"
-        - "run-migrations.sh"
-      resources:
-        cpu: "150m"
-        memory: "256Mi"
-      readOnlyRootFilesystem: true
-      writableDirs:
-        - /tmp
-
-  sidecarContainers:
-    - name: log-collector
-      image:
-        repository: crfhiskybert.azurecr.io/mytenant/log-collector
-        tag: v1.0.0
-      command:
-        - "/bin/sh"
-        - "-c"
-        - "tail -f /var/log/app.log"
-      resources:
-        cpu: "150m"
-        memory: "256Mi"
-      readOnlyRootFilesystem: true
-      writableDirs:
-        - /var/log
-```
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
 
 ## Generated Resources
 
-> For å se nøyaktig hvilke manifester en konkret SkybertApp rendrer til
-> (uten kluster-tilgang), se [SkybertApp rendering](skybertapp-render.md).
-> Kopier av Composition, XRD og en render-klar `functions.yaml` ligger
-> under `references/skybertapp/`.
+| Ressurs | Navn | Opprettes når |
+|---------|------|---------------|
+| Deployment | `<name>-deployment` (hovedcontainer `<name>-main`) | Alltid |
+| Service (ClusterIP) | `<name>-svc` | `hostname` er satt |
+| Ingress (nginx, TLS) | `<name>-ingress` (TLS-secret `<name>-tls`) | `hostname` er satt |
+| ConfigMap | `<name>-config` | `config` er satt |
+| HorizontalPodAutoscaler | `<name>-hpa` | `autoscaling` er satt |
+| PodDisruptionBudget | `<name>-pdb` | Se [Pod Disruption Budget](#pod-disruption-budget) |
+| SecretStore | `<vault-lowercase>-<name>` | Én per unik vault i `secrets[]` |
+| ExternalSecret | `<vault-lowercase>-es-<index>-<name>` | Én per element i `secrets[]` |
+| Secret (fra ExternalSecret) | `<vault-lowercase>-secret-<index>-<name>` (eller `secrets[].name`) | Én per element i `secrets[]` |
 
-SkybertApp oppretter følgende Kubernetes-ressurser:
+`<name>` er `metadata.name` på SkybertApp-en. Deployment, Service og PDB bruker labelen
+`skybert.fhi.no/webapp: <name>` som selector; podene får i tillegg `app: <name>`. Pod-template får
+`azure.workload.identity/use: "true"` og `serviceAccountName: <tenant>-azure`; service accounten
+provisjoneres av tenant-bootstrap, ikke av SkybertApp — se
+[Azure Workload Identity](security.md#azure-workload-identity).
 
-- **Deployment** — Hoved-workload
-- **Service** — ClusterIP service (når hostname er satt)
-- **Ingress** — NGINX ingress med TLS (når hostname er satt)
-- **ConfigMap** — Konfigurasjonsverdier (når config er satt)
-- **HorizontalPodAutoscaler** — Autoskalering (når autoscaling er satt)
-- **PodDisruptionBudget** — Beskytter tilgjengelighet under voluntary disruptions (når `replicas > 1`, `autoscaling.minReplicas > 1`, eller eksplisitt aktivert)
-- **SecretStore** — External Secrets store per vault
-- **ExternalSecret** — Synkroniserer secrets fra Azure Key Vault
+For å se manifestene en konkret SkybertApp rendrer til, uten kluster-tilgang, se
+[SkybertApp rendering](skybertapp-render.md).
 
-### Navnekonvensjoner for genererte ressurser
-
-| Ressurs | Navnemønster |
-|---------|-------------|
-| Deployment | `<name>-deployment` |
-| Hoved-container | `<name>-main` |
-| Service Account | `<tenant>-azure` (utledet fra namespace `tn-<tenant>`) |
-| ConfigMap | `<name>-config` |
-| Secret | `<vault-lowercase>-secret-<index>-<app-navn>` (hvis ikke spesifisert med `name`) |
-| ExternalSecret | `<vault-lowercase>-es-<index>-<app-navn>` |
-
-> **⚠️ Endret navnekonvensjon (2026-08-14):** Genererte secret- og ExternalSecret-navn har fått
-> `-<app-navn>` som suffiks (`<app-navn>` = `metadata.name` på SkybertApp-en). Refererer du til et
-> auto-generert secret-navn utenfor SkybertApp-en — f.eks. `envFrom.secretRef` i en rå Deployment,
-> eller et volum i en annen ressurs — må referansen oppdateres. Sett `secrets[].name` eksplisitt
-> hvis du vil ha et stabilt navn som ikke avhenger av composition-versjonen. Endringen kom for å
-> unngå navnekollisjon mellom to SkybertApps i samme namespace som bruker samme vault.
->
-> **Merk at offisiell docs ennå ikke er oppdatert:** [SkybertApp reference](https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/)
-> oppgir fortsatt `<vault-lowercase>-secret-<index>` uten suffiks. Composition-en i infra-repoet er
-> den som faktisk kjører, og er lagt til grunn her.
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/crossplane/base/compositions/skybertapp.yaml
-
-## SkybertApp vs WebApp
-
-| | SkybertApp (v1alpha1) | WebApp (v1) |
-|---|---|---|
-| **Status** | Aktiv, anbefalt | **Utdatert** |
-| **Secrets** | Inline i spec | Manuell SecretStore + ExternalSecret |
-| **Workload Identity** | Automatisk (alltid aktivert) | Manuell service account + annotations |
-| **Sikkerhet** | Automatisk hardening | Manuell securityContext |
-| **Config** | `config`-felt (filer + env vars) | Manuell ConfigMap |
-| **Init/Sidecar** | Innebygd støtte | Manuell |
-
-**Bruk alltid SkybertApp for nye deployments.**
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml

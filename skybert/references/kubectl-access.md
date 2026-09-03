@@ -1,69 +1,55 @@
 # Kubectl-tilgang til Skybert
 
 ## Forutsetninger
-1. Azure CLI installert (Windows: via "Firmaportal", Linux/WSL: [Microsofts guide](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux))
-   - I WSL: verifiser riktig binær med `which az` for å unngå at Windows PATH brukes feilaktig
-2. kubectl installert (`winget install kubectl` på Windows)
-3. Tilgangspakke via myaccess.microsoft.com (f.eks. `FHI - Skybert - <Tenant>-Test-Yellow`)
-4. Innlogget med `az login`
-5. For prod og foreløpig red-test (`aks-red-test-01`): PIM elevation må fullføres først
 
-> **Viktig:** Kjør `az logout && az login` etter at tilgang er innvilget, for å oppdatere token.
+1. Azure CLI installert (Windows: via «Firmaportal», Linux/WSL: [Microsofts guide](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux)).
+   I WSL: verifiser med `which az` at du ikke kjører Windows-binæren.
+2. `kubectl` og/eller `k9s` installert (`winget install kubectl`, `winget install k9s`).
+3. Tilgangspakke bestilt og godkjent på https://myaccess.microsoft.com/. Pakken gir medlemskap i
+   tenantens rollegruppe (mønster `A-FHI-XX-Tenant`); én av tenantens to godkjennere
+   (`A-FHI-AP-XX-Approver`) godkjenner — en godkjenner kan ikke godkjenne seg selv — og tilgangen er
+   tidsbegrenset til ett år.
+4. `az logout && az login` etter at tilgangspakken er innvilget, og på nytt etter PIM-aktivering.
+
+> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://docs.sky.fhi.no/miscellaneous/access-packages/
 
 ## Koble til klusteret
 
-> **Viktig (prod + red-test):** I normal drift bør du ikke trenge å koble til produksjonsklusteret — bruk logger/metrics/Grafana i stedet.
->
-> - **Prod-klustere** (inkluderer `policies-prod`): Kyverno `deny-tenant-runtime-access` blokkerer (Enforce) `kubectl exec`, `port-forward`, `attach`, API-`proxy` (pod og service) og ephemeral debug-containere i `tn-*`.
-> - **`aks-red-test-01`** (inkluderer ikke lenger `policies-prod`, fjernet juni 2026): Kyverno `restrict-tenant-runtime-access` blokkerer `port-forward`, `attach` og API-`proxy`. Kyverno blokkerer **ikke** exec der; om exec fungerer avhenger av RBAC/tilgang — `skybert:tenant-admin` har ikke runtime-fragmentet for red-test.
-> - **Hva du gjør i stedet:** Bruk green-test, yellow-test-02, ops-test eller sandbox for interaktiv debugging (runtime-tilgang via fragmentet `skybert:tenant-admin:test-sandbox:runtime-access`); feilsøk prod/red-test via logger/metrics/Grafana.
-> - **`aks-norsyss-prod-01` (unntak):** `tn-norsyss` har fått **port-forward** åpnet — både via PolicyException fra `deny-pod-portforward` og ClusterRole-fragmentet `skybert:tenant-admin:norsyss:runtime-access`. `exec`, `attach` og API-`proxy` er fortsatt blokkert. Se [Kyverno-policier](kyverno-policies.md#produksjon--runtime-restriksjoner).
->
-> Se [Kyverno-policier](kyverno-policies.md#produksjon--runtime-restriksjoner).
+Klustrene er AKS på Azure Local, Arc-connected, uten direkte nettverkstilgang. All kubectl-trafikk
+går via `az connectedk8s proxy` (ikke `az aks get-credentials`).
 
-> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/
-
-**Viktig:** Du kan IKKE bruke `az aks get-credentials` - Skybert bruker Azure Arc-connected Kubernetes.
-
-**Steg 1: Start proxy (hold denne terminalen åpen)**
+**Steg 1: Start proxy (hold terminalen åpen)**
 
 ```powershell
-az connectedk8s proxy --resource-group rg-fhi-aks-<sone>-<env>-weu-01 --name <kluster-navn> --subscription <subscription-id>
+az connectedk8s proxy --resource-group <resource-group> --name <kluster-navn> --subscription <subscription-id>
 ```
 
-Proxyen kjører på port 47011 og MÅ holdes åpen mens du bruker kubectl.
+Verdiene står i [klustertabellen](#tilgjengelige-klustere) — bruk den, ikke et navnemønster
+(sandbox og ops-test følger ikke `rg-fhi-aks-<sone>-<env>-weu-01`). Har du valgt riktig subscription
+ved `az login`, kan `--subscription` utelates. Proxyen registrerer selv en kubectl-context;
+plattformens egne verktøy (`ska az proxy`, `sk8`) starter den på en tilfeldig port i 47000–49999.
 
-**Steg 2: Åpne ny terminal og kjør kubectl**
+**Steg 2: Kjør kubectl i en annen terminal**
+
 ```powershell
-# Sett default namespace (anbefalt)
 kubectl config set-context --current --namespace=tn-<tenant>
-
-# Eller bruk -n flagget på hver kommando
-kubectl get pods -n tn-<tenant>
+kubectl get pods
 ```
+
+Du har kun tilgang i eget namespace `tn-<tenant>`. Manuelle endringer rulles tilbake av Flux
+innen få minutter — permanente endringer gjøres via GitOps. `exec`/`port-forward`/`attach`/`proxy`
+virker kun i sandbox, green-test, yellow-test-02 og ops-test; i prod blokkerer Kyverno, i red-test
+mangler RBAC-fragmentet — se [Kyverno-policier](kyverno-policies.md#produksjon--runtime-restriksjoner).
+
+> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/az--proxy.sh
 
 ## Tilgjengelige klustere
 
-> **Sist oppdatert 2026-07-04.** Se offisiell docs for løpende oppdaterte verdier: https://docs.sky.fhi.no/get-started/connectedk8s/
->
-> Infra-repoets `scripts/lib/clusters.sh` er autoritativt metadataregister (navn, resource group, subscription ID). Ved tvil, slå opp der.
->
-> **Maskinlesbart register:** Plattformen publiserer klusterregisteret som JSON på
-> **https://docs.sky.fhi.no/sk8/clusters.json** — per kluster: `name`, `resourceGroup`,
-> `subscription`, `oidcIssuerUrl` og `needsPim`. Nyttig for oppslag/automatisering uten repo-tilgang.
-> Registeret bekrefter tabellene under, inkludert PIM-regelen (`needsPim: true` for alle
-> prod-klustere og `aks-red-test-01`). Det publiserte registeret inneholder fortsatt
-> `aks-yellow-test-01` (under utfasing).
->
-> Kilde (autoritativ kluster-liste): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/01abbad/scripts/lib/clusters.sh
-> Kilde (publisert register): https://docs.sky.fhi.no/sk8/clusters.json
-
-Totalt 10 klustere er registrert i `scripts/lib/clusters.sh`. I den autoritative
-`COLOR_GROUP_CLUSTERS`-mappingen er `aks-yellow-test-02` aktivt testkluster for
-yellow-lanen. `aks-yellow-test-01` er fortsatt registrert, men inngår ikke i
-yellow-lanen og er under utfasing.
-
-> Kilde (autoritativ kluster-mapping): https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/8aa3d7a71eb1209962ff3769a00a169cb3caec8e/scripts/lib/clusters.sh
+`scripts/lib/clusters.sh` i infra-repoet er autoritativt register (navn, resource group,
+subscription, OIDC issuer, PIM). Samme data publiseres maskinlesbart på
+https://docs.sky.fhi.no/sk8/clusters.json (`name`, `resourceGroup`, `subscription`,
+`oidcIssuerUrl`, `needsPim`). `COLOR_GROUP_CLUSTERS` i samme fil definerer lanene:
+hver farge = sandbox + ett test- + ett prod-kluster.
 
 ### Sandbox
 
@@ -71,7 +57,7 @@ yellow-lanen og er under utfasing.
 |---------|---------------|----------------|
 | aks-sandbox-01 | `rg-fhi-aks-sandbox-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 
-`aks-sandbox-01` er felles for alle fargesoner og kjører grønn sone-policyer.
+`aks-sandbox-01` er felles for alle fargesoner.
 
 ### Test
 
@@ -79,6 +65,7 @@ yellow-lanen og er under utfasing.
 |---------|---------------|----------------|
 | aks-green-test-01 | `rg-fhi-aks-green-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-yellow-test-02 | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-yellow-test-01 [¹] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-red-test-01 | `rg-fhi-aks-red-test-weu-01` | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
 | aks-ops-test-01 [²] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 
@@ -89,38 +76,37 @@ yellow-lanen og er under utfasing.
 | aks-green-prod-02 | `rg-fhi-aks-green-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
 | aks-yellow-prod-01 | `rg-fhi-aks-yellow-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
 | aks-red-prod-01 | `rg-fhi-aks-red-prod-weu-01` | `88fde73a-d4a6-4aab-b8be-31810fcd7116` |
-| aks-norsyss-prod-01 [¹] | `rg-fhi-aks-norsyss-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
+| aks-norsyss-prod-01 [³] | `rg-fhi-aks-norsyss-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
 
-[¹] `aks-norsyss-prod-01` er registrert i `scripts/lib/clusters.sh`, men ikke del av en standard fargegruppe.
+[¹] Registrert, men ikke i `COLOR_GROUP_CLUSTERS` — yellow-lanen bruker `aks-yellow-test-02`.
 
-[²] `aks-ops-test-01` brukes bl.a. for plattformpilotering (historisk Flux Operator-pilot).
+[²] Plattformens eget test-/utviklingskluster (første kluster ved komponentoppgraderinger). Deler resource group og subscription med yellow-test.
+
+[³] Ikke i `COLOR_GROUP_CLUSTERS`; kjører samme Kyverno-policysett som gul prod.
+
+> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh
 
 ### PIM (Privileged Identity Management)
 
-PIM-elevation kreves for:
+PIM-aktivering kreves for alle produksjonsklustere og for `aks-red-test-01` (`needsPim: true` i
+registeret). Aktiver via Azure Portal → **Privileged Identity Management** → **My Roles** → Groups
+([direktelenke](https://portal.azure.com/#blade/Microsoft_Azure_PIMCommon/CommonMenuBlade)), og kjør
+`az logout && az login` etterpå. Formålet er logging av hvem/når/hvorfor; daglige oppgaver skal
+løses via Grafana eller testklustrene.
 
-- Alle **produksjonsklustere**.
-- **Rød sone test** (`aks-red-test-01`) — foreløpig.
-
-PIM aktiveres via Azure Portal → **Privileged Identity Management** → **My Roles** ([direktelenke](https://portal.azure.com/#blade/Microsoft_Azure_PIMCommon/CommonMenuBlade)). Etter aktivering må tokenet oppdateres:
-
-```powershell
-az logout
-az login
-```
-
-> Kilde: https://docs.sky.fhi.no/miscellaneous/PIM/
-> Kilde (needsPim per kluster): https://docs.sky.fhi.no/sk8/clusters.json
+> Kilde: https://docs.sky.fhi.no/miscellaneous/PIM/ · https://docs.sky.fhi.no/sk8/clusters.json
 
 ### OIDC issuer URL-er
 
-Trengs ved opprettelse av federated credentials på managed identities (workload identity-binding mot K8s service accounts). Format: `https://europe.oic.prod-arc.azure.com/{tenantId}/{oidcIssuerId}/`. Andre GUID er per-kluster issuer-ID som Azure genererer når workload identity er aktivert.
+Trengs ved opprettelse av federated credentials på managed identities (workload identity mot
+Kubernetes service accounts). Format: `https://europe.oic.prod-arc.azure.com/<entra-tenant-id>/<issuer-id>/`.
 
 | Kluster | OIDC issuer URL |
 |---------|-----------------|
 | aks-sandbox-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/cf8f6b35-4954-4548-b3da-37287cdbe99b/` |
 | aks-green-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/8eae23c5-dedf-4812-9c32-9de1adbb67c9/` |
 | aks-yellow-test-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/bfb4e46e-3df2-436b-985b-ecdc184e46f7/` |
+| aks-yellow-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/5218cffc-5c13-4b12-8edc-0d76cba4c9a3/` |
 | aks-ops-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/50541d55-54ba-48bc-bb33-bfeec177d216/` |
 | aks-red-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/30e79bc7-b120-4a86-8b94-07d875ccface/` |
 | aks-green-prod-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/2776d74b-e71f-41e5-b56e-4db0abc67cd3/` |
@@ -128,249 +114,64 @@ Trengs ved opprettelse av federated credentials på managed identities (workload
 | aks-red-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/94639478-26a0-487a-926e-0dca36bce049/` |
 | aks-norsyss-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/2e7d357f-5942-4fad-bc16-91b0de9a7471/` |
 
-> Kilde: `Fhi.Skybert.Infra/scripts/lib/clusters.sh`
-
-Hent live:
+Hent live (klustrene er Arc-ressurser — `az connectedk8s show`, ikke `az aks show`):
 
 ```bash
-az connectedk8s show \
-  --name <cluster> --resource-group <rg> --subscription <sub> \
+az connectedk8s show --name <cluster> --resource-group <rg> --subscription <sub> \
   --query oidcIssuerProfile.issuerUrl -o tsv
 ```
 
-**Viktig**: Skybert-klusterne er **AKS på Azure Local** (tidligere markedsnavn: Azure Stack HCI; Arc-projisert som `microsoft.kubernetes/connectedclusters`), ikke Azure-cloud AKS. Derfor virker **ikke** `az aks show` -- bruk `az connectedk8s show`.
-
-### Nyttige felt fra `az connectedk8s show`
-
-Hele JSON-objektet inneholder mer enn bare OIDC. Felt verdt å huske til fremtidige queries:
-
-| Felt | Hva det forteller |
-|------|-------------------|
-| `oidcIssuerProfile.issuerUrl` | Workload identity issuer (federated credential setup) |
-| `aadProfile.adminGroupObjectIDs` | Entra-grupper med cluster-admin via Azure RBAC for Kubernetes |
-| `aadProfile.enableAzureRbac` | Bekrefter at Azure RBAC styrer K8s-autorisasjon |
-| `identity.principalId` | System-assigned MI på selve connected-cluster-ressursen |
-| `connectivityStatus` | Arc-agent: `Connected` / `Offline` / `Expired` |
-| `lastConnectivityTime` | Siste heartbeat fra Arc-agenten |
-| `agentVersion`, `arcAgentProfile.agentState`, `arcAgentProfile.agentAutoUpgrade` | Arc-agentens helse og oppgraderingsmodus |
-| `kubernetesVersion` | K8s-versjon på klusteret |
-| `distribution`, `infrastructure`, `offering` | Bekrefter clustertype (`aks_workload` / `azure_stack_hci` / `AzureStackHCI_AKS_Workload`) |
-| `managedIdentityCertificateExpirationTime` | Når Arc-MI-sertifikatet utløper (rotasjon kreves før dette) |
-| `securityProfile.workloadIdentity.enabled` | Om workload identity er på |
-| `totalCoreCount`, `totalNodeCount` | Kapasitet |
-
-### Proxy-eksempler per sone
-
-**Sandbox:**
-```powershell
-az connectedk8s proxy --resource-group rg-fhi-aks-sandbox-weu-01 --name aks-sandbox-01 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
-```
-
-**Grønn test:**
-```powershell
-az connectedk8s proxy --resource-group rg-fhi-aks-green-test-weu-01 --name aks-green-test-01 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
-```
-
-**Gul test:**
-```powershell
-az connectedk8s proxy --resource-group rg-fhi-aks-yellow-test-weu-01 --name aks-yellow-test-02 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
-```
-
-**Rød test:**
-```powershell
-az connectedk8s proxy --resource-group rg-fhi-aks-red-test-weu-01 --name aks-red-test-01 --subscription 247deb95-d7de-4d1b-9fab-1f50a24715ed
-```
-
-**Grønn prod:**
-```powershell
-az connectedk8s proxy --resource-group rg-fhi-aks-green-prod-weu-01 --name aks-green-prod-02 --subscription c0b8ff18-a1bc-4390-ba6d-a9c252e86252
-```
-
-**Gul prod:**
-```powershell
-az connectedk8s proxy --resource-group rg-fhi-aks-yellow-prod-weu-01 --name aks-yellow-prod-01 --subscription c0b8ff18-a1bc-4390-ba6d-a9c252e86252
-```
-
-**Rød prod:**
-```powershell
-az connectedk8s proxy --resource-group rg-fhi-aks-red-prod-weu-01 --name aks-red-prod-01 --subscription 88fde73a-d4a6-4aab-b8be-31810fcd7116
-```
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh · https://docs.sky.fhi.no/internal/replace-cluster-in-place/
 
 ## sk8 CLI — automatisert PIM + proxy
 
-> **Intern (plattformteam):** `sk8` vedlikeholdes i infra-repoet og releases der
-> (`sk8/v*`-tags) — tilgang til releases krever tilgang til `FHISkybert/Fhi.Skybert.Infra`.
-> Funksjonaliteten er nyttig for alle med kubectl-tilgang, men verktøyet er merket internt i docs.
+Go-CLI i infra-repoet (`utils/sk8/`), publisert som GitHub-release (`sk8/v*`-tags) på
+`FHISkybert/Fhi.Skybert.Infra` — nedlasting krever tilgang til repoet. Forutsetninger: `az` med
+`connectedk8s`-extension, `kubectl`, `gh`. Klusterregisteret hentes fra
+`https://docs.sky.fhi.no/sk8/clusters.json` (lokal cache + innebygd fallback; `--refresh` tvinger ny henting).
 
-Go-basert CLI som automatiserer tilkoblingsflyten over:
+- **`sk8 cluster [navn]`** — interaktiv picker eller fuzzy-match på delnavn, PIM-aktivering ved
+  behov (`--justification`, `--duration-hours`, `--skip-pim`), og `az connectedk8s proxy` i
+  bakgrunnen. Kjøres den på nytt mens proxyen lever, kan den bytte kubectl-context i stedet.
+  `sk8 cluster list` viser registeret.
+- **`sk8 status --tenant <tenant>`** — sammenligner siste commit i GitOps-repoet
+  (`FHIDev/Fhi.<Tenant>.GitOps`, via `gh`) med det Flux har deployet på gjeldende context
+  (`Kustomization.status.lastAppliedOriginRevision` + readiness), og skanner `tn-<tenant>` for
+  suspenderte Kustomizations, crash-loops, image-pull-feil og deployments uten klare replikaer.
+- **`sk8 policies --tenant <tenant>`** — aggregerer Kyverno PolicyReports for tenanten på gjeldende
+  context: anbefalinger og policy-brudd, gruppert på melding og merket **Recommendation** eller
+  **Planned enforced**, med berørte workloads under. VPA-/Goldilocks-anbefalinger vises ikke her —
+  se [Observability](observability.md#ressursanbefalinger-i-grafana).
+- **`sk8 suspend --tenant <tenant>` / `sk8 resume --tenant <tenant>`** — pauser/gjenopptar
+  Flux-rekonsiliering av tenantens Kustomization på gjeldende context. Samme som Flux-dashboardet
+  gjør — se [Flux-verktøy](flux-tooling.md#flux-dashboard).
 
-- **`sk8 cluster [navn]`** — velg kluster (interaktiv picker eller fuzzy-match på delnavn),
-  aktiver PIM om nødvendig (`--justification`, `--duration-hours`), og start
-  `az connectedk8s proxy` i bakgrunnen. Kjøres den på nytt mens en proxy allerede kjører,
-  kan den bytte kubectl-context i stedet. `sk8 cluster list` viser registeret.
-- **`sk8 status --tenant <tenant>`** — mini-dashboard som sammenligner siste commit i
-  GitOps-repoet (`FHIDev/Fhi.<Tenant>.GitOps`, via `gh`) med det Flux faktisk har deployet
-  (`Kustomization.status.lastAppliedOriginRevision` + readiness), og skanner `tn-<tenant>`
-  for suspenderte Kustomizations, crash-loops, image pull-feil og deployments uten klare replikaer.
-- **`sk8 policies --tenant <tenant>`** — viser ressursanbefalinger og policy-brudd for tenanten på
-  gjeldende kubectl-context. Output grupperes på melding (ikke på policy-regelnavn), og hvert punkt
-  merkes **Recommendation** eller **Planned enforced** med berørte workloads under. Dette er
-  raskeste vei til Goldilocks/VPA-anbefalingene — se
-  [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa). Krever samme
-  proxy/context som `sk8 status`. Sist brukte tenant huskes.
+`--tenant` husker sist brukte tenant. Bash-dispatcheren `ska` (`ska tenant new` →
+`scripts/tenant--new.sh`) er plattformteamets verktøy og ikke det samme som `sk8`.
 
-Klusterregisteret hentes fra `https://docs.sky.fhi.no/sk8/clusters.json` (med lokal cache og
-innebygd fallback). Forutsetninger: `az` (med `connectedk8s`-extension), `kubectl`, `gh`.
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/sk8/README.md · https://docs.sky.fhi.no/internal/ska-cli/
 
-> **To ulike CLI-er:** Den interne script-dispatcheren heter `ska` (`scripts/ska` — f.eks.
-> `ska tenant new` → `scripts/tenant--new.sh`), nå dokumentert på `internal/ska-cli/` (gammel
-> `sk8-cli`-URL redirecter dit). Den er et plattformteam-verktøy. Go-CLI-en **`sk8`** i
-> `utils/sk8/` er en separat, uendret CLI og den som er relevant for utviklere (`cluster`,
-> `status`, `policies`).
+## k9s
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/d3d4e9260b81977d61f57ad231e1c5a9bb3754e0/utils/sk8/README.md
-> Kilde: https://docs.sky.fhi.no/internal/ska-cli/
+`winget install k9s`, start proxy som over, og kjør `k9s -n tn-<tenant>`. Hjelp finnes i UI-et og
+på https://k9scli.io/topics/commands/.
 
-## Nyttige kubectl-kommandoer
-
-**Viktig:** Husk ALLTID å spesifisere namespace med `-n tn-<tenant>` eller sett default namespace først.
-
-> **Merk:** `kubectl exec`, `port-forward`, `attach` og `proxy` virker i praksis kun i green-test, yellow-test-02, ops-test og sandbox. I prod blokkeres alle av Kyverno (`deny-tenant-runtime-access`); i `aks-red-test-01` blokkeres port-forward/attach/proxy av Kyverno (`restrict-tenant-runtime-access`), mens exec avhenger av RBAC/tilgang — se [Koble til klusteret](#koble-til-klusteret).
-
-```powershell
-# Se pods
-kubectl get pods -n tn-<tenant>
-
-# Se alle ressurser
-kubectl get all -n tn-<tenant>
-
-# Se logger
-kubectl logs <pod-name> -n tn-<tenant>
-
-# Follow logs
-kubectl logs -f <pod-name> -n tn-<tenant>
-
-# Se ingress/URL
-kubectl get ingress -n tn-<tenant>
-
-# Describe pod for feilsøking
-kubectl describe pod <pod-name> -n tn-<tenant>
-
-# Port-forward for lokal testing
-kubectl port-forward <pod-name> 8080:8080 -n tn-<tenant>
-
-# Exec inn i pod
-kubectl exec -it <pod-name> -n tn-<tenant> -- /bin/sh
-```
-
-**Suspend/resume egen Flux Kustomization** (suspend/resume via `patch`; RBAC tillater også `create`/`delete` for egne ekstra Kustomizations):
-```powershell
-kubectl -n tn-<tenant> patch kustomization <navn> --type merge -p '{"spec":{"suspend":true}}'
-# resume: sett "suspend":false (eller bruk `flux resume kustomization <navn>` med flux-CLI)
-```
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/c31fccc2ab593ffdbf523b14b20677aba4db8fd5/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
-
-## k9s - Terminal UI for Kubernetes
-
-k9s er et kraftig terminal-basert UI som gjør det enklere å navigere og administrere Kubernetes-ressurser.
-
-### Installasjon
-```powershell
-# Windows (winget)
-winget install k9s
-
-# Windows (scoop)
-scoop install k9s
-
-# macOS
-brew install derailed/k9s/k9s
-```
-
-### Bruk med Skybert
-
-1. Start proxy i én terminal (må holdes åpen):
-   ```powershell
-   az connectedk8s proxy --resource-group rg-fhi-aks-yellow-test-weu-01 --name aks-yellow-test-02 --subscription 09fc3dd5-8ce9-4951-a7a6-49f95b871cbd
-   ```
-
-2. Start k9s i en annen terminal:
-   ```powershell
-   # Start k9s direkte i ditt namespace
-   k9s -n tn-<tenant>
-
-   # Eller start k9s og naviger manuelt
-   k9s
-   ```
-
-### k9s-kommandoer
-
-| Tast | Funksjon |
-|------|----------|
-| `:ns` | Bytt namespace |
-| `:pod` | Vis pods |
-| `:svc` | Vis services |
-| `:ing` | Vis ingresses |
-| `:deploy` | Vis deployments |
-| `l` | Se logger for valgt pod |
-| `s` | Shell inn i valgt pod |
-| `d` | Describe valgt ressurs |
-| `ctrl+d` | Slett valgt ressurs |
-| `/` | Søk/filtrer |
-| `esc` | Gå tilbake |
-| `ctrl+c` | Avslutt k9s |
-
-**Tips:**
-- Bruk `0` for å se alle namespaces du har tilgang til
-- Trykk `?` for hjelp og alle hurtigtaster
-- k9s husker siste namespace mellom sesjoner
-
-## Vanlige feil ved kubectl-tilkobling
-
-**Feil: "dial tcp 127.0.0.1:47011: connectex: No connection could be made"**
-- Årsak: Proxyen kjører ikke
-- Løsning: Start `az connectedk8s proxy ...` i en egen terminal
-
-**Feil: "AuthorizationFailed" ved `az aks get-credentials`**
-- Årsak: Skybert bruker IKKE vanlig AKS
-- Løsning: Bruk `az connectedk8s proxy` i stedet
-
-**Feil: "User does not have access to the resource" i namespace "default"**
-- Årsak: Du kjører kubectl uten å spesifisere namespace
-- Løsning: Legg til `-n tn-<tenant>` eller sett default namespace
+> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/
 
 ## Kjøre container lokalt fra ACR
 
-For å teste samme image som kjører i Skybert lokalt på utvikler-PC.
-
-### Forutsetninger
-- Docker Desktop installert og kjørende
-- Azure CLI (`az`) installert
-- AcrPull-tilgang til `crfhiskybert.azurecr.io` (ikke gitt automatisk - se feilsøking)
-
-### Kommandoer
+Samme image som kjører i Skybert kan kjøres lokalt (Docker Desktop):
 
 ```powershell
-# 1. Logg inn på Azure
 az login
-
-# 2. Autentiser mot ACR
 az acr login --name crfhiskybert
-
-# 3. Pull imaget
-docker pull crfhiskybert.azurecr.io/<tenant>/<tenant>_test:<tag>
-
-# 4. Kjør containeren
-docker run -p 8080:8080 crfhiskybert.azurecr.io/<tenant>/<tenant>_test:<tag>
+docker pull crfhiskybert.azurecr.io/<tenant>/<app>:<tag>
+docker run -p 8080:8080 crfhiskybert.azurecr.io/<tenant>/<app>:<tag>
 ```
 
-Appen er da tilgjengelig på **http://localhost:8080**
+Det krever AcrPull for din bruker på `crfhiskybert.azurecr.io`, som ikke følger av tilgangspakken —
+be om det på `#ext-fhi-skybert` (oppgi bruker og `<tenant>/<app>`). Feiler `docker pull` med
+«pull access denied» eller «repository does not exist» selv om `az acr login` lyktes, mangler
+tilgangen; ACR skjuler om repoet finnes.
 
-### Alternativ: Bygg lokalt fra kildekode
-
-Hvis du ikke har ACR-tilgang ennå, kan du bygge fra kildekoden:
-
-```powershell
-docker build -t <tenant> .
-docker run -p 8080:8080 <tenant>
-```
+> **Operasjonell antakelse:** Lokal pull fra Skybert-registeret er ikke beskrevet i docs eller infra; imagenavnet følger docs' konvensjon, tilgangsmodellen er observert i bruk.

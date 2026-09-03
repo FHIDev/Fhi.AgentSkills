@@ -1,38 +1,29 @@
 # Secrets-mønstre
 
+Alle secrets ligger i Azure Key Vault og synkes inn i podene via External Secrets Operator (ESO)
+med Workload Identity — aldri i image, kode eller Git. Anbefalt rekkefølge: **SkybertApp `secrets[]`**
+først; manuell SecretStore + ExternalSecret bare for raw Deployments og andre workloads utenfor SkybertApp.
+
+> Kilde: https://docs.sky.fhi.no/miscellaneous/vault_secrets/
+
 ## Anbefalt: SkybertApp inline secrets
 
-SkybertApp håndterer SecretStore og ExternalSecret automatisk:
-
-```yaml
-apiVersion: skybert.fhi.no/v1alpha1
-kind: SkybertApp
-metadata:
-  name: myapp
-  namespace: tn-mytenant
-spec:
-  image:
-    repository: crfhiskybert.azurecr.io/mytenant/myapp
-    tag: "1.0.0"
-  secrets:
-    - vault: my-keyvault
-      keys:
-        - remote: database-password
-          local: DB_PASSWORD
-        - remote: api-key
-          local: API_KEY
-      mountAsEnv: false
-```
+`spec.secrets[]` i SkybertApp oppgir vault-navn og nøkler (`remote` i Key Vault, valgfritt `local`-navn
+og `property` for JSON-uttrekk). Composition oppretter én SecretStore per unike vault og én
+ExternalSecret per innslag (`refreshInterval: 10m`), begge med `authType: WorkloadIdentity` og
+`serviceAccountRef: <tenant>-azure`. Secreten monteres som filer under `/secrets/<secret name>` som
+standard (`mountAsFiles: true`); `mountAsEnv: true` injiserer den i tillegg som miljøvariabler, og
+`mountPath` overstyrer filstien. Feltoversikt og eksempel: [SkybertApp CRD — Secrets](skybertapp-crd.md#secrets).
 
 ### Navn på genererte secrets
 
 Uten `secrets[].name` heter den genererte Kubernetes-secreten
 `<vault-lowercase>-secret-<index>-<app-navn>`, og ExternalSecret-ressursen
 `<vault-lowercase>-es-<index>-<app-navn>`. `<app-navn>` er `metadata.name` på SkybertApp-en.
+Docs' referanseliste viser mønsteret uten `-<app-navn>` — composition er autoritativ.
 
-Suffikset kom til 2026-08-14 for å unngå navnekollisjon mellom to SkybertApps i samme namespace
-som bruker samme vault. **Skal andre ressurser referere til secreten ved navn — sett `name`
-eksplisitt.** Da er du uavhengig av composition-versjonen:
+**Skal andre ressurser referere til secreten ved navn — sett `name` eksplisitt.** Da er du uavhengig
+av composition-versjonen:
 
 ```yaml
 secrets:
@@ -43,13 +34,13 @@ secrets:
         local: DB_PASSWORD
 ```
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/a1ce34539f1b10f06fb5112e319ec57f11da30b0/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
 
 ## Manuell: SecretStore + ExternalSecret (ESO)
 
-External Secrets Operator (ESO) er standard mekanisme for secrets-håndtering utenfor SkybertApp. Påkrevet for raw Kubernetes deployments, legacy `WebApp` CRD, eller spesielle behov.
-
-### SecretStore
+For raw Deployments og andre workloads utenfor SkybertApp. Service accounten `<tenant>-azure` er
+allerede annotert med identitetens client-id, så du trenger bare en SecretStore som peker på vaulten,
+en ExternalSecret som beskriver secreten, og et volum i Deploymenten.
 
 ```yaml
 apiVersion: external-secrets.io/v1
@@ -66,8 +57,6 @@ spec:
         name: <tenant>-azure
 ```
 
-### ExternalSecret
-
 ```yaml
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -75,7 +64,7 @@ metadata:
   name: myapp-db-secret
   namespace: tn-<tenant>
 spec:
-  refreshInterval: 1h
+  refreshInterval: 5m
   secretStoreRef:
     name: myapp-secret-store
     kind: SecretStore
@@ -88,11 +77,19 @@ spec:
         key: "database-password"
 ```
 
+ExternalSecret oppretter Kubernetes-secreten `myapp-db-secret`; monter den som et vanlig
+`secret`-volum i Deploymenten (`volumes[].secret.secretName: myapp-db-secret` + `volumeMounts`).
+
+> Kilde: https://docs.sky.fhi.no/miscellaneous/vault_secrets/
+
 ## Key Vault
 
-Key Vault-navnet oppgis av plattformteamet ved onboarding. Det finnes ingen fast navnekonvensjon - bruk det faktiske vault-navnet du har fått tildelt.
+Tenanten oppretter selv Key Vault i egen Azure-subscription (anbefalt én for test og én for prod) og gir
+tenantens managed identity `tn-<tenant>-skybert-sa-<env>` lesetilgang til secretene. Plattformen
+oppretter og federerer identiteten, men setter ikke opp tilganger. Bruk vault-navnet i
+`secrets[].vault` eller `vaultUrl`. Se [Sikkerhet — Tilgang til Azure-ressurser](security.md#tilgang-til-azure-ressurser).
 
-**RBAC-krav:** SecretStore bruker plattformens SA (`<tenant>-azure`) og dets tilhørende managed identity for å aksessere Key Vault. Denne identiteten provisjoneres av plattformteamet, men **tenanten må selv gi den `Key Vault Secrets User`-rollen** på sin Key Vault. Uten denne rollen feiler alle ExternalSecrets med `403 ForbiddenByRbac`. Administrer dette via Terraform eller `az role assignment create`.
+> Kilde: https://docs.sky.fhi.no/get-started/prerequisites/application/
 
 ## Rotasjon og oppdatering
 
@@ -101,14 +98,4 @@ Hvis applikasjonen ikke leser filendringer fortløpende, kan **Reloader** (platt
 installert på alle klustere) restarte poden automatisk når den monterte secreten endres —
 docs omtaler dette som å «enable reloader» på workloaden.
 
-> Kilde: https://docs.sky.fhi.no/miscellaneous/vault_secrets/
-
-## Regler
-
-- **Unngå** å montere secrets som miljøvariabler (`mountAsEnv: true`) — miljøvariabler kan lekke via crash dumps, `/proc/*/environ`, child-prosesser og logging. Bruk fil-montering (default `mountAsFiles: true`) som standard og les secrets fra filsystemet
-- **Aldri** commit secrets til Git
-- **Aldri** legg secrets i container images
-- Bruk Azure Key Vault som eneste kilde for secrets
-- SkybertApp inline secrets er foretrukket fremfor manuell SecretStore/ExternalSecret
-- ESO (SecretStore + ExternalSecret) er **standard** mekanisme
-- CSI driver (SecretProviderClass) er **legacy** - unngå for nye deployments
+> Kilde: https://docs.sky.fhi.no/miscellaneous/vault_secrets/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/reloader/
