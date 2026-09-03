@@ -24,6 +24,7 @@ Test-issuerne finnes på alle test-klustere og sandbox; prod-issueren på alle p
 SkybertApp eksponerer ingen Ingress-annotasjoner, og docs beskriver ingen tenant-mekanisme for å peke et hostnavn til en offentlig IP. Trenger appen offentlig DNS-oppslag, avklar med plattformteamet på `#ext-fhi-skybert`.
 
 > **Operasjonell antakelse:** Plattformen bruker selv `external-dns.alpha.kubernetes.io/target` på egne Gateway-/Ingress-objekter, men mekanismen er ikke dokumentert for tenanter.
+
 ## Ingress-regler (Kyverno-håndhevet)
 
 Følgende regler gjelder alle Ingress-ressurser på alle klustere:

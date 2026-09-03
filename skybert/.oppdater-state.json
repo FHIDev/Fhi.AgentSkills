@@ -58,6 +58,26 @@
       "summary": "Docs-siden motsier seg selv om cortex-tenant velger namespace- eller tenant-label først; infra (label_list: [namespace, tenant]) og Alloy-kommentar sier namespace først. Skillen følger infra.",
       "firstSeen": "2026-09-03",
       "lastSeen": "2026-09-03"
+    },
+    {
+      "id": "docs-infra-konflikt-tempo",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/observability.md",
+      "source": "docs/observability/tracing.md vs infra/tempo/ + infra/flux-system/base/kustomizations-infra/tempo.yaml",
+      "summary": "Docs merker Tempo «Planned — not yet available»; infra har Flux-Kustomization tempo i kustomizations-infra (trukket inn av alle 9 klustere) og et aks-ops-test-01-overlay, mens base kun har namespace + helm-manifest. Skillen følger docs — riktig for tenanter, men utrullingen er i gang. Revurderes når docs oppdateres eller flere kluster-overlays kommer.",
+      "firstSeen": "2026-09-03",
+      "lastSeen": "2026-09-03"
+    },
+    {
+      "id": "coverage-matrise-utdatert",
+      "status": "partial",
+      "category": "OMSTRUKTURER",
+      "target": "skybert/.oppdater-coverage.json",
+      "source": "PR #62 og #63 (restrukturering av 16 skill-filer)",
+      "summary": "Matrise A ble ikke oppdatert da SKILL.md og referansefilene ble restrukturert. docsCommit står på acde93e0 (PR #59) og skillContentHash matcher ikke lenger innholdet, så forutsetning 3 for videreført dekning er brutt — neste FULL leser alle docs-sider på nytt og skriver ny matrise. 13 coveredIn-ankere peker på slettede seksjoner (10 i SKILL.md, bl.a. #legal-og-compliance, #skybertapp-crd, #gitops-flyt). Ankrene rettes ikke manuelt: en ærlig matrise krever full side-for-side-gjennomgang. Lukkes ved neste FULL.",
+      "firstSeen": "2026-09-03",
+      "lastSeen": "2026-09-03"
     }
   ]
 }

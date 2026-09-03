@@ -54,7 +54,7 @@ Ved FULL modus skal alle påstander merket **Operasjonell antakelse** vurderes p
 1. Erfaringskunnskap (plattformteam, Slack, egen drift) beholdes når den er korrekt, Skybert-spesifikk og merket Operasjonell antakelse. Ellers `FJERN` (`ustøttet`).
 2. Legacy-seksjoner (WebApp, CSI) beholdes i `legacy-webapp-csi.md` som kanonisk fil, med status beskrevet slik kildene faktisk sier det (WebApp: udokumentert, ikke deprecated; CSI/SecretProviderClass: deprecated per RBAC-kommentar). Andre filer nevner status i maks én setning med lenke.
 3. Kluster-navn, subscription IDs, tekniske verdier — kun oppdater ved ny verdi, aldri slett — og kun i kanonisk fil; klustertabellen skal ikke gjentas.
-4. Feilsøkingsoppføringer beholdes når de er Skybert-spesifikke (Kyverno-avvisning, Flux-latens, proxy-oppsett) og merket. Generiske K8s/Azure-feil (ImagePullBackOff-mekanikk, AADSTS-koder, CRD-pruning) → `FJERN` (`generisk`).
+4. Feilsøkingsoppføringer beholdes når de er Skybert-spesifikke (Kyverno-avvisning, Flux-latens, proxy-oppsett) og merket. Det som fjernes er den **generiske mekanikken** — hvordan `imagePullSecrets`, AADSTS-koder eller CRD-schemavalidering virker i sin alminnelighet → `FJERN` (`generisk`). Skybert-varianten av samme feil beholdes: `acr-pull-secret`-patchingen, XRD-ens lukkede schema, `AADSTS700213` fra feil OIDC-subject-format. Avgjør med generisk-testen i [analyseregler.md](analyseregler.md), ikke på feilnavnet alene.
 5. Ved `OMSTRUKTURER`: alle detaljer fra opprinnelig plassering MÅ finnes i ny plassering.
 
 ## Merking av interne temaer
