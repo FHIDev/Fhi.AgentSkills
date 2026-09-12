@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Speiler .claude/skills/ -> .agents/skills/ (kompatibilitetskopi for Codex, se CLAUDE.md)
 # og verifiserer at trærne er identiske etterpå.
-# Kjøres fra repo-rot: bash .claude/skills/oppdater-skybert/scripts/sync-agents.sh
+# Kjøres fra repo-rot: bash .github/scripts/sync-agents.sh
 set -euo pipefail
 
 if [ ! -d ".claude/skills" ]; then

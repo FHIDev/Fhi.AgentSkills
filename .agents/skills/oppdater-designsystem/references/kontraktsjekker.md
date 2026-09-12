@@ -74,21 +74,21 @@ disse kravene. En oppdatering er ikke ferdig før alle punkter er bekreftet.
 ### Versjonskonsistens
 
 Følgende skal vise **samme versjon** etter oppdatering (verifiseres av `contract-check.mjs`):
-- `designsystem/.oppdater-state.json` (`version`)
-- `<!-- Basert på ... -->` i `designsystem/SKILL.md`
-- `Verifisert mot:`-feltet i `designsystem/SKILL.md`
+- `maintenance/designsystem/.oppdater-state.json` (`version`)
+- `<!-- Basert på ... -->` i `plugins/designsystem/skills/designsystem/SKILL.md`
+- `Verifisert mot:`-feltet i `plugins/designsystem/skills/designsystem/SKILL.md`
 - Latest-raden i `versions/INDEX.md`
 - Vedlikeholdsnotater i referansefiler som er ment å følge latest
 
 ### Evals — regresjonstest
 
-Kjør spørsmålene i `designsystem/evals/evals.json` mot den oppdaterte skillen:
+Kjør spørsmålene i `plugins/designsystem/skills/designsystem/evals/evals.json` mot den oppdaterte skillen:
 les skillen slik en agent ville gjort (følg versjonsrutingen i SKILL.md) og besvar
 hvert spørsmål. Sammenlign med `expected_output`. Avvik betyr at oppdateringen har
 introdusert en regresjon eller at eval-fasiten må oppdateres (begrunn i så fall hvorfor
 fasiten er utdatert — typisk fordi ny versjon faktisk endrer riktig svar).
 
-Trigger-evals (`designsystem/evals/trigger-evals.json`) brukes når skill-beskrivelsen
+Trigger-evals (`plugins/designsystem/skills/designsystem/evals/trigger-evals.json`) brukes når skill-beskrivelsen
 i frontmatter endres: verifiser at should-trigger-promptene fortsatt matcher
 beskrivelsen og at should-not-trigger-promptene ikke gjør det.
 

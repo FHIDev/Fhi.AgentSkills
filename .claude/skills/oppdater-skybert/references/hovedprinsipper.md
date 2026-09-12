@@ -13,7 +13,7 @@
 9. **Oppdage det ukjente** — vær aktivt åpen for nye mapper, filtyper og dokumentasjonsformer i kilderepoene. Ikke begrens deg til forhåndsdefinerte stier.
 10. **Skill mellom faktatyper** — merk tydelig forskjell mellom informasjonstypene (se nedenfor).
 11. **Én kanonisk plassering per faktum** — hvert faktum, hver YAML-blokk og hvert eksempel har én kanonisk fil (se «Kanonisk plassering for tverrgående fakta» i [routing-tabell.md](routing-tabell.md)). Andre filer får kun kryssreferanse eller én oppsummerende setning, aldri kopi.
-12. **Nåtilstand uten datostempler** — brødtekst beskriver hvordan plattformen er nå. Ingen «per 2026-xx», «ny juni 2026», «tidligere var», «ikke lenger», «under utrulling», «sist oppdatert». Verifiseringstidspunkt og SHA-er bor kun i `skybert/.oppdater-state.json`; eneste unntak er den genererte «Sist verifisert»-linjen i `skybert/SKILL.md`.
+12. **Nåtilstand uten datostempler** — brødtekst beskriver hvordan plattformen er nå. Ingen «per 2026-xx», «ny juni 2026», «tidligere var», «ikke lenger», «under utrulling», «sist oppdatert». Verifiseringstidspunkt og SHA-er bor kun i `maintenance/skybert/.oppdater-state.json`; eneste unntak er den genererte «Sist verifisert»-linjen i `plugins/skybert/skills/skybert/SKILL.md`.
 13. **Tilfører-det-noe-testen** — hver seksjon skal bestå én av tre: (a) kuratert sammendrag med Skybert-spesifikke fakta som ikke står samlet i én docs-side, (b) kobling av docs og infra (f.eks. «docs sier X, composition gjør Y»), (c) merket Operasjonell antakelse. Består seksjonen ingen av dem, reduseres den til én setning + `> Kilde:`-lenke.
 
 ## Kildeautoritet og konfliktregel
@@ -38,7 +38,7 @@
 
 ## Avledede påstander
 
-Skillen inneholder mange tekniske verdier som er *avledet* fra kildene uten å stå i filen kilden ruter til: rekonsilieringsintervaller, CRD-defaults, versjonsnumre, hostnames, image-stier, namespace-mønstre. Når en kildefil endres, skal alle avledede påstander i **hele** skillen re-verifiseres — ikke bare målfilene fra routing-tabellen. Konkret: identifiser nøkkelverdiene som endret seg, og søk etter forekomster av dem i alle skybert/-filer. Se konsekvenssjekken i [github-modus.md](github-modus.md). Treff på samme nøkkelverdi i flere filer er samtidig en duplikatindikasjon: rett verdien i kanonisk fil og erstatt øvrige forekomster med kryssreferanse (`OMSTRUKTURER`), ikke `KORRIGER` i hver fil.
+Skillen inneholder mange tekniske verdier som er *avledet* fra kildene uten å stå i filen kilden ruter til: rekonsilieringsintervaller, CRD-defaults, versjonsnumre, hostnames, image-stier, namespace-mønstre. Når en kildefil endres, skal alle avledede påstander i **hele** skillen re-verifiseres — ikke bare målfilene fra routing-tabellen. Konkret: identifiser nøkkelverdiene som endret seg, og søk etter forekomster av dem i alle plugins/skybert/skills/skybert/-filer. Se konsekvenssjekken i [github-modus.md](github-modus.md). Treff på samme nøkkelverdi i flere filer er samtidig en duplikatindikasjon: rett verdien i kanonisk fil og erstatt øvrige forekomster med kryssreferanse (`OMSTRUKTURER`), ikke `KORRIGER` i hver fil.
 
 ## Re-validering ved FULL
 

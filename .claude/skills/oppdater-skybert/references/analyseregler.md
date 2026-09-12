@@ -53,7 +53,7 @@
 ## Persistens av uferdige poster (`openItems`)
 
 Ingen endringspost skal kunne forsvinne stille mellom kjøringer. Alle poster som ikke når
-fullført tilstand lagres i `openItems` i `skybert/.oppdater-state.json` (schema: se
+fullført tilstand lagres i `openItems` i `maintenance/skybert/.oppdater-state.json` (schema: se
 State-kontrakt i SKILL.md) med en av tre statusverdier:
 
 | Status | Betyr |

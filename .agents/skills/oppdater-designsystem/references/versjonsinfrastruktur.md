@@ -4,13 +4,13 @@
 
 ### 6a. State-fil (autoritativ for scripting)
 
-Oppdater `designsystem/.oppdater-state.json` med ny versjon. Kjør:
+Oppdater `maintenance/designsystem/.oppdater-state.json` med ny versjon. Kjør:
 
 ```bash
 node .claude/skills/oppdater-designsystem/scripts/fetch-sources.mjs {ny-versjon}
 ```
 
-Scriptet arkiverer nøkkelartefakter under `designsystem/versions/sources/v{versjon}/`
+Scriptet arkiverer nøkkelartefakter under `maintenance/designsystem/sources/v{versjon}/`
 (hele upstream-filer uendret — aldri redigerte utdrag) og oppdaterer state-filen med
 `version`, `gitTag`, `tarballUrl`, `distIntegrity`, `verifiedDate` og `archivedArtifacts`.
 
@@ -21,7 +21,7 @@ verifisering mot TypeScript-kilden (manifests har historisk vært ufullstendige,
 
 ### 6b. Menneskelesbar kommentar
 
-Oppdater linjen **rett etter frontmatter** (etter closing `---`) i `designsystem/SKILL.md`:
+Oppdater linjen **rett etter frontmatter** (etter closing `---`) i `plugins/designsystem/skills/designsystem/SKILL.md`:
 
 ```markdown
 <!-- Basert på @{pakkenavn} v{versjon} -->
@@ -33,7 +33,7 @@ Oppdater linjen **rett etter frontmatter** (etter closing `---`) i `designsystem
 
 ### 7a. FEATURES.md — nye public features
 
-`designsystem/versions/FEATURES.md` er autoritativ kilde for **når public features ble
+`plugins/designsystem/skills/designsystem/versions/FEATURES.md` er autoritativ kilde for **når public features ble
 innført**. For hver ny public feature i ny latest (ny komponent, nytt attributt, ny slot,
 nytt event, ny metode, nytt ikon, ny entrypoint, deprecation, endret default-atferd):
 
@@ -48,7 +48,7 @@ nytt event, ny metode, nytt ikon, ny entrypoint, deprecation, endret default-atf
 
 ### 7b. Les gjeldende INDEX.md
 
-Les `designsystem/versions/INDEX.md` for å finne:
+Les `plugins/designsystem/skills/designsystem/versions/INDEX.md` for å finne:
 - Hvilken versjon som er markert som "Latest"
 - Hvilke versjoner som er "Supported"
 - Eldste "Supported"-versjon (for rotasjon)
@@ -57,7 +57,7 @@ Les `designsystem/versions/INDEX.md` for å finne:
 
 **Algoritme (bruk alltid denne — også ved ett enkelt hopp):**
 
-1. Les forrige latest fra `designsystem/versions/INDEX.md` (Latest-raden).
+1. Les forrige latest fra `plugins/designsystem/skills/designsystem/versions/INDEX.md` (Latest-raden).
 2. Bruk listen over mellomliggende minor-versjoner fra `check-version.mjs`.
 3. **For HVER mellomliggende minor** (løkke, lavest versjon først):
    a. Beregn om minoren faller innenfor support-vinduet: de siste 9 minor-versjonene *under* ny latest.
@@ -66,9 +66,9 @@ Les `designsystem/versions/INDEX.md` for å finne:
    c. Les kildekode fra git-taggen for denne patch-versjonen (samme fremgangsmåte som
       [kildelesing.md](kildelesing.md)). Minimum: manifest-/tarball-diff — changelog alene
       er aldri nok.
-   d. Opprett delta-fil `designsystem/versions/v{X.Y}.x.md` basert på standardmalen nedenfor.
+   d. Opprett delta-fil `plugins/designsystem/skills/designsystem/versions/v{X.Y}.x.md` basert på standardmalen nedenfor.
 4. Opprett til slutt delta-fil for **forrige latest** (normalt steg — utenfor løkken):
-   - Lag `designsystem/versions/v{forrige-major}.{forrige-minor}.x.md`.
+   - Lag `plugins/designsystem/skills/designsystem/versions/v{forrige-major}.{forrige-minor}.x.md`.
    - Fyll inn kjente avvik basert på endringer identifisert i steg 4–5.
    - Merk seksjonene med verifiseringsstatus.
 
@@ -113,7 +113,7 @@ Korte tips for oppgradering til latest.
   - Events/API-atferd: ja/nei
 ```
 
-Se [`versions/GUIDE.md`](../../../../designsystem/versions/GUIDE.md) for hvordan
+Se [`versions/GUIDE.md`](../../../../plugins/designsystem/skills/designsystem/versions/GUIDE.md) for hvordan
 delta-filer og FEATURES.md leses sammen (beslutningsflyt for versjonsspørsmål).
 
 ### 7d. Oppdater INDEX.md
@@ -138,16 +138,16 @@ delta-filer og FEATURES.md leses sammen (beslutningsflyt for versjonsspørsmål)
 
 ### 7e. Oppdater SKILL.md og samlet stale-sjekk
 
-Dette er det autoritative steget for alle versjonsstreng-oppdateringer i `designsystem/`.
+Dette er det autoritative steget for alle versjonsstreng-oppdateringer i `plugins/designsystem/skills/designsystem/`.
 
-**Faste oppdateringer i `designsystem/SKILL.md`:**
+**Faste oppdateringer i `plugins/designsystem/skills/designsystem/SKILL.md`:**
 - Pakkenavnet og versjonsnummeret i toppkommentaren (`<!-- Basert på ... -->`)
 - Feltet `Verifisert mot:` med ny versjon og dato
 - Støttepolicyteksten hvis versjonsvinduet endres
 
-**Samlet stale-sjekk i hele `designsystem/`:**
+**Samlet stale-sjekk i hele `plugins/designsystem/skills/designsystem/`:**
 
-Bruk stale-listen fra kildelesingen (3.0) og søk i hele `designsystem/`
+Bruk stale-listen fra kildelesingen (3.0) og søk i hele `plugins/designsystem/skills/designsystem/`
 etter versjonsstrenger som peker på forrige latest. For hver treff, vurder:
 
 - **Skal følge latest** (f.eks. `Verifisert mot`, vedlikeholdsnotater, installasjonsinstrukser)

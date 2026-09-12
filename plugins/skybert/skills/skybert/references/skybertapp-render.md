@@ -25,8 +25,9 @@ Rendering skjer lokalt via `crossplane render`, uten kluster-tilgang.
 | `skybertapp/xrd.yaml` | CompositeResourceDefinition for `SkybertApp`, kopi av `infra/crossplane/base/xrds/skybertapp.yaml` |
 | `skybertapp/functions.yaml` | Function-pakker fra `infra/crossplane/base/functions.yaml`, **omskrevet til public xpkg.crossplane.io** slik at render fungerer uten ACR-login |
 
-Kopiene vedlikeholdes av `oppdater-skybert`-skillen; hvilken infra-commit de tilsvarer står i
-`skybert/.oppdater-state.json` (`github.infra.commit`).
+Kopiene vedlikeholdes av `oppdater-skybert`-skillen. Vedlikeholdere finner kildecommit i
+`maintenance/skybert/.oppdater-state.json` (`github.infra.commit`) i kilderepoet
+Fhi.AgentSkills. Denne vedlikeholdsfilen følger ikke med pluginen og trengs ikke for rendering.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/crossplane/base/
 
@@ -38,7 +39,7 @@ Kopiene vedlikeholdes av `oppdater-skybert`-skillen; hvilken infra-commit de til
 
 ## Eksempel: rått XR
 
-`SKILL_DIR` er stien til `skybert/references/skybertapp` der skillen er installert. Lagre
+`SKILL_DIR` er stien til `plugins/skybert/skills/skybert/references/skybertapp` der skillen er installert. Lagre
 Quick Start-manifestet fra CRD-referansen som `myapp.yaml`:
 
 ```yaml

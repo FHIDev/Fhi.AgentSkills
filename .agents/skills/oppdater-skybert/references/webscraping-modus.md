@@ -42,7 +42,7 @@ Bygg per-side map: `{ [location]: { title, hash: sha256(location+title+text_norm
 
 ## Steg 3 — Sammenlign med forrige hash
 
-Les `webscraping.globalHash` og `lastFullscanDate` fra `skybert/.oppdater-state.json`
+Les `webscraping.globalHash` og `lastFullscanDate` fra `maintenance/skybert/.oppdater-state.json`
 (migrering fra gammel `<!-- Kilde-hash: ... -->`-kommentar: se State-kontrakt i SKILL.md).
 
 **Periodisk FULL:** Hvis `lastFullscanDate` mangler eller er > 30 dager gammel → kjør FULL
@@ -86,9 +86,9 @@ Lagre til `.tmp/oppdater-skybert/pages/<sidenavn>.html`.
 
 ### FULL modus (uten eksisterende state)
 
-Hent `search_index.json`, beregn alle per-side hashes, hent HTML for alle sider i scope, analyser alt. Kjøres når `skybert/.oppdater-state.json` mangler eller ikke har `webscraping`-felt, eller når `lastFullscanDate` mangler / er > 30 dager gammel (periodisk FULL, se steg 3).
+Hent `search_index.json`, beregn alle per-side hashes, hent HTML for alle sider i scope, analyser alt. Kjøres når `maintenance/skybert/.oppdater-state.json` mangler eller ikke har `webscraping`-felt, eller når `lastFullscanDate` mangler / er > 30 dager gammel (periodisk FULL, se steg 3).
 
-### INKREMENTELL modus (med eksisterende state i skybert/.oppdater-state.json)
+### INKREMENTELL modus (med eksisterende state i maintenance/skybert/.oppdater-state.json)
 
 1. Hent `search_index.json`, beregn nye per-side hashes
 2. Sammenlign med `webscraping.pages[]` fra state-filen
@@ -105,7 +105,7 @@ Hent `search_index.json`, beregn alle per-side hashes, hent HTML for alle sider 
 | Ingen infra-repo-tilgang | Ingen CRD-versjonssporing, ingen infra signal inventory, infra-basert innhold kan ikke verifiseres |
 | Ingen `docs/internal/`-tilgang | Kun publiserte sider er tilgjengelige |
 | Kun publisert docs | Ingen tilgang til mkdocs.yml, workflows eller README |
-| Inkrementell basert på per-side hash | Krever persistent state i `skybert/.oppdater-state.json` |
+| Inkrementell basert på per-side hash | Krever persistent state i `maintenance/skybert/.oppdater-state.json` |
 | Hash-normalisering lowercaser tekst | Rene case-endringer i docs (f.eks. feltnavn) oppdages ikke av no-op-sjekken |
 | Kompletthet gjelder kun søkeindeksen | Sider/vedlegg som ikke er i `search_index.json` er usynlige for denne modusen |
 
@@ -122,8 +122,8 @@ Denne modusen kan IKKE verifisere innhold som har infra-repoet som kilde (kilder
 
 ## State i web-scraping-modus
 
-All state bor i `skybert/.oppdater-state.json` (se State-kontrakt i SKILL.md — det skrives
-**ingen** HTML-kommentar i `skybert/SKILL.md`). Web-scraping-modus populerer
+All state bor i `maintenance/skybert/.oppdater-state.json` (se State-kontrakt i SKILL.md — det skrives
+**ingen** HTML-kommentar i `plugins/skybert/skills/skybert/SKILL.md`). Web-scraping-modus populerer
 `webscraping`-feltet:
 
 ```json

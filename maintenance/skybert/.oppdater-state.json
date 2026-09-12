@@ -73,7 +73,7 @@
       "id": "coverage-matrise-utdatert",
       "status": "partial",
       "category": "OMSTRUKTURER",
-      "target": "skybert/.oppdater-coverage.json",
+      "target": "maintenance/skybert/.oppdater-coverage.json",
       "source": "PR #62 og #63 (restrukturering av 16 skill-filer)",
       "summary": "Matrise A ble ikke oppdatert da SKILL.md og referansefilene ble restrukturert. docsCommit står på acde93e0 (PR #59) og skillContentHash matcher ikke lenger innholdet, så forutsetning 3 for videreført dekning er brutt — neste FULL leser alle docs-sider på nytt og skriver ny matrise. 13 coveredIn-ankere peker på slettede seksjoner (10 i SKILL.md, bl.a. #legal-og-compliance, #skybertapp-crd, #gitops-flyt). Ankrene rettes ikke manuelt: en ærlig matrise krever full side-for-side-gjennomgang. Lukkes ved neste FULL.",
       "firstSeen": "2026-09-03",

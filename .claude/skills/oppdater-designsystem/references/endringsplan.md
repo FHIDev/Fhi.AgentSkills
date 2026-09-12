@@ -2,11 +2,11 @@
 
 ## Steg 4 – Analyser og lag endringsplan
 
-Sammenlign kildekoden fra taggen med innholdet i `designsystem/`-skillen. Lag en
+Sammenlign kildekoden fra taggen med innholdet i `plugins/designsystem/skills/designsystem/`-skillen. Lag en
 strukturert endringsplan. Bruk denne sjekklisten systematisk før du skriver planen:
 
 1. **Public API:** Sammenlign `custom-elements.json` / `web-types.json` / publisert pakke med
-   komponentreferansene i `designsystem/references/components/` for komponenter, attributter,
+   komponentreferansene i `plugins/designsystem/skills/designsystem/references/components/` for komponenter, attributter,
    properties, events, metoder, slots og tag-navn.
 2. **Runtime-atferd:** Les relevant TypeScript for å fange opp effective defaults,
    normalisering av ugyldige verdier, runtime-validering, warnings/deprecations og
@@ -39,7 +39,7 @@ strukturert endringsplan. Bruk denne sjekklisten systematisk før du skriver pla
    **vurderingspunkter**. Upstream-skillen overskriver aldri lokal kuratert kunnskap
    automatisk.
 10. **Kilde-diff mot forrige arkiv:** Sammenlign artefaktlisten i
-    `designsystem/versions/sources/v{forrige}/` med den nye versjonens artefakter.
+    `maintenance/designsystem/sources/v{forrige}/` med den nye versjonens artefakter.
     Alt som *forsvinner* fra kilden skal eksplisitt vurderes: flyttet hvor? fortsatt
     gyldig? bevart i skillen hvor? Konklusjonen tas inn i planen.
 
@@ -96,7 +96,7 @@ Ikke bruk denne kategorien til stilistisk omskriving.
 
 ### Format for endringsplanen
 
-Hver post i planen skal angi **hvilken fil** i `designsystem/` som må oppdateres og
+Hver post i planen skal angi **hvilken fil** i `plugins/designsystem/skills/designsystem/` som må oppdateres og
 **kildegrunnlag** (hvilken upstream-fil eller artefakt som underbygger endringen).
 
 Presenter planen slik:
@@ -107,13 +107,13 @@ Versjon analysert: v{versjon}
 Dato: {dato}
 
 ### Mangler
-- [ ] {beskrivelse} — Fil: `{designsystem/...}` — Kilde: `{upstream-fil}`
+- [ ] {beskrivelse} — Fil: `{plugins/designsystem/skills/designsystem/...}` — Kilde: `{upstream-fil}`
 
 ### Feil / utdatert
-- [ ] {beskrivelse} — Fil: `{designsystem/...}` — Kilde: `{upstream-fil}`
+- [ ] {beskrivelse} — Fil: `{plugins/designsystem/skills/designsystem/...}` — Kilde: `{upstream-fil}`
 
 ### Forbedringer
-- [ ] {beskrivelse} — Fil: `{designsystem/...}` — Kilde: `{upstream-fil}`
+- [ ] {beskrivelse} — Fil: `{plugins/designsystem/skills/designsystem/...}` — Kilde: `{upstream-fil}`
 ```
 
 **Vent på godkjenning fra bruker før du går videre til steg 5.**
@@ -122,7 +122,7 @@ Dato: {dato}
 
 ## Steg 5 – Gjennomfør endringer
 
-Etter godkjenning, oppdater filene i `designsystem/`-mappen. Skillen skal dekke følgende tema:
+Etter godkjenning, oppdater filene i `plugins/designsystem/skills/designsystem/`-mappen. Skillen skal dekke følgende tema:
 
 - **Installasjon og oppsett** – Hvordan installere pakken og komme i gang
 - **Komponentoversikt med props/API** – Tilgjengelige komponenter, hvilke props de tar, events de emitter

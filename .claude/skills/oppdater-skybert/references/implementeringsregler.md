@@ -25,7 +25,7 @@
 
 Regler:
 - Maks én `> Kilde:`-linje per seksjon (H2/H3), plassert sist i seksjonen.
-- Aldri commit-SHA, tag eller dato i lenken. Verifiserings-SHA bor kun i `skybert/.oppdater-state.json`.
+- Aldri commit-SHA, tag eller dato i lenken. Verifiserings-SHA bor kun i `maintenance/skybert/.oppdater-state.json`.
 - Migrering: eksisterende SHA-lenker (`blob/<sha>/`, `tree/<sha>/`) skrives om til `main`. Finnes ikke stien lenger på `main` → finn ny sti eller behandle påstanden som `utdatert`.
 - Hvis en seksjon allerede har en kilde-referanse, oppdater URL-en hvis den har endret seg.
 
@@ -54,7 +54,7 @@ Opprettes kun ved godkjente `ny-fil`-poster i endringsplanen. Krav:
 
 ## Skybert-verdier i CLAUDE.md / AGENTS.md
 
-Skybert-skillen (`skybert/SKILL.md`) skal inneholde en seksjon som anbefaler brukere å legge inn prosjektspesifikke Skybert-verdier i sin `CLAUDE.md` eller `AGENTS.md`. Anbefalt tabell-format:
+Skybert-skillen (`plugins/skybert/skills/skybert/SKILL.md`) skal inneholde en seksjon som anbefaler brukere å legge inn prosjektspesifikke Skybert-verdier i sin `CLAUDE.md` eller `AGENTS.md`. Anbefalt tabell-format:
 
 ```markdown
 ## Skybert-verdier
@@ -70,7 +70,7 @@ Skybert-skillen (`skybert/SKILL.md`) skal inneholde en seksjon som anbefaler bru
 | Azure tenant ID | `<azure-tenant-id>` |
 ```
 
-Ved fullscan: sjekk om `skybert/SKILL.md` inneholder en "Skybert-verdier i CLAUDE.md"-seksjon. Hvis den mangler → opprett som `NY`-post i planen.
+Ved fullscan: sjekk om `plugins/skybert/skills/skybert/SKILL.md` inneholder en "Skybert-verdier i CLAUDE.md"-seksjon. Hvis den mangler → opprett som `NY`-post i planen.
 
 ---
 
@@ -87,9 +87,9 @@ Etter implementering, verifiser:
 7. Alle `OMSTRUKTURER`-endringer har beholdt alle detaljer fra opprinnelig plassering.
 8. Statiske kopier i `references/skybertapp/` er synkronisert hvis XRD/composition/functions ble endret; provenance er `github.infra.commit` i state-filen. `skybertapp-render.md` skal ikke inneholde SHA, dato eller refresh-prosedyre (gjelder kun GitHub-modus).
 9. Routing-tabellen har rad(er) for alle nye målfiler som ble opprettet.
-10. `openItems` i `skybert/.oppdater-state.json` er ajourført: utsatte (`deferred`), delvis implementerte (`partial`) og verifikasjonsfeilede (`failed-verification`) poster lagt til/oppdatert, avklarte/fullførte fjernet. Se [analyseregler.md](analyseregler.md).
-11. Ingen `> Kilde:`-lenke inneholder commit-SHA: `git grep -nE '(blob|tree)/[0-9a-f]{7,40}/' -- skybert/` gir null treff. Ingen seksjon har mer enn én Kilde-linje.
-12. Ingen datostempler/historikk i brødtekst: `git grep -nEi '(per |status per |sist oppdatert |verifisert (mot|per) )20[0-9]{2}|ikke lenger|tidligere var|under utrulling' -- skybert ':!*.json'` gir kun treff på «Sist verifisert»-linjene i `skybert/SKILL.md`.
+10. `openItems` i `maintenance/skybert/.oppdater-state.json` er ajourført: utsatte (`deferred`), delvis implementerte (`partial`) og verifikasjonsfeilede (`failed-verification`) poster lagt til/oppdatert, avklarte/fullførte fjernet. Se [analyseregler.md](analyseregler.md).
+11. Ingen `> Kilde:`-lenke inneholder commit-SHA: `git grep -nE '(blob|tree)/[0-9a-f]{7,40}/' -- plugins/skybert/skills/skybert/` gir null treff. Ingen seksjon har mer enn én Kilde-linje.
+12. Ingen datostempler/historikk i brødtekst: `git grep -nEi '(per |status per |sist oppdatert |verifisert (mot|per) )20[0-9]{2}|ikke lenger|tidligere var|under utrulling' -- skybert ':!*.json'` gir kun treff på «Sist verifisert»-linjene i `plugins/skybert/skills/skybert/SKILL.md`.
 13. Alle avsnitt uten `> Kilde:` er merket `> **Operasjonell antakelse:**`.
 14. Duplikatsøk: ingen YAML-blokk over 5 linjer og ingen nøkkelverdi-tabell finnes i mer enn én fil.
 

@@ -2,33 +2,33 @@
 
 ## 3.0 Les eksisterende designsystem-skill
 
-Les alle **markdown-filer** i `designsystem/`-mappen i dette repoet — ikke bare `SKILL.md`,
+Les alle **markdown-filer** i `plugins/designsystem/skills/designsystem/`-mappen i dette repoet — ikke bare `SKILL.md`,
 men også alle referansefiler under `references/`, `references/components/` og `versions/` —
-samt `.oppdater-state.json`. Hovedfilen alene er aldri nok til å anse skillen som oppdatert;
+samt `maintenance/designsystem/.oppdater-state.json`. Hovedfilen alene er aldri nok til å anse skillen som oppdatert;
 referansefilene inneholder den faktiske dybden.
 
-**Unntak — `versions/sources/`:** Enumerer innholdet (hvilke versjoner og artefakter som
+**Unntak — `maintenance/designsystem/sources/`:** Enumerer innholdet (hvilke versjoner og artefakter som
 er arkivert), men **ikke les** arkivartefaktene (`custom-elements.json`, `web-types.json`
 osv. — de er store). Les dem kun målrettet når du verifiserer en konkret påstand eller
 lager kilde-diff mot forrige versjon (sjekkliste-punkt 10 i
 [endringsplan.md](endringsplan.md)).
 
-> Merk: Stien `designsystem/SKILL.md` er relativ til **repo-roten** (`Fhi.AgentSkills/`), ikke til skill-mappen.
+> Merk: Stien `plugins/designsystem/skills/designsystem/SKILL.md` er relativ til **repo-roten** (`Fhi.AgentSkills/`), ikke til skill-mappen.
 
 Notér underveis:
 
 1. **Komponentlisten:** hvilke komponenter som er dokumentert i
-   `designsystem/references/components/` (filnavnene uten `.md`-ending, eller
+   `plugins/designsystem/skills/designsystem/references/components/` (filnavnene uten `.md`-ending, eller
    komponentnavnene i konsoliderte filer som `typography.md`). Denne listen brukes
    nedenfor til å finne alle TypeScript- og `.docs.mdx`-filer som skal leses.
-2. **Stale-referanser:** hvilke filer under `designsystem/` som inneholder eksplisitte
+2. **Stale-referanser:** hvilke filer under `plugins/designsystem/skills/designsystem/` som inneholder eksplisitte
    latest-referanser (versjonsnumre, pakkenavn med versjon, eller vedlikeholdsnotater
    som sier "basert på latest"). Denne listen brukes i den samlede stale-sjekken
    (se [versjonsinfrastruktur.md](versjonsinfrastruktur.md)).
 
 ## 3.1 Verifiser npm-pakkenavn
 
-Pakkenavnet kommer fra `designsystem/.oppdater-state.json` (via `check-version.mjs`).
+Pakkenavnet kommer fra `maintenance/designsystem/.oppdater-state.json` (via `check-version.mjs`).
 Hvis state-filen mangler eller pakkenavnet virker feil, hent rot-`package.json` fra:
 
 ```

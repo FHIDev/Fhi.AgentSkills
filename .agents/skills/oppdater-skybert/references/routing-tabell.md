@@ -120,7 +120,7 @@ avsnitt. Tabellen oppdateres i samme kjøring som en kanonisk plassering endres.
 
 Brukes når agenten ikke har filsti-tilgang, kun emnenavn fra docs-sider.
 
-| Emne i docs | Målfil i skybert/ |
+| Emne i docs | Målfil i plugins/skybert/skills/skybert/ |
 |-------------|-------------------|
 | SkybertApp CRD, felt-spec | `references/skybertapp-crd.md` |
 | Secrets, Key Vault, ExternalSecret, SecretStore | `references/secrets.md` |
@@ -152,7 +152,7 @@ Brukes når agenten ikke har filsti-tilgang, kun emnenavn fra docs-sider.
 
 Tabellen skal holdes i synk med virkeligheten i samme kjøring som avviket oppdages:
 
-- Når en ny målfil opprettes i `skybert/` (godkjent `ny-fil`-post) → legg til routing-rad(er) for kildene som ruter dit.
+- Når en ny målfil opprettes i `plugins/skybert/skills/skybert/` (godkjent `ny-fil`-post) → legg til routing-rad(er) for kildene som ruter dit.
 - Når kanonisk plassering for et tverrgående faktum endres (ny fil overtar tema) → oppdater tabellen «Kanonisk plassering for tverrgående fakta» og flytt/reduser innhold i andre filer i samme kjøring.
 - Når dekningsmatrise A foreslår målfil for en udekket side → legg til routing-rad når forslaget godkjennes.
 - Når en kildefil er flyttet/omdøpt i kilderepoene (compare viser removed+added) → oppdater raden, ikke la den peke på død sti.

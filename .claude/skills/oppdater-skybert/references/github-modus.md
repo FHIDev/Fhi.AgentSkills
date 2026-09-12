@@ -229,7 +229,7 @@ Hent komplett filtree fra begge repoer. Alle filer i scope behandles som "endred
 
 ### INKREMENTELL modus
 
-Bruker commit SHAs fra `skybert/.oppdater-state.json` (persistent, committet) for å sammenligne:
+Bruker commit SHAs fra `maintenance/skybert/.oppdater-state.json` (persistent, committet) for å sammenligne:
 
 ```bash
 gh api repos/FHISkybert/Fhi.Skybert.Docs/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
@@ -245,7 +245,7 @@ gh api repos/FHISkybert/Fhi.Skybert.Infra/compare/<old_sha>...<new_sha> --jq '.f
 Routing-tabellen sier hvilke målfiler en endret kildefil *primært* ruter til — men avledede påstander kan ligge hvor som helst i skillen. Etter å ha lest de endrede kildefilene:
 
 1. Identifiser **endrede nøkkelverdier**: feltnavn, defaults, enum-verdier, versjonsnumre, hostnames, image-stier, intervaller, namespace-/navnekonvensjoner, policy-navn.
-2. Søk etter hver nøkkelverdi (gammel OG ny form) i **alle** filer under `skybert/` — ikke bare målfilene fra routing.
+2. Søk etter hver nøkkelverdi (gammel OG ny form) i **alle** filer under `plugins/skybert/skills/skybert/` — ikke bare målfilene fra routing.
 3. Hvert treff i en fil utenfor primær-routing vurderes: er påstanden der fortsatt korrekt? Hvis ikke → egen endringspost (`KORRIGER`/`UTVID`) for den filen.
 4. Gir en nøkkelverdi treff i mer enn én skill-fil, er det en duplikat: rett i kanonisk fil (se «Kanonisk plassering for tverrgående fakta» i [routing-tabell.md](routing-tabell.md)) og erstatt de andre forekomstene med kryssreferanse (`OMSTRUKTURER` med `kanonisk:`-flagg) — ikke `KORRIGER` i hver fil.
 
@@ -261,12 +261,12 @@ Eksempel: endres rekonsilieringsintervallet i `flux-instance.yaml`, rettes talle
 
 ### State-fil etter vellykket Apply
 
-Etter vellykket implementering (steg 9) oppdateres `skybert/.oppdater-state.json` med nye
+Etter vellykket implementering (steg 9) oppdateres `maintenance/skybert/.oppdater-state.json` med nye
 commit SHAs og `commitDate` for begge repoer, `sistVerifisert`, ev. `lastFullscanDate`
 (kun FULL) og ajourført `openItems` — se State-kontrakt i SKILL.md for komplett schema.
 
-Den varige staten er i de to committede filene `skybert/.oppdater-state.json` (kjøringsstate) og
-`skybert/.oppdater-coverage.json` (bevart matrise A) — se State-kontrakten i SKILL.md.
+Den varige staten er i de to committede filene `maintenance/skybert/.oppdater-state.json` (kjøringsstate) og
+`maintenance/skybert/.oppdater-coverage.json` (bevart matrise A) — se State-kontrakten i SKILL.md.
 `changed-files.json` i `.tmp/` er kun runtime-cache.
 
 ---
@@ -282,7 +282,7 @@ spec:
       referenceable: true
 ```
 
-Parse `spec.versions[].name` der `served: true` og `referenceable: true`. Sammenlign med API-versjonen dokumentert i `skybert/SKILL.md` og `references/skybertapp-crd.md` (f.eks. `apiVersion: skybert.fhi.no/v1alpha1` i eksemplene).
+Parse `spec.versions[].name` der `served: true` og `referenceable: true`. Sammenlign med API-versjonen dokumentert i `plugins/skybert/skills/skybert/SKILL.md` og `references/skybertapp-crd.md` (f.eks. `apiVersion: skybert.fhi.no/v1alpha1` i eksemplene).
 
 Ved endring (f.eks. v1alpha1 → v1beta1):
 - Opprett endringspost med `crd-versjon`-flagg
@@ -305,7 +305,7 @@ Hver feltendring får **egen endringspost** i planen — ikke samlepost som «XR
 
 Ved FULL modus: verifiser at hvert felt i XRD-schemaet er representert i `references/skybertapp-crd.md` med korrekt type, default og required-status. Udekkede felt → `UTVID`-post per felt (eller gruppert per seksjon hvis mange).
 
-### Statiske kopier i skybert/references/skybertapp/
+### Statiske kopier i plugins/skybert/skills/skybert/references/skybertapp/
 
 Skillen inneholder statiske kopier av infra-filer, brukt av `references/skybertapp-render.md` for lokal `crossplane render`:
 
@@ -319,13 +319,13 @@ Når en kildefil over er endret (compare/discovery):
 1. Opprett endringspost for å oppdatere den statiske kopien (for `functions.yaml`: bevar xpkg-omskrivingen, oppdater bare versjoner/innhold)
 2. Verifiser at eksemplene i `skybertapp-render.md` fortsatt stemmer med ny composition-output
 
-Provenance for kopiene er `github.infra.commit`/`commitDate` i `skybert/.oppdater-state.json` — kopiene synkes ved hver GitHub-kjøring som berører kildefilene, og state-SHA-en er dermed alltid gyldig for dem. `skybertapp-render.md` skal ikke inneholde SHA, dato eller refresh-kommandoer.
+Provenance for kopiene er `github.infra.commit`/`commitDate` i `maintenance/skybert/.oppdater-state.json` — kopiene synkes ved hver GitHub-kjøring som berører kildefilene, og state-SHA-en er dermed alltid gyldig for dem. `skybertapp-render.md` skal ikke inneholde SHA, dato eller refresh-kommandoer.
 
 **Refresh-prosedyre** (kjøres av denne skillen, ikke av brukerskillen):
 
 ```bash
 RAW=https://raw.githubusercontent.com/FHISkybert/Fhi.Skybert.Infra/main
-SKILL=skybert/references/skybertapp
+SKILL=plugins/skybert/skills/skybert/references/skybertapp
 curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/compositions/skybertapp.yaml" -o "$SKILL/composition.yaml"
 curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/xrds/skybertapp.yaml"         -o "$SKILL/xrd.yaml"
 # functions.yaml: sammenlign kun spec.package-versjonene og oppdater versjonsnumrene i
@@ -345,7 +345,7 @@ Disse kopiene skal ALDRI drifte stille: ved FULL modus sammenlignes de alltid mo
 
 | Docs-side (fra mkdocs.yml) | Hovedtema | Dekket i skillen hvor? | Dekningsgrad | Hva mangler | Foreslått målfil hvis udekket |
 |---|---|---|---|---|---|
-| `docs/get-started/index.md` | Onboarding | `skybert/SKILL.md` linjer 30-80 | Komplett | -- | -- |
+| `docs/get-started/index.md` | Onboarding | `plugins/skybert/skills/skybert/SKILL.md` linjer 30-80 | Komplett | -- | -- |
 | `docs/auth/workload-identity.md` | WI | `references/security.md` | Delvis | Federated credential-oppsett, token-utløp | -- |
 | `docs/new-topic/something.md` | Nytt emne | Ikke dekket | Fraværende | Alt | ny `references/new-topic.md` |
 
