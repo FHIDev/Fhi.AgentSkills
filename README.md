@@ -27,7 +27,8 @@ codex plugin add skybert-plugin@fhi-agent-skills
 codex plugin add designsystem-plugin@fhi-agent-skills
 ```
 
-Se [oppdatering og migrering](docs/plugins.md). Intern FHI-katalog avventer katalogavklaring.
+Se [oppdatering og migrering](docs/plugins.md). Valgt intern katalog er
+`FHIDev/Fhi.AIAgent.Marketplace`; registreringen leveres i en separat PR.
 Installer hver plugin fra én katalog, selv om flere kataloger er registrert.
 
 ## Vedlikehold og bidrag

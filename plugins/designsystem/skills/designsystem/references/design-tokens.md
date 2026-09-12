@@ -2,7 +2,10 @@
 
 FHI Designsystem bruker CSS custom properties (design tokens) for farger, typografi, spacing og mer. Tokenene er tilgjengelige når `theme/default.css` er importert.
 
-**Bruk alltid semantiske tokens** — aldri hardkodede verdier.
+**Bruk alltid semantiske fargetokens** — aldri hardkodede fargeverdier. For avstander brukes designsystemets spacing-tokens, som er primitive.
+
+Ikke overskriv globale theme-tokens; bruk dem som verdier i egen CSS. Da følger
+egne elementer med når designsystemets farger og størrelser oppdateres.
 
 ## Innhold
 
@@ -43,7 +46,7 @@ Mønster: `--fhi-{palett}-{stopp}`
 | `teal` | `--fhi-teal-500` | Ingen semantisk mapping |
 | `purple` | `--fhi-purple-500` | Ingen semantisk mapping |
 
-Stopp-skala: `010`, `050`, `100`–`900` (i trinn på 100). Lavere tall = lysere, høyere = mørkere. `black` og `white` finnes som enkelt-tokens (`--fhi-black`, `--fhi-white`).
+Stopp-skala: `010`, `050`, `100`, `150`, `200`–`900` (i trinn på 100). Lavere tall = lysere, høyere = mørkere. `black` og `white` finnes som enkelt-tokens (`--fhi-black`, `--fhi-white`).
 
 ### Semantisk → primitiv mapping
 
@@ -56,7 +59,7 @@ Stopp-skala: `010`, `050`, `100`–`900` (i trinn på 100). Lavere tall = lysere
 | `warning` | `yellow` / `orange` |
 | `danger` | `red` |
 
-`greybeige`, `teal` og `purple` har ingen semantiske tokens i v0.41.2.
+`greybeige`, `teal` og `purple` har ingen semantiske tokens i v0.43.5.
 
 ### Semantiske tokens — navnemønster
 
@@ -92,7 +95,26 @@ Stopp-skala: `010`, `050`, `100`–`900` (i trinn på 100). Lavere tall = lysere
 | `base-active` | Basisfarge ved aktiv | `--fhi-color-accent-base-active` |
 | `text-subtle` | Svakere/sekundær tekst | `--fhi-color-neutral-text-subtle` |
 | `text-default` | Standard tekst | `--fhi-color-neutral-text-default` |
-| `text-inverted` | Lys tekst på mørk bakgrunn | `--fhi-color-neutral-text-inverted` |
+| `text-inverted` | Tekst med kontrast mot rollens `base`-farger | `--fhi-color-neutral-text-inverted` |
+
+`text-inverted` er ikke alltid lys: `--fhi-color-warning-text-inverted` peker
+på mørk `--fhi-orange-900` for bruk mot warning-rollens lyse base-farger.
+
+### Kontrast og tilstander
+
+Innen samme fargeskala er `text-subtle` ment for `background`-fargene og
+`surface-default`, mens `text-default` kan brukes mot alle `background`- og
+`surface`-fargene. Bruk rollens `text-inverted` mot dens `base`-farger.
+
+`border-subtle` har ikke tilstrekkelig kontrast til å være eneste signal om en
+avgrensning eller interaksjon. Støtt den med tekst/ikon, eller bruk
+`border-default`/`border-strong`. Formidle alltid feil og status med mer enn
+farge, for eksempel forklarende tekst og eventuelt ikon.
+
+Token-navn beskriver tiltenkt bruk, men komponenter kan bruke et annet trinn
+for en roligere overgang: et element uten bakgrunn kan bruke `surface-default`
+ved hover, og en ikke-interaktiv `bordered`-komponent kan bruke `surface-active`
+som kantfarge.
 
 ### Eksempler på bruk i egen CSS
 
@@ -135,6 +157,10 @@ Stopp-skala: `010`, `050`, `100`–`900` (i trinn på 100). Lavere tall = lysere
 
 Fonten Roboto Flex lastes automatisk med `theme/default.css`.
 
+Upstreams typografiveiledning anbefaler denne fonten for interne FHI-løsninger.
+Ved allment åpne løsninger: konsulter [FHIs visuelle profil for fonter](https://www.fhi.no/om/fhi/visuell-profil/innhold/fonter/).
+Dette er et bruksråd fra designsystemets dokumentasjon, ikke en påstand om fontlisensen.
+
 ```css
 font-family: var(--fhi-font-family-default);
 /* → 'Roboto Flex', system-ui, sans-serif */
@@ -148,6 +174,28 @@ font-family: var(--fhi-font-family-default);
 | `--fhi-font-weight-regular` | 400 | Normal tekst |
 | `--fhi-font-weight-medium` | 500 | Labels, overskrifter |
 | `--fhi-font-weight-bold` | 600 | Titler, uthevet |
+
+### Fontstørrelsesskala
+
+Bruk typografikomponentene som hovedregel; tokens er et supplement når
+komponentene ikke kan brukes. De primitive størrelsene bak tekststilene er:
+
+| Token | Verdi |
+|-------|-------|
+| `--fhi-font-size-1` | 0.625rem |
+| `--fhi-font-size-2` | 0.75rem |
+| `--fhi-font-size-3` | 0.875rem |
+| `--fhi-font-size-4` | 1rem |
+| `--fhi-font-size-5` | 1.125rem |
+| `--fhi-font-size-6` | 1.25rem |
+| `--fhi-font-size-7` | 1.5rem |
+| `--fhi-font-size-8` | 1.75rem |
+| `--fhi-font-size-9` | 2rem |
+| `--fhi-font-size-10` | 2.25rem |
+| `--fhi-font-size-11` | 2.625rem |
+| `--fhi-font-size-12` | 3rem |
+| `--fhi-font-size-13` | 3.375rem |
+| `--fhi-font-size-14` | 3.75rem |
 
 ### Typografi-tokens
 

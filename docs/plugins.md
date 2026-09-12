@@ -54,14 +54,14 @@ En feil publisert versjon rettes med høyere versjonsnummer.
 
 ## Intern katalog og videre arbeid
 
-Avklar med Kristian Grønli om sentral- eller teamkatalog skal brukes før registrering.
-Sentralkatalogen heter `FHIDev/Fhi.AIAgent.Marketplace`; gammel URL videresendes.
+Valgt intern kanal er sentralkatalogen `FHIDev/Fhi.AIAgent.Marketplace`, siden skillene
+brukes på tvers av team. Gammel repo-URL videresendes.
 Foreslått source er `git-subdir` til `plugins/<domene>` uten katalogversjon. Verifiser
 oppdatering A → B med bare bump i pluginmanifestet i begge klienter, særlig Claude Code.
 Fallback er versjon begge steder med plugin-release først og katalogoppdatering etterpå.
 
 FHI-utrulling bør bruke managed settings (`extraKnownMarketplaces` og `enabledPlugins`)
-for valgt katalog. Konkrete katalogverdier fastsettes etter eierskapsavklaringen.
+for `fhi-marketplace` fra `FHIDev/Fhi.AIAgent.Marketplace` etter at registreringen er merget.
 Eksisterende dobbeltinstallasjoner ryddes ved migrering.
 
 De påkrevde jobbnavnene `validate-claude-plugins`, `validate-codex-plugins` og

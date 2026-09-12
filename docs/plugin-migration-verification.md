@@ -38,8 +38,9 @@ Det starter ingen modell. CLI-ene må være installert. Midlertidige profiler sl
 - Claude CLI-valideringen er bekreftet lokalt. Ny jobb må kjøre på GitHub-runner før
   den eventuelt gjøres påkrevd. Eksisterende tre påkrevde jobbnavn er bevart.
 - Trigger- og svarkvalitet er ikke evaluert med modellkall i denne migreringen.
-- Intern katalog avklares med Kristian Grønli. `git-subdir` med bare manifestversjon
-  krever egen A → B-oppdateringstest før registrering/utrulling.
+- Valgt intern katalog er `FHIDev/Fhi.AIAgent.Marketplace`. `git-subdir`-testen i
+  marketplace-arbeidet bekrefter A → B med bare manifestversjon i begge klienter
+  mot isolerte Git-repoer. GitHub-kilden kontrolleres etter at denne strukturen er merget.
 
 Wrapperne ble fjernet etter bestått direkte installasjon og oppdatering. Revert av
 strukturendringen gjenoppretter dem fra Git. For allerede distribuerte feilversjoner

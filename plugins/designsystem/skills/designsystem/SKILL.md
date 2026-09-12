@@ -2,17 +2,17 @@
 name: designsystem
 description: Ekspert på FHI Designsystem (@folkehelseinstituttet/designsystem, designsystem.fhi.no). Bruk ved installasjon eller oppsett av designsystemet, bruk av FHI-komponenter (fhi-button, fhi-text-input, fhi-checkbox, etc.), bruk av FHI design tokens (farger, typografi, spacing), ikoner, rammeverk-integrasjon (React, Angular, Blazor), eller spørsmål om komponenter brukeren har sett i designsystemets Storybook. Gjelder også når brukeren sier «FHI-komponent» eller bygger skjema/UI i en FHI-app uten å nevne designsystemet eksplisitt.
 ---
-<!-- Basert på @folkehelseinstituttet/designsystem v0.41.2 -->
+<!-- Basert på @folkehelseinstituttet/designsystem v0.43.5 -->
 
 # FHI Designsystem — Brukerveiledning
 
 Bruk FHI Designsystem i egne prosjekter. Designsystemet er basert på standard web components og fungerer i alle rammeverk.
 
-> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.41.2 — latest)
+> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.43.5 — latest)
 > **Dokumentasjon:** https://designsystem.fhi.no/
 > **GitHub:** https://github.com/FHIDev/Fhi.Designsystem
 > **Figma:** https://www.figma.com/design/VgQG6XeEbFOmHIrxyAOACR/FHI-Designsystem
-> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.41.2` (2026-07-05)
+> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.43.5` (2026-09-08)
 > **Støttepolicy:** Latest + 9 tidligere minor (totalt 10 minor). Se [`versions/INDEX.md`](versions/INDEX.md) for støttede versjoner.
 >
 > **Versjonsbehandling:**
@@ -33,6 +33,8 @@ npm install @folkehelseinstituttet/designsystem
 ### Theme CSS (påkrevd)
 
 Theme-filen inneholder alle design tokens (farger, typografi, spacing) og fonten Roboto Flex. Den **må** importeres før komponentene brukes.
+
+For allment åpne løsninger: se [font-rådet](references/design-tokens.md#font) om FHIs visuelle profil.
 
 ```typescript
 // I hovedfilen (main.ts, app.ts, e.l.)
@@ -73,7 +75,7 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 
 **KRITISK**: Importer alltid `theme/default.css` **før** komponentene brukes. Uten theme-filen mangler alle design tokens, og komponentene rendres uten styling.
 
-**KRITISK**: Bruk alltid **semantiske design tokens** i egen CSS. Aldri bruk hardkodede farge- eller størrelsesverdier. Bruk `var(--fhi-color-accent-base-default)`, ikke `#2a76c6`.
+**KRITISK**: Bruk alltid **semantiske fargetokens** i egen CSS. Aldri bruk hardkodede farge- eller størrelsesverdier. Bruk `var(--fhi-color-accent-base-default)`, ikke `#2a76c6`. For avstander brukes designsystemets spacing-tokens, selv om disse er primitive.
 
 **KRITISK**: Form-komponenter (fhi-text-input, fhi-checkbox, fhi-radio, fhi-date-input, fhi-select) deltar automatisk i native HTML `<form>` via ElementInternals. Sett `name`-attributt for FormData-deltakelse.
 
@@ -94,6 +96,8 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 | Form | [`fhi-radio`](references/components/fhi-radio.md) | Radioknapp (grupper med felles `name`) |
 | Form | [`fhi-select`](references/components/fhi-select.md) | Nedtrekksliste — fra v0.41.0 |
 | Form | [`fhi-select-item`](references/components/fhi-select.md) | Alternativ i `fhi-select` |
+| Navigasjon | [`fhi-link`](references/components/fhi-link.md) | Lenke med `href` og `target` — fra v0.43.0 |
+| Visuell | [`fhi-callout`](references/components/fhi-callout.md) | Fremhevet beskjed med valgfri tittel og ikon — fra v0.42.0 |
 | Visuell | [`fhi-tag`](references/components/fhi-tag.md) | Status-/kategorimerke |
 | Visuell | [`fhi-tooltip`](references/components/fhi-tooltip.md) | Tooltip med auto-posisjonering |
 | Visuell | [`fhi-modal-dialog`](references/components/fhi-modal-dialog.md) | Modal dialog |
@@ -129,5 +133,7 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 3. **Forms**: Les [Form-bruk](references/form-usage.md) for FormData-integrasjon.
 4. **Design tokens**: Les [Design tokens](references/design-tokens.md) for riktige token-navn.
 5. **Ikoner**: Les [Ikonbruk](references/icon-usage.md) for import-mønster og tilgjengelige ikoner.
+6. **Kildeoppslag**: Ved mangler i lokale referanser, les komponentens `fhi-*.manifest.json` eller `custom-elements.json` i den installerte pakken. Verifiser runtime-atferd og begrensninger i kildekode/docs fra tilhørende publiserte git-tag, ikke `main`.
+7. **Svar**: Ta med relevant dokumentasjonslenke når den hjelper brukeren. Utelat unødvendige default-attributter i nye eksempler, med mindre de forklarer en bestemt variant eller oppførsel.
 
 > Vedlikehold av denne skillen gjøres med `oppdater-designsystem`-skillen i dette repoet.
