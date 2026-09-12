@@ -26,6 +26,14 @@ import '@folkehelseinstituttet/designsystem/fhi-radio';
 | `change` | Utløses når denne radioen velges |
 | `input` | Utløses når denne radioen velges |
 
+## Form reset
+
+Har gruppen et forhåndsvalgt alternativ via `checked`-attributtet,
+gjenopprettes dette ved form-reset. Har ingen radio dette attributtet,
+beholdes brukerens valg etter reset, også i FormData. Reset tømmer dermed
+ikke en gruppe som opprinnelig var uten valg. Dette er bekreftet i alle
+prøvde versjoner fra v0.41.2 til v0.43.5.
+
 ## Eksempler
 
 ```html

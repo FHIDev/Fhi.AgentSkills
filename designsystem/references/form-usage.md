@@ -39,7 +39,27 @@ import '@folkehelseinstituttet/designsystem/fhi-button';
 
 ## Form reset
 
-`<fhi-button type="reset">` tilbakestiller alle feltene til opprinnelige verdier.
+`<fhi-button type="reset">` utløser komponentenes reset-callbacker. De
+gjenoppretter ikke alltid opprinnelig tilstand:
+
+- `fhi-checkbox` setter alltid `checked=false`, også når boksen var
+  forhåndsavkrysset.
+- `fhi-radio` gjenoppretter gruppens forhåndsvalg når et alternativ hadde
+  `checked`-attributtet. Uten forhåndsvalg beholdes brukerens valg etter reset,
+  også i FormData.
+- `fhi-select` tilbakestiller til opprinnelig valgt alternativ (eller `''`).
+
+Checkbox- og radio-avvikene er bekreftet i publiserte pakker fra v0.41.2 til
+v0.43.5 som ble prøvd under oppdateringen; de er ikke nye i v0.43.
+
+## Programmatisk Select-verdi
+
+Når `fhi-select.value` endres programmatisk etter initialisering, kan den
+synlige verdien endres uten at FormData oppdateres. For eksempel kan feltet
+vise `b` mens skjemaet fortsatt sender `a`. Dette er bekreftet i v0.43.5.
+Kontroller innsendt verdi i slike forløp; native form-assosiering alene er
+ikke en garanti for synkronisering. Se [Select](components/fhi-select.md)
+for forskjellen mellom feltets `value` og endringer på alternativene.
 
 ## Disabled
 

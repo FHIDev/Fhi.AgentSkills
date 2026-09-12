@@ -24,6 +24,12 @@ import '@folkehelseinstituttet/designsystem/fhi-checkbox';
 | `change` | Utløses når tilstand endres |
 | `input` | Utløses når tilstand endres |
 
+## Form reset
+
+Reset setter alltid `checked=false`, også når boksen opprinnelig hadde
+`checked`-attributtet. Den opprinnelige avkrysningen gjenopprettes ikke.
+Dette er bekreftet i v0.41.2 og v0.43.5.
+
 ## Eksempler
 
 ```html
