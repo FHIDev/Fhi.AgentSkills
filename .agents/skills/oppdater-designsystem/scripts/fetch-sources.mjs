@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Steg 6a i oppdater-designsystem: arkiver nøkkelartefakter for en publisert versjon
-// under designsystem/versions/sources/v{versjon}/ og oppdater designsystem/.oppdater-state.json.
+// under maintenance/designsystem/sources/v{versjon}/ og oppdater maintenance/designsystem/.oppdater-state.json.
 // Bruk: node fetch-sources.mjs <versjon>   (f.eks. node fetch-sources.mjs 0.41.0)
 //
 // Arkiverer HELE upstream-filer uendret (aldri redigerte utdrag): package.json,
@@ -10,7 +10,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, rmSyn
 import { execSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { designsystemDir, statePath, currentVersionInfo, fetchJson } from './lib.mjs';
+import { sourcesDir, statePath, currentVersionInfo, fetchJson } from './lib.mjs';
 
 const version = process.argv[2];
 if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) {
@@ -33,7 +33,7 @@ try {
   execSync('tar -xzf package.tgz', { cwd: tmp, stdio: 'inherit' }); // tar finnes på Windows 10+, macOS og Linux
   const pkgDir = path.join(tmp, 'package');
 
-  const destDir = path.join(designsystemDir, 'versions', 'sources', `v${version}`);
+  const destDir = path.join(sourcesDir, `v${version}`);
   mkdirSync(destDir, { recursive: true });
 
   // ai-tooling/SKILL.md er obligatorisk kildeinput (se kildelesing.md) — arkiveres

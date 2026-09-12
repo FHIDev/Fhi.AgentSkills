@@ -8,7 +8,7 @@
       "name": "skybert-plugin",
       "source": {
         "source": "local",
-        "path": "./plugins/codex/skybert-plugin"
+        "path": "./plugins/skybert"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -20,7 +20,7 @@
       "name": "designsystem-plugin",
       "source": {
         "source": "local",
-        "path": "./plugins/codex/designsystem-plugin"
+        "path": "./plugins/designsystem"
       },
       "policy": {
         "installation": "AVAILABLE",

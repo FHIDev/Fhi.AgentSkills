@@ -1,16 +1,16 @@
 ---
 name: oppdater-skybert
-description: Oppdaterer skybert-skillen basert på kilderepoene FHISkybert/Fhi.Skybert.Docs og FHISkybert/Fhi.Skybert.Infra, eller via web-scraping av docs.sky.fhi.no for de uten repo-tilgang. Sammenligner med alle eksisterende filer i skybert/ og lager en endringsplan til gjennomgang. Fjerner innhold som er feil, utdatert, generisk eller duplisert, og merker erfaringsbasert innhold eksplisitt. Bruk denne skillen når skybert-skillen skal synkroniseres med nye kilder, eller når du mistenker at skillen er utdatert eller mangelfull.
+description: Oppdaterer skybert-skillen basert på kilderepoene FHISkybert/Fhi.Skybert.Docs og FHISkybert/Fhi.Skybert.Infra, eller via web-scraping av docs.sky.fhi.no for de uten repo-tilgang. Sammenligner med alle eksisterende filer i plugins/skybert/skills/skybert/ og lager en endringsplan til gjennomgang. Fjerner innhold som er feil, utdatert, generisk eller duplisert, og merker erfaringsbasert innhold eksplisitt. Bruk denne skillen når skybert-skillen skal synkroniseres med nye kilder, eller når du mistenker at skillen er utdatert eller mangelfull.
 ---
 
 # Oppdater Skybert-skillen
 
-Denne skillen beskriver arbeidsflyten for å holde `skybert/`-skillen i dette repoet oppdatert og korrekt basert på:
+Denne skillen beskriver arbeidsflyten for å holde `plugins/skybert/skills/skybert/`-skillen i dette repoet oppdatert og korrekt basert på:
 
 - **FHISkybert/Fhi.Skybert.Docs** — MkDocs-basert dokumentasjon (publisert på docs.sky.fhi.no)
 - **FHISkybert/Fhi.Skybert.Infra** — Flux GitOps infra-repo med CRD-definisjoner, Kyverno-policier, tenant-bootstrap
 
-Styrende prinsipp: **repo-basert + bevar korrekt, Skybert-spesifikk erfaring**. Alt i `skybert/` skal enten være sporbart til kildene (`> Kilde:`) eller eksplisitt merket `> **Operasjonell antakelse:**`; generisk kunnskap, duplikater og historikk fjernes. Se [hovedprinsipper.md](references/hovedprinsipper.md).
+Styrende prinsipp: **repo-basert + bevar korrekt, Skybert-spesifikk erfaring**. Alt i `plugins/skybert/skills/skybert/` skal enten være sporbart til kildene (`> Kilde:`) eller eksplisitt merket `> **Operasjonell antakelse:**`; generisk kunnskap, duplikater og historikk fjernes. Se [hovedprinsipper.md](references/hovedprinsipper.md).
 
 ## Underdokumenter
 
@@ -27,13 +27,15 @@ Les ved behov — ikke les alt ved oppstart.
 
 ## Forutsetninger
 
+State og coverage ligger i `maintenance/skybert/`, utenfor den distribuerte skillen.
+Ved endret distribuert innhold: øk versjonen i `plugins/skybert/.claude-plugin/plugin.json`
+etter [versjonsreglene](../../../docs/plugins.md#versjonering). Bare endret state eller
+coverage krever ingen bump. Coverage skrives først ved komplett FULL; fravær er ikke strukturdrift.
+
 ```
 Skybert-skill (oppdateres):
-skybert/
+plugins/skybert/skills/skybert/
 ├── SKILL.md                                 (onboarding, konsepter, Blaloypa, navnekonvensjoner)
-├── .oppdater-state.json                     (persistent state for inkrementell oppdatering)
-├── .oppdater-coverage.json                  (bevart matrise A; skrives først ved en komplett FULL — fravær er ikke strukturdrift)
-├── .claude-plugin/plugin.json               (plugin-manifest — vedlikeholdes IKKE av denne skillen)
 └── references/
     ├── skybertapp-crd.md                    (SkybertApp XRD-spec)
     ├── legacy-webapp-csi.md                 (legacy WebApp CRD + CSI driver, migreringsguide)
@@ -61,7 +63,7 @@ Runtime-cache (opprettes, ikke committet):
 └── UPDATE-PLAN.md
 ```
 
-**Treet over er illustrativt, ikke autoritativt.** I steg 3 skal faktisk innhold i `skybert/` enumereres (alle filer, inkludert undermapper og ikke-markdown-filer). Avvik mellom faktisk filliste og treet over → opprett selvoppdaterings-post for denne filen (se [Selvoppdatering](#selvoppdatering-av-oppdater-skybert)).
+**Treet over er illustrativt, ikke autoritativt.** I steg 3 skal faktisk innhold i `plugins/skybert/skills/skybert/` enumereres (alle filer, inkludert undermapper og ikke-markdown-filer). Avvik mellom faktisk filliste og treet over → opprett selvoppdaterings-post for denne filen (se [Selvoppdatering](#selvoppdatering-av-oppdater-skybert)).
 
 ---
 
@@ -71,12 +73,12 @@ Persistent state ligger i **nøyaktig to** committede filer, med hvert sitt ansv
 
 | Fil | Innhold | Skrives |
 |-----|---------|---------|
-| `skybert/.oppdater-state.json` | Kjøringsstate: modus, SHA-er, datoer, `openItems` | Ved hver vellykket Apply |
-| `skybert/.oppdater-coverage.json` | Bevart matrise A (dekning per docs-side) | Kun når matrise A er komplett |
+| `maintenance/skybert/.oppdater-state.json` | Kjøringsstate: modus, SHA-er, datoer, `openItems` | Ved hver vellykket Apply |
+| `maintenance/skybert/.oppdater-coverage.json` | Bevart matrise A (dekning per docs-side) | Kun når matrise A er komplett |
 
 Ingen annen persistent state finnes. `.tmp/oppdater-skybert/` er runtime-cache og skal aldri
-leses som state. `skybert/SKILL.md` skal **ikke** inneholde noen state-HTML-kommentar.
-Linjen «Sist verifisert mot offisiell docs» i `skybert/SKILL.md` er ren visning for
+leses som state. `plugins/skybert/skills/skybert/SKILL.md` skal **ikke** inneholde noen state-HTML-kommentar.
+Linjen «Sist verifisert mot offisiell docs» i `plugins/skybert/skills/skybert/SKILL.md` er ren visning for
 mennesker: den genereres fra `sistVerifisert`-feltet i state-filen i steg 9 og skal aldri
 redigeres manuelt eller brukes som maskinlesbar kilde.
 
@@ -103,7 +105,7 @@ redigeres manuelt eller brukes som maskinlesbar kilde.
       "id": "<kort-slug>",
       "status": "deferred|partial|failed-verification",
       "category": "NY|UTVID|KORRIGER|OMSTRUKTURER|FORBEDRING|FJERN|VURDER",
-      "target": "<målfil i skybert/>",
+      "target": "<målfil i plugins/skybert/skills/skybert/>",
       "source": "<kildereferansen som utløste posten>",
       "summary": "<kort beskrivelse / beslutningsspørsmål>",
       "firstSeen": "<ISO-dato>",
@@ -119,7 +121,7 @@ redigeres manuelt eller brukes som maskinlesbar kilde.
   utsatte `VURDER`-poster. Se [analyseregler.md](references/analyseregler.md) for
   status-verdiene og livssyklusen.
 
-### Dekningsmatrise-fil: `skybert/.oppdater-coverage.json`
+### Dekningsmatrise-fil: `maintenance/skybert/.oppdater-coverage.json`
 
 Bevart matrise A, committet sammen med skybert-filene. Eneste gyldige grunnlag for videreført
 dekning (se «Videreført dekning i FULL-modus» i steg 4).
@@ -129,7 +131,7 @@ dekning (se «Videreført dekning i FULL-modus» i steg 4).
   "schemaVersion": 1,
   "generatedAt": "<ISO-8601>",
   "docsCommit": "<sha for docs-repo da matrisen ble laget>",
-  "skillContentHash": "<sha256 over skybert/-innholdet, se under>",
+  "skillContentHash": "<sha256 over plugins/skybert/skills/skybert/-innholdet, se under>",
   "pages": [
     {
       "path": "docs/get-started/index.md",
@@ -153,8 +155,8 @@ dekning (se «Videreført dekning i FULL-modus» i steg 4).
 
   ```bash
   find skybert -type f \
-    ! -path 'skybert/.oppdater-state.json' \
-    ! -path 'skybert/.oppdater-coverage.json' \
+    ! -path 'maintenance/skybert/.oppdater-state.json' \
+    ! -path 'maintenance/skybert/.oppdater-coverage.json' \
     ! -path 'skybert/.claude-plugin/*' \
     | sort \
     | while read -r f; do printf '%s %s\n' "$f" "$(git hash-object "$f")"; done \
@@ -171,12 +173,12 @@ dekning (se «Videreført dekning i FULL-modus» i steg 4).
 ### Regler
 
 - State-filen oppdateres kun etter vellykket Apply (steg 9)
-- State-filen er eneste sted for SHA-er og verifiseringsdatoer. Brødteksten i `skybert/` skal ikke inneholde dem (kontrollpunkt 11–12 i [implementeringsregler.md](references/implementeringsregler.md))
+- State-filen er eneste sted for SHA-er og verifiseringsdatoer. Brødteksten i `plugins/skybert/skills/skybert/` skal ikke inneholde dem (kontrollpunkt 11–12 i [implementeringsregler.md](references/implementeringsregler.md))
 - `lastFullscanDate` oppdateres kun ved FULL-modus, og kun når matrise A faktisk er komplett
   (se steg 4). Ufullstendig gjennomgang → la `lastFullscanDate` stå urørt
 - **Migrering fra eldre format:**
   - Finnes en gammel state-HTML-kommentar (`<!-- Oppdater-skybert-state: ... -->` eller
-    `<!-- Kilde-hash: ... -->`) i `skybert/SKILL.md` → parse den én gang, flytt verdiene
+    `<!-- Kilde-hash: ... -->`) i `plugins/skybert/skills/skybert/SKILL.md` → parse den én gang, flytt verdiene
     inn i state-filen (schemaVersion 3), og fjern kommentaren i samme Apply.
   - State-fil med `schemaVersion: 2` → migrer: hent `last_fullscan_date` fra kommentaren
     (finnes den ikke → kjør FULL), konverter `openVurder`-poster til `openItems` med
@@ -206,10 +208,10 @@ gh api repos/FHISkybert/Fhi.Skybert.Docs/commits/main --jq '.sha'
 - **Suksess** → GitHub-modus. Les [github-modus.md](references/github-modus.md).
 - **403/404** og ingen lokal klon → Web-scraping-modus. Les [webscraping-modus.md](references/webscraping-modus.md).
 
-### 1c. Les state fra skybert/.oppdater-state.json
+### 1c. Les state fra maintenance/skybert/.oppdater-state.json
 
-Les og parse `skybert/.oppdater-state.json`. Hvis filen mangler eller er ugyldig: sjekk om
-`skybert/SKILL.md` har en gammel state-HTML-kommentar (migreringstilfelle — se
+Les og parse `maintenance/skybert/.oppdater-state.json`. Hvis filen mangler eller er ugyldig: sjekk om
+`plugins/skybert/skills/skybert/SKILL.md` har en gammel state-HTML-kommentar (migreringstilfelle — se
 State-kontrakt). Finnes ingen av delene → behandle som første kjøring.
 
 ### 1d. Bestem kjoringsmodus
@@ -241,9 +243,9 @@ Hent og les alle relevante kildefiler basert på tilgangsmodus.
 
 ---
 
-## Steg 3 — Les eksisterende skybert/-filer
+## Steg 3 — Les eksisterende plugins/skybert/skills/skybert/-filer
 
-Enumerér ALLE filer under `skybert/` rekursivt — inkludert undermapper og ikke-markdown-filer (f.eks. de statiske YAML-kopiene i `references/skybertapp/`). Unnta kun `.claude-plugin/` (plugin-manifest), `.oppdater-state.json` og `.oppdater-coverage.json`. Les deretter alt.
+Enumerér ALLE filer under `plugins/skybert/skills/skybert/` rekursivt — inkludert undermapper og ikke-markdown-filer (f.eks. de statiske YAML-kopiene i `references/skybertapp/`). Les deretter alt. Manifest og vedlikeholdsdata ligger utenfor dette treet.
 
 Sammenlign den faktiske fillisten med Forutsetninger-treet i denne filen — avvik gir selvoppdaterings-post.
 
@@ -272,7 +274,7 @@ Ved FULL kan docs-sider som er **beviselig uendret** siden forrige fullscan vide
 dekningsvurdering i matrise A i stedet for å leses på nytt. Alle fire forutsetningene må være
 oppfylt — er én av dem brutt, skal sidene leses på nytt:
 
-1. **`skybert/.oppdater-coverage.json` finnes og er gyldig.** Uten bevart matrise finnes det ikke
+1. **`maintenance/skybert/.oppdater-coverage.json` finnes og er gyldig.** Uten bevart matrise finnes det ikke
    noe å videreføre *fra*: `openItems` sier bare hva som var udekket, ikke hvilke sider som var
    komplette eller hvor de var dekket. Mangler filen → full side-for-side-gjennomgang, og skriv
    matrisen ved denne kjøringens Apply.
@@ -298,11 +300,11 @@ dekningsgjelden synlig, og neste kjøring trigger FULL på nytt.
 
 ## Steg 5 — Analyser endringer
 
-Sammenlign kildeinnhold med eksisterende skybert/-filer. Bruk routing fra [routing-tabell.md](references/routing-tabell.md) og regler fra [analyseregler.md](references/analyseregler.md).
+Sammenlign kildeinnhold med eksisterende plugins/skybert/skills/skybert/-filer. Bruk routing fra [routing-tabell.md](references/routing-tabell.md) og regler fra [analyseregler.md](references/analyseregler.md).
 
 Kategoriser hver endring som: `NY`, `UTVID`, `KORRIGER`, `OMSTRUKTURER`, `FORBEDRING`, `FJERN` eller `VURDER`. `FJERN` krever `fjerningsgrunn`-flagg; `duplikat` krever `kanonisk:`-flagg.
 
-**Ved INKREMENTELL:** Routing-tabellen er ikke nok — utfør også konsekvenssjekken beskrevet i [github-modus.md](references/github-modus.md) (søk i hele `skybert/` etter avledede påstander som berøres av endrede nøkkelverdier). Inkluder alle åpne poster fra `openItems` i state-filen i planen på nytt (utsatte, delvis implementerte og poster som feilet verifikasjon).
+**Ved INKREMENTELL:** Routing-tabellen er ikke nok — utfør også konsekvenssjekken beskrevet i [github-modus.md](references/github-modus.md) (søk i hele `plugins/skybert/skills/skybert/` etter avledede påstander som berøres av endrede nøkkelverdier). Inkluder alle åpne poster fra `openItems` i state-filen i planen på nytt (utsatte, delvis implementerte og poster som feilet verifikasjon).
 
 ---
 
@@ -318,7 +320,7 @@ Skriv `.tmp/oppdater-skybert/UPDATE-PLAN.md` med disse seksjonene:
 6. **Fjernet innhold:** per post: fil, seksjon, grunn, motsigende kilde eller kanonisk plassering
 7. **Hygienesjekk:** antall SHA-lenker funnet/omskrevet, datostempler funnet/fjernet, umerkede avsnitt funnet/håndtert, duplikater funnet/konsolidert
 
-State-informasjon for inkrementell oppdatering skrives til `skybert/.oppdater-state.json` i steg 9.
+State-informasjon for inkrementell oppdatering skrives til `maintenance/skybert/.oppdater-state.json` i steg 9.
 
 ---
 
@@ -332,7 +334,7 @@ Presenter:
 5. Advarsel om `VURDER`-poster
 
 Brukeren kan: godkjenne alle, godkjenne delvis, eller avvise alle.
-**Ingen endringer i skybert/-filer uten eksplisitt godkjenning.**
+**Ingen endringer i plugins/skybert/skills/skybert/-filer uten eksplisitt godkjenning.**
 
 ---
 
@@ -348,7 +350,7 @@ Implementer kun eksplisitt godkjente endringer. Se [implementeringsregler.md](re
 
 ## Steg 9 — Oppdater state-fil
 
-Skriv/oppdater `skybert/.oppdater-state.json` (kjøringsstate — den andre state-filen,
+Skriv/oppdater `maintenance/skybert/.oppdater-state.json` (kjøringsstate — den andre state-filen,
 `.oppdater-coverage.json`, dekkes av punktet nederst i dette steget):
 - **GitHub-modus:** Lagre commit SHAs og `commitDate` for begge repoer
 - **Web-scraping-modus:** Lagre `globalHash` og per-side hashes fra `search_index.json`
@@ -357,7 +359,7 @@ Skriv/oppdater `skybert/.oppdater-state.json` (kjøringsstate — den andre stat
   `lastFullscanDate` — men **kun hvis matrise A er komplett** for alle docs-sider (se steg 4).
   Ble gjennomgangen ufullstendig, la `lastFullscanDate` stå urørt og opprett en `openItems`-post
   som beskriver dekningsgjelden.
-- **Skriv `skybert/.oppdater-coverage.json`** når matrise A er komplett: alle sider, `docsCommit`
+- **Skriv `maintenance/skybert/.oppdater-coverage.json`** når matrise A er komplett: alle sider, `docsCommit`
   = docs-SHA fra denne kjøringen, `skillContentHash` = hashen beregnet etter at alle skill-endringer
   er implementert (se State-kontrakten for kommandoen). Er matrisen ufullstendig, skal filen ikke
   skrives — en delvis matrise ville blitt lest som komplett ved neste kjøring.
@@ -369,14 +371,14 @@ Skriv/oppdater `skybert/.oppdater-state.json` (kjøringsstate — den andre stat
   - Fjern poster som ble avklart/fullført
 
 Deretter: regenerer visningslinjen `> **Sist verifisert mot offisiell docs:** <dato>` i
-`skybert/SKILL.md` fra `sistVerifisert`-feltet (dette er den eneste state-avledede teksten
+`plugins/skybert/skills/skybert/SKILL.md` fra `sistVerifisert`-feltet (dette er den eneste state-avledede teksten
 i SKILL.md — aldri skriv noen HTML-state-kommentar).
 
-`skybert/SKILL.md` og `skybert/.oppdater-state.json` committes sammen — og
-`skybert/.oppdater-coverage.json` skal med i samme commit når den er skrevet eller oppdatert i
+`plugins/skybert/skills/skybert/SKILL.md` og `maintenance/skybert/.oppdater-state.json` committes sammen — og
+`maintenance/skybert/.oppdater-coverage.json` skal med i samme commit når den er skrevet eller oppdatert i
 denne kjøringen. **Merk at coverage-filen er ny og utracket ved første komplette FULL**, så
-`git commit -am` vil hoppe over den. Bruk eksplisitt `git add skybert/.oppdater-coverage.json`
-(eller `git add skybert/`) før commit, og verifiser med `git status --porcelain skybert/` at
+`git commit -am` vil hoppe over den. Bruk eksplisitt `git add maintenance/skybert/.oppdater-coverage.json`
+(eller `git add plugins/skybert/skills/skybert/`) før commit, og verifiser med `git status --porcelain plugins/skybert/skills/skybert/` at
 ingen av de tre står igjen som `??`.
 
 **Kontrakt:** State-filen oppdateres KUN etter vellykket Apply.
@@ -391,15 +393,15 @@ Ved **INKREMENTELL** modus trigges selvoppdatering når compare-output inneholde
 
 ### Hva sjekkes
 
-1. **Routing-tabellen** — Nye docs-filer eller infra-mapper som ikke er mappet? Nye målfiler i `skybert/` uten routing-rad?
+1. **Routing-tabellen** — Nye docs-filer eller infra-mapper som ikke er mappet? Nye målfiler i `plugins/skybert/skills/skybert/` uten routing-rad?
 2. **Sti-baserte filtermoenstre** — Har mappestrukturen endret seg?
-3. **State-format** — Er `schemaVersion` i `.oppdater-state.json` konsistent med State-kontrakten? Har `skybert/SKILL.md` fått en state-kommentar den ikke skal ha?
+3. **State-format** — Er `schemaVersion` i `.oppdater-state.json` konsistent med State-kontrakten? Har `plugins/skybert/skills/skybert/SKILL.md` fått en state-kommentar den ikke skal ha?
 4. **Nye emner** — Nye dokumentasjonsomrader uten dekning i routing eller filstruktur?
-5. **Forutsetninger-treet** — Stemmer det med faktisk filliste i `skybert/` (fra steg 3)? Filer i `skybert/` som mangler i treet, eller to filer om samme tema, er avvik.
+5. **Forutsetninger-treet** — Stemmer det med faktisk filliste i `plugins/skybert/skills/skybert/` (fra steg 3)? Filer i `plugins/skybert/skills/skybert/` som mangler i treet, eller to filer om samme tema, er avvik.
    **Unntak:** manglende `.oppdater-coverage.json` er **ikke** strukturdrift og skal ikke gi
    selvoppdaterings-post. Filen skrives først ved en komplett FULL (se steg 4/9), så den er
    forventet fraværende inntil da.
-6. **Prinsippdrift** — Inneholder `skybert/` igjen `> Kilde:`-lenker med commit-SHA, datostempler i brødtekst, umerkede kildeløse avsnitt, dupliserte blokker eller to filer om samme tema? Det betyr at reglene i denne skillen ikke ble fulgt eller er uklare — rapporter som selvoppdaterings-post med forslag til regelpresisering.
+6. **Prinsippdrift** — Inneholder `plugins/skybert/skills/skybert/` igjen `> Kilde:`-lenker med commit-SHA, datostempler i brødtekst, umerkede kildeløse avsnitt, dupliserte blokker eller to filer om samme tema? Det betyr at reglene i denne skillen ikke ble fulgt eller er uklare — rapporter som selvoppdaterings-post med forslag til regelpresisering.
 
 ### Output
 

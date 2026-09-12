@@ -53,7 +53,7 @@ if (basertPaa && indexLatestMinor && !basertPaa.startsWith(`${indexLatestMinor}.
 if (stateVersion && basertPaa && stateVersion !== basertPaa) {
   err(`Versjonsavvik: .oppdater-state.json v${stateVersion} ≠ SKILL.md v${basertPaa}`);
 }
-if (!stateVersion) warn('designsystem/.oppdater-state.json mangler (opprettes av fetch-sources.mjs)');
+if (!stateVersion) warn('maintenance/designsystem/.oppdater-state.json mangler (opprettes av fetch-sources.mjs)');
 if (errors.length === 0) pass(`Versjonskonsistens: v${basertPaa}`);
 
 // ---------------------------------------------------------------- relative lenker

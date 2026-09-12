@@ -1,23 +1,19 @@
-@~/.claude/privacy.md
-
 # Fhi.AgentSkills – repo-informasjon for Claude
 
 ## Repo-struktur
 
 ```
 Fhi.AgentSkills/
-├── .claude-plugin/      ← Claude Code-marketplace (skybert- og designsystem-plugin)
-├── .claude/
-│   └── skills/          ← kanonisk plassering for interne vedlikeholds-skills (oppdater-*)
-├── .agents/
-│   ├── plugins/         ← Codex-marketplace
-│   └── skills/          ← kompatibilitetskopi av .claude/skills for Codex
-├── designsystem/        ← designsystem-skillen (også Claude-plugin)
-├── skybert/             ← skybert-skillen (også Claude-plugin)
-├── system-beskrivelse/  ← system-beskrivelse-skillen
+├── .claude-plugin/      ← offentlig Claude-katalog
+├── .agents/plugins/    ← offentlig Codex-katalog
 ├── plugins/
-│   └── codex/           ← Codex-plugins (symlinker til skill-mappene)
-├── docs/                ← dokumentasjon av plugin-oppsettene
+│   ├── skybert/        ← manifest + skills/skybert/
+│   └── designsystem/   ← manifest + skills/designsystem/
+├── maintenance/        ← state, coverage og kildearkiver (distribueres ikke)
+├── .claude/skills/     ← kanoniske vedlikeholds-skills
+├── .agents/skills/     ← identisk kompatibilitetskopi
+├── .github/scripts/    ← validering og speiling
+├── docs/
 └── README.md
 ```
 

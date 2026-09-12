@@ -4,3 +4,4 @@
 # Arbeidsartefakter
 .tmp/
 *.tgz
+__pycache__/

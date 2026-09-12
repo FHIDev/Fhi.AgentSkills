@@ -5,8 +5,9 @@ import path from 'node:path';
 
 // Scriptene ligger i .claude/skills/oppdater-designsystem/scripts/ → roten er 4 nivåer opp.
 export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
-export const designsystemDir = path.join(repoRoot, 'designsystem');
-export const statePath = path.join(designsystemDir, '.oppdater-state.json');
+export const designsystemDir = path.join(repoRoot, 'plugins', 'designsystem', 'skills', 'designsystem');
+export const sourcesDir = path.join(repoRoot, 'maintenance', 'designsystem', 'sources');
+export const statePath = path.join(repoRoot, 'maintenance', 'designsystem', '.oppdater-state.json');
 
 /**
  * Gjeldende pakke + versjon. .oppdater-state.json er autoritativ;
@@ -20,7 +21,7 @@ export function currentVersionInfo() {
   const skill = readFileSync(path.join(designsystemDir, 'SKILL.md'), 'utf8');
   const m = skill.match(/<!--\s*Basert på\s+(@?\S+?)\s+v(\d+\.\d+\.\d+)\s*-->/);
   if (m) return { package: m[1], version: m[2], source: 'skill-comment' };
-  throw new Error('Fant ikke gjeldende versjon: verken designsystem/.oppdater-state.json eller "<!-- Basert på ... -->" i designsystem/SKILL.md.');
+  throw new Error('Fant ikke gjeldende versjon: verken maintenance/designsystem/.oppdater-state.json eller "<!-- Basert på ... -->" i plugins/designsystem/skills/designsystem/SKILL.md.');
 }
 
 export function semverCmp(a, b) {

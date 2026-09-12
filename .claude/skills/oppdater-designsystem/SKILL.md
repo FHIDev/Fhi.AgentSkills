@@ -5,16 +5,18 @@ description: Oppdaterer designsystem-skillen i dette repoet basert på siste pub
 
 # Oppdater Designsystem-skillen
 
-Arbeidsflyt for å holde `designsystem/`-skillen i dette repoet oppdatert og korrekt i
+Arbeidsflyt for å holde `plugins/designsystem/skills/designsystem/`-skillen i dette repoet oppdatert og korrekt i
 henhold til siste **publiserte** versjon av FHI Designsystem.
 
 ```
 Fhi.AgentSkills (dette repoet)
-└── designsystem/          ← skillen som skal oppdateres
-    ├── SKILL.md
+├── plugins/designsystem/skills/designsystem/  ← distribuert skill
+│   ├── SKILL.md
+│   ├── references/
+│   └── versions/          (INDEX.md, GUIDE.md, FEATURES.md, delta-filer)
+└── maintenance/designsystem/
     ├── .oppdater-state.json   ← maskinlesbar state (autoritativ for scripting)
-    ├── references/
-    └── versions/          (INDEX.md, GUIDE.md, FEATURES.md, delta-filer, sources/)
+    └── sources/              ← arkiverte upstream-filer
 
 Kilder:
 ├── github.com/FHIDev/Fhi.Designsystem  (leses kun fra publisert git-tag)
@@ -35,14 +37,18 @@ Kilder:
 
 ## Steg 1 – Versjonssjekk (fast path)
 
+Ved endret distribuert innhold: øk versjonen i
+`plugins/designsystem/.claude-plugin/plugin.json` etter [versjonsreglene](../../../docs/plugins.md#versjonering).
+Bare endret state eller kildearkiv krever ingen bump. Pluginversjon og upstream-versjon er uavhengige.
+
 Kjør versjonssjekk-scriptet fra repo-roten:
 
 ```bash
 node .claude/skills/oppdater-designsystem/scripts/check-version.mjs
 ```
 
-Scriptet leser gjeldende versjon fra `designsystem/.oppdater-state.json` (fallback:
-`<!-- Basert på ... -->`-kommentaren i `designsystem/SKILL.md`), slår opp siste
+Scriptet leser gjeldende versjon fra `maintenance/designsystem/.oppdater-state.json` (fallback:
+`<!-- Basert på ... -->`-kommentaren i `plugins/designsystem/skills/designsystem/SKILL.md`), slår opp siste
 publiserte versjon i npm-registeret, lister mellomliggende minor-versjoner
 (pre-releases filtrert bort, høyeste patch per minor) og verifiserer git-taggen.
 Output er JSON. Hvis scriptet feiler, se [Feilhåndtering](references/feilhandtering.md)
@@ -91,7 +97,7 @@ holdes identisk. Etter alle endringer under `.claude/skills/`, kjør det delte
 sync-scriptet fra repo-roten (speiler hele treet og verifiserer):
 
 ```bash
-bash .claude/skills/oppdater-skybert/scripts/sync-agents.sh
+bash .github/scripts/sync-agents.sh
 ```
 
 CI-workflowen `.github/workflows/skills-sync-check.yml` feiler PR-en hvis trærne

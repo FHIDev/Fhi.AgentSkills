@@ -1,22 +1,21 @@
 #!/usr/bin/env bash
 # Samlet invariant-sjekk for skybert-skillen og oppdater-skybert-skillen.
 # Én definisjon av «gyldig» — kjøres lokalt før PR og i CI.
-# Kjøres fra repo-rot: bash .claude/skills/oppdater-skybert/scripts/validate.sh
+# Kjøres fra repo-rot: bash .github/scripts/validate.sh
 #
-# Sjekker (bygges ut inkrementelt, se docs/analyse-skybert-skill-forbedringer.md P8):
+# Sjekker:
 #   1. .claude/skills og .agents/skills er identiske (speilingsregel fra CLAUDE.md)
-#   2. skybert/SKILL.md har ingen state-HTML-kommentar (state bor KUN i .oppdater-state.json)
-#   3. skybert/.oppdater-state.json er gyldig JSON med påkrevde felter for sitt schema
-#   4. Statiske kopier i skybert/references/skybertapp/ finnes
-#   5. Relative referanselenker i skybert/SKILL.md peker på eksisterende filer
-#   6. skybert/evals/evals.json (hvis den finnes) er gyldig JSON med påkrevd struktur
+#   2. plugins/skybert/skills/skybert/SKILL.md har ingen state-HTML-kommentar (state bor KUN i .oppdater-state.json)
+#   3. maintenance/skybert/.oppdater-state.json er gyldig JSON med påkrevde felter for sitt schema
+#   4. Statiske kopier i plugins/skybert/skills/skybert/references/skybertapp/ finnes
+#   5. Relative referanselenker i plugins/skybert/skills/skybert/SKILL.md peker på eksisterende filer
 set -uo pipefail
 
 FEIL=0
 feil() { echo "FEIL: $*" >&2; FEIL=1; }
 ok()   { echo "OK:   $*"; }
 
-if [ ! -d ".claude/skills" ] || [ ! -d "skybert" ]; then
+if [ ! -d ".claude/skills" ] || [ ! -d "plugins/skybert/skills/skybert" ]; then
   echo "FEIL: kjør fra repo-rot" >&2
   exit 1
 fi
@@ -35,21 +34,21 @@ else
   diff -rq .claude/skills .agents/skills >&2 || true
 fi
 
-# 2. Ingen state-kommentar i skybert/SKILL.md
-if grep -qE '<!-- *(Oppdater-skybert-state|Kilde-hash)' skybert/SKILL.md; then
-  feil "skybert/SKILL.md inneholder en state-HTML-kommentar — state skal kun bo i skybert/.oppdater-state.json"
+# 2. Ingen state-kommentar i plugins/skybert/skills/skybert/SKILL.md
+if grep -qE '<!-- *(Oppdater-skybert-state|Kilde-hash)' plugins/skybert/skills/skybert/SKILL.md; then
+  feil "plugins/skybert/skills/skybert/SKILL.md inneholder en state-HTML-kommentar — state skal kun bo i maintenance/skybert/.oppdater-state.json"
 else
-  ok "ingen state-kommentar i skybert/SKILL.md"
+  ok "ingen state-kommentar i plugins/skybert/skills/skybert/SKILL.md"
 fi
 
 # 3. State-fil: gyldig JSON + schema-felter
 "$PY" - <<'EOF' || FEIL=1
 import json, sys
 try:
-    with open("skybert/.oppdater-state.json", encoding="utf-8") as f:
+    with open("maintenance/skybert/.oppdater-state.json", encoding="utf-8") as f:
         s = json.load(f)
 except Exception as e:
-    print(f"FEIL: skybert/.oppdater-state.json kan ikke parses: {e}", file=sys.stderr); sys.exit(1)
+    print(f"FEIL: maintenance/skybert/.oppdater-state.json kan ikke parses: {e}", file=sys.stderr); sys.exit(1)
 
 problemer = []
 sv = s.get("schemaVersion")
@@ -76,45 +75,25 @@ if problemer:
     for p in problemer:
         print(f"FEIL: .oppdater-state.json: {p}", file=sys.stderr)
     sys.exit(1)
-print(f"OK:   skybert/.oppdater-state.json gyldig (schemaVersion {sv})")
+print(f"OK:   maintenance/skybert/.oppdater-state.json gyldig (schemaVersion {sv})")
 EOF
 
 # 4. Statiske kopier finnes
 for f in xrd.yaml composition.yaml functions.yaml; do
-  if [ -f "skybert/references/skybertapp/$f" ]; then
+  if [ -f "plugins/skybert/skills/skybert/references/skybertapp/$f" ]; then
     ok "statisk kopi finnes: references/skybertapp/$f"
   else
-    feil "statisk kopi mangler: skybert/references/skybertapp/$f"
+    feil "statisk kopi mangler: plugins/skybert/skills/skybert/references/skybertapp/$f"
   fi
 done
 
-# 5. Relative lenker i skybert/SKILL.md peker på eksisterende filer
+# 5. Relative lenker i plugins/skybert/skills/skybert/SKILL.md peker på eksisterende filer
 while IFS= read -r lenke; do
-  if [ ! -f "skybert/$lenke" ]; then
-    feil "skybert/SKILL.md lenker til ikke-eksisterende fil: $lenke"
+  if [ ! -f "plugins/skybert/skills/skybert/$lenke" ]; then
+    feil "plugins/skybert/skills/skybert/SKILL.md lenker til ikke-eksisterende fil: $lenke"
   fi
-done < <(grep -oE '\]\((references/[^)#]+)' skybert/SKILL.md | sed 's/^](//' | sort -u)
-ok "relative lenker i skybert/SKILL.md sjekket"
-
-# 6. Evals-format (hvis filen finnes)
-if [ -f "skybert/evals/evals.json" ]; then
-  "$PY" - <<'EOF' || FEIL=1
-import json, sys
-try:
-    with open("skybert/evals/evals.json", encoding="utf-8") as f:
-        e = json.load(f)
-except Exception as ex:
-    print(f"FEIL: skybert/evals/evals.json kan ikke parses: {ex}", file=sys.stderr); sys.exit(1)
-sp = e.get("sporsmal")
-if not isinstance(sp, list) or not sp:
-    print("FEIL: evals.json mangler ikke-tom 'sporsmal'-liste", file=sys.stderr); sys.exit(1)
-for i, q in enumerate(sp):
-    for felt in ("id", "sporsmal", "fasit"):
-        if felt not in q:
-            print(f"FEIL: evals.json sporsmal[{i}] mangler {felt}", file=sys.stderr); sys.exit(1)
-print(f"OK:   skybert/evals/evals.json gyldig ({len(sp)} spørsmål)")
-EOF
-fi
+done < <(grep -oE '\]\((references/[^)#]+)' plugins/skybert/skills/skybert/SKILL.md | sed 's/^](//' | sort -u)
+ok "relative lenker i plugins/skybert/skills/skybert/SKILL.md sjekket"
 
 if [ "$FEIL" -ne 0 ]; then
   echo "validate: FEILET" >&2

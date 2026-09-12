@@ -4,7 +4,7 @@ name: Skills sync check
 # kompatibilitetskopi (se CLAUDE.md). Drift her er en stille feil — denne
 # sjekken gjør den synlig og blokkerende.
 #
-# Sjekkene er definert ETT sted: .claude/skills/oppdater-skybert/scripts/validate.sh
+# Sjekkene er definert ETT sted: .github/scripts/validate.sh
 # (speiling + state-schema + statiske kopier + lenker + evals-format).
 # Samme script kjøres lokalt før PR.
 on:
@@ -17,5 +17,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Run skills validate script
-        run: bash .claude/skills/oppdater-skybert/scripts/validate.sh
+        run: bash .github/scripts/validate.sh
+      - name: Designsystem contract checks (offline)
+        run: node .claude/skills/oppdater-designsystem/scripts/contract-check.mjs
+      - name: Version guard tests
+        run: python3 .github/scripts/test_versions.py
+      - name: Require increasing plugin versions
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 .github/scripts/check_versions.py --base "$BASE_SHA" --head "$HEAD_SHA"
