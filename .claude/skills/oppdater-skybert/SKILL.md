@@ -148,16 +148,12 @@ dekning (se «Videreført dekning i FULL-modus» i steg 4).
   sammenligner mot nøyaktig disse, ikke mot `lastFullscanDate` eller state-SHA-ene.
 - **`skillContentHash` er en innholdshash, ikke en commit-SHA.** En commit-SHA ville vært umulig:
   hashen lagres i en fil som selv inngår i commit-en, så verdien ville endret commit-SHA-en den
-  peker på. Innholdshashen beregnes derfor over selve skill-innholdet, og eksplisitt **uten** de
-  tre stiene som ikke er skill-innhold (`.oppdater-state.json`, `.oppdater-coverage.json`,
-  `.claude-plugin/`) — de to første endres ved hver kjøring, og den tredje vedlikeholdes ikke av
-  denne skillen:
+  peker på. Innholdshashen beregnes derfor over selve skill-innholdet. State, coverage og
+  plugin-manifestet ligger utenfor skill-treet etter omleggingen til `plugins/`, så de inngår
+  ikke i hashen og trenger ingen ekskludering:
 
   ```bash
-  find skybert -type f \
-    ! -path 'maintenance/skybert/.oppdater-state.json' \
-    ! -path 'maintenance/skybert/.oppdater-coverage.json' \
-    ! -path 'skybert/.claude-plugin/*' \
+  find plugins/skybert/skills/skybert -type f \
     | sort \
     | while read -r f; do printf '%s %s\n' "$f" "$(git hash-object "$f")"; done \
     | sha256sum | cut -d' ' -f1
