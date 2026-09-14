@@ -25,7 +25,7 @@ def check(old, new, changed):
 
 
 def git(*args):
-    return subprocess.check_output(['git', *args], cwd=ROOT, text=True).strip()
+    return subprocess.check_output(['git', *args], cwd=ROOT, text=True, encoding='utf-8').strip()
 
 
 def run(base, head):
@@ -39,7 +39,7 @@ def run(base, head):
         manifest = f'{folder}/.claude-plugin/plugin.json'
         exists = bool(git('ls-tree', base, '--', manifest))
         old = json.loads(git('show', f'{base}:{manifest}'))['version'] if exists else None
-        new = json.loads((ROOT / manifest).read_text() if head == 'WORKTREE'
+        new = json.loads((ROOT / manifest).read_text(encoding='utf-8') if head == 'WORKTREE'
                          else git('show', f'{head}:{manifest}'))['version']
         changed = bool(git('diff', '--name-only', base, *([] if head == 'WORKTREE' else [head]), '--', folder))
         check(old, new, changed)
