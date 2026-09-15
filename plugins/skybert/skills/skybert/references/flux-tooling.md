@@ -32,6 +32,10 @@ Rettighetene bak knappene (tenant-admins verb på Kustomizations/OCIRepositories
 
 > Kilde: https://docs.sky.fhi.no/build/flux-dashboard/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/skybert-system/base/tenant-admin-clusterroles/
 
+Suspend med dashboardet eller `flux suspend kustomization <navn> -n tn-<tenant>`, aldri med `kubectl patch` eller `kubectl edit`. Tenantens Kustomization appliseres selv av plattformens `tenants`-Kustomization (hvert 2. minutt, `force: true`), og den applyen tar over `spec.suspend` fra kubectl: feltet forsvinner, og tenanten rekonsilierer igjen uten varsel. `flux suspend` skriver feltet med manager `flux`, og det blir stående.
+
+> **Operasjonell antakelse:** Observert på røde tenant-klustere: kubectl-suspend ble revertert innen ett intervall, `flux suspend` sto over flere.
+
 ### URL-er per kluster
 
 URL-mønster: `https://flux.<color>-<instance>.<domain>` (`<domain>` = `skytest.fhi.no` for non-prod, dvs. sandbox og test, `sky.fhi.no` for prod).

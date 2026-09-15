@@ -38,6 +38,16 @@ SkybertApp eksponerer ingen Ingress-annotasjoner, så et `hostname` på SkybertA
 
 > **Operasjonell antakelse:** Ikke dokumentert for tenanter i docs, men i bruk i `tn-ki-mcp` (`Fhi.Ki.Mcp.GitOps`, test og prod) og verifisert i `tn-ehds-soksak` i grønn test med offentlig A-record, TLS og trafikk utenfra. For andre klustere (sandbox, ops-test, gul, rød): avklar IP med plattformteamet på `#ext-fhi-skybert`.
 
+## DNS-eierskap for tenanter på flere laner
+
+external-dns kjører per kluster mot samme Azure DNS-sone (`sky.fhi.no` i `rg-domains`), med TXT-registry og `--txt-owner-id=<kluster>`. Er tenanten registrert på både grønn og rød lane, rendres samme Ingress-host på begge prod-klustrene. Klusteret som skriver recorden først eier den, og det andre hopper over den. Klustrene er ikke konfigurert likt: `aks-red-prod-01` kjører v0.21 med `--policy=sync` og sletter egne records når Ingressen forsvinner, `aks-green-prod-03` kjører v0.16.1 med `--policy=upsert-only` og sletter aldri. Merk, `aks-green-prod-03` skriver fortsatt `--txt-owner-id=aks-green-prod-02`, så TXT-recorden viser det gamle klusternavnet.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/external-dns/
+
+Eieren står i TXT-recorden (`dig +short <host> TXT` gir `external-dns/owner=<kluster>`). Eierskapet flyttes fra rødt til grønt uten git-endring: suspend tenantens Kustomization på rødt med `flux suspend` (se [Flux-verktøy](flux-tooling.md)), slett Ingressen der, vent til recorden har grønn eier (1–2 min), og resume. Rødt ser da en fremmed eier og lar recorden være. Kappløpet gjentar seg hver gang recorden slettes eller hostnavnet endres.
+
+> **Operasjonell antakelse:** Framgangsmåten er prøvd på en tenant registrert på både grønn og rød prod; docs beskriver ikke DNS-eierskap mellom laner.
+
 ## Ingress-regler (Kyverno-håndhevet)
 
 Følgende regler gjelder alle Ingress-ressurser på alle klustere:
