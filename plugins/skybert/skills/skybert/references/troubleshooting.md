@@ -75,6 +75,18 @@ eksplisitt gir Audit-funn, ikke avvisning. Se [Kyverno-policier](kyverno-policie
 
 > Kilde: https://docs.sky.fhi.no/troubleshooting/non-root/ · https://docs.sky.fhi.no/internal/kyverno-policies/
 
+### Node-image krasjer ved oppstart som UID 1000
+
+Et `node:*`-image som bygger som root og starter via corepack (`pnpm exec`, `yarn`) eller med
+`tsx`, kan krasje når containeren kjører som UID 1000 med read-only rot: corepack vil laste ned
+og cache pakkehåndtereren under `$HOME/.cache` (`ENOENT: mkdir '/.cache/node/corepack/v1'`), og
+`tsx` skriver transpileringscache i `/tmp` (`ENOENT: mkdir '/tmp/tsx-1000'`). Start binæren
+direkte (`USER node` og `CMD ["node_modules/.bin/tsx", "server/index.ts"]`), og legg `/tmp` i
+`writableDirs` når `readOnlyRootFilesystem: true`. Reproduser lokalt før push med
+`docker run --user 1000:1000 --read-only --tmpfs /tmp <image>`.
+
+> **Operasjonell antakelse:** Begge feilene reprodusert lokalt med `docker run --user 1000 --read-only`, og løsningen verifisert i `tn-ehds-soksak` på `aks-green-test-01` (2026-09-14). Ikke beskrevet i docs.
+
 ### Workload Identity feiler mot Azure
 
 Bruk `kubectl get pod <pod> -n tn-<tenant> -o yaml` og sjekk at poden har labelen
