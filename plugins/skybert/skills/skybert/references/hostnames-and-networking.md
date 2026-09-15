@@ -21,9 +21,9 @@ Test-issuerne finnes på alle test-klustere og sandbox; prod-issueren på alle p
 
 ## Public DNS-oppslag (external-dns)
 
-SkybertApp eksponerer ingen Ingress-annotasjoner, og docs beskriver ingen tenant-mekanisme for å peke et hostnavn til en offentlig IP. Trenger appen offentlig DNS-oppslag, avklar med plattformteamet på `#ext-fhi-skybert`.
+SkybertApp eksponerer ingen Ingress-annotasjoner, så et `hostname` på SkybertApp får alltid ingressens private IP. Trenger appen offentlig DNS-oppslag (f.eks. en frontend hostet utenfor FHI, eller claude.ai), la `hostname` stå tomt på SkybertApp og skriv egen `Service` (selector `skybert.fhi.no/webapp: <app>`) og `Ingress` med `cert-manager.io/cluster-issuer` og `external-dns.alpha.kubernetes.io/target: "<klusterets offentlige front-end-IP>"`. Kjente verdier: `83.118.177.220` for `aks-green-test-01` og `83.118.177.234` for `aks-green-prod-02`.
 
-> **Operasjonell antakelse:** Plattformen bruker selv `external-dns.alpha.kubernetes.io/target` på egne Gateway-/Ingress-objekter, men mekanismen er ikke dokumentert for tenanter.
+> **Operasjonell antakelse:** Ikke dokumentert for tenanter i docs, men i bruk i `tn-ki-mcp` (`Fhi.Ki.Mcp.GitOps`, test og prod) og verifisert i `tn-ehds-soksak` på `aks-green-test-01` med offentlig A-record, TLS og trafikk utenfra (2026-09-14). For andre klustere: avklar IP med plattformteamet på `#ext-fhi-skybert`.
 
 ## Ingress-regler (Kyverno-håndhevet)
 
