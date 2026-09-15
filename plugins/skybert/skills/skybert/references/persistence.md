@@ -9,7 +9,7 @@ Skybert kjører AKS på **Azure Local**, og StorageClassene kommer fra fire ulik
 
 | StorageClass | Provisioner | Reclaim | Access | Hva det er |
 |:--|:--|:--|:--|:--|
-| `cloud-backed-sc` | `wyvern.csi.azure.com` | Delete | RWO | Block-volum med Azure-kopi — overlever node-tap. **Start her.** |
+| `cloud-backed-sc` | `wyvern.csi.azure.com` | Delete | RWO | Volum med Azure-kopi — overlever node-tap. I podden NFSv4, se ikke-root under. **Start her.** |
 | `cloud-backed-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Samme, men PV-en overlever PVC-en |
 | `unbacked-sc` | `wyvern.csi.azure.com` | Delete | RWO | Block-volum kun på Azure Local-klusteret, ingen cloud-kopi |
 | `unbacked-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Samme med Retain |
@@ -29,6 +29,12 @@ ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
   ikke skal bety datatap. **Aldri database på `ontap-nas`:** klassen er definert med
   `mountOptions: [nfsvers=3, nolock]`, så den gir ingen av konsistensgarantiene en database
   trenger — i verste fall åpner to prosesser samme datakatalog — og CNPG støtter ikke NFS for PGDATA.
+- **Ikke-root på `cloud-backed-*`:** dokumentasjonen kaller klassen blokkvolum, men podden får
+  NFSv4.2 fra en lokal gateway (Azure Container Storage, med interne `disk.csi.akshci.com`-PVC-er i
+  `azure-arc-containerstorage`). Rota eies av `nobody` (4294967294) med 0755, `fsGroup` ignoreres
+  uten advarsel, og en container uten root fikk ikke skrive. Observert på `cloud-backed-retain-sc`
+  på green-test 2026-09-15; `unbacked-*` bruker samme driver, men er ikke prøvd. `ontap-nas` gir
+  rot `0777` og numeriske id-er, og virker uten root.
 - **Cache/scratch:** `unbacked-sc` eller `default`.
 - **Delte filer flere pods:** `ontap-nas` — eneste klasse med `ReadWriteMany` for vanlig filtilgang.
   Trident-backenden er konfigurert med `accessMode: ReadWriteMany`; bruk `accessModes: [ReadWriteMany]`
