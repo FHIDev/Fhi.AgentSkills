@@ -80,9 +80,12 @@ eksplisitt gir Audit-funn, ikke avvisning. Se [Kyverno-policier](kyverno-policie
 Et `node:*`-image som bygger som root og starter via corepack (`pnpm exec`, `yarn`) eller med
 `tsx`, kan krasje når containeren kjører som UID 1000 med read-only rot: corepack vil laste ned
 og cache pakkehåndtereren under `$HOME/.cache` (`ENOENT: mkdir '/.cache/node/corepack/v1'`), og
-`tsx` skriver transpileringscache i `/tmp` (`ENOENT: mkdir '/tmp/tsx-1000'`). Start binæren
-direkte (`USER node` og `CMD ["node_modules/.bin/tsx", "server/index.ts"]`), og legg `/tmp` i
-`writableDirs` når `readOnlyRootFilesystem: true`. Reproduser lokalt før push med
+`tsx` skriver transpileringscache i `/tmp` (`ENOENT: mkdir '/tmp/tsx-1000'`). Enklest er å
+kompilere TypeScript i build-steget og starte `node dist/index.js` direkte, uten corepack og
+`tsx`; da trengs ingen skrivbar cache. Må `tsx` brukes, start binæren direkte
+(`CMD ["node_modules/.bin/tsx", "server/index.ts"]`) og legg `/tmp` i `writableDirs` når
+`readOnlyRootFilesystem: true`. Sett `USER node` (uid 1000) i Dockerfile så imaget kjører som
+samme bruker lokalt som på klusteret, og reproduser før push med
 `docker run --user 1000:1000 --read-only --tmpfs /tmp <image>`.
 
 > **Operasjonell antakelse:** Begge feilene reprodusert lokalt med `docker run --user 1000 --read-only`, og løsningen verifisert i `tn-ehds-soksak` på `aks-green-test-01` (2026-09-14). Ikke beskrevet i docs.
