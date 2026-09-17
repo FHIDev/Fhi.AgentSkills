@@ -9,7 +9,7 @@ Skybert kjører AKS på **Azure Local**, og StorageClassene kommer fra fire ulik
 
 | StorageClass | Provisioner | Reclaim | Access | Hva det er |
 |:--|:--|:--|:--|:--|
-| `cloud-backed-sc` | `wyvern.csi.azure.com` | Delete | RWO | Block-volum med Azure-kopi — overlever node-tap. **Start her.** |
+| `cloud-backed-sc` | `wyvern.csi.azure.com` | Delete | RWO | Volum med Azure-kopi — overlever node-tap. I podden NFSv4.2, se ikke-root under. **Start her.** |
 | `cloud-backed-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Samme, men PV-en overlever PVC-en |
 | `unbacked-sc` | `wyvern.csi.azure.com` | Delete | RWO | Block-volum kun på Azure Local-klusteret, ingen cloud-kopi |
 | `unbacked-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Samme med Retain |
@@ -29,6 +29,12 @@ ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
   ikke skal bety datatap. **Aldri database på `ontap-nas`:** klassen er definert med
   `mountOptions: [nfsvers=3, nolock]`, så den gir ingen av konsistensgarantiene en database
   trenger — i verste fall åpner to prosesser samme datakatalog — og CNPG støtter ikke NFS for PGDATA.
+- **Ikke-root på `cloud-backed-*`:** docs kaller klassen blokkvolum, men i podden er den NFSv4.2
+  fra en lokal gateway (Azure Container Storage). Rota eies av `nobody` med 0755, `fsGroup`
+  ignoreres uten advarsel, og en container uten root får ikke skrive. Kyverno avviser
+  `runAsUser: 0`, så tenanten kan ikke chown-e via init-container — meld behovet på
+  `#ext-fhi-skybert`. `ontap-nas` gir rot `0777` og virker uten root, men er fortsatt uaktuell
+  for databaser (over).
 - **Cache/scratch:** `unbacked-sc` eller `default`.
 - **Delte filer flere pods:** `ontap-nas` — eneste klasse med `ReadWriteMany` for vanlig filtilgang.
   Trident-backenden er konfigurert med `accessMode: ReadWriteMany`; bruk `accessModes: [ReadWriteMany]`
@@ -38,6 +44,10 @@ ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
   Avklar på `#ext-fhi-skybert` før bruk.
 
 > Kilde: https://docs.sky.fhi.no/persistence/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/nas-sc.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/ontap-nas-backend.yaml
+
+> **Operasjonell antakelse:** Ikke-root-funnet er observert på `cloud-backed-retain-sc` på green-test
+> 2026-09-15 (rot eid av uid 4294967294; interne `disk.csi.akshci.com`-PVC-er i
+> `azure-arc-containerstorage`). `unbacked-*` bruker samme driver, men er ikke prøvd. Ikke beskrevet i docs.
 
 ## Databasevalg
 
@@ -147,6 +157,11 @@ spec:
     requests: { cpu: 200m, memory: 512Mi }
     limits: { memory: 1Gi }
 ```
+
+> **Operasjonell antakelse:** Eksempelet er ikke kjørt på nytt etter funnet om
+> [ikke-root på `cloud-backed-*`](#storageclasses). CNPG kjører PostgreSQL som ikke-root (uid 26)
+> og er avhengig av `fsGroup`, så `initdb` kan feile på PGDATA. Verifiser i sandbox eller test før
+> klassen brukes i prod, og meld på `#ext-fhi-skybert` hvis den feiler.
 
 Operatoren lager tre Services: `pg-rw` (skriving, følger primary gjennom failover), `pg-ro`
 (lesing fra replikaer), `pg-r` (hvilken som helst instans). En failover dropper eksisterende
