@@ -21,16 +21,47 @@ gh api repos/FHISkybert/Fhi.Skybert.Infra/commits/main --jq '.sha'
 
 Alternativ: `git clone https://github.com/FHISkybert/Fhi.Skybert.Infra ".tmp/oppdater-skybert/infra-repo"`
 
+### Retningslinje-repo (Fhi.Guidelines)
+
+`FHIDev/Fhi.Guidelines` er FHIs MkDocs-site for retningslinjer (privat repo; bygget pushes som image til ACR,
+ingen bekreftet offentlig URL). Bare stiene i `github.guidelines.paths` i state-filen er i scope — repoet
+dekker langt mer enn Skybert, og skal ikke rutes i sin helhet.
+
+```bash
+gh api repos/FHIDev/Fhi.Guidelines/commits/<branch> --jq '.sha'
+gh api "repos/FHIDev/Fhi.Guidelines/contents/<sti>?ref=<branch>" --jq '.content' | base64 -d
+```
+
+**Retningslinjer i PR-branch.** En retningslinje kan tas inn i skillen mens den fortsatt ligger i en åpen
+PR (status «Utkast»/«Forslag»). Da står PR-branchen i `github.guidelines.branch`, og Kilde-linjene i
+skillen peker på PR-URL-en (se Kildereferanse-format i [implementeringsregler.md](implementeringsregler.md)).
+Ved hver kjøring, før compare:
+
+1. Sjekk om hver sti i `paths` finnes på `main`:
+   `gh api "repos/FHIDev/Fhi.Guidelines/contents/<sti>?ref=main" --jq '.sha'`.
+2. Finnes stien på `main` → les filen derfra, sett `branch: "main"` i state ved Apply, og opprett
+   endringspost (`KORRIGER`) som skriver om Kilde-linjene til `blob/main/<sti>` og oppdaterer
+   statusomtalen i målfilen (tabellen øverst i retningslinjen: Utkast / Forslag / Godkjent).
+3. Finnes stien verken på `main` eller på branchen i state → `VURDER` (PR lukket uten merge?). Ikke `FJERN`
+   før brukeren har avgjort.
+4. Endres bare status-tabellen (f.eks. Utkast → Godkjent, dokumenteier fylt inn) → `KORRIGER` av
+   statusomtalen i målfilen; det er en reell endring for brukeren, ikke `meta`.
+
+Compare etter squash-merge viser stien som `added` selv om innholdet er kjent — les den på nytt og
+diff mot målfilen, det er ikke en feil.
+
 **Hente commit SHA:**
 ```bash
 gh api repos/FHISkybert/Fhi.Skybert.Docs/commits/main --jq '.sha'
 gh api repos/FHISkybert/Fhi.Skybert.Infra/commits/main --jq '.sha'
+gh api repos/FHIDev/Fhi.Guidelines/commits/<github.guidelines.branch> --jq '.sha'
 ```
 
 **Hente commit-dato:**
 ```bash
 gh api repos/FHISkybert/Fhi.Skybert.Docs/commits/main --jq '.commit.committer.date'
 gh api repos/FHISkybert/Fhi.Skybert.Infra/commits/main --jq '.commit.committer.date'
+gh api repos/FHIDev/Fhi.Guidelines/commits/<github.guidelines.branch> --jq '.commit.committer.date'
 ```
 
 **Hente filtree:**
@@ -49,6 +80,8 @@ curl -sH "Authorization: token $(gh auth token)" \
 ```bash
 gh api repos/FHISkybert/Fhi.Skybert.Docs/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
 gh api repos/FHISkybert/Fhi.Skybert.Infra/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
+# Guidelines: bare treff på stier i github.guidelines.paths er relevante
+gh api repos/FHIDev/Fhi.Guidelines/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
 ```
 
 **Retry-policy:** 3 forsøk med eksponentiell backoff (1s, 3s, 9s). Ved vedvarende feil på normativ fil (XRD, compositions): stopp kjøring med feilrapport. Ved feil på ikke-kritisk fil: logg som manglende og fortsett.
@@ -79,7 +112,16 @@ Før detaljert lesing: oppdage hva som faktisk finnes.
    - CRD-er og API-definisjoner utover de forventede stiene
 4. Lag et **signal inventory**: Hvilke filer/mønstre inneholder agentnyttig kunnskap, og hvilke er støy?
 
-**Output fra discovery:** En oversikt over begge repoers faktiske innhold, ikke bare det som var forventet.
+### Retningslinje-repo discovery
+
+1. Les `mkdocs.yml` (nav) og list `docs/**/*.md` på `main` — og på branchen i state hvis den ikke er `main`.
+2. Bekreft at alle stier i `github.guidelines.paths` finnes (se «Retningslinjer i PR-branch»).
+3. Retningslinjer utenfor `paths` med Skybert-relevans (container images, Kubernetes, CI/CD, registry,
+   secrets, nettverk) → selvoppdaterings-post av typen `scope` (`VURDER`), ikke automatisk routing.
+4. Les `docs/om/slik-leser-du-dokumentene.md` én gang for semantikken i 🛑 KRAV / 💡 VEILEDNING og
+   statusverdiene Utkast / Forslag / Godkjent. Siden rutes ikke til noen målfil.
+
+**Output fra discovery:** En oversikt over alle kilderepoers faktiske innhold, ikke bare det som var forventet.
 
 ---
 
@@ -110,6 +152,15 @@ Før detaljert lesing: oppdage hva som faktisk finnes.
 
 **Nedprioritert:** Trivielle cluster-overlays som bare peker til base, vendor CRD-dumps uten forklaringsverdi, repo-hygiene, gjentatt YAML der mønsteret allerede er forklart.
 
+## Detaljert leserekkefølge — Retningslinje-repo
+
+1. Hver sti i `github.guidelines.paths`, fra `main` når den finnes der, ellers fra branchen i state
+2. `docs/om/slik-leser-du-dokumentene.md` (KRAV/VEILEDNING-semantikk, status-tagger)
+3. `mkdocs.yml` — kun for discovery av nye Skybert-relevante retningslinjer (FULL)
+
+**Alt annet i repoet er utenfor scope.** Kategori-landingssider (`docs/<Kategori>/index.md`) er navigasjon
+uten faktainnhold.
+
 ---
 
 ## Seleksjonsregler
@@ -124,6 +175,12 @@ Inkluder filer med utvikler-impact (tenant/runtime/policy/CI-CD/feilsøking). Ek
 Eksempler:
 - Inkluder: `docs/internal/flux.md` (rekonsiliering påvirker utviklere), `docs/internal/service-mesh.md` (nettverkstopologi)
 - Ekskluder: `docs/internal/upgrade-component.md` (plattformdrift), `docs/internal/managing-tenants.md` (admin-operasjon)
+
+### Retningslinje-repo
+
+**I scope:** nøyaktig stiene i `github.guidelines.paths`. Utvidelse av listen skjer bare via godkjent
+selvoppdaterings-post (type `scope`) — da legges stien til både i state-filen og i routing-tabellen i samme
+kjøring.
 
 ### Infra-repo — Sti-baserte filtermønstre
 
@@ -234,8 +291,10 @@ Bruker commit SHAs fra `maintenance/skybert/.oppdater-state.json` (persistent, c
 ```bash
 gh api repos/FHISkybert/Fhi.Skybert.Docs/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
 gh api repos/FHISkybert/Fhi.Skybert.Infra/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
+gh api repos/FHIDev/Fhi.Guidelines/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
 ```
 
+- For guidelines: kjør sjekken i «Retningslinjer i PR-branch» først (sti på `main`?), og filtrer compare-output til `github.guidelines.paths`
 - Bare endrede filer (i scope) leses og analyseres — men se konsekvenssjekken under
 - Discovery pass hoppes over ved INKREMENTELL, MED UNNTAK: nye stier i compare-output (added-filer/nye mapper) som ikke matcher routing-tabellen eller filtermønstrene skal leses (mini-discovery), og routing-/filteroppdatering foreslås som selvoppdaterings-post
 - Hvis compare feiler (force-push, rebase) → fall tilbake til FULL modus og informer bruker
@@ -255,14 +314,15 @@ Eksempel: endres rekonsilieringsintervallet i `flux-instance.yaml`, rettes talle
 ```json
 {
   "docs": { "added": [], "modified": [], "removed": [] },
-  "infra": { "added": [], "modified": [], "removed": [] }
+  "infra": { "added": [], "modified": [], "removed": [] },
+  "guidelines": { "added": [], "modified": [], "removed": [] }
 }
 ```
 
 ### State-fil etter vellykket Apply
 
 Etter vellykket implementering (steg 9) oppdateres `maintenance/skybert/.oppdater-state.json` med nye
-commit SHAs og `commitDate` for begge repoer, `sistVerifisert`, ev. `lastFullscanDate`
+commit SHAs og `commitDate` for alle tre repoer (guidelines: `branch` satt til `main` når stiene finnes der), `sistVerifisert`, ev. `lastFullscanDate`
 (kun FULL) og ajourført `openItems` — se State-kontrakt i SKILL.md for komplett schema.
 
 Den varige staten er i de to committede filene `maintenance/skybert/.oppdater-state.json` (kjøringsstate) og
