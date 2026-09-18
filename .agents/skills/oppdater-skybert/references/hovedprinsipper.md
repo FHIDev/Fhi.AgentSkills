@@ -8,7 +8,7 @@
 4. **All docs-info må dekkes** — hver docs-side må spores til minst ett sted i skillen via obligatorisk dekningsmatrise.
 5. **Presisjon, ikke volum** — ved komprimering, flytting eller konsolidering skal alle kildestøttede, Skybert-spesifikke operative detaljer (feltnavn, defaults, navnekonvensjoner, policy-effekter) fortsatt finnes i kanonisk fil. Generisk innhold, duplikater og ordrette docs-kopier er ikke detaljer som skal bevares.
 6. **Strukturforbedring OK** — omorganisering, nye sider, sammenslåing tillatt — men aldri på bekostning av kildestøttede detaljer.
-7. **Full gjennomgang** — komplett gjennomgang av hele skillen mot begge kilder.
+7. **Full gjennomgang** — komplett gjennomgang av hele skillen mot alle kilderepoer (docs, infra og retningslinjene i scope).
 8. **Kuratert uttrekk, ikke rå dump** — oppsummer og generaliser mønstre, ikke lim inn store YAML-blokker. Kodeeksempler kun der de viser Skybert-spesifikk syntaks (SkybertApp-felt, dispatch-payload, navnekonvensjoner, `az connectedk8s proxy`-argumenter). Generiske kubectl/Helm/Kustomize/PromQL/C#/Python-eksempler erstattes med én setning og lenke.
 9. **Oppdage det ukjente** — vær aktivt åpen for nye mapper, filtyper og dokumentasjonsformer i kilderepoene. Ikke begrens deg til forhåndsdefinerte stier.
 10. **Skill mellom faktatyper** — merk tydelig forskjell mellom informasjonstypene (se nedenfor).
@@ -20,10 +20,12 @@
 
 - **Docs-repo** er autoritativt for: bruker- og plattformdokumentasjon, konsepter, onboarding, how-to, brukerveiledning.
 - **Infra-repo** er autoritativt for: GitOps-mønstre, bootstrap, tenant-mekanismer, cluster-oppsett, plattformkomponenter, faktisk implementasjon.
+- **Retningslinje-repo** (Fhi.Guidelines, kun stiene i scope) er autoritativt for: FHI-krav (🛑 KRAV) og veiledning (💡 VEILEDNING) som gjelder på tvers av plattformen — hva teamet *skal/bør* gjøre. Det sier ingenting om hva Skybert *håndhever*; det er infra.
 
 **Konfliktregel:**
 - Docs trumfer Infra for: brukerrettet veiledning, anbefalte fremgangsmåter, konseptforklaringer.
 - Infra trumfer Docs for: faktisk teknisk implementasjon, reelle verdier, konfigurasjonsdetaljer.
+- Retningslinje og Infra er ulike lag, ikke konkurrerende kilder: skillen gjengir kravet (retningslinje) *og* håndhevelsen (Kyverno/RBAC/CRD) hver for seg, uten å slå dem sammen til én påstand. Krever retningslinjen noe plattformen gjør umulig (f.eks. digest-deploy når CRD-en bare tar tag) → beskriv gapet og Skybert-måten å oppfylle kravet på; direkte motstrid → `VURDER`.
 - Ved reell konflikt der ingen kilde har tydelig forrang: beskriv begge versjoner med kildehenvisning, bruk `VURDER`-kategori, og la brukeren avgjøre.
 
 **Domeneeksempler:**
@@ -35,6 +37,8 @@
 | Konseptforklaring av tenant-modellen | Docs |
 | Faktisk tenant-bootstrap-logikk | Infra |
 | Arbeidsflyt-anbefalinger (CI/CD) | Docs |
+| Krav til bygging, scanning, tagging og push av images | Retningslinje (Fhi.Guidelines) |
+| Hva Kyverno faktisk avviser eller muterer på pods | Infra |
 
 ## Avledede påstander
 
@@ -67,7 +71,7 @@ Merk tydelig forskjell mellom disse tre typene:
 
 | Type | Beskrivelse | Eksempel |
 |------|-------------|---------|
-| **Dokumentert fakta** | Eksplisitt beskrevet i docs- eller infra-repo | CRD-felt, onboarding-steg |
+| **Dokumentert fakta** | Eksplisitt beskrevet i docs-, infra- eller retningslinje-repo | CRD-felt, onboarding-steg, KRAV-punkter |
 | **Utledet mønster** | Observert fra kode/konfigurasjon, ikke eksplisitt dokumentert | Bootstrap-rekkefølge utledet fra scripts |
 | **Operasjonell antakelse** | Lokal/erfaringsbasert kunnskap uten kilde i repoene | Feilsøkingstips fra plattformteam |
 
