@@ -80,6 +80,8 @@ Les referansefilene i denne rekkefølgen, hver når du kommer til steget:
 | — | Feilhåndtering (oppslag ved behov) | [feilhandtering.md](references/feilhandtering.md) |
 
 **Endringsplanen (steg 4) skal godkjennes av bruker før steg 5 gjennomføres.**
+Planen presenteres i samtalen. Den skal ikke lagres som fil i repoet og ikke
+inngå i commit eller PR (se [endringsplan.md](references/endringsplan.md)).
 
 ## Absolutte regler (gjelder hele flyten)
 
