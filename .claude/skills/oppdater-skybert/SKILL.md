@@ -1,6 +1,6 @@
 ---
 name: oppdater-skybert
-description: Oppdaterer skybert-skillen basert på kilderepoene FHISkybert/Fhi.Skybert.Docs og FHISkybert/Fhi.Skybert.Infra, eller via web-scraping av docs.sky.fhi.no for de uten repo-tilgang. Sammenligner med alle eksisterende filer i plugins/skybert/skills/skybert/ og lager en endringsplan til gjennomgang. Fjerner innhold som er feil, utdatert, generisk eller duplisert, og merker erfaringsbasert innhold eksplisitt. Bruk denne skillen når skybert-skillen skal synkroniseres med nye kilder, eller når du mistenker at skillen er utdatert eller mangelfull.
+description: Oppdaterer skybert-skillen basert på kilderepoene FHISkybert/Fhi.Skybert.Docs og FHISkybert/Fhi.Skybert.Infra samt utvalgte FHI-retningslinjer i FHIDev/Fhi.Guidelines, eller via web-scraping av docs.sky.fhi.no for de uten repo-tilgang. Sammenligner med alle eksisterende filer i plugins/skybert/skills/skybert/ og lager en endringsplan til gjennomgang. Fjerner innhold som er feil, utdatert, generisk eller duplisert, og merker erfaringsbasert innhold eksplisitt. Bruk denne skillen når skybert-skillen skal synkroniseres med nye kilder, eller når du mistenker at skillen er utdatert eller mangelfull.
 ---
 
 # Oppdater Skybert-skillen
@@ -9,6 +9,7 @@ Denne skillen beskriver arbeidsflyten for å holde `plugins/skybert/skills/skybe
 
 - **FHISkybert/Fhi.Skybert.Docs** — MkDocs-basert dokumentasjon (publisert på docs.sky.fhi.no)
 - **FHISkybert/Fhi.Skybert.Infra** — Flux GitOps infra-repo med CRD-definisjoner, Kyverno-policier, tenant-bootstrap
+- **FHIDev/Fhi.Guidelines** — FHI-retningslinjer (MkDocs, privat repo, ikke publisert på docs.sky.fhi.no). Kun sidene i `github.guidelines.paths` i state-filen er i scope (i dag `docs/CI-CD/container-images.md`); resten av repoet vurderes bare for nye Skybert-relevante retningslinjer ved FULL.
 
 Styrende prinsipp: **repo-basert + bevar korrekt, Skybert-spesifikk erfaring**. Alt i `plugins/skybert/skills/skybert/` skal enten være sporbart til kildene (`> Kilde:`) eller eksplisitt merket `> **Operasjonell antakelse:**`; generisk kunnskap, duplikater og historikk fjernes. Se [hovedprinsipper.md](references/hovedprinsipper.md).
 
@@ -43,6 +44,7 @@ plugins/skybert/skills/skybert/
     ├── secrets.md                           (secrets-moenstre)
     ├── security.md                          (Workload Identity, sikkerhet)
     ├── workflows.md                         (CI/CD)
+    ├── container-images.md                  (FHI-retningslinje for container images, mappet mot Skybert)
     ├── kubectl-access.md                    (kubectl, klusterliste)
     ├── observability.md                     (logging, metrics, tracing)
     ├── persistence.md                       (StorageClasses, databasevalg, CloudNativePG)
@@ -91,7 +93,8 @@ redigeres manuelt eller brukes som maskinlesbar kilde.
   "sistVerifisert": "<ISO-dato>",
   "github": {
     "docs": { "repo": "FHISkybert/Fhi.Skybert.Docs", "branch": "main", "commit": "<sha>", "commitDate": "<ISO-dato>" },
-    "infra": { "repo": "FHISkybert/Fhi.Skybert.Infra", "branch": "main", "commit": "<sha>", "commitDate": "<ISO-dato>" }
+    "infra": { "repo": "FHISkybert/Fhi.Skybert.Infra", "branch": "main", "commit": "<sha>", "commitDate": "<ISO-dato>" },
+    "guidelines": { "repo": "FHIDev/Fhi.Guidelines", "branch": "main", "commit": "<sha>", "commitDate": "<ISO-dato>", "paths": ["docs/CI-CD/container-images.md"] }
   },
   "webscraping": {
     "source": "docs.sky.fhi.no",
@@ -117,6 +120,9 @@ redigeres manuelt eller brukes som maskinlesbar kilde.
 
 - Kun ett av `github`/`webscraping`-feltene populeres per kjøring. I web-scraping-modus
   beholdes `github`-feltet uendret (kan ikke verifiseres i den modusen).
+- `github.guidelines.paths` er den fullstendige listen over retningslinje-sider i scope. `branch`
+  er normalt `main`, men kan være en PR-branch når en retningslinje er tatt inn før den er merget —
+  se «Retningslinjer i PR-branch» i [github-modus.md](references/github-modus.md).
 - `openItems` lagrer **alle** endringsposter som ikke nådde fullført tilstand — ikke bare
   utsatte `VURDER`-poster. Se [analyseregler.md](references/analyseregler.md) for
   status-verdiene og livssyklusen.
@@ -199,10 +205,12 @@ Hvis variabelen ikke er satt eller katalogen ikke eksisterer → gå til steg 1b
 
 ```bash
 gh api repos/FHISkybert/Fhi.Skybert.Docs/commits/main --jq '.sha'
+gh api repos/FHIDev/Fhi.Guidelines/commits/main --jq '.sha'
 ```
 
 - **Suksess** → GitHub-modus. Les [github-modus.md](references/github-modus.md).
-- **403/404** og ingen lokal klon → Web-scraping-modus. Les [webscraping-modus.md](references/webscraping-modus.md).
+- **403/404** på docs-repoet og ingen lokal klon → Web-scraping-modus. Les [webscraping-modus.md](references/webscraping-modus.md).
+- **403/404 kun på Fhi.Guidelines** → GitHub-modus for docs/infra; retningslinje-basert innhold merkes «ikke verifisert i denne kjøringen» og får samme vern som infra-innhold i web-scraping-modus (se Feilhåndtering).
 
 ### 1c. Les state fra maintenance/skybert/.oppdater-state.json
 
@@ -219,7 +227,7 @@ Betingelsene evalueres ovenfra og ned — første treff vinner:
 | State-fil mangler / ugyldig (ev. kun gammel HTML-kommentar finnes) | **FULL** (med migrering til schemaVersion 3) |
 | State-fil har `schemaVersion: 2` | Migrer til 3 (se State-kontrakt), fortsett deretter med radene under |
 | `lastFullscanDate` > 30 dager gammel | **FULL** — kjøres selv om SHAs/hash er uendret |
-| SHAs/hash uendret fra state | **NO-OP** — rapporter "ingen endringer" og stopp. Har state-filen åpne `openItems`, skal de likevel listes for brukeren med `firstSeen`-dato |
+| SHAs (docs, infra, guidelines)/hash uendret fra state | **NO-OP** — rapporter "ingen endringer" og stopp. Har state-filen åpne `openItems`, skal de likevel listes for brukeren med `firstSeen`-dato |
 | SHA/hash endret | **INKREMENTELL** (begge moduser) |
 
 Periodisk FULL ved uendrede kilder er ikke bortkastet: det er mekanismen som fanger akkumulert drift fra inkrementelle kjøringer (delvis godkjente planer, avledede påstander som ble oversett) og re-validerer dekningsmatrisene og selve denne skillen.
@@ -283,6 +291,10 @@ oppfylt — er én av dem brutt, skal sidene leses på nytt:
 
 **Unntak som alltid leses på nytt:** endrede sider, nye sider, og sider med en åpen post i
 `openItems`.
+
+**Retningslinje-sider** (`github.guidelines.paths`) føres i matrise A med stien prefikset
+`guidelines:` (f.eks. `guidelines:docs/CI-CD/container-images.md`). De omfattes ikke av videreført
+dekning — coverage-filen er docs-scoped via `docsCommit` — og leses alltid på nytt ved FULL.
 
 Matrise B og C, XRD-feltdekningssjekken, sammenligning av statiske kopier, re-validering av
 operasjonelle antakelser samt duplikatsøk og generisk-test (se [analyseregler.md](references/analyseregler.md)) kjøres uansett i full bredde — de er ikke omfattet av videreføringen.
@@ -348,7 +360,9 @@ Implementer kun eksplisitt godkjente endringer. Se [implementeringsregler.md](re
 
 Skriv/oppdater `maintenance/skybert/.oppdater-state.json` (kjøringsstate — den andre state-filen,
 `.oppdater-coverage.json`, dekkes av punktet nederst i dette steget):
-- **GitHub-modus:** Lagre commit SHAs og `commitDate` for begge repoer
+- **GitHub-modus:** Lagre commit SHAs og `commitDate` for alle tre repoer (docs, infra,
+  guidelines). For guidelines: finnes alle `paths` på `main`, skal `branch` være `main` og SHA-en
+  hentes derfra — se «Retningslinjer i PR-branch» i [github-modus.md](references/github-modus.md)
 - **Web-scraping-modus:** Lagre `globalHash` og per-side hashes fra `search_index.json`
   (rør ikke `github`-feltet)
 - **Begge moduser:** Sett `sistVerifisert` til dagens dato. Ved FULL modus: oppdater også
@@ -397,7 +411,8 @@ Ved **INKREMENTELL** modus trigges selvoppdatering når compare-output inneholde
    **Unntak:** manglende `.oppdater-coverage.json` er **ikke** strukturdrift og skal ikke gi
    selvoppdaterings-post. Filen skrives først ved en komplett FULL (se steg 4/9), så den er
    forventet fraværende inntil da.
-6. **Prinsippdrift** — Inneholder `plugins/skybert/skills/skybert/` igjen `> Kilde:`-lenker med commit-SHA, datostempler i brødtekst, umerkede kildeløse avsnitt, dupliserte blokker eller to filer om samme tema? Det betyr at reglene i denne skillen ikke ble fulgt eller er uklare — rapporter som selvoppdaterings-post med forslag til regelpresisering.
+6. **Retningslinjer i scope** — Ved FULL: les `mkdocs.yml`-nav i Fhi.Guidelines. Nye retningslinjer med Skybert-relevans (container images, Kubernetes, CI/CD, registry, secrets, nettverk) som ikke står i `github.guidelines.paths` → `VURDER`-post med forslag om å ta dem inn i `paths` og routing-tabellen. Ikke rut hele repoet automatisk.
+7. **Prinsippdrift** — Inneholder `plugins/skybert/skills/skybert/` igjen `> Kilde:`-lenker med commit-SHA, datostempler i brødtekst, umerkede kildeløse avsnitt, dupliserte blokker eller to filer om samme tema? Det betyr at reglene i denne skillen ikke ble fulgt eller er uklare — rapporter som selvoppdaterings-post med forslag til regelpresisering.
 
 ### Output
 
@@ -412,7 +427,9 @@ Rapporteres som egen seksjon i UPDATE-PLAN.md med per-endring: fil, type (routin
 | Problem | Handling |
 |---------|----------|
 | `gh api` feil / rate limit | Retry 3x med backoff. Ved vedvarende: stopp, foreslå `gh auth refresh` |
-| Repo 403/404 | Fall tilbake til web-scraping-modus |
+| Repo 403/404 (docs/infra) | Fall tilbake til web-scraping-modus |
+| Fhi.Guidelines 403/404 | Fortsett i GitHub-modus for docs/infra. Ikke foreslå `KORRIGER`/`FJERN` (`feil`/`utdatert`/`ustøttet`) for retningslinje-basert innhold; merk det «ikke verifisert i denne kjøringen» i planen |
+| Retningslinje-sti finnes verken på `main` eller på branchen i state | `VURDER`-post (PR lukket eller avvist?). Aldri `FJERN` før brukeren har avgjort |
 | Normativ fil 404 (XRD, compositions) | Stopp, rapporter (kun GitHub-modus) |
 | Ikke-kritisk fil 404 | Logg som manglende, fortsett |
 | SHA-compare feiler | Fall tilbake til FULL modus |

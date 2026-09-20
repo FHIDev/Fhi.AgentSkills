@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-09-03T10:00:00Z",
+  "updatedAt": "2026-09-17T12:00:00Z",
   "mode": "github",
   "lastFullscanDate": "2026-08-15",
   "sistVerifisert": "2026-09-01",
@@ -16,6 +16,15 @@
       "branch": "main",
       "commit": "d3d4e9260b81977d61f57ad231e1c5a9bb3754e0",
       "commitDate": "2026-08-31"
+    },
+    "guidelines": {
+      "repo": "FHIDev/Fhi.Guidelines",
+      "branch": "retningslinje_images",
+      "commit": "94cb353895ab234c813d99abcb3f14b381be237b",
+      "commitDate": "2026-09-15",
+      "paths": [
+        "docs/CI-CD/container-images.md"
+      ]
     }
   },
   "openItems": [
@@ -78,6 +87,16 @@
       "summary": "Matrise A ble ikke oppdatert da SKILL.md og referansefilene ble restrukturert. docsCommit står på acde93e0 (PR #59) og skillContentHash matcher ikke lenger innholdet, så forutsetning 3 for videreført dekning er brutt — neste FULL leser alle docs-sider på nytt og skriver ny matrise. 13 coveredIn-ankere peker på slettede seksjoner (10 i SKILL.md, bl.a. #legal-og-compliance, #skybertapp-crd, #gitops-flyt). Ankrene rettes ikke manuelt: en ærlig matrise krever full side-for-side-gjennomgang. Lukkes ved neste FULL.",
       "firstSeen": "2026-09-03",
       "lastSeen": "2026-09-03"
+    },
+    {
+      "id": "guidelines-container-images-utkast",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/container-images.md",
+      "source": "FHIDev/Fhi.Guidelines PR #2 (docs/CI-CD/container-images.md, branch retningslinje_images)",
+      "summary": "Retningslinjen RL-CICD-001 er tatt inn fra en åpen PR med status Utkast; dokumenteier og avvikssystem er TBD, og Kilde-linjene peker på PR-URL. Når stien finnes på main: sett branch til main i state, skriv om Kilde-lenkene til blob/main og oppdater statusomtalen øverst i filen (Utkast/Forslag/Godkjent). Lukkes PR-en uten merge: avgjør om filen beholdes.",
+      "firstSeen": "2026-09-17",
+      "lastSeen": "2026-09-17"
     }
   ]
 }

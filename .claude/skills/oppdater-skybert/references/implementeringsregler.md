@@ -19,6 +19,8 @@
 | Docs-repo | `> Kilde: https://docs.sky.fhi.no/<sti>/` |
 | Infra-repo (fil) | `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/<filbane>` |
 | Infra-repo (katalog) | `> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/<katalogbane>/` |
+| Retningslinje-repo (sti på `main`) | `> Kilde: https://github.com/FHIDev/Fhi.Guidelines/blob/main/<filbane>` |
+| Retningslinje-repo (sti ikke på `main` ennå) | `> Kilde: https://github.com/FHIDev/Fhi.Guidelines/pull/<nr> (<filbane>)` — skrives om til `blob/main`-formen i første kjøring der stien finnes på `main` |
 | Kombinert | Én linje: `> Kilde: <docs-url> · <infra-url>` |
 | Web-scraping | `> Kilde: https://docs.sky.fhi.no/<sti>/` |
 | Ingen repo-kilde | `> **Operasjonell antakelse:** <én setning om hvorfor den er Skybert-spesifikk>` (se hovedprinsipper.md) |
@@ -92,6 +94,7 @@ Etter implementering, verifiser:
 12. Ingen datostempler/historikk i brødtekst: `git grep -nEi '(per |status per |sist oppdatert |verifisert (mot|per) )20[0-9]{2}|ikke lenger|tidligere var|under utrulling' -- skybert ':!*.json'` gir kun treff på «Sist verifisert»-linjene i `plugins/skybert/skills/skybert/SKILL.md`.
 13. Alle avsnitt uten `> Kilde:` er merket `> **Operasjonell antakelse:**`.
 14. Duplikatsøk: ingen YAML-blokk over 5 linjer og ingen nøkkelverdi-tabell finnes i mer enn én fil.
+15. Retningslinje-lenker: for hver sti i `github.guidelines.paths` som finnes på `main`, peker alle `> Kilde:`-linjer for den stien på `blob/main/`, ikke på en PR-URL, og `branch` i state er `main`.
 
 ---
 

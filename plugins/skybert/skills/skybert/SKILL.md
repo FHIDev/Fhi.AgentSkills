@@ -72,7 +72,7 @@ Alle klustere kjører samme Kyverno-grunnpolicyer (`policies-green`); prod-klust
 
 *Organisatorisk:* en utpekt **tenant owner** (typisk produkteier/domeneeier) som er ansvarlig for brukeradministrasjon, kostnader, sikkerhet, tilgjengelighet, dataklassifisering, applikasjons-ROS og DPIA (ved persondata). Plattformens egen ROS kan refereres for infrastruktur, nettverk og secrets management.
 
-*Applikasjon:* kjører på Linux (språk og rammeverk er valgfritt), har Dockerfile og en CI-pipeline som bygger og pusher image (plattformen federerer pipelinen mot registeret). Azure-subscriptions for Key Vault o.l. er teamets ansvar (anbefalt: én for test, én for prod). Database: Azure managed, NHN Moderne Etatsplattform eller CloudNativePG i klusteret — se [Persistence](references/persistence.md). Rød data krever komplett liste over eksterne tjenester appen når, med risikovurdering.
+*Applikasjon:* kjører på Linux (språk og rammeverk er valgfritt), har Dockerfile og en CI-pipeline som bygger og pusher image (plattformen federerer pipelinen mot registeret). Imaget skal følge FHI-retningslinjen for container images (Trivy-scanning, immutable tags, minimalt prod-image) — se [Container images](references/container-images.md). Azure-subscriptions for Key Vault o.l. er teamets ansvar (anbefalt: én for test, én for prod). Database: Azure managed, NHN Moderne Etatsplattform eller CloudNativePG i klusteret — se [Persistence](references/persistence.md). Rød data krever komplett liste over eksterne tjenester appen når, med risikovurdering.
 
 *Teknisk:* GitHub-organisasjon FHIDev; tilgangspakke via MyAccess; PIM for prod og `aks-red-test-01` — se [kubectl-tilgang](references/kubectl-access.md#pim-privileged-identity-management).
 
@@ -235,6 +235,7 @@ For prosjekter på Skybert anbefales det å legge disse verdiene i prosjektets `
 | [Secrets-mønstre](references/secrets.md) | SkybertApp-secrets, SecretStore/ExternalSecret, Key Vault-ansvar |
 | [Sikkerhet](references/security.md) | Workload Identity, managed identities, tenant-RBAC, securityContext, ACR-pull |
 | [Workflows](references/workflows.md) | GitOps-workflows, promotion, GitHub App, variabler og secrets |
+| [Container images](references/container-images.md) | FHI-retningslinje for images: base image, Trivy, funn-terskler, immutable tags, least privilege på Skybert |
 | [Plattformarkitektur](references/platform-architecture.md) | Flux, Crossplane, OCI-flyt, tenant-bootstrap, tenant-RBAC |
 | [kubectl-tilgang](references/kubectl-access.md) | Proxy, klusterliste, PIM, sk8, k9s, ACR-pull lokalt |
 | [Kyverno-policier](references/kyverno-policies.md) | Mutasjoner, Enforce/Audit, runtime-restriksjoner, VPA |

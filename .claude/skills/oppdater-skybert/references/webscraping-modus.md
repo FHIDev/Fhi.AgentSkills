@@ -103,18 +103,19 @@ Hent `search_index.json`, beregn alle per-side hashes, hent HTML for alle sider 
 | Begrensning | Konsekvens |
 |-------------|------------|
 | Ingen infra-repo-tilgang | Ingen CRD-versjonssporing, ingen infra signal inventory, infra-basert innhold kan ikke verifiseres |
+| Ingen Fhi.Guidelines-tilgang | Retningslinje-basert innhold (Kilde mot `github.com/FHIDev/Fhi.Guidelines`) kan ikke verifiseres — repoet er privat og ikke publisert på docs.sky.fhi.no |
 | Ingen `docs/internal/`-tilgang | Kun publiserte sider er tilgjengelige |
 | Kun publisert docs | Ingen tilgang til mkdocs.yml, workflows eller README |
 | Inkrementell basert på per-side hash | Krever persistent state i `maintenance/skybert/.oppdater-state.json` |
 | Hash-normalisering lowercaser tekst | Rene case-endringer i docs (f.eks. feltnavn) oppdages ikke av no-op-sjekken |
 | Kompletthet gjelder kun søkeindeksen | Sider/vedlegg som ikke er i `search_index.json` er usynlige for denne modusen |
 
-### Vern av infra-basert innhold (kritisk)
+### Vern av infra- og retningslinje-basert innhold (kritisk)
 
-Denne modusen kan IKKE verifisere innhold som har infra-repoet som kilde (kildereferanser mot `github.com/FHISkybert/Fhi.Skybert.Infra`). Derfor:
+Denne modusen kan IKKE verifisere innhold som har infra-repoet eller retningslinje-repoet som kilde (kildereferanser mot `github.com/FHISkybert/Fhi.Skybert.Infra` eller `github.com/FHIDev/Fhi.Guidelines`). Reglene under gjelder begge:
 
 - Foreslå aldri `KORRIGER` eller `FJERN` med grunn `feil`/`utdatert`/`ustøttet` for infra-basert innhold i denne modusen — selv om publisert docs ser ut til å motsi det. Bruk `VURDER` med begge kilder sitert. `FJERN` med grunn `generisk`, `duplikat` eller `meta` krever ingen kildeverifikasjon og er tillatt også her.
-- Merk alle infra-baserte seksjoner i UPDATE-PLAN.md som **«ikke verifisert i denne kjøringen»** — planen skal ikke gi inntrykk av at hele skillen er validert.
+- Merk alle infra- og retningslinje-baserte seksjoner i UPDATE-PLAN.md som **«ikke verifisert i denne kjøringen»** — planen skal ikke gi inntrykk av at hele skillen er validert.
 - Rør aldri `github`-feltet i `.oppdater-state.json` (commit SHAs og datoer for docs/infra beholdes uendret).
 - De statiske kopiene i `references/skybertapp/` kan ikke oppdateres i denne modusen — noter alder (`github.infra.commitDate` i state-filen) i planen hvis den er over 30 dager gammel.
 

@@ -38,7 +38,7 @@
 | `docs/miscellaneous/access-packages.md` | `SKILL.md` |
 | `docs/miscellaneous/PIM.md` | `references/kubectl-access.md` |
 | `docs/miscellaneous/probes.md` | `references/configuration.md` |
-| `docs/legal/*.md` | `SKILL.md` (kort omtale) |
+| `docs/legal/*.md` | `SKILL.md` (kort omtale); `references/container-images.md` for «Scanning (Coming)» i `docs/legal/index.md` |
 | `docs/troubleshooting/non-root.md` | `references/troubleshooting.md` |
 | `docs/internal/flux.md` | `references/platform-architecture.md` (NB: kan motsi infra-repo — markeres som kildekonflikt) |
 | `docs/internal/service-mesh.md` | `references/hostnames-and-networking.md` |
@@ -89,6 +89,14 @@
 | `manifests/*.md` | VURDER — migreringsplaner, ikke auto-route (hent kun tenant-impact med konkrete tenant-steg) |
 | `utils/sk8/README.md`, `utils/sk8/data/clusters.json` | `references/kubectl-access.md` — intern-merket (sk8 Go-CLI + innebygd klusterregister). Øvrig `utils/**` (Go-kode, `version-checker/`, `grafana-airgapped/`) er lavprioritet/støy |
 
+### Retningslinje-repo (Fhi.Guidelines)
+
+| Kildesti | Kanonisk målfil (første) — øvrige får kun kryssreferanse eller én setning |
+|----------|--------------|
+| `docs/CI-CD/container-images.md` | `references/container-images.md` — `SKILL.md` (én setning i Blåløypa), `workflows.md`, `security.md`, `kyverno-policies.md` og `troubleshooting.md` lenker kun |
+| `docs/om/slik-leser-du-dokumentene.md` | Ingen målfil — leses for KRAV/VEILEDNING-semantikk og statusverdier |
+| Øvrige `docs/**` | Utenfor scope. Skybert-relevante retningslinjer → selvoppdaterings-post (`scope`, `VURDER`) før de får routing-rad og legges i `github.guidelines.paths` |
+
 ---
 
 ## Kanonisk plassering for tverrgående fakta
@@ -115,6 +123,7 @@ avsnitt. Tabellen oppdateres i samme kjøring som en kanonisk plassering endres.
 | WebApp/CSI-status | `legacy-webapp-csi.md` | `SKILL.md` (én setning), `configuration.md`, `secrets.md`, `security.md`, `skybertapp-crd.md` |
 | Feilsøking, tilkoblingsfeil / ACR-pull lokalt | `troubleshooting.md` / `kubectl-access.md` | `SKILL.md` (prosa, ikke kommandoer) |
 | Minimal SkybertApp | `SKILL.md` + `skybertapp-crd.md` | `configuration.md`, `secrets.md` |
+| FHI-krav til container images (Trivy, funn-terskler, immutable tags, pipeline-gating) og mapping mot Kyverno | `container-images.md` | `SKILL.md` (én setning), `workflows.md`, `security.md`, `kyverno-policies.md`, `troubleshooting.md` |
 
 ## Emnebasert routing (web-scraping-modus)
 
@@ -126,6 +135,7 @@ Brukes når agenten ikke har filsti-tilgang, kun emnenavn fra docs-sider.
 | Secrets, Key Vault, ExternalSecret, SecretStore | `references/secrets.md` |
 | Workload Identity, nettverkspolicyer, sikkerhet | `references/security.md` |
 | GitHub Actions, CI/CD, oci-push, update-tag | `references/workflows.md` |
+| Container images, Dockerfile-krav, Trivy, sårbarhetsscanning, image-tagging | `references/container-images.md` |
 | kubectl, k9s, az connectedk8s proxy | `references/kubectl-access.md` |
 | Logging, metrics, Grafana, Loki, Mimir, Tempo | `references/observability.md` |
 | Helm, Kustomize, WebApp, Deployment, raw manifests | `references/configuration.md` |

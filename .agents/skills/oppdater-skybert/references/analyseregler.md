@@ -29,14 +29,14 @@
 ## Terskler
 
 - **`FORBEDRING`** kun ved vesentlig bedre/mer korrekt formulering — ikke stilistiske preferanser.
-- **`FJERN`** med grunn `feil`/`utdatert` krever kildesitat som motsier. `generisk`, `duplikat` og `meta` krever ingen kildeevidens — de vurderes mot skillen selv. `ustøttet` krever at søk i begge repoer er gjort og at innholdet ikke er Skybert-spesifikt.
+- **`FJERN`** med grunn `feil`/`utdatert` krever kildesitat som motsier. `generisk`, `duplikat` og `meta` krever ingen kildeevidens — de vurderes mot skillen selv. `ustøttet` krever at søk i alle kilderepoer (docs, infra, retningslinjer i scope) er gjort og at innholdet ikke er Skybert-spesifikt.
 - **Fravær i kildene alene gir ikke `feil`.** Kildeløst innhold som er Skybert-spesifikt og korrekt → behold merket Operasjonell antakelse. Kildeløst og ikke Skybert-spesifikt → `FJERN` (`ustøttet`). Uklart → `VURDER`.
 - **`KORRIGER`** krever at eksisterende innhold er beviselig feil basert på kildene.
 - **`UTVID`** brukes når eksisterende innhold er korrekt men ufullstendig.
 - **`OMSTRUKTURER`** krever at alle detaljer bevares i ny plassering.
 - **WIP/placeholder-sider** → `VURDER` med begrunnelse, aldri brukt som evidens for `feil`/`utdatert`.
 - **Innhold uten `> Kilde:` og uten Operasjonell antakelse-merke** er umerket, ikke beskyttet: det får i denne kjøringen enten kilde, merke eller `FJERN`.
-- **Generisk-testen:** ville en agent uten denne skillen svart det samme riktig? kubectl-grunnkommandoer, `gh run list`, k9s-taster, Helm/Kustomize-mappestruktur, PromQL-maler, Azure WI-miljøvariabler, `crossplane render`-semantikk, GitHub Actions `concurrency`, Envoy/HTTPRoute-standardfelt → ja → `generisk`.
+- **Generisk-testen:** ville en agent uten denne skillen svart det samme riktig? kubectl-grunnkommandoer, `gh run list`, k9s-taster, Helm/Kustomize-mappestruktur, PromQL-maler, Azure WI-miljøvariabler, `crossplane render`-semantikk, GitHub Actions `concurrency`, Envoy/HTTPRoute-standardfelt → ja → `generisk`. Et FHI-krav fra en retningslinje (Trivy som standardverktøy, stopp ved Critical/High, immutable tags) er **ikke** generisk selv om praksisen er allment kjent — det er organisasjonens beslutning, som agenten ikke kan vite. Den generelle *begrunnelsen* for kravet (hvorfor minimale images er bra) er derimot generisk og reduseres til én setning.
 - **Docs-kopi-testen:** ordrett gjengivelse av én docs-side uten kurering → sammendrag + Kilde-lenke (`OMSTRUKTURER`).
 - **Kompletthets-terskel:** `Komplett` i matrise A betyr at Skybert-spesifikke operative fakta er representert, ikke at siden er gjengitt. Et sammendrag med lenke kan være komplett.
 
@@ -106,7 +106,8 @@ Livssyklus:
 
 Kildeautoritet, konfliktregler og domeneeksempler er definert ett sted:
 se «Kildeautoritet og konfliktregel» i [hovedprinsipper.md](hovedprinsipper.md).
-Kortversjon: Infra vinner for normative tekniske forhold, Docs for konsept/veiledning;
+Kortversjon: Infra vinner for normative tekniske forhold, Docs for konsept/veiledning; retningslinjer
+(Fhi.Guidelines) er et eget lag — krav gjengis ved siden av håndhevelsen, aldri slått sammen;
 uoppløselig konflikt → `VURDER` med begge kilder sitert.
 
 ---
