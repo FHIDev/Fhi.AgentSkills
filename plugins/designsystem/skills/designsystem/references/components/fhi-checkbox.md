@@ -16,6 +16,10 @@ import '@folkehelseinstituttet/designsystem/fhi-checkbox';
 | `checked` | `checked` | `boolean` | `false` | Avkrysset tilstand |
 | `status` | `status` | `'error' \| undefined` | `undefined` | Feilstatus |
 | `disabled` | `disabled` | `boolean` | `false` | Deaktivert |
+| `helpText` | `help-text` | `string \| undefined` | `undefined` | Hjelpetekst under label (fra v0.44.0) |
+
+Når du bruker ikke-tom `help-text`, må du også sette `label`. Uten label logger
+komponenten `console.error`, men viser fortsatt hjelpeteksten.
 
 ## Events
 
@@ -33,6 +37,9 @@ Dette er bekreftet i v0.41.2 og v0.43.5.
 ## Eksempler
 
 ```html
+<fhi-checkbox label="Ta med vedlegg" name="attachments" value="yes"
+  help-text="Legger ved underlagsfilene i eksporten."></fhi-checkbox>
+
 <fhi-checkbox label="Godta vilkårene" name="terms" value="accepted"></fhi-checkbox>
 
 <fhi-checkbox label="Nyhetsbrev" name="newsletter" checked></fhi-checkbox>
