@@ -89,7 +89,6 @@ sammenlign rekursive git-trær for begge commits etter blob-SHA. Kontroller `tru
 ved avkorting hent undertrær. Bruk komplett added/removed/modified-liste til discovery,
 også ved inkrementell kjøring.
 
-
 **Retry-policy:** 3 forsøk med eksponentiell backoff (1s, 3s, 9s). Ved vedvarende feil på normativ fil (XRD, compositions): stopp kjøring med feilrapport. Ved feil på ikke-kritisk fil: logg som manglende og fortsett.
 
 ---

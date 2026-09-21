@@ -175,9 +175,8 @@ docker pull crfhiskybert.azurecr.io/<tenant>/<app>:<tag>
 docker run -p 8080:8080 crfhiskybert.azurecr.io/<tenant>/<app>:<tag>
 ```
 
-Lokal pull krever registry-/repository-lesetilgang for brukeren, som ikke følger automatisk av
-tenant-tilgangspakken. Avklar riktig rolle for `crfhiskybert` med plattformteamet på
-`#ext-fhi-skybert` (oppgi bruker og `<tenant>/<app>`). Feiler `docker pull` med
+Det krever AcrPull for din bruker på `crfhiskybert.azurecr.io`, som ikke følger av tilgangspakken —
+be om det på `#ext-fhi-skybert` (oppgi bruker og `<tenant>/<app>`). Feiler `docker pull` med
 «pull access denied» eller «repository does not exist» selv om `az acr login` lyktes, mangler
 tilgangen; ACR skjuler om repoet finnes.
 

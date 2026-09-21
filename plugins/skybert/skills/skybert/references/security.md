@@ -59,7 +59,13 @@ Plattformen leverer to typer managed identities per tenant:
 - **Workload identities per miljø** `tn-<tenant>-skybert-sa-<env>` — se
   [Oppsett i applikasjon](#oppsett-i-applikasjon).
 
-> **Merk (GitHub OIDC-subject):** GitHub-repoer kan presentere navnebasert eller immutable ID-basert subject (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`). Kontroller formatet for det aktuelle repoet, også etter rename/transfer. Subject matches eksakt; feil format gir `AADSTS700213`. Plattformens bootstrap oppretter begge variantene for GitOps-repoet. Ved federering av app-repoer må credentialen samsvare med repoets subject; docs-eksempelet viser bare navnebasert subject.
+> **Merk (GitHub OIDC-subject):** GitHub byttet standardformat på OIDC-subject. Nyopprettede repoer
+> presenterer et subject med immutable numeriske ID-er (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`);
+> eldre repoer beholder det navnebaserte subjectet til de renames eller flyttes — da går de over på
+> ID-formatet. Subject matches eksakt — en federert credential med feil format gir `AADSTS700213`
+> ved token-utveksling. Plattformens bootstrap oppretter begge variantene for GitOps-repoet; ved
+> federering av nye, renamede eller flyttede app-repoer må ID-varianten med — docs-siden viser bare
+> navnebasert subject. Skjæringsdatoen står i bootstrap-scriptet (Kilde under).
 
 > Kilde: https://docs.sky.fhi.no/internal/attach-application-repo/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--bootstrap--azure.sh
 

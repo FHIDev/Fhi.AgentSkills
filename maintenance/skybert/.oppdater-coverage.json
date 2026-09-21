@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generatedAt": "2026-09-21T06:18:19Z",
   "docsCommit": "f05b2901ad8a7efd098f1f74ccfb5ecb07d1d155",
-  "skillContentHash": "956be99bb48285f4efa7b79d413fae8afcc007a9babd8345cf85e7249c0f2904",
+  "skillContentHash": "0af5d1d628f981d8448cc878b32d97536c54c4298ff4c4a26a9b39849332b786",
   "pages": [
     {
       "path": "docs/auth/index.md",
@@ -713,7 +713,7 @@
     },
     {
       "path": "docs/workloads/waf/examples.md",
-      "topic": "examples",
+      "topic": "WAF — eksempler på directives_map.app (unntak, GeoIP)",
       "coveredIn": [
         "references/waf.md#tilgang-og-status",
         "references/waf.md#plattformens-policier",
@@ -724,7 +724,7 @@
     },
     {
       "path": "docs/workloads/waf/index.md",
-      "topic": "index",
+      "topic": "WAF — Coraza/OWASP CRS via EnvoyExtensionPolicy, bundles og coverage-policy",
       "coveredIn": [
         "references/waf.md#tilgang-og-status",
         "references/waf.md#plattformens-policier",
