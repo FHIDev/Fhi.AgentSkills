@@ -6,7 +6,7 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-09-01
+> **Sist verifisert mot offisiell docs:** 2026-09-21
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/ (samme innhold på https://skybert.fhi.no/)
 > Denne skillen er en kuratert oppsummering for AI-agenter. Hver seksjon har enten en `> Kilde:`-lenke eller er merket `> **Operasjonell antakelse:**` (erfaring uten repo-kilde).
 
@@ -70,7 +70,7 @@ Alle klustere kjører samme Kyverno-grunnpolicyer (`policies-green`); prod-klust
 
 **Forutsetninger**
 
-*Organisatorisk:* en utpekt **tenant owner** (typisk produkteier/domeneeier) som er ansvarlig for brukeradministrasjon, kostnader, sikkerhet, tilgjengelighet, dataklassifisering, applikasjons-ROS og DPIA (ved persondata). Plattformens egen ROS kan refereres for infrastruktur, nettverk og secrets management.
+*Organisatorisk:* en utpekt **tenant owner** (typisk produkteier/domeneeier) som er ansvarlig for brukeradministrasjon, kostnader, sikkerhet, tilgjengelighet, dataklassifisering, applikasjons-ROS og vurdering av DPIA-behov etter [plattformens DPIA-veiledning](https://docs.sky.fhi.no/legal/dpia/). Plattformens egen ROS kan refereres for infrastruktur, nettverk og secrets management.
 
 *Applikasjon:* kjører på Linux (språk og rammeverk er valgfritt), har Dockerfile og en CI-pipeline som bygger og pusher image (plattformen federerer pipelinen mot registeret). Imaget skal følge FHI-retningslinjen for container images (Trivy-scanning, immutable tags, minimalt prod-image) — se [Container images](references/container-images.md). Azure-subscriptions for Key Vault o.l. er teamets ansvar (anbefalt: én for test, én for prod). Database: Azure managed, NHN Moderne Etatsplattform eller CloudNativePG i klusteret — se [Persistence](references/persistence.md). Rød data krever komplett liste over eksterne tjenester appen når, med risikovurdering.
 
@@ -225,6 +225,12 @@ For prosjekter på Skybert anbefales det å legge disse verdiene i prosjektets `
 
 > **Operasjonell antakelse:** Anbefaling for AI-agenter i FHI-repoer, ikke fra Skybert-docs; verdiene er de Skybert-spesifikke konvensjonene over.
 
+## WAF
+
+For Coraza/OWASP CRS på Envoy Gateway, tilgangsbegrensninger og Audit-status, se [WAF](references/waf.md).
+
+> Kilde: https://docs.sky.fhi.no/workloads/waf/
+
 ## Referanser
 
 | Dokument | Innhold |
@@ -235,6 +241,7 @@ For prosjekter på Skybert anbefales det å legge disse verdiene i prosjektets `
 | [Secrets-mønstre](references/secrets.md) | SkybertApp-secrets, SecretStore/ExternalSecret, Key Vault-ansvar |
 | [Sikkerhet](references/security.md) | Workload Identity, managed identities, tenant-RBAC, securityContext, ACR-pull |
 | [Workflows](references/workflows.md) | GitOps-workflows, promotion, GitHub App, variabler og secrets |
+| [WAF](references/waf.md) | Coraza/OWASP CRS, tilgang, bundles og policy-status |
 | [Container images](references/container-images.md) | FHI-retningslinje for images: base image, Trivy, funn-terskler, immutable tags, least privilege på Skybert |
 | [Plattformarkitektur](references/platform-architecture.md) | Flux, Crossplane, OCI-flyt, tenant-bootstrap, tenant-RBAC |
 | [kubectl-tilgang](references/kubectl-access.md) | Proxy, klusterliste, PIM, sk8, k9s, ACR-pull lokalt |

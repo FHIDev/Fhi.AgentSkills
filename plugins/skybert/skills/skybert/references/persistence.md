@@ -43,11 +43,13 @@ ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
   tenanter lander samme sted), og har ikke-POSIX-semantikk (ingen locking, ingen partial writes).
   Avklar på `#ext-fhi-skybert` før bruk.
 
-> Kilde: https://docs.sky.fhi.no/persistence/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/nas-sc.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/ontap-nas-backend.yaml
+> Kilde: https://docs.sky.fhi.no/persistence/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/nas-sc.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/ontap-nas-backend.yaml · https://docs.sky.fhi.no/internal/replace-cluster-in-place/
 
 > **Operasjonell antakelse:** Ikke-root-funnet er observert på `cloud-backed-retain-sc` på green-test
-> 2026-09-15 (rot eid av uid 4294967294; interne `disk.csi.akshci.com`-PVC-er i
+> (rot eid av uid 4294967294; interne `disk.csi.akshci.com`-PVC-er i
 > `azure-arc-containerstorage`). `unbacked-*` bruker samme driver, men er ikke prøvd. Ikke beskrevet i docs.
+
+**Ved klusterutskifting:** Den interne runbooken beskriver ingen prosedyre for å hente tilbake `ontap-nas`-volumer etter at det gamle klusteret er borte. Forvent datatap uten egen backup; eventuell berging fra et fortsatt tilgjengelig gammelt kluster er ikke verifisert.
 
 ## Databasevalg
 
@@ -294,10 +296,9 @@ Instansene eksponerer metrics på port **9187**. Alloy oppdager targets fra pod-
 (`prometheus.io/scrape: "true"` + `prometheus.io/port: "9187"` via `inheritedMetadata`);
 `spec.monitoring.enablePodMonitor` gjør ingenting — det finnes ingen Prometheus Operator.
 
-> **Ingen CNPG-metrics på rød sone:** `base-tenant-ingress` blokkerer Alloy fra å scrape `tn-*`
-> der. Kjent plattform-gap; annotasjonene fikser det ikke. Backup-overvåking på rød er manuell.
+På rød sone tillater infra-policyen `alloy-scrape-ingress` TCP fra Alloy til tenant-podene, også port 9187. Docs beskriver fortsatt scraping som blokkert; manifestene åpner nettverksveien, men bekrefter ikke at et bestemt target er oppe. Behold scrape-annotasjonene og kontroller target og metrics i Grafana. Se [Rød sone](hostnames-and-networking.md#rød-sone).
 
-> Kilde: https://docs.sky.fhi.no/persistence/postgres/
+> Kilde: https://docs.sky.fhi.no/persistence/postgres/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/globalnetworkpolicies/base/policies-red/alloy.yaml
 
 ### Oppgraderinger
 
@@ -323,7 +324,7 @@ Alle er opt-in på namespace-labelen `skybert.fhi.no/needs-cnpg=true`, som platt
 Token-utvekslingen mot Entra dekkes **ikke** av disse: den ligger i `shared-egress-to-entra`,
 som velger på `skybert.fhi.no/needs-entra-login=true` — et separat opt-in. Uten den labelen får
 `inheritFromAzureAD: true` aldri et token, og både base-backup og WAL-arkivering feiler.
-Replikering mellom instansene dekkes av den Kyverno-genererte `<ns>-internal-access`-GNP-en.
+Replikering mellom instansene dekkes av Kyverno-generert intern egress og ingress; tenantens egne ingress-regler kan begrense den.
 Generelle rød sone-regler: se [Rød sone](hostnames-and-networking.md#rød-sone).
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/globalnetworkpolicies/base/policies-red/cnpg.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/globalnetworkpolicies/base/policies-red/shared-egress-to-entra.yaml

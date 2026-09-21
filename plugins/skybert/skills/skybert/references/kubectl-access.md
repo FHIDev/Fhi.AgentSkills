@@ -6,7 +6,7 @@
    I WSL: verifiser med `which az` at du ikke kjører Windows-binæren.
 2. `kubectl` og/eller `k9s` installert (`winget install kubectl`, `winget install k9s`).
 3. Tilgangspakke bestilt og godkjent på https://myaccess.microsoft.com/. Pakken gir medlemskap i
-   tenantens rollegruppe (mønster `A-FHI-XX-Tenant`); én av tenantens to godkjennere
+   tenantens tilgangsgruppe (`R-FHI-Skybert-<tenant>-Access`); én av tenantens to godkjennere
    (`A-FHI-AP-XX-Approver`) godkjenner — en godkjenner kan ikke godkjenne seg selv — og tilgangen er
    tidsbegrenset til ett år.
 4. `az logout && az login` etter at tilgangspakken er innvilget, og på nytt etter PIM-aktivering.
@@ -51,6 +51,8 @@ https://docs.sky.fhi.no/sk8/clusters.json (`name`, `resourceGroup`, `subscriptio
 `oidcIssuerUrl`, `needsPim`). `COLOR_GROUP_CLUSTERS` i samme fil definerer lanene:
 hver farge = sandbox + ett test- + ett prod-kluster.
 
+> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh
+
 ### Sandbox
 
 | Kluster | Resource Group | Subscription ID |
@@ -58,6 +60,8 @@ hver farge = sandbox + ett test- + ett prod-kluster.
 | aks-sandbox-01 | `rg-fhi-aks-sandbox-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 
 `aks-sandbox-01` er felles for alle fargesoner.
+
+> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh
 
 ### Test
 
@@ -68,6 +72,8 @@ hver farge = sandbox + ett test- + ett prod-kluster.
 | aks-yellow-test-01 [¹] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-red-test-01 | `rg-fhi-aks-red-test-weu-01` | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
 | aks-ops-test-01 [²] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+
+> Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh
 
 ### Produksjon
 
@@ -169,8 +175,9 @@ docker pull crfhiskybert.azurecr.io/<tenant>/<app>:<tag>
 docker run -p 8080:8080 crfhiskybert.azurecr.io/<tenant>/<app>:<tag>
 ```
 
-Det krever AcrPull for din bruker på `crfhiskybert.azurecr.io`, som ikke følger av tilgangspakken —
-be om det på `#ext-fhi-skybert` (oppgi bruker og `<tenant>/<app>`). Feiler `docker pull` med
+Lokal pull krever registry-/repository-lesetilgang for brukeren, som ikke følger automatisk av
+tenant-tilgangspakken. Avklar riktig rolle for `crfhiskybert` med plattformteamet på
+`#ext-fhi-skybert` (oppgi bruker og `<tenant>/<app>`). Feiler `docker pull` med
 «pull access denied» eller «repository does not exist» selv om `az acr login` lyktes, mangler
 tilgangen; ACR skjuler om repoet finnes.
 

@@ -91,7 +91,8 @@ Etter implementering, verifiser:
 9. Routing-tabellen har rad(er) for alle nye målfiler som ble opprettet.
 10. `openItems` i `maintenance/skybert/.oppdater-state.json` er ajourført: utsatte (`deferred`), delvis implementerte (`partial`) og verifikasjonsfeilede (`failed-verification`) poster lagt til/oppdatert, avklarte/fullførte fjernet. Se [analyseregler.md](analyseregler.md).
 11. Ingen `> Kilde:`-lenke inneholder commit-SHA: `git grep -nE '(blob|tree)/[0-9a-f]{7,40}/' -- plugins/skybert/skills/skybert/` gir null treff. Ingen seksjon har mer enn én Kilde-linje.
-12. Ingen datostempler/historikk i brødtekst: `git grep -nEi '(per |status per |sist oppdatert |verifisert (mot|per) )20[0-9]{2}|ikke lenger|tidligere var|under utrulling' -- skybert ':!*.json'` gir kun treff på «Sist verifisert»-linjene i `plugins/skybert/skills/skybert/SKILL.md`.
+12. Ingen datostempler/historikk i brødtekst: `git grep -nEi '(per |status per |sist oppdatert |verifisert (mot|per) )20[0-9]{2}|ikke lenger|tidligere var|under utrulling' -- plugins/skybert/skills/skybert/ ':!*.json'` gir kun treff på «Sist verifisert»-linjene i `plugins/skybert/skills/skybert/SKILL.md`.
+    Kontroller også ISO-datoer utenom den genererte visningslinjen. Funksjonelle datoavhengigheter skal omskrives uten tap av atferdsforskjell, ikke slettes mekanisk. Valider alle `coveredIn`-ankre mot ferdig skill.
 13. Alle avsnitt uten `> Kilde:` er merket `> **Operasjonell antakelse:**`.
 14. Duplikatsøk: ingen YAML-blokk over 5 linjer og ingen nøkkelverdi-tabell finnes i mer enn én fil.
 15. Retningslinje-lenker: for hver sti i `github.guidelines.paths` som finnes på `main`, peker alle `> Kilde:`-linjer for den stien på `blob/main/`, ikke på en PR-URL, og `branch` i state er `main`.

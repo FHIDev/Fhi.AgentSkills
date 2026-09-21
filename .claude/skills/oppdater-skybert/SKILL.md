@@ -44,6 +44,7 @@ plugins/skybert/skills/skybert/
     ├── secrets.md                           (secrets-moenstre)
     ├── security.md                          (Workload Identity, sikkerhet)
     ├── workflows.md                         (CI/CD)
+    ├── waf.md                               (Coraza/OWASP CRS, tilgang, bundles og policier)
     ├── container-images.md                  (FHI-retningslinje for container images, mappet mot Skybert)
     ├── kubectl-access.md                    (kubectl, klusterliste)
     ├── observability.md                     (logging, metrics, tracing)

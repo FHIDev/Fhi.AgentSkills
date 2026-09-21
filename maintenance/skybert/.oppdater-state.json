@@ -1,27 +1,27 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-09-17T12:00:00Z",
+  "updatedAt": "2026-09-21T06:18:19Z",
   "mode": "github",
-  "lastFullscanDate": "2026-08-15",
-  "sistVerifisert": "2026-09-01",
+  "lastFullscanDate": "2026-09-21",
+  "sistVerifisert": "2026-09-21",
   "github": {
     "docs": {
       "repo": "FHISkybert/Fhi.Skybert.Docs",
       "branch": "main",
-      "commit": "14acbd612b3510e39c4ef68038e035aab2195fe8",
-      "commitDate": "2026-09-01"
+      "commit": "f05b2901ad8a7efd098f1f74ccfb5ecb07d1d155",
+      "commitDate": "2026-09-20T07:23:47Z"
     },
     "infra": {
       "repo": "FHISkybert/Fhi.Skybert.Infra",
       "branch": "main",
-      "commit": "d3d4e9260b81977d61f57ad231e1c5a9bb3754e0",
-      "commitDate": "2026-08-31"
+      "commit": "d4536734a090ecad995ab5efd1d283a2a7487d00",
+      "commitDate": "2026-09-18T15:37:40Z"
     },
     "guidelines": {
       "repo": "FHIDev/Fhi.Guidelines",
       "branch": "retningslinje_images",
       "commit": "94cb353895ab234c813d99abcb3f14b381be237b",
-      "commitDate": "2026-09-15",
+      "commitDate": "2026-09-15T12:04:54Z",
       "paths": [
         "docs/CI-CD/container-images.md"
       ]
@@ -34,69 +34,139 @@
       "category": "VURDER",
       "target": "references/hostnames-and-networking.md",
       "source": "docs/internal/dev-gatewayapi.md",
-      "summary": "Ny docs-side er en WIP-skisse (brødtekst: «Tester mermaid, ser shit ut i dark mode») med ett mermaid-diagram over ListenerSet-topologi. Besluttet 2026-08-15: ingen endring nå — topologien er allerede dekket i hostnames-and-networking.md. Uendret per 2026-09-01. Revurderes når siden får reelt innhold.",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. Behold dagens funksjonelle forklaring og åpen post; siden inneholder bare en skisse. Oppfølging: Ingen funksjon går tapt, men siden må vurderes på nytt når den får innhold.",
       "firstSeen": "2026-08-15",
-      "lastSeen": "2026-09-01"
+      "lastSeen": "2026-09-21"
     },
     {
       "id": "docs-infra-konflikt-exec-rbac",
       "status": "deferred",
       "category": "VURDER",
-      "target": "references/kyverno-policies.md",
-      "source": "docs/persistence/postgres.md vs infra/skybert-system/aks-*/kustomization.yaml",
-      "summary": "Docs sier «kubectl exec is not granted to tenants on any cluster»; infra gir pods/exec via test-sandbox-runtime-access.yaml på green-test, yellow-test-02, ops-test og sandbox. Skillen følger infra og nevner konflikten. Revurderes når docs eller infra endres.",
+      "target": "references/persistence.md",
+      "source": "docs/persistence/postgres.md + infra/skybert-system/base/tenant-admin-clusterroles/",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. Behold eksisterende miljøavgrensning og konflikten med docs; ikke påstå at exec er utilgjengelig overalt. Oppfølging: Docs kan fortsatt forvirre brukere; en utsettelse gir ingen grunn til å svekke korrekt RBAC-beskrivelse.",
       "firstSeen": "2026-09-03",
-      "lastSeen": "2026-09-03"
+      "lastSeen": "2026-09-21"
     },
     {
       "id": "docs-infra-konflikt-envoy-skybertapp",
       "status": "deferred",
       "category": "VURDER",
       "target": "references/hostnames-and-networking.md",
-      "source": "docs/explanations/tools-and-components.md vs infra/crossplane/base/compositions/skybertapp.yaml",
-      "summary": "Docs merker Envoy Gateway «Handled by SkybertApp» (ListenerSet/HTTPRoute); composition på main rendrer fortsatt nginx-Ingress, og Gateway API-varianten finnes kun som beta-XRD på aks-ops-test-01. Skillen følger infra. Revurderes når base-composition endres.",
+      "source": "docs/explanations/tools-and-components.md + infra/crossplane/",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. v1alpha1 rendrer Ingress; beta på ops-test rendrer Gateway API. Behold kildekonflikten. Oppfølging: Ingen endring i støttet tenant-oppskrift; generelt løfte om Gateway API ville bli misvisende.",
       "firstSeen": "2026-09-03",
-      "lastSeen": "2026-09-03"
+      "lastSeen": "2026-09-21"
     },
     {
       "id": "docs-konflikt-cortex-tenant-rekkefolge",
       "status": "deferred",
       "category": "VURDER",
       "target": "references/observability.md",
-      "source": "docs/internal/observability/mimir.md (linje ~21 vs ~256)",
-      "summary": "Docs-siden motsier seg selv om cortex-tenant velger namespace- eller tenant-label først; infra (label_list: [namespace, tenant]) og Alloy-kommentar sier namespace først. Skillen følger infra.",
+      "source": "docs/internal/observability/mimir.md + infra/mimir/base/cortex-tenant-0.8.0-values.yaml",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. Behold namespace → tenant → cluster_metrics i samsvar med konfigurasjonen. Oppfølging: Kildenes selvmotsigelse består; ingen grunn til å snu labelrekkefølgen.",
       "firstSeen": "2026-09-03",
-      "lastSeen": "2026-09-03"
+      "lastSeen": "2026-09-21"
     },
     {
       "id": "docs-infra-konflikt-tempo",
       "status": "deferred",
       "category": "VURDER",
       "target": "references/observability.md",
-      "source": "docs/observability/tracing.md vs infra/tempo/ + infra/flux-system/base/kustomizations-infra/tempo.yaml",
-      "summary": "Docs merker Tempo «Planned — not yet available»; infra har Flux-Kustomization tempo i kustomizations-infra (trukket inn av alle 9 klustere) og et aks-ops-test-01-overlay, mens base kun har namespace + helm-manifest. Skillen følger docs — riktig for tenanter, men utrullingen er i gang. Revurderes når docs oppdateres eller flere kluster-overlays kommer.",
+      "source": "docs/observability/tracing.md + infra/tempo/aks-ops-test-01/",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. Ops-test-manifester alene dokumenterer ikke tenant-tilgang, ingest-flyt eller drift. Oppfølging: Unngår å love tracing; plattformteamet må avklare faktisk tjenestestatus.",
       "firstSeen": "2026-09-03",
-      "lastSeen": "2026-09-03"
-    },
-    {
-      "id": "coverage-matrise-utdatert",
-      "status": "partial",
-      "category": "OMSTRUKTURER",
-      "target": "maintenance/skybert/.oppdater-coverage.json",
-      "source": "PR #62 og #63 (restrukturering av 16 skill-filer)",
-      "summary": "Matrise A ble ikke oppdatert da SKILL.md og referansefilene ble restrukturert. docsCommit står på acde93e0 (PR #59) og skillContentHash matcher ikke lenger innholdet, så forutsetning 3 for videreført dekning er brutt — neste FULL leser alle docs-sider på nytt og skriver ny matrise. 13 coveredIn-ankere peker på slettede seksjoner (10 i SKILL.md, bl.a. #legal-og-compliance, #skybertapp-crd, #gitops-flyt). Ankrene rettes ikke manuelt: en ærlig matrise krever full side-for-side-gjennomgang. Lukkes ved neste FULL.",
-      "firstSeen": "2026-09-03",
-      "lastSeen": "2026-09-03"
+      "lastSeen": "2026-09-21"
     },
     {
       "id": "guidelines-container-images-utkast",
       "status": "deferred",
       "category": "VURDER",
       "target": "references/container-images.md",
-      "source": "FHIDev/Fhi.Guidelines PR #2 (docs/CI-CD/container-images.md, branch retningslinje_images)",
-      "summary": "Retningslinjen RL-CICD-001 er tatt inn fra en åpen PR med status Utkast; dokumenteier og avvikssystem er TBD, og Kilde-linjene peker på PR-URL. Når stien finnes på main: sett branch til main i state, skriv om Kilde-lenkene til blob/main og oppdater statusomtalen øverst i filen (Utkast/Forslag/Godkjent). Lukkes PR-en uten merge: avgjør om filen beholdes.",
+      "source": "FHIDev/Fhi.Guidelines PR #2",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. Scope-filen finnes ikke på main, PR-en er åpen med uendret head. Ingen grunnlag for å promotere status. Oppfølging: Eier/avvikssystem forblir uavklart; innholdet må ikke fremstilles som endelig godkjent.",
       "firstSeen": "2026-09-17",
-      "lastSeen": "2026-09-17"
+      "lastSeen": "2026-09-21"
+    },
+    {
+      "id": "waf-tenant-rbac",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/waf.md",
+      "source": "docs/workloads/waf/index.md + infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja, som E35. Standardrollene mangler envoyextensionpolicies for både tenant-admin og Flux. Oppfølging: Uten forbehold vil nye WAF-manifester kunne feile med Forbidden.",
+      "firstSeen": "2026-09-21",
+      "lastSeen": "2026-09-21"
+    },
+    {
+      "id": "docs-infra-roed-nettverk",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/hostnames-and-networking.md",
+      "source": "docs/internal/global-network-policies.md + docs/persistence/postgres.md + infra/globalnetworkpolicies/ + infra/kyverno-policies/base/policies-red/",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. Begge overlays inkluderer split-GNP og Alloy-unntak; docs beskriver eldre oppsett. Behold konflikt i openItems til docs er samstemt. Oppfølging: Utdatert tekst vil skjule intern ingress-kontroll og gi feil diagnose av CNPG-metrics.",
+      "firstSeen": "2026-09-21",
+      "lastSeen": "2026-09-21"
+    },
+    {
+      "id": "waf-bundle-default",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/waf.md",
+      "source": "docs/workloads/waf/index.md + infra/kyverno-policies/base/policies-waf/inject-tenant-waf-bundle.yaml",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja, som E35. Ingen rød override er funnet. Beskriv samtidig docs-konflikten, DetectionOnly og failOpen-forskjellen. Oppfølging: Docs kan skape falsk forventning om strict og blokkerende CRS.",
+      "firstSeen": "2026-09-21",
+      "lastSeen": "2026-09-21"
+    },
+    {
+      "id": "waf-image-runtime",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/waf.md",
+      "source": "infra/utils/coraza-proxy-wasm/README.md + docs/workloads/waf/index.md",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. README sier eksplisitt at dette ikke er verifisert; E35 beholder begrensningen. Oppfølging: Ingen driftspåstand kan gis før plattformen bekrefter fungerende image.",
+      "firstSeen": "2026-09-21",
+      "lastSeen": "2026-09-21"
+    },
+    {
+      "id": "skybertapp-sidecar-rendering",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/skybertapp-crd.md",
+      "source": "infra/crossplane/base/compositions/skybertapp.yaml",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. Uten initContainers blir sidecars skrevet under containers, men med restartPolicy: Always. Manifesteffekten er sikker; runtime-aksept er ikke testet. Oppfølging: Dagens omtale som vanlige containere kan gi inntrykk av at denne varianten er verifisert.",
+      "firstSeen": "2026-09-21",
+      "lastSeen": "2026-09-21"
+    },
+    {
+      "id": "acr-local-pull-role",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/kubectl-access.md",
+      "source": "Eksisterende operasjonell antakelse + scripts/tenant--bootstrap--azure.sh",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. Infra bruker repository-roller for push-identiteter; det beviser ikke dagens brukerrolle for lokal pull. Behold lokal pull-oppskrift, be plattformen bekrefte riktig rolle. Oppfølging: Eksakt AcrPull-påstand kan være utdatert, men mangel på brukerkilde alene er ikke bevis på feil.",
+      "firstSeen": "2026-09-21",
+      "lastSeen": "2026-09-21"
+    },
+    {
+      "id": "docs-dpia-scope",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "SKILL.md",
+      "source": "docs/get-started/prerequisites/organization.md + docs/legal/dpia.md",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. Kildene bruker ulike forutsetninger; ikke avgjør juridisk plikt i denne synkroniseringen. Oppfølging: Motstridende docs blir ellers gjengitt som én sikker norm.",
+      "firstSeen": "2026-09-21",
+      "lastSeen": "2026-09-21"
+    },
+    {
+      "id": "docs-kryptering-scope",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "SKILL.md",
+      "source": "docs/legal/index.md + docs/internal/service-mesh.md",
+      "summary": "Godkjent dokumentasjonsvalg er implementert. Ja. Docs-oversikten er videre enn verifiserte TLS-/mesh-mekanismer. Dokumenter konkrete mekanismer og behold en kildekonflikt. Oppfølging: Ingen detalj går tapt; en universell garanti ville være uten tilstrekkelig kildegrunnlag.",
+      "firstSeen": "2026-09-21",
+      "lastSeen": "2026-09-21"
     }
   ]
 }

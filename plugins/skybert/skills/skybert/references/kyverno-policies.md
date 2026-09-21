@@ -134,7 +134,7 @@ Gjelder `aks-red-test-01` og `aks-red-prod-01` (`policies-red`). Nettverksreglen
 
 | Policy | Modus | Handling |
 |--------|-------|----------|
-| `generate-tenant-internal-gnp` | Generate | Oppretter GlobalNetworkPolicy `<ns>-internal-access` (order 600) per `tn-*`-namespace: TCP innenfor eget namespace |
+| `generate-tenant-internal-gnp` | Generate | Oppretter separate ingress- og egress-GNP-er per `tn-*`; rekkefølge og effekt står i [Rød sone](hostnames-and-networking.md#rød-sone) |
 | `sub-1200-calico-netpol-in-tenants` | Enforce | Avviser native Kubernetes `NetworkPolicy` i `tn-*`; Calico `NetworkPolicy` må ha kun `Ingress`-regler og `spec.order < 1200` (gulvet 1000 kommer fra `limit-calico-netpol-order`) |
 | `restrict-tenant-runtime-access` | Enforce | Blokkerer `kubectl port-forward`, `attach` og API-`proxy` (pod og service) i `tn-*`. Blokkerer **ikke** `kubectl exec` eller ephemeral debug-containere — policybeskrivelsen nevner ephemeral containers, men reglene gjør det ikke |
 
@@ -167,6 +167,12 @@ fragmentet bærer labelen `aggregate-to-tenant-admin-yellow-prod`, som klusteret
 ikke nok uten RBAC, og motsatt.
 
 > Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-prod/deny-tenant-runtime-access.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/skybert-system/
+
+## WAF-policier
+
+Enforce, mutasjon og Audit for WAF er samlet i [WAF](waf.md#plattformens-policier).
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/kyverno-policies/base/policies-waf/
 
 ## PolicyExceptions
 

@@ -7,6 +7,8 @@ navnekonvensjonene står i [SkybertApp CRD-spesifikasjon](skybertapp-crd.md).
 
 Rendering skjer lokalt via `crossplane render`, uten kluster-tilgang.
 
+> **Operasjonell antakelse:** Lokal inspeksjon av den distribuerte SkybertApp-compositionen; render-forutsetninger og begrensninger står nedenfor.
+
 ## Forutsetninger
 
 - `crossplane` CLI (v2). Installer: `curl -sL https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh | sh`.
@@ -31,28 +33,12 @@ Fhi.AgentSkills. Denne vedlikeholdsfilen følger ikke med pluginen og trengs ikk
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/crossplane/base/
 
-## Pipeline
-
-`crossplane render` kjører Composition-pipen (helm template først hvis manifestet er en Helm-template) og skriver ut ressursene Crossplane ville ha applied, uten å opprette dem.
-
-> **Operasjonell antakelse:** Generell `crossplane render`-semantikk; ikke beskrevet i kildene.
-
 ## Eksempel: rått XR
 
 `SKILL_DIR` er stien til `plugins/skybert/skills/skybert/references/skybertapp` der skillen er installert. Lagre
 Quick Start-manifestet fra CRD-referansen som `myapp.yaml`:
 
-```yaml
-apiVersion: skybert.fhi.no/v1alpha1
-kind: SkybertApp
-metadata:
-  name: myapp
-  namespace: tn-mytenant
-spec:
-  image:
-    repository: crfhiskybert.azurecr.io/mytenant/myapp
-    tag: v1.0.0
-```
+Se [Quick Start](skybertapp-crd.md#quick-start) for manifestet.
 
 ```bash
 crossplane render \
@@ -88,7 +74,7 @@ og render resultatet.
 - Hvilke Kinds som genereres og hvilke betingelser som trigger dem
 - Navnemønstre (`<name>-deployment`, `<vault-lowercase>-secret-<i>-<name>` osv.)
 - Field values som kommer fra XR-et eller XRD-defaults
-- Ingress-issuer-valg basert på hostname-suffiks
+- Ingress-issuer-valg etter compositionens tekstsøk i hostname; se [Ingress](skybertapp-crd.md#ingress)
 - `status.labelSelector` på composite-echoen — den utledes rent fra navnet (`skybert.fhi.no/webapp=<name>`)
 
 **Ikke stol på:**

@@ -59,28 +59,27 @@ Plattformen leverer to typer managed identities per tenant:
 - **Workload identities per miljø** `tn-<tenant>-skybert-sa-<env>` — se
   [Oppsett i applikasjon](#oppsett-i-applikasjon).
 
-> **Merk (GitHub OIDC-subject):** Repoer opprettet etter 2026-07-15 presenterer et subject med
-> immutable numeriske ID-er (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`); eldre repoer bytter
-> til samme format ved rename/transfer. Subject matches eksakt — en federert credential med feil
-> format gir `AADSTS700213` ved token-utveksling. Plattformens bootstrap oppretter begge variantene
-> for GitOps-repoet; ved federering av app-repoer opprettet etter 2026-07-15 (eller renamet/flyttet)
-> må ID-varianten med — docs-siden viser bare navnebasert subject.
+> **Merk (GitHub OIDC-subject):** GitHub-repoer kan presentere navnebasert eller immutable ID-basert subject (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`). Kontroller formatet for det aktuelle repoet, også etter rename/transfer. Subject matches eksakt; feil format gir `AADSTS700213`. Plattformens bootstrap oppretter begge variantene for GitOps-repoet. Ved federering av app-repoer må credentialen samsvare med repoets subject; docs-eksempelet viser bare navnebasert subject.
 
 > Kilde: https://docs.sky.fhi.no/internal/attach-application-repo/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--bootstrap--azure.sh
+
+### Ved utskifting av kluster
+
+**Tenant-konsekvens av intern gjenoppretting:** Et reprovisjonert kluster kan ha samme navn, men ny OIDC issuer URL. Plattformteamet oppdaterer plattformforvaltede identiteter. Eier tenanten egne managed identities med egne federated credentials, må tenanten oppdatere issuer på disse; subject og audience beholdes.
+
+> Kilde: https://docs.sky.fhi.no/internal/replace-cluster-in-place/
 
 ## Tenant-RBAC — hva du kan administrere
 
 Tenantens Entra-gruppe bindes ved bootstrap til ClusterRole `skybert:tenant-admin` via en RoleBinding i
 `tn-<tenant>`; plattformen lager bindingen, du skal ikke lage en egen. Rollen aggregeres av
 rettighetsfragmenter som varierer per kluster (runtime-subressurser som `exec`/`portforward` finnes
-bare i test/sandbox-aggregeringen), og enkelte tenant-baser (inkl. nye generert av bootstrap-scriptet) binder fortsatt `cluster-admin` —
+bare i test/sandbox-aggregeringen), og enkelte tenant-baser har unntak med `cluster-admin` —
 tenantens faktiske RoleBindings er autoritative. Hva rollen gir, hvordan den aggregeres og
 bootstrap-flyten står i [Plattformarkitektur — Tenant-bootstrap](platform-architecture.md#tenant-bootstrap);
 runtime-restriksjoner per miljø står i [Kyverno-policier](kyverno-policies.md).
 
-`securitypolicies` (`gateway.envoyproxy.io`) er med i RBAC-settet med full CRUD; kildekommentaren
-beskriver formålet som «firewalls, oidc, etc». Andre `gateway.envoyproxy.io`-ressurser er ikke med,
-og `SecurityPolicy` er ikke omtalt i offisiell docs — avklar med plattformteamet før du bygger på den.
+`securitypolicies` og `clienttrafficpolicies` (`gateway.envoyproxy.io`) er med i RBAC-settet med full CRUD. `envoyextensionpolicies` og `backendtrafficpolicies` er ikke med. Tilgangsbegrensningen for WAF er beskrevet i [WAF](waf.md#tilgang-og-status). `SecurityPolicy` er ikke en dokumentert autentiseringstjeneste fra plattformen; avklar bruken med plattformteamet.
 
 > Kilde: https://docs.sky.fhi.no/internal/skybert-system/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
 
