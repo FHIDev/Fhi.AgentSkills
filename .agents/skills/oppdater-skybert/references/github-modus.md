@@ -84,6 +84,11 @@ gh api repos/FHISkybert/Fhi.Skybert.Infra/compare/<old_sha>...<new_sha> --jq '.f
 gh api repos/FHIDev/Fhi.Guidelines/compare/<old_sha>...<new_sha> --jq '.files[] | {filename, status}'
 ```
 
+**Fullstendig endringsliste:** Når `compare.files` når 300, eller fullstendighet er usikker,
+sammenlign rekursive git-trær for begge commits etter blob-SHA. Kontroller `truncated=false`;
+ved avkorting hent undertrær. Bruk komplett added/removed/modified-liste til discovery,
+også ved inkrementell kjøring.
+
 **Retry-policy:** 3 forsøk med eksponentiell backoff (1s, 3s, 9s). Ved vedvarende feil på normativ fil (XRD, compositions): stopp kjøring med feilrapport. Ved feil på ikke-kritisk fil: logg som manglende og fortsett.
 
 ---
@@ -237,6 +242,7 @@ scripts/lib/grafana/*.sh
 # sk8 Go-CLI (intern-merket i docs, men tenant-nyttig): kun README og innebygd
 # klusterregister er signal. Publisert register: docs-repoets docs/sk8/clusters.json.
 # (Script-dispatcheren scripts/ska er et separat verktøy, dokumentert i docs/internal/ska-cli.md.)
+utils/coraza-proxy-wasm/**
 utils/sk8/README.md
 utils/sk8/data/clusters.json
 
@@ -252,9 +258,9 @@ infra/kube-state-metrics/base/*-values.yaml
 infra/skybert-system/base/*.yaml
 ```
 
-**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, `infra/traefik/`, `infra/tenant-repositories/`, øvrige drifts-scripts, `scripts/FLOWS.md` og `scripts/skatlas/**` (intern script-dokumentasjon/SKAtlas-tooling — `FLOWS.md` kan konsulteres ved script-provenance, ikke dyplesing), samt `utils/**` utover sk8-filene i mønsteret over (Go-kildekode, `utils/version-checker/`, `utils/grafana-airgapped/`) og `.github/workflows/utils-sk8-*.yaml`.
+**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, `infra/traefik/`, øvrige drifts-scripts, `scripts/FLOWS.md` og `scripts/skatlas/**` (intern script-dokumentasjon/SKAtlas-tooling — `FLOWS.md` kan konsulteres ved script-provenance, ikke dyplesing), samt `utils/**` utover Coraza- og sk8-filene i mønsteret over (Go-kildekode, `utils/version-checker/`, `utils/grafana-airgapped/`) og `.github/workflows/utils-sk8-*.yaml`.
 
-**Ny tenant vs. innholdsendring:** `infra/tenant-repositories/base/ocirepos/*.yaml` (OCIRepository pr. tenant) og `infra/grafana/*/patch-orgs.yaml` (Entra-gruppe→org-mapping) endres typisk når en **ny tenant** legges til. Da følger de et allerede dokumentert mønster og gir normalt ingen skill-endring — og UUID-er/Entra-gruppe-IDer i `patch-orgs.yaml` filtreres bort per sikkerhetsreglene. Behandle dem kun som skill-relevante hvis selve mønsteret endres (nytt felt, ny provider, endret URL-konvensjon), ikke når en ny tenant-instans tilføyes.
+**Ny tenant vs. innholdsendring:** `tenants/*/base/oci-repository.yaml` og `tenants/*/*/kustomization.yaml` (OCIRepository pr. tenant) og `infra/grafana/*/patch-orgs.yaml` (Entra-gruppe→org-mapping) endres typisk når en **ny tenant** legges til. Da følger de et allerede dokumentert mønster og gir normalt ingen skill-endring — og UUID-er/Entra-gruppe-IDer i `patch-orgs.yaml` filtreres bort per sikkerhetsreglene. Behandle dem kun som skill-relevante hvis selve mønsteret endres (nytt felt, ny provider, endret URL-konvensjon), ikke når en ny tenant-instans tilføyes.
 
 Disse mappene skal IKKE dypleses, men skannes for tenant-impact i discovery pass (FULL) og når compare viser endringer i dem (INKREMENTELL). Tenant-impact betyr konfigurasjon som endrer hva utviklere kan bruke eller observere, f.eks.:
 - `crds/` — hvilke CRD-er som er tilgjengelige for tenanter (ExternalSecret, ServiceMonitor, osv.) og deres versjoner

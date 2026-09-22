@@ -88,7 +88,7 @@ kompilere TypeScript i build-steget og starte `node dist/index.js` direkte, uten
 samme bruker lokalt som på klusteret, og reproduser før push med
 `docker run --user 1000:1000 --read-only --tmpfs /tmp <image>`.
 
-> **Operasjonell antakelse:** Begge feilene reprodusert lokalt med `docker run --user 1000 --read-only`, og løsningen verifisert i `tn-ehds-soksak` på `aks-green-test-01` (2026-09-14). Ikke beskrevet i docs.
+> **Operasjonell antakelse:** Begge feilene reprodusert lokalt med `docker run --user 1000 --read-only`, og løsningen verifisert i `tn-ehds-soksak` på `aks-green-test-01`. Ikke beskrevet i docs.
 
 ### Workload Identity feiler mot Azure
 

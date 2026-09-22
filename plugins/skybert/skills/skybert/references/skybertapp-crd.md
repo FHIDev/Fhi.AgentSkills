@@ -3,6 +3,8 @@
 Kanonisk feltreferanse for `SkybertApp`, med genererte ressurser og navnekonvensjoner. Feltene er
 verifisert mot XRD-en og compositionen i infra-repoet; docs-siden er sekundær der de avviker.
 
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/crossplane/base/
+
 ## API
 
 ```yaml
@@ -173,7 +175,7 @@ metrics:
 | `hostname` | string | `""` | Hostname å eksponere (aktiverer ingress) |
 
 Støttede domener: test `*.skytest.fhi.no` og `*.fhi-k8s.com`, produksjon `*.sky.fhi.no`.
-Compositionen velger cert-manager-issuer etter domenesuffiks og feiler på andre hostnavn.
+Compositionen velger cert-manager-issuer med tekstsøk (`contains`) etter `skytest.fhi.no`, `fhi-k8s.com` og `sky.fhi.no`, i denne rekkefølgen, og feiler dersom ingen matcher. Dette er ikke validering av domenesuffiks; bruk de støttede domenene over.
 TLS-sertifikat provisjoneres automatisk. Se [Hostnavn og nettverk](hostnames-and-networking.md).
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
@@ -265,8 +267,7 @@ Refererer andre ressurser til secreten, sett `secrets[].name` eksplisitt. Se [Se
 | `sidecarContainers[].readOnlyRootFilesystem` | boolean | `false` | Read-only root filesystem |
 | `sidecarContainers[].writableDirs` | string[] | — | Skrivbare emptyDir-monteringer |
 
-Sidecars rendres som native sidecars (under `initContainers` med `restartPolicy: Always`) når `initContainers` også er angitt; uten init-containere rendres de som vanlige containere
-i Deployment-en, og vises slik i `kubectl describe pod`.
+Sidecars rendres under `initContainers` med `restartPolicy: Always` når `initContainers` er angitt. Uten `initContainers` skriver compositionen dem under `containers`, fortsatt med `restartPolicy: Always`. Denne varianten er ikke runtime-verifisert; avklar med plattformteamet før bruk.
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
 

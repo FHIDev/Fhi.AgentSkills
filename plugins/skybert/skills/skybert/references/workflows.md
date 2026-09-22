@@ -25,7 +25,7 @@ sette noe her selv.
 | Type | Navn | Beskrivelse |
 |------|------|-------------|
 | Variabel | `GITOPS_REPO` | GitOps-repoet som skal trigges, f.eks. `FHIDev/Fhi.<tenant>.GitOps` |
-| Secret | `GITOPS_APP_CLIENT_ID` | Client ID for GitHub App installert på GitOps-repoet |
+| Variabel | `GITOPS_APP_CLIENT_ID` | Client ID for GitHub App installert på GitOps-repoet |
 | Secret | `GITOPS_APP_PRIVATE_KEY` | Privat nøkkel (PEM-innhold) for samme GitHub App — ikke client secret |
 | Variabel | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` | Kun hvis app-repoet skal pushe imaget med `tn-<tenant>-acr-push`. Plattformteamet federerer identiteten til app-repoet (branch `main` eller et GitHub environment) og setter variablene — be om dette. Skal være variabler, ikke secrets |
 
@@ -59,11 +59,11 @@ Flux-intervaller og hva som skjer i klusteret er beskrevet i
 
 Artefaktene pushes til `crfhiskybert.azurecr.io/<tenant>/gitops_<env>:latest`, f.eks.
 `crfhiskybert.azurecr.io/exempl/gitops_prod:latest`. Mappenavn styrer artefaktnavn, så ikke endre dem.
-Plattformens `OCIRepository` for tenanten (én per kluster, i namespace `tenant-repositories`) peker på
+Plattformens `OCIRepository` for tenanten (én per kluster, i namespace `tn-<tenant>`) peker på
 nøyaktig denne URL-en. Kyverno-policyen `flux-verify-sources` (Enforce) tillater bare `OCIRepository`-URL-er
 under `oci://crfhiskybert.azurecr.io/`.
 
-> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/tenant-repositories/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-green/flux-verify-sources.yaml
+> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/tenants/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-green/flux-verify-sources.yaml
 
 ## update-tag.yaml - Automatisk tag-oppdatering
 
@@ -103,7 +103,7 @@ og samme tag, sendt når teamet er trygg på versjonen. Docs' eksempel fra en Gi
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         id: gitops-app-token
         with:
-          client-id: ${{ secrets.GITOPS_APP_CLIENT_ID }}
+          client-id: ${{ vars.GITOPS_APP_CLIENT_ID }}
           private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
           owner: FHIDev
           repositories: |
@@ -127,8 +127,8 @@ og samme tag, sendt når teamet er trygg på versjonen. Docs' eksempel fra en Gi
 
 Standard `GITHUB_TOKEN` i app-repoet kan ikke nå et annet repo eller en annen org. Dokumentert mønster er en
 **GitHub App** installert kun på GitOps-repoet, med **Contents: Read and write** (Metadata: Read følger med).
-Workflowen minter et kortlivet installasjonstoken med `actions/create-github-app-token` fra secrets
-`GITOPS_APP_CLIENT_ID` og `GITOPS_APP_PRIVATE_KEY` (Client ID + privat nøkkel-PEM — **ikke** client secret),
+Workflowen minter et kortlivet installasjonstoken med `actions/create-github-app-token` fra repository-variabelen
+`GITOPS_APP_CLIENT_ID` og secreten `GITOPS_APP_PRIVATE_KEY` (Client ID + privat nøkkel-PEM — **ikke** client secret),
 og sender dispatch med `peter-evans/repository-dispatch` (se eksempelet over). App-oppsett bestilles hos
 plattformteamet på NHN-Slack `#ext-fhi-skybert`; docs har ferdig meldingsmal med GitOps-repo, kaller-repo og
 app-navn `<tenant>-gitops-dispatch`.

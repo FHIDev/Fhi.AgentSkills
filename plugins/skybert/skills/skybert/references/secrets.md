@@ -15,6 +15,8 @@ ExternalSecret per innslag (`refreshInterval: 10m`), begge med `authType: Worklo
 standard (`mountAsFiles: true`); `mountAsEnv: true` injiserer den i tillegg som miljøvariabler, og
 `mountPath` overstyrer filstien. Feltoversikt og eksempel: [SkybertApp CRD — Secrets](skybertapp-crd.md#secrets).
 
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
+
 ### Navn på genererte secrets
 
 Uten `secrets[].name` heter den genererte Kubernetes-secreten

@@ -20,6 +20,7 @@
 | `docs/workloads/index.md` | `references/configuration.md`, `references/skybertapp-crd.md` |
 | `docs/workloads/skybertapp/index.md` | `references/skybertapp-crd.md` |
 | `docs/workloads/skybertapp/references/skybertapp.md` | `references/skybertapp-crd.md` |
+| `docs/workloads/waf/*.md` | `references/waf.md` — kanonisk WAF-dekning; andre filer lenker kun |
 | `docs/workloads/jobs.md` | `references/configuration.md` |
 | `docs/workloads/resource-sizing.md` | `references/observability.md`, `references/skybertapp-crd.md` |
 | `docs/build/index.md` | `SKILL.md`, `references/workflows.md` |
@@ -53,11 +54,11 @@
 | `docs/internal/attach-application-repo.md` | `references/security.md`, ev. `references/workflows.md` — selektiv intern (ACR-push-identitet, federering av app-repoer) |
 | `docs/internal/helm-and-crds.md` | VURDER — plattformintern, ikke auto-route |
 | `docs/internal/managing-clusters.md` | VURDER — plattformintern, ikke auto-route |
-| `docs/internal/replace-cluster-in-place.md` | VURDER — plattformintern runbook; hent kun tenant-impact (federated credentials / Workload Identity-konsekvenser ved cluster-bytte) |
+| `docs/internal/replace-cluster-in-place.md` | `references/security.md`, `references/persistence.md` — selektiv intern: tenant-eide federated credentials og datatap ved klusterutskifting; ikke kopier runbooken |
 | `docs/internal/component-versions.md` | VURDER — versjonsmatrise, endres hyppig; vurder lenking framfor kopiering |
 | `docs/internal/decisions/gatewayapi.md` | `references/hostnames-and-networking.md` — selektivt (Gateway API-retning); kombiner med `infra/envoy/` før konkrete påstander |
 | `docs/internal/migrate-ingress-to-traefik.md` | `references/hostnames-and-networking.md` — selektivt, merk som intern beredskap, kun tenant-impact (Traefik backup på green) |
-| `docs/miscellaneous/fhi-felles-cryptography.md` | VURDER — målgruppe (tenant-utviklere vs. plattform) må avklares |
+| `docs/miscellaneous/fhi-felles-cryptography.md` | Utenfor scope — bibliotekdokumentasjon, ikke plattformmekanisme (beholdt scope-beslutning) |
 
 ### Infra-repo
 
@@ -73,12 +74,13 @@
 | `infra/goldilocks/base/*-values.yaml` | `references/kyverno-policies.md`, `references/observability.md`, `references/platform-architecture.md` |
 | `infra/cloudnative-pg/**` | `references/persistence.md` (kanonisk; `platform-architecture.md` har kun én komponentrad) |
 | `infra/kube-state-metrics/base/*-values.yaml` | `references/observability.md` — CustomResourceState-metrics (VPA-gauges, PolicyReport) er tenant-synlige i Grafana |
+| `infra/kyverno-policies/base/policies-waf/**`, `utils/coraza-proxy-wasm/**` | `references/waf.md` — Coraza, bundles, policy-status og image-begrensninger |
 | `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
 | `infra/skybert-system/base/tenant-admin-clusterroles/*.yaml` | `references/platform-architecture.md`, `references/security.md`, `references/kyverno-policies.md` |
 | `tenants/*/base/*.yaml` | `references/platform-architecture.md` |
 | `scripts/tenant--*.sh` | `references/platform-architecture.md` |
 | `scripts/lib/grafana/*.sh` | Ikke egen målfil — hjelpebibliotek der avledede fakta (X-Scope-OrgID, org_mapping) havner etter refaktorering. Brukes til provenance-referanser i `references/observability.md` / `references/platform-architecture.md`. Andre `scripts/lib/*.sh` leses bare selektivt når de sources av en endret tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk |
-| `infra/tenant-repositories/base/ocirepos/*.yaml`, `infra/grafana/*/patch-orgs.yaml` | Normalt ingen routing (ny tenant-instans = dokumentert mønster). Kun ved mønsterendring → `references/platform-architecture.md`. Se seleksjonsreglene i [github-modus.md](github-modus.md) |
+| `tenants/*/base/oci-repository.yaml`, `tenants/*/*/kustomization.yaml`, `infra/grafana/*/patch-orgs.yaml` | Normalt ingen routing (ny tenant-instans = dokumentert mønster). Kun ved mønsterendring → `references/platform-architecture.md`. Se seleksjonsreglene i [github-modus.md](github-modus.md) |
 | `infra/tenant-bootstrap/base/*.yaml` | `references/platform-architecture.md` |
 | `infra/tenant-bootstrap/base/tenants/*.yaml` | `references/platform-architecture.md` |
 | `infra/flux-operator/base/*.yaml` | `references/platform-architecture.md` |
@@ -123,6 +125,7 @@ avsnitt. Tabellen oppdateres i samme kjøring som en kanonisk plassering endres.
 | WebApp/CSI-status | `legacy-webapp-csi.md` | `SKILL.md` (én setning), `configuration.md`, `secrets.md`, `security.md`, `skybertapp-crd.md` |
 | Feilsøking, tilkoblingsfeil / ACR-pull lokalt | `troubleshooting.md` / `kubectl-access.md` | `SKILL.md` (prosa, ikke kommandoer) |
 | Minimal SkybertApp | `SKILL.md` + `skybertapp-crd.md` | `configuration.md`, `secrets.md` |
+| WAF (Coraza/OWASP CRS, bundles, tilgang og policy-status) | `waf.md` | `SKILL.md`, `security.md`, `kyverno-policies.md`, `hostnames-and-networking.md` |
 | FHI-krav til container images (Trivy, funn-terskler, immutable tags, pipeline-gating) og mapping mot Kyverno | `container-images.md` | `SKILL.md` (én setning), `workflows.md`, `security.md`, `kyverno-policies.md`, `troubleshooting.md` |
 
 ## Emnebasert routing (web-scraping-modus)

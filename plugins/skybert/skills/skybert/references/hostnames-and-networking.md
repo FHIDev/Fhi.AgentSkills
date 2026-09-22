@@ -23,7 +23,7 @@ Test-issuerne finnes på alle test-klustere og sandbox; prod-issueren på alle p
 
 SkybertApp eksponerer ingen Ingress-annotasjoner, så et `hostname` på SkybertApp får alltid ingressens private IP. Trenger appen offentlig DNS-oppslag (f.eks. en frontend hostet utenfor FHI, eller claude.ai), la `hostname` stå tomt på SkybertApp (da rendres verken Service eller Ingress) og skriv egen `Service` (selector `skybert.fhi.no/webapp: <app>`, port = `spec.port`) og `Ingress` med `spec.ingressClassName: nginx`, TLS-blokk for hostnavnet, `cert-manager.io/cluster-issuer` (se tabellen over) og `external-dns.alpha.kubernetes.io/target: "<klusterets offentlige front-end-IP>"`. Ingressen må oppfylle [Kyverno-reglene under](#ingress-regler-kyverno-håndhevet). Kjente verdier: `83.118.177.220` for `aks-green-test-01` og `83.118.177.234` for `aks-green-prod-02`. Offentlig eksponering utenfor grønn sone er en klassifiseringsbeslutning, ikke et IP-oppslag — avklar med plattformteamet på `#ext-fhi-skybert` før du bruker mønsteret på gul eller rød.
 
-> **Operasjonell antakelse:** Ikke dokumentert for tenanter i docs, men i bruk i `tn-ki-mcp` (`Fhi.Ki.Mcp.GitOps`, test og prod) og verifisert i `tn-ehds-soksak` på `aks-green-test-01` med offentlig A-record, TLS og trafikk utenfra (2026-09-14). For andre klustere (sandbox, ops-test, gul, rød): avklar IP med plattformteamet på `#ext-fhi-skybert`.
+> **Operasjonell antakelse:** Ikke dokumentert for tenanter i docs, men i bruk i `tn-ki-mcp` (`Fhi.Ki.Mcp.GitOps`, test og prod) og verifisert i `tn-ehds-soksak` på `aks-green-test-01` med offentlig A-record, TLS og trafikk utenfra. For andre klustere (sandbox, ops-test, gul, rød): avklar IP med plattformteamet på `#ext-fhi-skybert`.
 
 ## Ingress-regler (Kyverno-håndhevet)
 
@@ -41,16 +41,16 @@ Følgende regler gjelder alle Ingress-ressurser på alle klustere:
 
 SkybertApp-compositionen (`skybert.fhi.no/v1alpha1`) rendrer Kubernetes `Ingress` med `ingressClassName: nginx`; `ingress-nginx` er produksjonsveien. Plattformens besluttede retning er **Gateway API**, implementert av **Envoy Gateway**. Docs (`tools-and-components`) merker Envoy Gateway og External DNS som «Handled by SkybertApp»; på `main` er det bare beta-XRD-en (`skybert-beta.fhi.no/v1beta1`, kun `aks-ops-test-01`) som genererer `HTTPRoute`/`ListenerSet` — `v1alpha1`-compositionen rendrer `Ingress`.
 
-**Aktivering per kluster:** Envoy Gateway (v1.8.2) er aktivert på alle klustere unntatt green-test og green-prod, som bare har namespacet og bruker `ingress-nginx`. Der Envoy er aktivert, definerer plattformen delte `Gateway`-objekter og `GatewayClass`-er:
+**Aktivering per kluster:** Envoy Gateway (v1.9.1) er konfigurert på alle klustere unntatt green-test og green-prod, som bare har namespacet og bruker `ingress-nginx`. Der Envoy er aktivert, definerer plattformen delte `Gateway`-objekter og `GatewayClass`-er:
 
 | Ressurs | Aktivert hvor |
 |---------|---------------|
 | GatewayClass `fhinett` + `helsenett`, Gateway `helsenett`, `ClientTrafficPolicy` for proxy protocol | Alle klustere med Envoy (ops-test, sandbox, yellow-test/prod, red-test/prod, norsyss) |
 | GatewayClass `internett` + Gateway `internett` | Kun ops-test, sandbox og yellow-test/prod — **ikke** red-klusterne eller norsyss |
 
-**Tenant-mønsteret:** plattformen kjører delte `Gateway`-objekter (`helsenett`, `internett`) i `envoy-gateway-system` med `allowedListeners.namespaces.from: All`; tenanter knytter til seg listeners og TLS via **`ListenerSet`** i eget namespace og ruter trafikk til sine Services med **`HTTPRoute`**. RBAC-rollen `skybert:tenant-admin` gir `listenersets`, `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes` og `udproutes` — **ikke** `gateways` — samt `securitypolicies` (`gateway.envoyproxy.io`), ikke `backendtrafficpolicies` (se [Sikkerhet](security.md)). Hostname-reglene over (inkl. flambert-blokkeringen) håndheves også på Gateway API-ruter.
+**Tenant-mønsteret:** plattformen kjører delte `Gateway`-objekter (`helsenett`, `internett`) i `envoy-gateway-system` med `allowedListeners.namespaces.from: All`; tenanter knytter til seg listeners og TLS via **`ListenerSet`** i eget namespace og ruter trafikk til sine Services med **`HTTPRoute`**. RBAC-rollen `skybert:tenant-admin` gir `listenersets`, `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes` og `udproutes` — **ikke** `gateways` — samt Envoy-policyer som beskrevet i [Sikkerhet](security.md#tenant-rbac--hva-du-kan-administrere). Hostname-reglene over (inkl. flambert-blokkeringen) håndheves også på Gateway API-ruter.
 
-`fhinett` er unntaket: GatewayClass-en finnes på alle Envoy-klustere, men det finnes ingen delt Gateway. Beta-compositionen forventer en Gateway `fhinett` i tenantens eget namespace, og tenant-RBAC gir ikke `gateways` — avklar med plattformteamet (`#ext-fhi-skybert`) før du bruker fhinett.
+`fhinett` er unntaket: GatewayClass-en finnes på alle Envoy-klustere. På ops-test finnes en Gateway `fhinett` i `skybert-system`, men dens namespace-selector tillater bare `skybert-system`, `grafana` og `flux-system` som listener-kilder; den gir ikke generell tenant-tilgang. Beta-compositionen forventer en Gateway `fhinett` i tenantens eget namespace, og tenant-RBAC gir ikke `gateways` — avklar med plattformteamet (`#ext-fhi-skybert`) før du bruker fhinett.
 
 På rød sone når Gateway API-trafikk ikke fram til podene — se [Rød sone](#rød-sone).
 
@@ -122,7 +122,7 @@ Et farget (color) klusterpar (test + prod) deler samme nettverksregler — test 
 | Gul | Foreløpig ingen restriksjoner. Utgående trafikk er åpen, men dette kan endre seg etter hvert som plattformen modnes. |
 | Rød | Streng egress-kontroll — se [Rød sone](#rød-sone). |
 
-Gjelder **alle klustere**, også grønn og gul: GlobalNetworkPolicy `deny-nfs-egress` (order 900) blokkerer TCP 2049 fra `tn-*`-namespaces, slik at tenanter ikke kan montere NFS-sharet selv. Kyverno-policyen `limit-calico-netpol-order` (Enforce) krever `spec.order >= 1000` på Calico `NetworkPolicy` i `tn-*`, slik at tenanter ikke kan overstyre plattformens GNP-er (lavere order vinner).
+Gjelder **alle klustere**, også grønn og gul: GlobalNetworkPolicy `deny-nfs-egress` (order 900) blokkerer TCP 2049 fra `tn-*`-namespaces, slik at tenanter ikke kan montere NFS-sharet selv. Kyverno-policyen `limit-calico-netpol-order` (Enforce) krever `spec.order >= 1000` på Calico `NetworkPolicy` i `tn-*`, slik at tenanter ikke kan overstyre NFS-forbudet (lavere order vinner). `default-allow-tenant-egress` (order 1200) tillater øvrig egress; i rød sone stopper `base-tenant-egress` (order 800) trafikk som ikke allerede er tillatt.
 
 > Kilde: https://docs.sky.fhi.no/build/environments/ · https://docs.sky.fhi.no/internal/global-network-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/globalnetworkpolicies/base/deny-nfs-egress.yaml
 
@@ -134,10 +134,15 @@ Gjelder **alle klustere**, også grønn og gul: GlobalNetworkPolicy `deny-nfs-eg
 
 | Policy | Type | Order | Effekt |
 |--------|------|-------|--------|
-| `<ns>-internal-access` | Ingress + Egress | 600 | Genereres av Kyverno per `tn-*`-namespace: tillater **TCP** innenfor eget namespace (ikke UDP/ICMP) |
+| `alloy-scrape-ingress` | Ingress | 500 | Tillater TCP fra namespace `alloy` til `tn-*`, uten portavgrensning |
+| `alloy-otlp-egress` | Egress | 500 | Tillater TCP fra `tn-*` til Alloy på 4317/4318 |
+| `<ns>-internal-egress` | Egress | 600 | Kyverno-generert; tillater trafikk innen eget namespace uten protokollfilter |
 | `base-tenant-egress` | Egress | 800 | Tillater DNS (UDP 53 til kube-dns i `kube-system`), deretter Deny |
 | `deny-nfs-egress` | Egress | 900 | Blokkerer TCP 2049 (alle klustere) |
-| `base-tenant-ingress` | Ingress | 1200 | Tillater TCP fra `ingress-nginx`-namespacet, deretter Deny |
+| `<ns>-internal-ingress` | Ingress | 1200 | Kyverno-generert; tillater trafikk innen eget namespace uten protokollfilter, etter tenantens ingress-policyer |
+| `base-tenant-ingress` | Ingress | 1201 | Tillater TCP fra `ingress-nginx`-namespacet, deretter Deny |
+
+Begge røde kluster-overlays inkluderer disse basene. Docs beskriver en eldre forskjell mellom red-test og red-prod; tabellen følger infra-manifestene. Tenantens Calico-regler med order 1000–1199 kan dermed begrense også ingress innen eget namespace.
 
 **Unntak opprettes av plattformteamet** som GlobalNetworkPolicy med `order: 500` (evalueres før base-policyene). Ikke self-service — kontakt `#ext-fhi-skybert`:
 

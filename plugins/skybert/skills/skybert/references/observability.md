@@ -1,17 +1,12 @@
 # Observability
 
-Hvert kluster kjører sin egen, komplette LGTM-stack: **Loki** (logger), **Mimir** (metrics) og **Grafana** (UI). **Tempo** (traces) er planlagt, ikke tilgjengelig. **Alloy** kjører som DaemonSet på hvert kluster, samler logger og metrics og skriver dem til Loki og Mimir i samme kluster — det finnes ingen sentral ingestion på tvers av klustere. Grafana er inngangspunktet: Explore, Logs Drilldown, dashboards og alerts.
+Hvert kluster kjører sin egen, komplette LGTM-stack: **Loki** (logger), **Mimir** (metrics) og **Grafana** (UI). **Tempo** (traces) er ikke bekreftet som tilgjengelig tenant-tjeneste; infra har Tempo-manifester for ops-test. **Alloy** kjører som DaemonSet på hvert kluster, samler logger og metrics og skriver dem til Loki og Mimir i samme kluster — det finnes ingen sentral ingestion på tvers av klustere. Grafana er inngangspunktet: Explore, Logs Drilldown, dashboards og alerts.
 
-> Kilde: https://docs.sky.fhi.no/observability/ · https://docs.sky.fhi.no/internal/observability/alloy/
+> Kilde: https://docs.sky.fhi.no/observability/ · https://docs.sky.fhi.no/internal/observability/alloy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/tempo/
 
 ## Logging med Loki
 
 Applikasjoner logger til stdout/stderr. Alloy scraper container-loggene automatisk og setter labelene `namespace`, `pod`, `container`, `node_name` og `app` (hvis podden har en `app`-label). Loki fungerer best med strukturert JSON til stdout — da kan feltene parses ved spørring (`| json | level="error"`).
-
-LogQL for egne logger:
-```logql
-{namespace="tn-<tenant>"} |= "error"
-```
 
 > Kilde: https://docs.sky.fhi.no/observability/logs/
 
@@ -81,11 +76,6 @@ metadata:
 
 **SkybertApp-snarvei:** sett `metrics.port` (og evt. `path`/`scheme`) i SkybertApp-spec, så legger composition annotasjonene på pod-template. Se [SkybertApp CRD — Metrics](skybertapp-crd.md#metrics).
 
-Spørreeksempel fra docs:
-```promql
-rate(http_requests_total{namespace="tn-<tenant>"}[5m])
-```
-
 > Kilde: https://docs.sky.fhi.no/observability/metrics/ · https://docs.sky.fhi.no/internal/observability/alloy/
 
 ### Ressursanbefalinger i Grafana
@@ -120,9 +110,9 @@ Plattformteamet planlegger autoskalering på egne metrics (request rate, kø-dyb
 
 ## Tracing med Tempo
 
-Distribuert tracing via **Tempo** er planlagt, ikke tilgjengelig for tenanter. Instrumenter appen med OpenTelemetry (auto-instrumentering for ASP.NET, Spring Boot, Flask m.fl.) så traces fungerer når Tempo slås på, men ikke regn med funksjonalitet i dag. Er tracing viktig for teamet, si fra i `#ext-fhi-skybert`.
+Distribuert tracing via **Tempo** er ikke bekreftet som tilgjengelig tenant-tjeneste. Infra har Tempo-manifester for ops-test; dette bekrefter ikke en tilgjengelig tenant-tjeneste. Instrumenter appen med OpenTelemetry (auto-instrumentering for ASP.NET, Spring Boot, Flask m.fl.) så traces fungerer når Tempo slås på, men ikke regn med funksjonalitet i dag. Er tracing viktig for teamet, si fra i `#ext-fhi-skybert`.
 
-> Kilde: https://docs.sky.fhi.no/observability/tracing/
+> Kilde: https://docs.sky.fhi.no/observability/tracing/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/tempo/
 
 ## Grafana
 
