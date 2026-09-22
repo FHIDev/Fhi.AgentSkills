@@ -118,6 +118,12 @@ Dato: {dato}
 
 **Vent på godkjenning fra bruker før du går videre til steg 5.**
 
+Planen er et samtaleartefakt. Ikke skriv den til en fil i repoet (f.eks.
+`UPDATE-DESIGNSYSTEM-PLAN.md` i roten), og ikke ta den med i commit eller PR.
+Trenger du et arbeidsdokument, legg det utenfor repoet. Det varige innholdet
+hører hjemme i delta-filene («Kilder og verifiseringsstatus»), `FEATURES.md`,
+state-filen og PR-beskrivelsen.
+
 ---
 
 ## Steg 5 – Gjennomfør endringer

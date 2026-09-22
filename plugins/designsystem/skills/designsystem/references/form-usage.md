@@ -1,6 +1,6 @@
 # Bruk i HTML forms
 
-Alle form-komponenter (fhi-button, fhi-text-input, fhi-date-input, fhi-checkbox, fhi-radio, fhi-select fra v0.41.0) deltar automatisk i native HTML `<form>` via ElementInternals API.
+Alle form-komponenter (fhi-button, fhi-text-input, fhi-date-input, fhi-checkbox, fhi-radio, fhi-select fra v0.41.0, fhi-text-area fra v0.45.0) deltar automatisk i native HTML `<form>` via ElementInternals API.
 
 ## FormData
 
@@ -47,6 +47,9 @@ gjenoppretter ikke alltid opprinnelig tilstand:
 - `fhi-radio` gjenoppretter gruppens forhåndsvalg når et alternativ hadde
   `checked`-attributtet. Uten forhåndsvalg beholdes brukerens valg etter reset,
   også i FormData.
+- `fhi-text-area` leser gjeldende `value`-attributt ved reset, eller bruker tom
+  streng når attributtet mangler. En verdi satt bare via JavaScript-propertyen
+  blir dermed ikke reset-verdien.
 - `fhi-select` tilbakestiller til opprinnelig valgt alternativ (eller `''`).
 
 Checkbox- og radio-avvikene er bekreftet i publiserte pakker fra v0.41.2 til
@@ -68,3 +71,11 @@ Deaktiverte felt ekskluderes automatisk fra FormData.
 ## Enter-submit
 
 Trykk Enter i `fhi-text-input` eller `fhi-date-input` sender automatisk inn skjemaet.
+
+I `fhi-text-area` gir Enter linjeskift.
+
+## Programmatisk Text Area-verdi
+
+Programmatisk `fhi-text-area.value` oppdaterer FormData uten å sende
+`input`/`change`; `readonly` beholdes i FormData. Se
+[Text Area](components/fhi-text-area.md) for verdi- og event-atferd.

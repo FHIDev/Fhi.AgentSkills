@@ -13,7 +13,7 @@
       "id": 2,
       "name": "ikon-i-tekstfelt-v0.34",
       "prompt": "Hvordan legger jeg et søkeikon inni et fhi-text-input-felt? Vi bruker @folkehelseinstituttet/designsystem 0.34.0.",
-      "expected_output": "Skal svare at start/end-slottene IKKE finnes i v0.34.x (innført i v0.35.0), at ikon-markering må håndteres utenfor komponenten i 0.34, og anbefale oppgradering. Krever at agenten fulgte versjonsrutingen til versions/v0.34.x.md.",
+      "expected_output": "Skal svare at start/end-slottene IKKE finnes i v0.34.x (innført i v0.35.0), at ikon-markering må håndteres utenfor komponenten i 0.34, og anbefale oppgradering. Skal markere at 0.34 er utenfor støttevinduet (eldste støttede minor er 0.36). versions/v0.34.x.md kan brukes som historisk oppslag.",
       "files": []
     },
     {
