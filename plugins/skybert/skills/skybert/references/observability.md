@@ -116,21 +116,21 @@ Distribuert tracing via **Tempo** er ikke bekreftet som tilgjengelig tenant-tjen
 
 ## Grafana
 
-Hvert kluster har sin egen Grafana-instans. URL-mønsteret er `https://grafana.<color>-<instance>.<domain>`, der `<domain>` er `skytest.fhi.no` for non-prod og `sky.fhi.no` for prod.
+Hvert kluster har sin egen Grafana-instans. URL-mønsteret er `https://grafana.<color>-<instance>.<domain>`, der `<domain>` er `skytest.fhi.no` for non-prod og `sky.fhi.no` for prod. `<instance>` er ikke alltid klusternummeret (sandbox-klusteret `aks-sandbox-02` har `grafana.sandbox-01`); bruk tabellen.
 
 | Kluster | Grafana-URL |
 |---------|-------------|
-| aks-sandbox-01 | `https://grafana.sandbox-01.skytest.fhi.no` |
-| aks-green-test-01 | `https://grafana.green-01.skytest.fhi.no` |
-| aks-green-prod-02 | `https://grafana.green-02.sky.fhi.no` |
-| aks-yellow-test-02 | `https://grafana.yellow-02.skytest.fhi.no` |
+| aks-sandbox-02 | `https://grafana.sandbox-01.skytest.fhi.no` |
+| aks-green-test-02 | `https://grafana.green-02.skytest.fhi.no` |
+| aks-green-prod-03 | `https://grafana.green-03.sky.fhi.no` |
+| aks-yellow-test-03 | `https://grafana.yellow-03.skytest.fhi.no` |
 | aks-yellow-prod-01 | `https://grafana.yellow-01.sky.fhi.no` |
 | aks-red-test-01 | `https://grafana.red-01.skytest.fhi.no` |
 | aks-red-prod-01 | `https://grafana.red-01.sky.fhi.no` (kun nåbar fra secure zone) |
 
 Du logger inn med FHI-bruker (Entra ID) og lander i Grafana-organisasjonen som tilhører tenanten. Alerts settes opp av tenanten selv i egen org.
 
-> Kilde: https://docs.sky.fhi.no/observability/grafana/
+> Kilde: https://docs.sky.fhi.no/observability/grafana/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/grafana/
 
 ### Grafana multi-tenancy
 

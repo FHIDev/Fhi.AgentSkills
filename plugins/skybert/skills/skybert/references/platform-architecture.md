@@ -118,9 +118,9 @@ Fire baser (`fida-analyserom`, `fida-epiplus`, `healthdcat-assistant`, `johan-ex
 
 ### Tenant-RBAC
 
-Tilgang i tenant-namespaces er en allow-list av ClusterRole-fragmenter i `infra/skybert-system/base/tenant-admin-clusterroles/`, aggregert via labels `rbac.skybert.fhi.no/aggregate-to-*` inn i to ClusterRoles som bindes med RoleBinding i `tn-*`:
+Tilgang i tenant-namespaces er en allow-list av ClusterRole-fragmenter i `infra/skybert-system/base/tenant-admin-clusterroles/`, aggregert via labels `rbac.skybert.fhi.no/aggregate-to-*` inn i to ClusterRoles som bindes med RoleBinding i `tn-*` (unntak: `skybert:tenant-admin:kubevirt` aggregeres ikke):
 
-- **`skybert:tenant-admin`** — bindes til tenantens Entra-gruppe. Hvert kluster-overlay i `infra/skybert-system/<kluster>/` patcher aggregation-selectoren til én miljølabel: `red-prod`, `red-test`, `yellow-prod` (yellow-prod-01 og norsyss-prod-01), `green-prod` eller `test-sandbox` (green-test-01, yellow-test-02, ops-test-01, sandbox-01).
+- **`skybert:tenant-admin`** — bindes til tenantens Entra-gruppe. Hvert kluster-overlay i `infra/skybert-system/<kluster>/` patcher aggregation-selectoren til én miljølabel: `red-prod`, `red-test`, `yellow-prod` (yellow-prod-01 og norsyss-prod-01), `green-prod` eller `test-sandbox` (green-test-02, yellow-test-03, ops-test-02, sandbox-02).
 - **`skybert:tenant-flux-reconciler`** — bindes til ServiceAccount `flux-reconciler`. Samme selector (`aggregate-to-tenant-flux-reconciler`) på alle klustere.
 
 Fragmentene:
@@ -129,18 +129,19 @@ Fragmentene:
 |---|---|---|
 | `skybert:tenant-admin:core` | alle miljøroller + flux-reconciler | Namespaced baseline uten wildcards: workloads, services, ingresses, configmaps, secrets, PVC, HPA, PDB, roles/rolebindings, native + Calico NetworkPolicies, cert-manager (`certificates`, `issuers`, `bundles`), Gateway API-ruter og `listenersets`, Envoy `securitypolicies` og `clienttrafficpolicies`, `secretproviderclasses`, `externalsecrets`/`secretstores`, alle `skybert.fhi.no`-ressurser, Flux `alerts`/`providers`, Flux `kustomizations` (alle verb — patch for suspend/resume, create/delete for egne ekstra), Flux `ocirepositories` (get/list/watch/patch/update — ikke create/delete, plattform-bootstrappet), `pushsecrets` (kun lese + delete). Lesetilgang: `resourcequotas`, `limitranges`, `verticalpodautoscalers`, `policyreports`, `metrics.k8s.io/pods`, SelfSubjectAccessReview. |
 | `skybert:tenant-admin:cnpg` | alle miljøroller + flux-reconciler | CNPG- og barman-ressurser (`clusters`, `backups`, `scheduledbackups`, `poolers`, `databases`, `objectstores` m.m.), alle klustere. Se [Persistence](persistence.md#cloudnativepg). |
-| `skybert:tenant-admin:test-sandbox:runtime-access` | kun `test-sandbox` | `pods/exec`, `pods/attach`, `pods/portforward`, `pods/proxy`, `services/proxy`, `pods/ephemeralcontainers` (kubectl debug). Gjelder green-test-01, yellow-test-02, ops-test-01 og sandbox-01. `aks-red-test-01` har **ikke** fragmentet: exec feiler der på RBAC selv om Kyverno tillater exec i red-test. |
+| `skybert:tenant-admin:kubevirt` | ingen — ikke aggregert; plattformteamet binder den per tenant med RoleBinding i infra-repoets `tenants/<tenant>/base/` (opt-in) | `kubevirt.io` `virtualmachines` (get/list/watch/create/update/patch/delete/deletecollection), `virtualmachineinstances` (kun get/list/watch), `subresources.kubevirt.io` `virtualmachines/start`, `/stop`, `/restart` (update) og `virtualmachineinstances/console` (get, for `virtctl console`). Bevisst utelatt: `virtualmachineexports`, snapshots, clones, backups og migrasjoner. KubeVirt er installert kun på `aks-green-test-02`, `aks-ops-test-02` og `aks-sandbox-02`. |
+| `skybert:tenant-admin:test-sandbox:runtime-access` | kun `test-sandbox` | `pods/exec`, `pods/attach`, `pods/portforward`, `pods/proxy`, `services/proxy`, `pods/ephemeralcontainers` (kubectl debug). Gjelder green-test-02, yellow-test-03, ops-test-02 og sandbox-02. `aks-red-test-01` har **ikke** fragmentet: exec feiler der på RBAC selv om Kyverno tillater exec i red-test. |
 | `skybert:tenant-admin:norsyss:runtime-access` | `yellow-prod` + flux-reconciler, kun på `aks-norsyss-prod-01` | `pods/portforward`. |
 | `skybert:tenant-flux-reconciler:eso` | kun flux-reconciler | `create`/`update`/`patch` på `pushsecrets`. Holdes unna tenant-admin og workload-SA-er slik at en kompromittert workload ikke kan lage pushsecrets dynamisk. |
 | `skybert:tenant-admin:flux-web-ui` | alle miljøroller (ikke flux-reconciler) | Custom verb som Flux Web UI sjekker via SubjectAccessReview: `reconcile`/`suspend`/`resume` på `kustomizations`, `reconcile`/`suspend`/`resume`/`download` på `ocirepositories`, `restart` på deployments/statefulsets/daemonsets/cronjobs/jobs, `get` på `resourcesets` (namespace-filter i UI). Selve endringen krever de native verbene fra core. |
 
 I prod-klustrene blokkerer Kyverno runtime-tilgang i tillegg til RBAC — se [Kyverno-policier](kyverno-policies.md#produksjon--runtime-restriksjoner).
 
-> Kilde: https://docs.sky.fhi.no/internal/skybert-system/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/skybert-system/base/tenant-admin-clusterroles/
+> Kilde: https://docs.sky.fhi.no/internal/skybert-system/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/skybert-system/base/tenant-admin-clusterroles/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/kubevirt/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/tenants/
 
 ### ResourceSet-basert bootstrap
 
-`infra/tenant-bootstrap/` er et proof of concept som bruker Flux `ResourceSet` til å generere tenant-ressurser fra en `ResourceSetInputProvider` per tenant (inputs `tenant`, `entraGroupId`, `wlidClientId`, `ociUrl`). Det er bare aktivert for `exempl` på `aks-ops-test-01`. ResourceSet-en genererer namespace, begge ServiceAccounts, RoleBindings mot `cluster-admin`, en egen `OCIRepository` i `tn-<tenant>` (`interval: 3m0s`) og Flux Kustomization (`interval: 2m`). Alle tenanter under `tenants/` bruker katalogstrukturen over.
+`infra/tenant-bootstrap/` er et proof of concept som bruker Flux `ResourceSet` til å generere tenant-ressurser fra en `ResourceSetInputProvider` per tenant (inputs `tenant`, `entraGroupId`, `wlidClientId`, `ociUrl`). Det er bare aktivert for `exempl` på `aks-ops-test-02`. ResourceSet-en genererer namespace, begge ServiceAccounts, RoleBindings mot `cluster-admin`, en egen `OCIRepository` i `tn-<tenant>` (`interval: 3m0s`) og Flux Kustomization (`interval: 2m`). Alle tenanter under `tenants/` bruker katalogstrukturen over.
 
 > Kilde: https://docs.sky.fhi.no/internal/flux/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/tenant-bootstrap/base/resourceset.yaml
 

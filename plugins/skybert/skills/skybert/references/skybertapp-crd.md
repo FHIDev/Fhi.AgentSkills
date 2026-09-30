@@ -13,7 +13,7 @@ kind: SkybertApp
 ```
 
 Namespaced Crossplane XRD (`skybertapps.skybert.fhi.no`), servert på alle klustere. En parallell
-beta-XRD `skybert-beta.fhi.no/v1beta1` med `network`-felt finnes kun på `aks-ops-test-01` — se
+beta-XRD `skybert-beta.fhi.no/v1beta1` med `network`-felt finnes kun på `aks-ops-test-02` — se
 [Ingress (nginx) og Gateway API (Envoy Gateway)](hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway).
 WebApp (`skybert.fhi.no/v1`) er udokumentert i docs; bruk SkybertApp for nye workloads — se
 [Legacy: WebApp CRD og CSI driver](legacy-webapp-csi.md).

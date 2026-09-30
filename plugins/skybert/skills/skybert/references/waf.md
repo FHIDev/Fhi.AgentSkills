@@ -15,7 +15,7 @@ Alle ni kluster-overlays inkluderer `policies-waf`, også klustere uten aktiv En
 | Policy | Virkning |
 |---|---|
 | `restrict-tenant-waf-wasm-source` | Enforce: Wasm-kilden må være `Image` med URL under `crfhiskybert.azurecr.io/waf/*`. |
-| `inject-tenant-waf-bundle` | Muterer en eksisterende `EnvoyExtensionPolicy` ved opprettelse/oppdatering; oppretter ikke policyen for tenanten. |
+| `inject-tenant-waf-bundle` | Muterer en eksisterende `EnvoyExtensionPolicy` ved opprettelse/oppdatering, men bare når `waf.skybert.fhi.no/bundle` er `owasp-detection` eller `owasp`; oppretter ikke policyen for tenanten. |
 | `require-tenant-waf-coverage` | Audit: rapporterer HTTPRoute uten en EnvoyExtensionPolicy i samme namespace som peker direkte på ruten med `targetRefs.kind: HTTPRoute` og riktig navn. Sjekken beviser ikke at WAF faktisk kjører. |
 
 Dekking via Gateway/Backend som docs omtaler, telles ikke av denne Audit-regelen. PolicyException følger plattformens vanlige avklaringsløp; manglende dekning blokkerer ikke apply gjennom denne regelen.
@@ -24,19 +24,18 @@ Dekking via Gateway/Backend som docs omtaler, telles ikke av denne Audit-regelen
 
 ## Bundles og egne regler
 
-Velg bundle med annotasjonen `waf.skybert.fhi.no/bundle`: `detection`, `baseline` eller `strict`. Infra defaulter til `baseline` i alle klustere; docs sier `strict` i rød sone. Bruk eksplisitt valg avklart med plattformteamet fremfor å stole på docs-defaulten.
+Velg bundle med annotasjonen `waf.skybert.fhi.no/bundle`: `owasp-detection` eller `owasp`. Uten annotasjonen, eller med en annen verdi, injiserer `inject-tenant-waf-bundle` ingen bundle og endrer ikke `EnvoyExtensionPolicy`-en; bundle er dermed opt-in i alle klustere, også rød. Docs beskriver `detection`/`baseline`/`strict` og automatisk injisering (default `baseline`, `strict` på rød); de navnene finnes ikke i policyen, og en annotasjon med et av dem gir ingen bundle. Følg infra, og avklar valg og konsekvenser med plattformteamet.
 
 | Bundle | Paranoia level | Inbound/outbound terskel | failOpen |
 |---|---|---|---|
-| detection | 1 | 5 / 4 | true |
-| baseline | 1 | 7 / 4 | true |
-| strict | 2 | 5 / 4 | false |
+| owasp-detection | 1 | 5 / 4 | true |
+| owasp | 1 | 5 / 4 | true |
 
-Alle tre setter `SecRuleEngine DetectionOnly`. CRS-funn håndheves dermed ikke som vanlig blokkerende regelmotor; `strict` har likevel `failOpen: false`, så feil i Wasm-filteret kan stenge trafikk. Ikke beskriv dette som at WAF aldri kan stoppe en forespørsel.
+Begge setter `SecRuleEngine DetectionOnly` og `failOpen: true`; preamble, terskler, engine og failOpen er i dag like i de to bundlene. CRS-funn håndheves dermed ikke som blokkerende regelmotor, og feil i Wasm-filteret stenger ikke trafikk. Infra-kommentaren sier at `owasp` skal settes til `SecRuleEngine On` når blokkering slås på. Ikke beskriv dette som at WAF blokkerer i dag.
 
-Tenant-regler legges i `config.directives_map.app`; plattformen bygger `default` fra preamble, app-reglene og til slutt engine, og setter `default_directives: default`. Tenantens regel-ID-er er 1–99999; CRS bruker 900000–999999. Bruk målrettede unntak, og én policy per rute som beskrevet i docs. Ved flere policyer beskriver docs at den eldste vinner.
+Tenant-regler legges i `config.directives_map.app`. Er `waf.skybert.fhi.no/bundle` satt til `owasp-detection` eller `owasp`, bygger `inject-tenant-waf-bundle` `default` fra preamble, app-reglene og til slutt engine, og setter `default_directives: default` og `failOpen`; uten en slik annotasjon endrer policyen verken `directives_map` eller `default_directives`. Tenantens regel-ID-er er 1–99999; CRS bruker 900000–999999. Bruk målrettede unntak, og én policy per rute som beskrevet i docs. Ved flere policyer beskriver docs at den eldste vinner.
 
-Request body-limit er 13107200 byte, no-files-limit 131072. `strict` bruker response-inspeksjon med limit 524288 for text/plain, text/html og application/json, og tillater GET/HEAD/POST/OPTIONS i CRS-konfigurasjonen. De to øvrige inspiserer ikke response body og inkluderer også PUT/PATCH/DELETE.
+Request body-limit er 13107200 byte, no-files-limit 131072. Begge bundlene har `SecResponseBodyAccess Off` (ingen response-inspeksjon) og tillater GET/HEAD/POST/OPTIONS/PUT/PATCH/DELETE i CRS-konfigurasjonen.
 
 Plattformbildet bygger inn GeoIP-støtte; bruk `%{GEO.COUNTRY_CODE}` ved substitusjon. Vis attribusjon til db-ip.com der GeoIP-resultater vises. Konkrete regler og unntak finnes i [plattformens eksempler](https://docs.sky.fhi.no/workloads/waf/examples/); prøv dem først etter at tilgang og image er avklart.
 
