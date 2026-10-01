@@ -4,6 +4,16 @@ Veiledning for å bruke ikoner fra FHI Designsystem. Alle ikoner er basert på [
 
 ---
 
+## Innhold
+
+- [Importere ikoner](#importere-ikoner)
+- [Bruk i HTML](#bruk-i-html)
+- [Properties](#properties)
+- [Bruk med andre komponenter](#bruk-med-andre-komponenter)
+- [Tilgjengelige ikoner](#tilgjengelige-ikoner)
+
+---
+
 ## Importere ikoner
 
 Hvert ikon er en egen web component og importeres individuelt:

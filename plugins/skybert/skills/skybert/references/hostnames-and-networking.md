@@ -1,5 +1,18 @@
 # Hostnavn og nettverkskonfigurasjon
 
+## Innhold
+
+- [Støttede domener](#støttede-domener)
+- [Public DNS-oppslag (external-dns)](#public-dns-oppslag-external-dns)
+- [Ingress-regler (Kyverno-håndhevet)](#ingress-regler-kyverno-håndhevet)
+- [Nettverkspolicyer](#nettverkspolicyer)
+- [Rød sone](#rød-sone)
+- [Egress-IP (tillatt utgående trafikk fra clusterne)](#egress-ip-tillatt-utgående-trafikk-fra-clusterne)
+- [Service Mesh](#service-mesh)
+- [Public CA / Trust Bundle](#public-ca--trust-bundle)
+
+---
+
 ## Støttede domener
 
 | Miljø | Domener |

@@ -6,6 +6,15 @@ først; manuell SecretStore + ExternalSecret bare for raw Deployments og andre w
 
 > Kilde: https://docs.sky.fhi.no/miscellaneous/vault_secrets/
 
+## Innhold
+
+- [Anbefalt: SkybertApp inline secrets](#anbefalt-skybertapp-inline-secrets)
+- [Manuell: SecretStore + ExternalSecret (ESO)](#manuell-secretstore--externalsecret-eso)
+- [Key Vault](#key-vault)
+- [Rotasjon og oppdatering](#rotasjon-og-oppdatering)
+
+---
+
 ## Anbefalt: SkybertApp inline secrets
 
 `spec.secrets[]` i SkybertApp oppgir vault-navn og nøkler (`remote` i Key Vault, valgfritt `local`-navn

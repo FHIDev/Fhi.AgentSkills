@@ -1,5 +1,12 @@
 # Steg 4–5 – Analyser, lag endringsplan og gjennomfør endringer
 
+## Innhold
+
+- [Steg 4 – Analyser og lag endringsplan](#steg-4--analyser-og-lag-endringsplan)
+- [Steg 5 – Gjennomfør endringer](#steg-5--gjennomfør-endringer)
+
+---
+
 ## Steg 4 – Analyser og lag endringsplan
 
 Sammenlign kildekoden fra taggen med innholdet i `plugins/designsystem/skills/designsystem/`-skillen. Lag en

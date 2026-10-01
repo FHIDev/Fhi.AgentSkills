@@ -5,6 +5,13 @@ Du har kun tilgang til ressurser i eget namespace (`tn-<tenant>`). Runtime-komma
 [Kyverno-policier — runtime-restriksjoner](kyverno-policies.md#produksjon--runtime-restriksjoner).
 Tilkobling til klusteret: [kubectl-tilgang](kubectl-access.md#koble-til-klusteret).
 
+## Innhold
+
+- [Verifisere deployment etter push](#verifisere-deployment-etter-push)
+- [Vanlige problemer](#vanlige-problemer)
+
+---
+
 ## Verifisere deployment etter push
 
 1. **GitHub-workflow:** sjekk at `oci-push` i GitOps-repoet fullførte, og at OCI-artefaktet

@@ -16,6 +16,16 @@ import '@folkehelseinstituttet/designsystem/fhi-select-item';
 
 **Når brukes Select** (fra docs): når listen er større enn det som passer for `fhi-radio`, eller når det ikke er plass til en radiogruppe i konteksten.
 
+## Innhold
+
+- [fhi-select](#fhi-select-1)
+- [fhi-select-item](#fhi-select-item)
+- [Verdisemantikk](#verdisemantikk)
+- [Kjente begrensninger](#kjente-begrensninger)
+- [Eksempler](#eksempler)
+
+---
+
 ## fhi-select
 
 | Property | Attributt | Type | Default | Beskrivelse |

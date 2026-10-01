@@ -2,6 +2,21 @@
 
 Denne modusen brukes når agenten har tilgang til kilderepoene via `gh api`, `curl` med `gh auth token`, eller lokal `git clone`.
 
+## Innhold
+
+- [Kildetilgang](#kildetilgang)
+- [Discovery pass (obligatorisk ved FULL modus)](#discovery-pass-obligatorisk-ved-full-modus)
+- [Detaljert leserekkefølge — Docs-repo](#detaljert-leserekkefølge--docs-repo)
+- [Detaljert leserekkefølge — Infra-repo](#detaljert-leserekkefølge--infra-repo)
+- [Detaljert leserekkefølge — Retningslinje-repo](#detaljert-leserekkefølge--retningslinje-repo)
+- [Seleksjonsregler](#seleksjonsregler)
+- [Sikkerhetsfiltreringsregler](#sikkerhetsfiltreringsregler)
+- [Inkrementell vs FULL modus](#inkrementell-vs-full-modus)
+- [CRD-versjonssporing](#crd-versjonssporing)
+- [Dekningsanalyse (3 obligatoriske matriser)](#dekningsanalyse-3-obligatoriske-matriser)
+
+---
+
 ## Kildetilgang
 
 ### Docs-repo

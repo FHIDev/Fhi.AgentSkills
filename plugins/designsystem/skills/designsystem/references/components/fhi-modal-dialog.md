@@ -8,6 +8,19 @@ Modal dialog med fokus-fangst, bakgrunnsklikk-lukking og Escape-lukking.
 import '@folkehelseinstituttet/designsystem/fhi-modal-dialog';
 ```
 
+## Innhold
+
+- [Properties](#properties)
+- [Egendefinert bredde (fra v0.42.2)](#egendefinert-bredde-fra-v0422)
+- [Metoder](#metoder)
+- [Events](#events)
+- [Slots](#slots)
+- [Bruk](#bruk)
+- [Eksempler](#eksempler)
+- [Kjente problemer](#kjente-problemer)
+
+---
+
 ## Properties
 
 | Property | Attributt | Type | Default | Beskrivelse |

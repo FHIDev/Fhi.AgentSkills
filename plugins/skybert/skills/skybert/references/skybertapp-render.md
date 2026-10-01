@@ -9,6 +9,16 @@ Rendering skjer lokalt via `crossplane render`, uten kluster-tilgang.
 
 > **Operasjonell antakelse:** Lokal inspeksjon av den distribuerte SkybertApp-compositionen; render-forutsetninger og begrensninger står nedenfor.
 
+## Innhold
+
+- [Forutsetninger](#forutsetninger)
+- [Statiske kopier i skillen](#statiske-kopier-i-skillen)
+- [Eksempel: rått XR](#eksempel-rått-xr)
+- [Hva du kan og ikke kan stole på i outputen](#hva-du-kan-og-ikke-kan-stole-på-i-outputen)
+- [Feilsøking](#feilsøking)
+
+---
+
 ## Forutsetninger
 
 - `crossplane` CLI (v2). Installer: `curl -sL https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh | sh`.

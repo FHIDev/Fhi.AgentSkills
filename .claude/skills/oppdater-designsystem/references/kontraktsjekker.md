@@ -1,5 +1,12 @@
 # Steg 8–9 – Contract checks og kvalitetskontrakt
 
+## Innhold
+
+- [Steg 8 – Contract checks](#steg-8--contract-checks)
+- [Steg 9 – Kvalitetskontrakt for sluttresultatet](#steg-9--kvalitetskontrakt-for-sluttresultatet)
+
+---
+
 ## Steg 8 – Contract checks
 
 ### 8a. Automatiserte sjekker
@@ -39,6 +46,7 @@ Scriptet dekker de mekaniske radene:
 | Konsistens hovedfil ↔ referansefiler | Verifiser: (1) Hver komponent i komponenttabellen i SKILL.md har en oppdatert referansefil under `references/components/`. (2) Token-mønster og terminologi i SKILL.md matcher `references/design-tokens.md`. (3) Ikonimport-mønster i SKILL.md matcher `references/icon-usage.md`. (4) Deprecations nevnt i komponentfiler er reflektert i SKILL.md når de er generelt viktige. |
 | Domene-dekning | Gå gjennom domene-tabellen i [endringsplan.md](endringsplan.md) og verifiser at hvert domene er dekket med oppdatert innhold i både hovedfil og referansefil(er). |
 | Rammeverk-råd | Verifiser at React-, Angular- og Blazor-rådene i `references/framework-setup.md` fortsatt samsvarer med publisert pakke og upstream get_started-docs. Fjern rammeverksspesifikke råd som ikke lenger er dokumentert eller implisert av upstream. |
+| Innholdsfortegnelse | Hver `.md`-fil under `references/` og `versions/GUIDE.md` med over 100 linjer har en `## Innhold`-seksjon mellom innledningen og første `##`-overskrift, med én lenke per `##`-overskrift i samme rekkefølge (GitHub-ankre, `---` etter listen). Legg den til når en fil passerer 100 linjer, og oppdater den når `##`-overskrifter legges til, fjernes eller får nytt navn. |
 | Upstream `ai-tooling/SKILL.md` | Verifiser at kontrollpunktet fra endringsplanen (sjekkliste-punkt 9) er gjennomført og at vurderingspunktene er avklart |
 
 ### Manuelle kommandoer (fallback hvis scriptene feiler)

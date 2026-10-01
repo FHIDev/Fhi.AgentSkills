@@ -2,6 +2,14 @@
 
 Kanonisk fil for StorageClasses, databasevalg og CloudNativePG (CNPG). Andre filer lenker hit.
 
+## Innhold
+
+- [StorageClasses](#storageclasses)
+- [Databasevalg](#databasevalg)
+- [CloudNativePG](#cloudnativepg)
+
+---
+
 ## StorageClasses
 
 Skybert kjører AKS på **Azure Local**, og StorageClassene kommer fra fire ulike CSI-drivere.

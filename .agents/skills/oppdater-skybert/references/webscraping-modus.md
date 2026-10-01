@@ -2,6 +2,21 @@
 
 Denne modusen brukes når agenten **ikke** har tilgang til kilderepoene (gh api returnerer 403/404). All informasjon hentes fra den publiserte dokumentasjonen.
 
+## Innhold
+
+- [Domene-strategi](#domene-strategi)
+- [Steg 1 — Hent search_index.json](#steg-1--hent-search_indexjson)
+- [Steg 2 — Beregn global hash](#steg-2--beregn-global-hash)
+- [Steg 3 — Sammenlign med forrige hash](#steg-3--sammenlign-med-forrige-hash)
+- [Steg 4 — Hent HTML-sider](#steg-4--hent-html-sider)
+- [Inkrementell vs FULL modus](#inkrementell-vs-full-modus)
+- [Begrensninger](#begrensninger)
+- [State i web-scraping-modus](#state-i-web-scraping-modus)
+- [Forenklet dekningsanalyse](#forenklet-dekningsanalyse)
+- [Feilhåndtering (web-scraping-spesifikk)](#feilhåndtering-web-scraping-spesifikk)
+
+---
+
 ## Domene-strategi
 
 ```

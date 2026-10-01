@@ -1,5 +1,15 @@
 # Routing-tabell: Kildefiler til Skybert-målfiler
 
+## Innhold
+
+- [Filsti-basert routing (GitHub-modus)](#filsti-basert-routing-github-modus)
+- [Kanonisk plassering for tverrgående fakta](#kanonisk-plassering-for-tverrgående-fakta)
+- [Emnebasert routing (web-scraping-modus)](#emnebasert-routing-web-scraping-modus)
+- [Routing-regler (felles for begge moduser)](#routing-regler-felles-for-begge-moduser)
+- [Vedlikehold av tabellen](#vedlikehold-av-tabellen)
+
+---
+
 ## Filsti-basert routing (GitHub-modus)
 
 ### Docs-repo

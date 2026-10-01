@@ -6,6 +6,15 @@ Tekstfelt med label, hjelpetekst og validering. Form-assosiert.
 import '@folkehelseinstituttet/designsystem/fhi-text-input';
 ```
 
+## Innhold
+
+- [Properties](#properties)
+- [Events](#events)
+- [Slots (fra v0.35.0)](#slots-fra-v0350)
+- [Eksempler](#eksempler)
+
+---
+
 ## Properties
 
 | Property | Attributt | Type | Default | Beskrivelse |

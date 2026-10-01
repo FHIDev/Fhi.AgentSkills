@@ -1,5 +1,16 @@
 # GitHub Workflows
 
+## Innhold
+
+- [Premade baseline i GitOps-repo](#premade-baseline-i-gitops-repo)
+- [Påkrevde GitHub Repository-variabler og secrets](#påkrevde-github-repository-variabler-og-secrets)
+- [Komplett CI/CD Flyt](#komplett-cicd-flyt)
+- [oci-push.yaml - Bygge og pushe til ACR](#oci-pushyaml---bygge-og-pushe-til-acr)
+- [update-tag.yaml - Automatisk tag-oppdatering](#update-tagyaml---automatisk-tag-oppdatering)
+- [GitHub App for repository_dispatch på tvers av repoer](#github-app-for-repository_dispatch-på-tvers-av-repoer)
+
+---
+
 ## Premade baseline i GitOps-repo
 
 GitOps-repoet (`Fhi.<Tenant>.GitOps`) leveres med `.github/workflows/oci-push.yaml` og

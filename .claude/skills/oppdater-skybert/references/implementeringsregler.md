@@ -1,5 +1,17 @@
 # Implementeringsregler
 
+## Innhold
+
+- [Prinsipper for implementering (steg 8)](#prinsipper-for-implementering-steg-8)
+- [Kildereferanse-format (differensiert)](#kildereferanse-format-differensiert)
+- [MkDocs-syntakskonvertering](#mkdocs-syntakskonvertering)
+- [Nye filer](#nye-filer)
+- [Skybert-verdier i CLAUDE.md / AGENTS.md](#skybert-verdier-i-claudemd--agentsmd)
+- [Kontrollpunkter etter implementering](#kontrollpunkter-etter-implementering)
+- [Operasjonelle antakelser og fjernet innhold i UPDATE-PLAN.md](#operasjonelle-antakelser-og-fjernet-innhold-i-update-planmd)
+
+---
+
 ## Prinsipper for implementering (steg 8)
 
 - **Seksjonsbasert patching** — oppdater kun seksjoner med evidensbasert grunnlag, behold øvrige uendret.
@@ -96,6 +108,7 @@ Etter implementering, verifiser:
 13. Alle avsnitt uten `> Kilde:` er merket `> **Operasjonell antakelse:**`.
 14. Duplikatsøk: ingen YAML-blokk over 5 linjer og ingen nøkkelverdi-tabell finnes i mer enn én fil.
 15. Retningslinje-lenker: for hver sti i `github.guidelines.paths` som finnes på `main`, peker alle `> Kilde:`-linjer for den stien på `blob/main/`, ikke på en PR-URL, og `branch` i state er `main`.
+16. Innholdsfortegnelse: hver `.md`-fil under `plugins/skybert/skills/skybert/references/` med over 100 linjer har en `## Innhold`-seksjon mellom innledningen og første `##`-overskrift, med én lenke per `##`-overskrift i samme rekkefølge (GitHub-ankre, `---` etter listen). Legg den til når en fil passerer 100 linjer, og oppdater den når `##`-overskrifter legges til, fjernes eller får nytt navn.
 
 ---
 

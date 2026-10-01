@@ -1,5 +1,12 @@
 # Steg 6–7 – Versjonsinfrastruktur
 
+## Innhold
+
+- [Steg 6 – Dokumenter versjonen som er brukt](#steg-6--dokumenter-versjonen-som-er-brukt)
+- [Steg 7 – Oppdater versjonsfilene](#steg-7--oppdater-versjonsfilene)
+
+---
+
 ## Steg 6 – Dokumenter versjonen som er brukt
 
 ### 6a. State-fil (autoritativ for scripting)
