@@ -1,5 +1,18 @@
 # Versjonsguide — beslutningsflyt
 
+## Innhold
+
+- [Identifiser versjon](#identifiser-versjon)
+- [Beslutningsflyt](#beslutningsflyt)
+- [Versjon-matching](#versjon-matching)
+- [To kilder: FEATURES.md + delta-filer](#to-kilder-featuresmd--delta-filer)
+- [Hvordan bruke delta-filer](#hvordan-bruke-delta-filer)
+- [Standard svarformat for versjonsspørsmål](#standard-svarformat-for-versjonsspørsmål)
+- [Kategorier for avvik (breaking vs notat)](#kategorier-for-avvik-breaking-vs-notat)
+- [Public vs internal komponenter](#public-vs-internal-komponenter)
+
+---
+
 ## Identifiser versjon
 
 1. Sjekk `package.json` → `dependencies["@folkehelseinstituttet/designsystem"]`

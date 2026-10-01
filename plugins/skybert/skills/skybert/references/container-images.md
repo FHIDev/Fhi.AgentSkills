@@ -12,6 +12,16 @@ fravikes, hvorfor, og hvilke kompenserende tiltak som er gjort.
 
 > Kilde: https://github.com/FHIDev/Fhi.Guidelines/pull/2 (`docs/CI-CD/container-images.md`)
 
+## Innhold
+
+- [Krav til imaget](#krav-til-imaget)
+- [Sårbarhetsscanning og håndtering av funn](#sårbarhetsscanning-og-håndtering-av-funn)
+- [Pipeline, tagging og promotion på Skybert](#pipeline-tagging-og-promotion-på-skybert)
+- [Least privilege på Skybert](#least-privilege-på-skybert)
+- [Sjekkliste før push](#sjekkliste-før-push)
+
+---
+
 ## Krav til imaget
 
 - **Base image** skal være offisielt eller betrodd, og holdes oppdatert. Pinnede versjoner må

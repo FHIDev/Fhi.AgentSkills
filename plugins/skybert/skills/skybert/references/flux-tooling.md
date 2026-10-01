@@ -1,5 +1,12 @@
 # Flux-verktøy
 
+## Innhold
+
+- [Flux Dashboard](#flux-dashboard)
+- [Flux Operator MCP](#flux-operator-mcp)
+
+---
+
 ## Flux Dashboard
 
 ### Hva du kan gjøre

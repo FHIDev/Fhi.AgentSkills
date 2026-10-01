@@ -1,5 +1,16 @@
 # Kubectl-tilgang til Skybert
 
+## Innhold
+
+- [Forutsetninger](#forutsetninger)
+- [Koble til klusteret](#koble-til-klusteret)
+- [Tilgjengelige klustere](#tilgjengelige-klustere)
+- [sk8 CLI — automatisert PIM + proxy](#sk8-cli--automatisert-pim--proxy)
+- [k9s](#k9s)
+- [Kjøre container lokalt fra ACR](#kjøre-container-lokalt-fra-acr)
+
+---
+
 ## Forutsetninger
 
 1. Azure CLI installert (Windows: via «Firmaportal», Linux/WSL: [Microsofts guide](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux)).

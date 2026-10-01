@@ -16,6 +16,19 @@ Skybert bruker Kyverno for policy-håndhevelse. Policiene under gjelder tenant-n
 
 > Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/kyverno-policies/
 
+## Innhold
+
+- [Automatiske mutasjoner (Kyverno setter automatisk)](#automatiske-mutasjoner-kyverno-setter-automatisk)
+- [Håndhevede policier (Enforce — avviser pods/ressurser som bryter)](#håndhevede-policier-enforce--avviser-podsressurser-som-bryter)
+- [Audit-policier (rapporterer i PolicyReport, blokkerer ikke)](#audit-policier-rapporterer-i-policyreport-blokkerer-ikke)
+- [Ressursanbefalinger (Goldilocks / VPA)](#ressursanbefalinger-goldilocks--vpa)
+- [Rød sone — ekstra policier](#rød-sone--ekstra-policier)
+- [Produksjon — runtime-restriksjoner](#produksjon--runtime-restriksjoner)
+- [WAF-policier](#waf-policier)
+- [PolicyExceptions](#policyexceptions)
+
+---
+
 ## Automatiske mutasjoner (Kyverno setter automatisk)
 
 | Policy | Handling | Scope |

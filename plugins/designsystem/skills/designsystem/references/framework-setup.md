@@ -8,6 +8,16 @@ npm install @folkehelseinstituttet/designsystem
 
 ---
 
+## Innhold
+
+- [IDE-støtte (intellisense og typesjekking)](#ide-støtte-intellisense-og-typesjekking)
+- [React 19+](#react-19)
+- [SSR (Next.js og andre server-rammeverk)](#ssr-nextjs-og-andre-server-rammeverk)
+- [Angular](#angular)
+- [Blazor](#blazor)
+
+---
+
 ## IDE-støtte (intellisense og typesjekking)
 
 Designsystemet leverer metadata for webkomponenter via `custom-elements.json` og

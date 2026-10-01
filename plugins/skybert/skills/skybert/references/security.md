@@ -1,5 +1,15 @@
 # Sikkerhet og Azure Workload Identity
 
+## Innhold
+
+- [Azure Workload Identity](#azure-workload-identity)
+- [Tenant-RBAC — hva du kan administrere](#tenant-rbac--hva-du-kan-administrere)
+- [Anbefalt sikkerhetskonfigurasjon](#anbefalt-sikkerhetskonfigurasjon)
+- [Nettverkspolicyer (rød sone)](#nettverkspolicyer-rød-sone)
+- [ACR image pull (automatisk `acr-pull-secret`)](#acr-image-pull-automatisk-acr-pull-secret)
+
+---
+
 ## Azure Workload Identity
 
 ### Oppsett i applikasjon

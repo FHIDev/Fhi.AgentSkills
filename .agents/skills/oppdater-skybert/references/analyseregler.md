@@ -1,5 +1,21 @@
 # Analyseregler for endringer
 
+## Innhold
+
+- [Endringskategorier](#endringskategorier)
+- [Flagg](#flagg)
+- [Terskler](#terskler)
+- [Krav til `VURDER`-poster (ingen sovepute)](#krav-til-vurder-poster-ingen-sovepute)
+- [Persistens av uferdige poster (`openItems`)](#persistens-av-uferdige-poster-openitems)
+- [Presisjon i påstander og endringsposter](#presisjon-i-påstander-og-endringsposter)
+- [Duplikater og kanonisk plassering](#duplikater-og-kanonisk-plassering)
+- [Hva hører hjemme i SKILL.md vs. references/](#hva-hører-hjemme-i-skillmd-vs-references)
+- [Konfliktløsning (Docs vs Infra)](#konfliktløsning-docs-vs-infra)
+- [Regler for dekningsgrad (matrise A, begge moduser)](#regler-for-dekningsgrad-matrise-a-begge-moduser)
+- [Anonymisering / sikkerhetsfiltreringsregler](#anonymisering--sikkerhetsfiltreringsregler)
+
+---
+
 ## Endringskategorier
 
 | Kategori | Definisjon |

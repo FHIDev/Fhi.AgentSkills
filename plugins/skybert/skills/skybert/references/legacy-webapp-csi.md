@@ -4,6 +4,15 @@ WebApp (`skybert.fhi.no/v1`) er ikke dokumentert i docs (docs dokumenterer kun S
 
 > Kilde: https://docs.sky.fhi.no/workloads/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/secrets-store-csi-driver/
 
+## Innhold
+
+- [WebApp CRD-spesifikasjon](#webapp-crd-spesifikasjon)
+- [Migrering fra WebApp til SkybertApp](#migrering-fra-webapp-til-skybertapp)
+- [Minimal WebApp (eksisterende workloads)](#minimal-webapp-eksisterende-workloads)
+- [CSI driver i raw Deployments](#csi-driver-i-raw-deployments)
+
+---
+
 ## WebApp CRD-spesifikasjon
 
 ### API

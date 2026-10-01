@@ -5,6 +5,15 @@ verifisert mot XRD-en og compositionen i infra-repoet; docs-siden er sekundær d
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/crossplane/base/
 
+## Innhold
+
+- [API](#api)
+- [Quick Start](#quick-start)
+- [Spec Reference](#spec-reference)
+- [Generated Resources](#generated-resources)
+
+---
+
 ## API
 
 ```yaml

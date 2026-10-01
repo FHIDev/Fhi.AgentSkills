@@ -4,6 +4,15 @@ Hvert kluster kjører sin egen, komplette LGTM-stack: **Loki** (logger), **Mimir
 
 > Kilde: https://docs.sky.fhi.no/observability/ · https://docs.sky.fhi.no/internal/observability/alloy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/tempo/
 
+## Innhold
+
+- [Logging med Loki](#logging-med-loki)
+- [Metrics med Mimir](#metrics-med-mimir)
+- [Tracing med Tempo](#tracing-med-tempo)
+- [Grafana](#grafana)
+
+---
+
 ## Logging med Loki
 
 Applikasjoner logger til stdout/stderr. Alloy scraper container-loggene automatisk og setter labelene `namespace`, `pod`, `container`, `node_name` og `app` (hvis podden har en `app`-label). Loki fungerer best med strukturert JSON til stdout — da kan feltene parses ved spørring (`| json | level="error"`).

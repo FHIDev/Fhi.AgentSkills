@@ -2,6 +2,16 @@
 
 Kanonisk fil for GitOps-flyt, OCI-flyt, Flux-intervaller, tenant-bootstrap og tenant-RBAC. Klusterliste og tilkobling: [kubectl-access](kubectl-access.md#tilgjengelige-klustere).
 
+## Innhold
+
+- [Teknologistakk](#teknologistakk)
+- [Komponentkart for tenant-utviklere](#komponentkart-for-tenant-utviklere)
+- [Flux GitOps](#flux-gitops)
+- [Crossplane](#crossplane)
+- [Tenant-bootstrap](#tenant-bootstrap)
+
+---
+
 ## Teknologistakk
 
 | Komponent | Teknologi | Rolle |

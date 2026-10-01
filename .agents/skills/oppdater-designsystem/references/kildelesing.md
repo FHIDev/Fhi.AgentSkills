@@ -1,5 +1,15 @@
 # Steg 3 – Les eksisterende skill og kildekode fra taggen
 
+## Innhold
+
+- [3.0 Les eksisterende designsystem-skill](#30-les-eksisterende-designsystem-skill)
+- [3.1 Verifiser npm-pakkenavn](#31-verifiser-npm-pakkenavn)
+- [3.2 Les fra taggen — aldri fra main](#32-les-fra-taggen--aldri-fra-main)
+- [3.3 Triager før du leser dypere](#33-triager-før-du-leser-dypere)
+- [3.4 Hvilke filer å lese](#34-hvilke-filer-å-lese)
+
+---
+
 ## 3.0 Les eksisterende designsystem-skill
 
 Les alle **markdown-filer** i `plugins/designsystem/skills/designsystem/`-mappen i dette repoet — ikke bare `SKILL.md`,
