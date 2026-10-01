@@ -1,6 +1,6 @@
 # Versjonsindeks
 
-Baseline er alltid SKILL.md (latest v0.45.0).
+Baseline er alltid SKILL.md (latest v0.45.3).
 Støttepolicy: Latest + 9 tidligere minor (totalt 10 minor).
 
 | Versjon | Status      | Nøkkelavvik vs latest                             | Delta-fil       |

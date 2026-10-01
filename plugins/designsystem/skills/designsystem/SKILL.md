@@ -2,17 +2,17 @@
 name: designsystem
 description: Ekspert på FHI Designsystem (@folkehelseinstituttet/designsystem, designsystem.fhi.no). Bruk ved installasjon eller oppsett av designsystemet, bruk av FHI-komponenter (fhi-button, fhi-text-input, fhi-checkbox, etc.), bruk av FHI design tokens (farger, typografi, spacing), ikoner, rammeverk-integrasjon (React, Angular, Blazor), eller spørsmål om komponenter brukeren har sett i designsystemets Storybook. Gjelder også når brukeren sier «FHI-komponent» eller bygger skjema/UI i en FHI-app uten å nevne designsystemet eksplisitt.
 ---
-<!-- Basert på @folkehelseinstituttet/designsystem v0.45.0 -->
+<!-- Basert på @folkehelseinstituttet/designsystem v0.45.3 -->
 
 # FHI Designsystem — Brukerveiledning
 
 Bruk FHI Designsystem i egne prosjekter. Designsystemet er basert på standard web components og fungerer i alle rammeverk.
 
-> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.45.0 — latest)
+> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.45.3 — latest)
 > **Dokumentasjon:** https://designsystem.fhi.no/
 > **GitHub:** https://github.com/FHIDev/Fhi.Designsystem
 > **Figma:** https://www.figma.com/design/VgQG6XeEbFOmHIrxyAOACR/FHI-Designsystem
-> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.45.0` (2026-09-20)
+> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.45.3` (2026-09-30)
 > **Støttepolicy:** Latest + 9 tidligere minor (totalt 10 minor). Se [`versions/INDEX.md`](versions/INDEX.md) for støttede versjoner.
 >
 > **Versjonsbehandling:**
