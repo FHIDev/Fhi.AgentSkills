@@ -54,12 +54,14 @@
 | `docs/internal/flux.md` | `references/platform-architecture.md` (NB: kan motsi infra-repo — markeres som kildekonflikt) |
 | `docs/internal/service-mesh.md` | `references/hostnames-and-networking.md` |
 | `docs/internal/global-network-policies.md` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
-| `docs/internal/ska-cli.md` | `references/kubectl-access.md` — intern-merket (script-dispatcheren `scripts/ska`; Go-CLI-en i `utils/sk8/` er separat og dekkes av `utils/sk8/`-raden) |
+| `docs/get-started/sk8-cli.md` | `references/kubectl-access.md` (sk8-seksjonen; publisert brukerdokumentasjon: installasjon, `sk8 cluster` og PIM for tenant-brukere, `status`/`policies`/`suspend`/`resume`, registerkilder) |
+| `docs/internal/ska-cli.md` | `references/kubectl-access.md` — intern-merket (script-dispatcheren `scripts/ska`; Go-CLI-en `sk8` er separat og dekkes av `docs/get-started/sk8-cli.md` og `utils/sk8/`-raden) |
 | `docs/internal/kyverno-policies.md` | `references/kyverno-policies.md` — intern katalogside; feltnivå-sjekk mot skillens policytabeller |
 | `docs/internal/oci-signing.md` | `references/platform-architecture.md` — selektiv intern (Cosign-signering/verifisering av plattform-artifakter; disable-runbook er støy) |
 | `docs/internal/skybert-system.md` | `references/security.md`, `references/platform-architecture.md` — selektiv intern (ACR pull secret, tenant-RBAC-aggregering; Flux-admin/shared-KV/Bertil er støy) |
 | `docs/internal/metallb.md` | VURDER — plattformdrift uten tenant-impact (tenanter kan ikke lage LoadBalancer-Services); normalt utenfor scope |
 | `docs/internal/script-atlas.md`, `docs/internal/skatlas/**` | Støy — generert intern tooling (SKAtlas-UI); ingen routing |
+| `docs/assets/images/*.svg` | Ingen routing — diagrammer til docs-sider; les tekstsiden (f.eks. `docs/internal/global-network-policies.md`). Endrede etiketter i diagrammet er kun en observasjon |
 | `docs/sk8/clusters.json` | `references/kubectl-access.md` (publisert maskinlesbart klusterregister) |
 | `docs/internal/attach-application-repo.md` | `references/security.md`, ev. `references/workflows.md` — selektiv intern (ACR-push-identitet, federering av app-repoer) |
 | `docs/internal/helm-and-crds.md` | VURDER — plattformintern, ikke auto-route |
@@ -87,6 +89,7 @@
 | `infra/kyverno-policies/base/policies-waf/**`, `utils/coraza-proxy-wasm/**` | `references/waf.md` — Coraza, bundles, policy-status og image-begrensninger |
 | `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
 | `infra/skybert-system/base/tenant-admin-clusterroles/*.yaml` | `references/platform-architecture.md`, `references/security.md`, `references/kyverno-policies.md` |
+| `infra/kubevirt/**`, `crds/base/kubevirt-*` | `references/platform-architecture.md` — kun installasjonsstatus (hvilke klustere) i Tenant-RBAC-raden for `skybert:tenant-admin:kubevirt`; tilgangsreglene kommer fra `kubevirt-access-rules.yaml` via raden over |
 | `tenants/*/base/*.yaml` | `references/platform-architecture.md` |
 | `scripts/tenant--*.sh` | `references/platform-architecture.md` |
 | `scripts/lib/grafana/*.sh` | Ikke egen målfil — hjelpebibliotek der avledede fakta (X-Scope-OrgID, org_mapping) havner etter refaktorering. Brukes til provenance-referanser i `references/observability.md` / `references/platform-architecture.md`. Andre `scripts/lib/*.sh` leses bare selektivt når de sources av en endret tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk |
@@ -99,7 +102,7 @@
 | `infra/traefik/**` | `references/hostnames-and-networking.md`, `references/platform-architecture.md` |
 | `infra/envoy/**` | `references/hostnames-and-networking.md`, `references/platform-architecture.md` (Gateway API/Envoy-status, kun tenant-impact) |
 | `manifests/*.md` | VURDER — migreringsplaner, ikke auto-route (hent kun tenant-impact med konkrete tenant-steg) |
-| `utils/sk8/README.md`, `utils/sk8/data/clusters.json` | `references/kubectl-access.md` — intern-merket (sk8 Go-CLI + innebygd klusterregister). Øvrig `utils/**` (Go-kode, `version-checker/`, `grafana-airgapped/`) er lavprioritet/støy |
+| `utils/sk8/README.md`, `utils/sk8/data/clusters.json` | `references/kubectl-access.md` — sk8 Go-CLI + innebygd klusterregister (brukerdokumentasjon: `docs/get-started/sk8-cli.md`). Øvrig `utils/**` (Go-kode, `version-checker/`, `grafana-airgapped/`) er lavprioritet/støy |
 
 ### Retningslinje-repo (Fhi.Guidelines)
 

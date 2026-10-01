@@ -34,9 +34,9 @@ Test-issuerne finnes på alle test-klustere og sandbox; prod-issueren på alle p
 
 ## Public DNS-oppslag (external-dns)
 
-SkybertApp eksponerer ingen Ingress-annotasjoner, så et `hostname` på SkybertApp får alltid ingressens private IP. Trenger appen offentlig DNS-oppslag (f.eks. en frontend hostet utenfor FHI, eller claude.ai), la `hostname` stå tomt på SkybertApp (da rendres verken Service eller Ingress) og skriv egen `Service` (selector `skybert.fhi.no/webapp: <app>`, port = `spec.port`) og `Ingress` med `spec.ingressClassName: nginx`, TLS-blokk for hostnavnet, `cert-manager.io/cluster-issuer` (se tabellen over) og `external-dns.alpha.kubernetes.io/target: "<klusterets offentlige front-end-IP>"`. Ingressen må oppfylle [Kyverno-reglene under](#ingress-regler-kyverno-håndhevet). Kjente verdier: `83.118.177.220` for `aks-green-test-01` og `83.118.177.234` for `aks-green-prod-02`. Offentlig eksponering utenfor grønn sone er en klassifiseringsbeslutning, ikke et IP-oppslag — avklar med plattformteamet på `#ext-fhi-skybert` før du bruker mønsteret på gul eller rød.
+SkybertApp eksponerer ingen Ingress-annotasjoner, så et `hostname` på SkybertApp får alltid ingressens private IP. Trenger appen offentlig DNS-oppslag (f.eks. en frontend hostet utenfor FHI, eller claude.ai), la `hostname` stå tomt på SkybertApp (da rendres verken Service eller Ingress) og skriv egen `Service` (selector `skybert.fhi.no/webapp: <app>`, port = `spec.port`) og `Ingress` med `spec.ingressClassName: nginx`, TLS-blokk for hostnavnet, `cert-manager.io/cluster-issuer` (se tabellen over) og `external-dns.alpha.kubernetes.io/target: "<klusterets offentlige front-end-IP>"`. Ingressen må oppfylle [Kyverno-reglene under](#ingress-regler-kyverno-håndhevet). Front-end-IP-ene `83.118.177.220` (grønn test) og `83.118.177.234` (grønn prod) er ikke bekreftet for dagens klustre; bekreft med plattformteamet. Offentlig eksponering utenfor grønn sone er en klassifiseringsbeslutning, ikke et IP-oppslag — avklar med plattformteamet på `#ext-fhi-skybert` før du bruker mønsteret på gul eller rød.
 
-> **Operasjonell antakelse:** Ikke dokumentert for tenanter i docs, men i bruk i `tn-ki-mcp` (`Fhi.Ki.Mcp.GitOps`, test og prod) og verifisert i `tn-ehds-soksak` på `aks-green-test-01` med offentlig A-record, TLS og trafikk utenfra. For andre klustere (sandbox, ops-test, gul, rød): avklar IP med plattformteamet på `#ext-fhi-skybert`.
+> **Operasjonell antakelse:** Ikke dokumentert for tenanter i docs, men i bruk i `tn-ki-mcp` (`Fhi.Ki.Mcp.GitOps`, test og prod) og verifisert i `tn-ehds-soksak` i grønn test med offentlig A-record, TLS og trafikk utenfra. For andre klustere (sandbox, ops-test, gul, rød): avklar IP med plattformteamet på `#ext-fhi-skybert`.
 
 ## Ingress-regler (Kyverno-håndhevet)
 
@@ -46,13 +46,13 @@ Følgende regler gjelder alle Ingress-ressurser på alle klustere:
 - **IngressClassName påkrevet**: Alle Ingress-ressurser må ha `spec.ingressClassName` satt
 - **Wildcards blokkert**: Wildcard-hosts (f.eks. `*.skytest.fhi.no`) er ikke tillatt
 - **SSL-redirect**: Kyverno setter automatisk `ssl-redirect: true` og `force-ssl-redirect: true`
-- **flambert-hostnames blokkert**: Hostnames `*.flambert` og `*.flambert.fhi.no` avvises (Enforce) i `tn-*`-namespaces — gjelder både `Ingress` og Gateway API-ressurser (`HTTPRoute`/`TLSRoute`/`GRPCRoute` og `ListenerSet`)
+- **flambert-hostnames blokkert**: Hostname `*.flambert` avvises (Enforce) i `tn-*`-namespaces — gjelder både `Ingress` og Gateway API-ressurser (`HTTPRoute`/`TLSRoute`/`GRPCRoute` og `ListenerSet`)
 
 > Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/kyverno-policies/base/policies-green/
 
 ### Ingress (nginx) og Gateway API (Envoy Gateway)
 
-SkybertApp-compositionen (`skybert.fhi.no/v1alpha1`) rendrer Kubernetes `Ingress` med `ingressClassName: nginx`; `ingress-nginx` er produksjonsveien. Plattformens besluttede retning er **Gateway API**, implementert av **Envoy Gateway**. Docs (`tools-and-components`) merker Envoy Gateway og External DNS som «Handled by SkybertApp»; på `main` er det bare beta-XRD-en (`skybert-beta.fhi.no/v1beta1`, kun `aks-ops-test-01`) som genererer `HTTPRoute`/`ListenerSet` — `v1alpha1`-compositionen rendrer `Ingress`.
+SkybertApp-compositionen (`skybert.fhi.no/v1alpha1`) rendrer Kubernetes `Ingress` med `ingressClassName: nginx`; `ingress-nginx` er produksjonsveien. Plattformens besluttede retning er **Gateway API**, implementert av **Envoy Gateway**. Docs (`tools-and-components`) merker Envoy Gateway og External DNS som «Handled by SkybertApp»; på `main` er det bare beta-XRD-en (`skybert-beta.fhi.no/v1beta1`, kun `aks-ops-test-02`) som genererer `HTTPRoute`/`ListenerSet` — `v1alpha1`-compositionen rendrer `Ingress`.
 
 **Aktivering per kluster:** Envoy Gateway (v1.9.1) er konfigurert på alle klustere unntatt green-test og green-prod, som bare har namespacet og bruker `ingress-nginx`. Der Envoy er aktivert, definerer plattformen delte `Gateway`-objekter og `GatewayClass`-er:
 
@@ -119,11 +119,11 @@ spec:
           port: 8080
 ```
 
-**SkybertApp på Gateway API (beta):** `skybert-beta.fhi.no/v1beta1` rendrer `ListenerSet` + `HTTPRoute` i stedet for `Ingress` og har et `network`-felt med enum `fhinett` / `helsenett` / `internett`, default `fhinett`. XRD og composition finnes **kun på `aks-ops-test-01`**. Regn den som plattform-intern: tenant-RBAC gir `*`/`*` på API-gruppen `skybert.fhi.no`, og beta-CRD-en ligger i `skybert-beta.fhi.no` — en annen gruppe, som ingen tenant-rolle dekker. Skriv Gateway API-ressursene selv til beta eventuelt promoteres.
+**SkybertApp på Gateway API (beta):** `skybert-beta.fhi.no/v1beta1` rendrer `ListenerSet` + `HTTPRoute` i stedet for `Ingress` og har et `network`-felt med enum `fhinett` / `helsenett` / `internett`, default `fhinett`. XRD og composition finnes **kun på `aks-ops-test-02`**. Regn den som plattform-intern: tenant-RBAC gir `*`/`*` på API-gruppen `skybert.fhi.no`, og beta-CRD-en ligger i `skybert-beta.fhi.no` — en annen gruppe, som ingen tenant-rolle dekker. Skriv Gateway API-ressursene selv til beta eventuelt promoteres.
 
 green-test og green-prod har Traefik forhåndsdeployert som nød-fallback for `ingress-nginx` (plattformdrift, ikke en tenant-oppgave).
 
-> Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/ · https://docs.sky.fhi.no/explanations/tools-and-components/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/aks-ops-test-01/compositions/skybertapp-beta.yaml
+> Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/ · https://docs.sky.fhi.no/explanations/tools-and-components/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/aks-ops-test-02/compositions/skybertapp-beta.yaml
 
 ## Nettverkspolicyer
 

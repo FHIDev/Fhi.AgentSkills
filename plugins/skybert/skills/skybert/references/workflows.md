@@ -141,7 +141,7 @@ Standard `GITHUB_TOKEN` i app-repoet kan ikke nå et annet repo eller en annen o
 Workflowen minter et kortlivet installasjonstoken med `actions/create-github-app-token` fra repository-variabelen
 `GITOPS_APP_CLIENT_ID` og secreten `GITOPS_APP_PRIVATE_KEY` (Client ID + privat nøkkel-PEM — **ikke** client secret),
 og sender dispatch med `peter-evans/repository-dispatch` (se eksempelet over). App-oppsett bestilles hos
-plattformteamet på NHN-Slack `#ext-fhi-skybert`; docs har ferdig meldingsmal med GitOps-repo, kaller-repo og
+plattformteamet på NHN-Slack `#ext-fhi-skybert`; docs har ferdig meldingsmal med GitOps-repo og
 app-navn `<tenant>-gitops-dispatch`.
 
 > Kilde: https://docs.sky.fhi.no/build/how-to/trigger-gitops-promotion/

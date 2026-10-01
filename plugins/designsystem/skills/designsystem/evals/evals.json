@@ -1,6 +1,6 @@
 {
   "skill_name": "designsystem",
-  "description": "Svar-evals: regresjonstest for designsystem-skillen. Kjøres som del av steg 9 i oppdater-designsystem (se kontraktsjekker.md). Les skillen slik en agent ville gjort (følg versjonsrutingen i SKILL.md) og sammenlign svaret med expected_output. Fasit er skrevet mot v0.40.0-baseline — hvis en ny versjon endrer riktig svar, oppdater fasiten og begrunn hvorfor.",
+  "description": "Svar-evals: regresjonstest for designsystem-skillen. Kjøres som del av steg 9 i oppdater-designsystem (se kontraktsjekker.md). Les skillen slik en agent ville gjort (følg versjonsrutingen i SKILL.md) og sammenlign svaret med expected_output. Fasit er skrevet mot v0.40.0-baseline (eval 8–9 mot v0.45.3) — hvis en ny versjon endrer riktig svar, oppdater fasiten og begrunn hvorfor.",
   "evals": [
     {
       "id": 1,
@@ -49,6 +49,20 @@
       "name": "versjonsspesifikk-feature-tag-bordered",
       "prompt": "Kan jeg bruke variant=\"bordered\" på fhi-tag? package.json sier \"@folkehelseinstituttet/designsystem\": \"^0.39.0\".",
       "expected_output": "Skal svare nei for 0.39.x — variant-attributtet med 'bordered' ble innført i v0.40.0. Skal bruke standard svarformat for versjonsspørsmål (For din versjon / I latest / Oppgraderingsnotat).",
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "ikon-i-tag-v0.44",
+      "prompt": "Jeg vil ha et klokkeikon foran teksten i en fhi-tag. package.json sier \"@folkehelseinstituttet/designsystem\": \"^0.44.0\".",
+      "expected_output": "Skal følge versjonsrutingen: 0.44.x er ikke latest, så INDEX.md/FEATURES.md konsulteres. Skal svare at ikonet legges først i default slot uten slot-attributt, f.eks. <fhi-tag><fhi-icon-clock></fhi-icon-clock>Utløper snart</fhi-tag>, med import av både fhi-tag og fhi-icon-clock. Skal IKKE bruke slot=\"icon\": icon-slotten innføres først i v0.45.2 (FEATURES.md), og i 0.44.x blir et element med slot=\"icon\" ikke tildelt noen slot og vises ikke. Skal bruke standard svarformat (For din versjon / I latest / Oppgraderingsnotat): i latest brukes slot=\"icon\", og ikon i default slot er deprecated fra 0.45.2 og gir console.warn, så koden bør migreres ved oppgradering.",
+      "files": []
+    },
+    {
+      "id": 9,
+      "name": "ikon-i-tag-latest",
+      "prompt": "Jeg vil ha et klokkeikon foran teksten i en fhi-tag. package.json sier \"@folkehelseinstituttet/designsystem\": \"^0.45.3\".",
+      "expected_output": "Fast path (latest): svar direkte fra SKILL.md og references/components/fhi-tag.md uten å lese versions/. Skal bruke slot=\"icon\", f.eks. <fhi-tag><fhi-icon-clock slot=\"icon\"></fhi-icon-clock>Utløper snart</fhi-tag>, med import av fhi-tag og fhi-icon-clock. Skal IKKE plassere ikonet i default slot (deprecated, gir console.warn).",
       "files": []
     }
   ]

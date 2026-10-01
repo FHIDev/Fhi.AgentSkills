@@ -215,7 +215,7 @@ infra/crossplane/base/compositions/webapp.yaml
 
 # Crossplane kluster-overlays — XRD-/composition-varianter som IKKE ligger i base.
 # Her rulles nye API-versjoner ut først (f.eks. skybertapp-beta.yaml med gruppe
-# skybert-beta.fhi.no/v1beta1 på aks-ops-test-01). Uten disse mønstrene fanges de
+# skybert-beta.fhi.no/v1beta1 på aks-ops-test-02). Uten disse mønstrene fanges de
 # kun i FULL-modus, aldri i INKREMENTELL.
 infra/crossplane/*/xrds/*.yaml
 infra/crossplane/*/compositions/*.yaml
@@ -254,7 +254,7 @@ scripts/lib/grafana/*.sh
 # Andre scripts/lib/*.sh leses selektivt bare når de sources av en endret
 # tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk.
 
-# sk8 Go-CLI (intern-merket i docs, men tenant-nyttig): kun README og innebygd
+# sk8 Go-CLI (publisert som docs/get-started/sk8-cli.md): kun README og innebygd
 # klusterregister er signal. Publisert register: docs-repoets docs/sk8/clusters.json.
 # (Script-dispatcheren scripts/ska er et separat verktøy, dokumentert i docs/internal/ska-cli.md.)
 utils/coraza-proxy-wasm/**
@@ -263,6 +263,12 @@ utils/sk8/data/clusters.json
 
 # CloudNativePG — støttet tenant-komponent (operator, values, plugin-versjoner)
 infra/cloudnative-pg/**
+
+# KubeVirt — smoke test på et utvalg klustere (hvilke klustere har operator/CRD-er); tenant-tilgang
+# styres av skybert:tenant-admin:kubevirt i infra/skybert-system/base/tenant-admin-clusterroles/
+# (ikke aggregert; bindes med RoleBinding i tenants/<tenant>/base/kubevirt-*rolebinding.yaml — en ny
+# binding i en tenant-base følger dette mønsteret og gir normalt ingen skill-endring)
+infra/kubevirt/**
 
 # kube-state-metrics — CustomResourceState-metrics (VPA-gauges, PolicyReport) er
 # tenant-synlige i Grafana; values-filen er signal, resten er drift

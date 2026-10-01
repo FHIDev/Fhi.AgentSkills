@@ -11,7 +11,7 @@ Skybert bruker Kyverno for policy-håndhevelse. Policiene under gjelder tenant-n
 | `policies-green` + `policy-exceptions` | Alle |
 | `policies-not-red` | Alle unntatt `aks-red-test-01`/`aks-red-prod-01` |
 | `policies-red` | `aks-red-test-01`, `aks-red-prod-01` |
-| `policies-prod` | `aks-green-prod-02`, `aks-red-prod-01`, `aks-yellow-prod-01`, `aks-norsyss-prod-01` |
+| `policies-prod` | `aks-green-prod-03`, `aks-red-prod-01`, `aks-yellow-prod-01`, `aks-norsyss-prod-01` |
 | `norsyss-runtime-access.yaml` (PolicyException) | `aks-norsyss-prod-01` |
 
 > Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/kyverno-policies/
@@ -76,7 +76,7 @@ Skybert bruker Kyverno for policy-håndhevelse. Policiene under gjelder tenant-n
 | Policy | Hva blokkeres |
 |--------|---------------|
 | `ingress-security` | Ingress uten TLS-match, uten ingressClassName, med wildcard-hosts |
-| `deny-flambert-hostnames-in-tenant-namespaces` | Hostnames `*.flambert` og `*.flambert.fhi.no` i `tn-*` — håndheves på `Ingress`, `HTTPRoute`/`TLSRoute`/`GRPCRoute` og `ListenerSet` |
+| `deny-flambert-hostnames-in-tenant-namespaces` | Hostname `*.flambert` i `tn-*` — håndheves på `Ingress`, `HTTPRoute`/`TLSRoute`/`GRPCRoute` og `ListenerSet` |
 
 Detaljene står i [Hostnavn og nettverk — Ingress-regler](hostnames-and-networking.md#ingress-regler-kyverno-håndhevet).
 
@@ -119,7 +119,7 @@ Detaljene står i [Hostnavn og nettverk — Ingress-regler](hostnames-and-networ
 | `recommend-network-policy` | `policies-not-red` | Bakgrunnsskann (`admission: false`): rapporterer `tn-*`-namespaces uten verken Kubernetes- eller Calico-`NetworkPolicy`. Funnet lander i PolicyReport i tenant-namespacet (matcher `default`-SA-en). På rød dekkes isolasjon av GNP-er i stedet |
 | `prevent-run-as-root-override` (regel i `auto-set-default-user-and-run-as-non-root`) | `policies-green` | `runAsNonRoot: false` på containere (alle pods) |
 
-Tenanten har lesetilgang til `policyreports` i eget namespace (`kubectl get policyreport -n tn-<tenant>`); `sk8 policies --tenant <tenant>` aggregerer de samme funnene — se [kubectl-tilgang](kubectl-access.md#sk8-cli--automatisert-pim--proxy).
+Tenanten har lesetilgang til `policyreports` i eget namespace (`kubectl get policyreport -n tn-<tenant>`); `sk8 policies --tenant <tenant>` aggregerer de samme funnene — se [kubectl-tilgang](kubectl-access.md#sk8-cli--pim-og-proxy).
 
 > Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/kyverno-policies/base/
 
@@ -160,7 +160,7 @@ Gjelder `aks-red-test-01` og `aks-red-prod-01` (`policies-red`). Nettverksreglen
 
 ## Produksjon — runtime-restriksjoner
 
-`policies-prod` gjelder kun prod-klustrene: aks-green-prod-02, aks-norsyss-prod-01, aks-red-prod-01 og aks-yellow-prod-01.
+`policies-prod` gjelder kun prod-klustrene: aks-green-prod-03, aks-norsyss-prod-01, aks-red-prod-01 og aks-yellow-prod-01.
 
 | Policy | Hva blokkeres |
 |--------|---------------|
@@ -168,7 +168,7 @@ Gjelder `aks-red-test-01` og `aks-red-prod-01` (`policies-red`). Nettverksreglen
 
 Konsekvens: feilsøk i prod via logger/metrics i Grafana — se [Observability](observability.md).
 
-**Test og sandbox:** I green-test, yellow-test-02, ops-test og sandbox er exec, port-forward, attach, proxy og debug-containere tillatt — ingen Kyverno-policy blokkerer dem, og `skybert:tenant-admin` aggregerer fragmentet `skybert:tenant-admin:test-sandbox:runtime-access` (`pods/exec`, `pods/attach`, `pods/portforward`, `pods/proxy`, `services/proxy`, `pods/ephemeralcontainers`). Docs (`persistence/postgres`) sier at `kubectl exec` ikke gis på noe kluster; infra-repoet er autoritativt her.
+**Test og sandbox:** exec, port-forward, attach, proxy og debug-containere er tillatt på klustrene som har RBAC-fragmentet (se [Tenant-RBAC](platform-architecture.md#tenant-rbac) for hvilke) — ingen Kyverno-policy blokkerer dem der, og `skybert:tenant-admin` aggregerer fragmentet `skybert:tenant-admin:test-sandbox:runtime-access` (`pods/exec`, `pods/attach`, `pods/portforward`, `pods/proxy`, `services/proxy`, `pods/ephemeralcontainers`). Docs (`persistence/postgres`) sier at `kubectl exec` ikke gis på noe kluster; infra-repoet er autoritativt her.
 
 **Unntak: `tn-norsyss` på `aks-norsyss-prod-01`.** PolicyException `norsyss-runtime-access` unntar
 namespacet fra regelen `deny-pod-portforward` i `deny-tenant-runtime-access`. Unntaket er avgrenset

@@ -83,8 +83,9 @@ import '@folkehelseinstituttet/designsystem/fhi-tag';
 ```
 
 ```html
+<!-- v0.45.2+: ikon i egen slot. Før v0.45.2: ikonet først i default slot uten slot-attributt (slot="icon" vises ikke). -->
 <fhi-tag color="success">
-  <fhi-icon-check></fhi-icon-check>
+  <fhi-icon-check slot="icon"></fhi-icon-check>
   Fullført
 </fhi-tag>
 ```
@@ -115,7 +116,7 @@ Se [`fhi-text-input`](components/fhi-text-input.md) for runtime-validering og fa
 
 ## Tilgjengelige ikoner
 
-> Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.45.0`
+> Ikonlisten nedenfor er verifisert mot `@folkehelseinstituttet/designsystem@0.45.3`
 > (`file-text` lagt til i v0.38.0; ellers uendret fra v0.34.0).
 
 Alle importeres som `@folkehelseinstituttet/designsystem/fhi-icon-{navn}` og brukes som `<fhi-icon-{navn}>`.

@@ -5,7 +5,7 @@
 - [Forutsetninger](#forutsetninger)
 - [Koble til klusteret](#koble-til-klusteret)
 - [Tilgjengelige klustere](#tilgjengelige-klustere)
-- [sk8 CLI — automatisert PIM + proxy](#sk8-cli--automatisert-pim--proxy)
+- [sk8 CLI — PIM og proxy](#sk8-cli--pim-og-proxy)
 - [k9s](#k9s)
 - [Kjøre container lokalt fra ACR](#kjøre-container-lokalt-fra-acr)
 
@@ -27,7 +27,7 @@
 ## Koble til klusteret
 
 Klustrene er AKS på Azure Local, Arc-connected, uten direkte nettverkstilgang. All kubectl-trafikk
-går via `az connectedk8s proxy` (ikke `az aks get-credentials`).
+går via `az connectedk8s proxy` (ikke `az aks get-credentials`). Docs anbefaler [`sk8`](#sk8-cli--pim-og-proxy) for å velge kluster og starte proxyen (PIM for tenant-brukere: se samme seksjon); de manuelle kommandoene under gjelder når `sk8` ikke kan brukes.
 
 **Steg 1: Start proxy (hold terminalen åpen)**
 
@@ -36,7 +36,7 @@ az connectedk8s proxy --resource-group <resource-group> --name <kluster-navn> --
 ```
 
 Verdiene står i [klustertabellen](#tilgjengelige-klustere) — bruk den, ikke et navnemønster
-(sandbox og ops-test følger ikke `rg-fhi-aks-<sone>-<env>-weu-01`). Har du valgt riktig subscription
+(sandbox og ops-test følger ikke `rg-fhi-aks-<sone>-<env>-weu-<nn>`, og `<nn>` er ikke likt for alle). Har du valgt riktig subscription
 ved `az login`, kan `--subscription` utelates. Proxyen registrerer selv en kubectl-context;
 plattformens egne verktøy (`ska az proxy`, `sk8`) starter den på en tilfeldig port i 47000–49999.
 
@@ -49,8 +49,8 @@ kubectl get pods
 
 Du har kun tilgang i eget namespace `tn-<tenant>`. Manuelle endringer rulles tilbake av Flux
 innen få minutter — permanente endringer gjøres via GitOps. `exec`/`port-forward`/`attach`/`proxy`
-virker kun i sandbox, green-test, yellow-test-02 og ops-test; i prod blokkerer Kyverno, i red-test
-mangler RBAC-fragmentet — se [Kyverno-policier](kyverno-policies.md#produksjon--runtime-restriksjoner).
+er begrenset per kluster: i prod blokkerer Kyverno, i red-test mangler RBAC-fragmentet — se
+[Kyverno-policier](kyverno-policies.md#produksjon--runtime-restriksjoner) og [Tenant-RBAC](platform-architecture.md#tenant-rbac) for hvilke klustere som tillater dem.
 
 > Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/az--proxy.sh
 
@@ -68,9 +68,9 @@ hver farge = sandbox + ett test- + ett prod-kluster.
 
 | Kluster | Resource Group | Subscription ID |
 |---------|---------------|----------------|
-| aks-sandbox-01 | `rg-fhi-aks-sandbox-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-sandbox-02 | `rg-fhi-sandbox-weu-02` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 
-`aks-sandbox-01` er felles for alle fargesoner.
+`aks-sandbox-02` er felles for alle fargesoner.
 
 > Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh
 
@@ -78,11 +78,10 @@ hver farge = sandbox + ett test- + ett prod-kluster.
 
 | Kluster | Resource Group | Subscription ID |
 |---------|---------------|----------------|
-| aks-green-test-01 | `rg-fhi-aks-green-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
-| aks-yellow-test-02 | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
-| aks-yellow-test-01 [¹] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-green-test-02 | `rg-fhi-aks-green-test-weu-02` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-yellow-test-03 | `rg-fhi-aks-yellow-test-weu-02` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-red-test-01 | `rg-fhi-aks-red-test-weu-01` | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
-| aks-ops-test-01 [²] | `rg-fhi-aks-yellow-test-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
+| aks-ops-test-02 [¹] | `rg-fhi-aks-ops-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 
 > Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh
 
@@ -90,16 +89,14 @@ hver farge = sandbox + ett test- + ett prod-kluster.
 
 | Kluster | Resource Group | Subscription ID |
 |---------|---------------|----------------|
-| aks-green-prod-02 | `rg-fhi-aks-green-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
+| aks-green-prod-03 | `rg-fhi-aks-green-prod-weu-02` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
 | aks-yellow-prod-01 | `rg-fhi-aks-yellow-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
 | aks-red-prod-01 | `rg-fhi-aks-red-prod-weu-01` | `88fde73a-d4a6-4aab-b8be-31810fcd7116` |
-| aks-norsyss-prod-01 [³] | `rg-fhi-aks-norsyss-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
+| aks-norsyss-prod-01 [²] | `rg-fhi-aks-norsyss-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
 
-[¹] Registrert, men ikke i `COLOR_GROUP_CLUSTERS` — yellow-lanen bruker `aks-yellow-test-02`.
+[¹] Plattformens eget test-/utviklingskluster (første kluster ved komponentoppgraderinger). Har egen resource group og deler subscription med sandbox, green-test og yellow-test.
 
-[²] Plattformens eget test-/utviklingskluster (første kluster ved komponentoppgraderinger). Deler resource group og subscription med yellow-test.
-
-[³] Ikke i `COLOR_GROUP_CLUSTERS`; kjører samme Kyverno-policysett som gul prod.
+[²] Ikke i `COLOR_GROUP_CLUSTERS`; kjører samme Kyverno-policysett som gul prod.
 
 > Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh
 
@@ -120,13 +117,12 @@ Kubernetes service accounts). Format: `https://europe.oic.prod-arc.azure.com/<en
 
 | Kluster | OIDC issuer URL |
 |---------|-----------------|
-| aks-sandbox-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/cf8f6b35-4954-4548-b3da-37287cdbe99b/` |
-| aks-green-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/8eae23c5-dedf-4812-9c32-9de1adbb67c9/` |
-| aks-yellow-test-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/bfb4e46e-3df2-436b-985b-ecdc184e46f7/` |
-| aks-yellow-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/5218cffc-5c13-4b12-8edc-0d76cba4c9a3/` |
-| aks-ops-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/50541d55-54ba-48bc-bb33-bfeec177d216/` |
+| aks-sandbox-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/759e640b-2715-4701-aee5-4dc3310fd6ec/` |
+| aks-green-test-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/23172a9b-f273-4124-b9fe-ca58df0854e2/` |
+| aks-yellow-test-03 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/47fb8696-2a09-4564-bece-dabab07a2ecb/` |
+| aks-ops-test-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/f0bab261-3722-49ff-afd1-fe8543c420bd/` |
 | aks-red-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/30e79bc7-b120-4a86-8b94-07d875ccface/` |
-| aks-green-prod-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/2776d74b-e71f-41e5-b56e-4db0abc67cd3/` |
+| aks-green-prod-03 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/710de989-061c-439c-a2e0-b54e6f831bc4/` |
 | aks-yellow-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/3ba54ddb-2c2c-4bf5-81d0-e2f419b5f466/` |
 | aks-red-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/94639478-26a0-487a-926e-0dca36bce049/` |
 | aks-norsyss-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/2e7d357f-5942-4fad-bc16-91b0de9a7471/` |
@@ -140,19 +136,22 @@ az connectedk8s show --name <cluster> --resource-group <rg> --subscription <sub>
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh · https://docs.sky.fhi.no/internal/replace-cluster-in-place/
 
-## sk8 CLI — automatisert PIM + proxy
+## sk8 CLI — PIM og proxy
 
 Go-CLI i infra-repoet (`utils/sk8/`), publisert som GitHub-release (`sk8/v*`-tags) på
 `FHISkybert/Fhi.Skybert.Infra` — nedlasting krever tilgang til repoet. Forutsetninger: `az` med
 `connectedk8s`-extension, `kubectl`, `gh`. Klusterregisteret hentes fra
-`https://docs.sky.fhi.no/sk8/clusters.json` (lokal cache + innebygd fallback; `--refresh` tvinger ny henting).
+`https://docs.sky.fhi.no/sk8/clusters.json` (lokal cache, deretter publisert register, deretter innebygd kopi; `--refresh` tvinger ny henting og feiler i stedet for å falle tilbake til cache eller innebygd kopi). Er publisert `clusters.json` ugyldig JSON, feiler `--refresh`; uten `--refresh` brukes cache eller innebygd kopi.
 
 - **`sk8 cluster [navn]`** — interaktiv picker eller fuzzy-match på delnavn, PIM-aktivering ved
   behov (`--justification`, `--duration-hours`, `--skip-pim`), og `az connectedk8s proxy` i
   bakgrunnen. Kjøres den på nytt mens proxyen lever, kan den bytte kubectl-context i stedet.
-  `sk8 cluster list` viser registeret.
+  `sk8 cluster list` viser registeret. For tenant-brukere virker ikke automatisk PIM-aktivering
+  (eligibility gis via Entra-grupper): aktiver PIM i Azure Portal og kjør deretter
+  `sk8 cluster <kluster> --skip-pim`. `--skip-pim` hopper bare over aktiveringsforespørselen og
+  gir ikke tilgang.
 - **`sk8 status --tenant <tenant>`** — sammenligner siste commit i GitOps-repoet
-  (`FHIDev/Fhi.<Tenant>.GitOps`, via `gh`) med det Flux har deployet på gjeldende context
+  (`FHIDev/Fhi.<Tenant>.GitOps`, eller repoet i OCI-artefaktets `org.opencontainers.image.source` når den finnes; via `gh`) med det Flux har deployet på gjeldende context
   (`Kustomization.status.lastAppliedOriginRevision` + readiness), og skanner `tn-<tenant>` for
   suspenderte Kustomizations, crash-loops, image-pull-feil og deployments uten klare replikaer.
 - **`sk8 policies --tenant <tenant>`** — aggregerer Kyverno PolicyReports for tenanten på gjeldende
@@ -166,7 +165,7 @@ Go-CLI i infra-repoet (`utils/sk8/`), publisert som GitHub-release (`sk8/v*`-tag
 `--tenant` husker sist brukte tenant. Bash-dispatcheren `ska` (`ska tenant new` →
 `scripts/tenant--new.sh`) er plattformteamets verktøy og ikke det samme som `sk8`.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/sk8/README.md · https://docs.sky.fhi.no/internal/ska-cli/
+> Kilde: https://docs.sky.fhi.no/get-started/sk8-cli/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/sk8/README.md · https://docs.sky.fhi.no/internal/ska-cli/
 
 ## k9s
 

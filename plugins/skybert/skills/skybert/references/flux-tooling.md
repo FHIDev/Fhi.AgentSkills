@@ -38,15 +38,15 @@ URL-mønster: `https://flux.<color>-<instance>.<domain>` (`<domain>` = `skytest.
 
 | Sone | Miljø | URL |
 |------|-------|-----|
-| Sandbox | sandbox | `https://flux.sandbox-01.skytest.fhi.no` |
-| Grønn | test | `https://flux.green-01.skytest.fhi.no` |
-| Grønn | prod | `https://flux.green-02.sky.fhi.no` |
-| Gul | test | `https://flux.yellow-02.skytest.fhi.no` |
+| Sandbox | sandbox | `https://flux.sandbox-02.skytest.fhi.no` |
+| Grønn | test | `https://flux.green-02.skytest.fhi.no` |
+| Grønn | prod | `https://flux.green-03.sky.fhi.no` |
+| Gul | test | `https://flux.yellow-03.skytest.fhi.no` |
 | Gul | prod | `https://flux.yellow-01.sky.fhi.no` |
 | Rød | test | `https://flux.red-01.skytest.fhi.no` |
 | Rød | prod | `https://flux.red-01.sky.fhi.no` (kun nåbar fra secure zone) |
 
-> Kilde: https://docs.sky.fhi.no/build/flux-dashboard/
+> Kilde: https://docs.sky.fhi.no/build/flux-dashboard/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/flux-operator/
 
 ## Flux Operator MCP
 
