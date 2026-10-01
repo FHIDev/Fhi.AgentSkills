@@ -71,9 +71,9 @@ Plattformen leverer to typer managed identities per tenant:
 
 ### Ved utskifting av kluster
 
-**Tenant-konsekvens av intern gjenoppretting:** Et reprovisjonert kluster kan ha samme navn, men ny OIDC issuer URL. Plattformteamet oppdaterer plattformforvaltede identiteter. Eier tenanten egne managed identities med egne federated credentials, må tenanten oppdatere issuer på disse; subject og audience beholdes.
+**Tenant-konsekvens av intern gjenoppretting:** Et reprovisjonert kluster kan ha samme navn, men ny OIDC issuer URL, eller få nytt navn med nye issuer- og dashboard-URL-er — se [klusterlisten](kubectl-access.md#tilgjengelige-klustere). Plattformteamet oppdaterer plattformforvaltede identiteter. Eier tenanten egne managed identities med egne federated credentials, må tenanten oppdatere issuer på disse; subject og audience beholdes.
 
-> Kilde: https://docs.sky.fhi.no/internal/replace-cluster-in-place/
+> Kilde: https://docs.sky.fhi.no/internal/replace-cluster-in-place/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh
 
 ## Tenant-RBAC — hva du kan administrere
 

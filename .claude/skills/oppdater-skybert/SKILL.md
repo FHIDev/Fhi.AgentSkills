@@ -228,7 +228,7 @@ Betingelsene evalueres ovenfra og ned — første treff vinner:
 | State-fil mangler / ugyldig (ev. kun gammel HTML-kommentar finnes) | **FULL** (med migrering til schemaVersion 3) |
 | State-fil har `schemaVersion: 2` | Migrer til 3 (se State-kontrakt), fortsett deretter med radene under |
 | `lastFullscanDate` > 30 dager gammel | **FULL** — kjøres selv om SHAs/hash er uendret |
-| SHAs (docs, infra, guidelines)/hash uendret fra state | **NO-OP** — rapporter "ingen endringer" og stopp. Har state-filen åpne `openItems`, skal de likevel listes for brukeren med `firstSeen`-dato |
+| SHAs (docs, infra, guidelines — for guidelines HEAD på `github.guidelines.branch`, ikke `main`)/hash uendret fra state | **NO-OP** — rapporter "ingen endringer" og stopp. Har state-filen åpne `openItems`, skal de likevel listes for brukeren med `firstSeen`-dato |
 | SHA/hash endret | **INKREMENTELL** (begge moduser) |
 
 Periodisk FULL ved uendrede kilder er ikke bortkastet: det er mekanismen som fanger akkumulert drift fra inkrementelle kjøringer (delvis godkjente planer, avledede påstander som ble oversett) og re-validerer dekningsmatrisene og selve denne skillen.
@@ -372,7 +372,11 @@ Skriv/oppdater `maintenance/skybert/.oppdater-state.json` (kjøringsstate — de
   som beskriver dekningsgjelden.
 - **Skriv `maintenance/skybert/.oppdater-coverage.json`** når matrise A er komplett: alle sider, `docsCommit`
   = docs-SHA fra denne kjøringen, `skillContentHash` = hashen beregnet etter at alle skill-endringer
-  er implementert (se State-kontrakten for kommandoen). Er matrisen ufullstendig, skal filen ikke
+  er implementert (se State-kontrakten for kommandoen). Ved INKREMENTELL er matrise A komplett når alle
+  docs-sider utenfor compare-listen er bevist uendret mot `coverage.docsCommit` (krav 1–3 i «Videreført
+  dekning»); oppdater da `docsCommit`, `skillContentHash` og radene for endrede/nye sider. Videreførte rader der `coveredIn`
+  peker på en seksjon som er endret i kjøringen skal vurderes på nytt før hashen oppdateres (hashen sier bare at skill-filene
+  er uendret siden forrige kjøring, ikke at dekningsvurderingen fortsatt stemmer). Er matrisen ufullstendig, skal filen ikke
   skrives — en delvis matrise ville blitt lest som komplett ved neste kjøring.
 - **Ajourfør `openItems`:**
   - Legg til poster brukeren utsatte/avviste ikke-endelig i steg 7 (`status: "deferred"`)

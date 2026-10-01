@@ -182,9 +182,9 @@ tar ikke dataene. `spec.managed.roles` på Cluster-en gjør samme jobb inline �
 én rolle. **`GRANT` er ikke deklarativt** — det hører hjemme i migreringene, kjørt med eget
 verktøy (Flyway, Liquibase, EF Core, Alembic) som versjonert Kubernetes `Job` mot `pg-rw`.
 
-Docs sier `kubectl exec` ikke gis til tenanter på noe kluster; infra gir det i praksis kun i
-green-test, yellow-test-02, ops-test og sandbox (se
-[runtime-restriksjoner](kyverno-policies.md#produksjon--runtime-restriksjoner)). Bruk mønsteret
+Docs sier `kubectl exec` ikke gis til tenanter på noe kluster; infra gir det i praksis bare i
+test- og sandbox-klustrene unntatt red-test (se
+[Tenant-RBAC](platform-architecture.md#tenant-rbac) for hvilke). Bruk mønsteret
 som virker overalt: kjør SQL fra en kortlivet klient-pod mot `pg-rw` (engangs-pod med
 `kubectl run` + `psql`, les passordet fra `pg-app`-secreten). `enableSuperuserAccess` er `false`
 som default; settes den til `true`, lander passordet i `pg-superuser`-secreten.

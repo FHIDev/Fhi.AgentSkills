@@ -6,7 +6,7 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-09-21
+> **Sist verifisert mot offisiell docs:** 2026-09-30
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/ (samme innhold på https://skybert.fhi.no/)
 > Denne skillen er en kuratert oppsummering for AI-agenter. Hver seksjon har enten en `> Kilde:`-lenke eller er merket `> **Operasjonell antakelse:**` (erfaring uten repo-kilde).
 
@@ -46,7 +46,7 @@ En **tenant** er den grunnleggende organisasjonsenheten — et mellomnivå mello
 
 GitOps-repoet leveres med tre miljømapper. Hver mappe pakkes til sitt eget OCI-artefakt (`gitops_sandbox`, `gitops_test`, `gitops_prod`) og deployes til sitt kluster:
 
-- `sandbox/` — felles sandkassekluster `aks-sandbox-01` for alle farger. Start her.
+- `sandbox/` — felles sandkassekluster `aks-sandbox-02` for alle farger. Start her.
 - `test/` — dedikert testkluster per farge. Samme nettverksregler som prod; test er ikke en svakere variant.
 - `prod/` — dedikert prod-kluster per farge.
 
@@ -56,11 +56,11 @@ GitOps-repoet leveres med tre miljømapper. Hver mappe pakkes til sitt eget OCI-
 
 | Sone | Data | Test | Prod | Egress |
 |------|------|------|------|--------|
-| **Grønn** | Åpne data | `aks-green-test-01` | `aks-green-prod-02` | Åpen |
-| **Gul** | Interne data, persondata | `aks-yellow-test-02` | `aks-yellow-prod-01` | Åpen inntil videre |
+| **Grønn** | Åpne data | `aks-green-test-02` | `aks-green-prod-03` | Åpen |
+| **Gul** | Interne data, persondata | `aks-yellow-test-03` | `aks-yellow-prod-01` | Åpen inntil videre |
 | **Rød** | Identifiserbar helseinformasjon | `aks-red-test-01` | `aks-red-prod-01` | Default deny; IP/CIDR-unntak via plattformteamet. Ingress kun fra NHN secure zone |
 
-Utover disse finnes `aks-sandbox-01` (alle farger), `aks-norsyss-prod-01` (eget prod-kluster i gul-lanen for Norsyss) og `aks-ops-test-01` (test-/utviklingskluster; hoster også tenanter). `aks-yellow-test-01` er registrert, men inngår ikke i gul-lanen.
+Utover disse finnes `aks-sandbox-02` (alle farger), `aks-norsyss-prod-01` (eget prod-kluster i gul-lanen for Norsyss) og `aks-ops-test-02` (test-/utviklingskluster; hoster også tenanter).
 
 Alle klustere kjører samme Kyverno-grunnpolicyer (`policies-green`); prod-klustrene har i tillegg `policies-prod` (blokkerer runtime-kommandoer) og rød sone `policies-red`. Rød sone forbyr native `NetworkPolicy`; Calico `NetworkPolicy` tillates med `spec.order` i `[1000, 1200)`. Se [Kyverno-policier](references/kyverno-policies.md) og [Rød sone](references/hostnames-and-networking.md#rød-sone). Full klusterliste med subscription-ID-er: [kubectl-tilgang](references/kubectl-access.md#tilgjengelige-klustere).
 
@@ -96,7 +96,7 @@ Repoet leveres fra plattformens mal; `.github/workflows/` er ferdig konfigurert 
 .github/workflows/
     oci-push.yaml         # pakker manifester til OCI-artefakter ved push til main
     update-tag.yaml       # oppdaterer image-tag via repository_dispatch
-sandbox/                  # → aks-sandbox-01
+sandbox/                  # → aks-sandbox-02
     my-app.yaml
 test/                     # → testklusteret for din farge
     my-app.yaml

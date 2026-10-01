@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-21T06:18:19Z",
-  "docsCommit": "f05b2901ad8a7efd098f1f74ccfb5ecb07d1d155",
-  "skillContentHash": "0af5d1d628f981d8448cc878b32d97536c54c4298ff4c4a26a9b39849332b786",
+  "generatedAt": "2026-09-30T20:00:00Z",
+  "docsCommit": "fcac9816144bebafd9c26d223c6cea17a99317a9",
+  "skillContentHash": "8f0a926a94caa0175769aad707ba58eb3dbeb3db35468a7f179b99be977ce9e6",
   "pages": [
     {
       "path": "docs/auth/index.md",
@@ -50,7 +50,7 @@
         "references/flux-tooling.md"
       ],
       "coverage": "komplett",
-      "missing": ""
+      "missing": "Docs viser fortsatt gamle Flux-hostnavn for green/yellow; skillen følger infra (flux-operator-overlays). Åpen post docs-klusternavn-etter-infra."
     },
     {
       "path": "docs/build/flux-mcp.md",
@@ -145,7 +145,7 @@
         "SKILL.md#skybert-platform-skill"
       ],
       "coverage": "komplett",
-      "missing": ""
+      "missing": "Docs viser fortsatt aks-green-test-01, aks-green-prod-02 og aks-yellow-test-02; skillen følger infra. Åpen post docs-klusternavn-etter-infra."
     },
     {
       "path": "docs/get-started/connectedk8s.md",
@@ -154,7 +154,16 @@
         "references/kubectl-access.md"
       ],
       "coverage": "komplett",
-      "missing": "Docs lister fortsatt aks-yellow-test-01; skillen noterer at den er under utfasing (infra clusters.sh er autoritativ)."
+      "missing": "Docs viser fortsatt gamle klusternavn (green-test-01, yellow-test-02, ops-test-01, green-prod-02); skillen følger infra (scripts/lib/clusters.sh). Åpen post docs-klusternavn-etter-infra."
+    },
+    {
+      "path": "docs/get-started/sk8-cli.md",
+      "topic": "sk8 CLI: installasjon, sk8 cluster og PIM for tenant-brukere, status/policies/suspend/resume, registerkilder",
+      "coveredIn": [
+        "references/kubectl-access.md#sk8-cli--pim-og-proxy"
+      ],
+      "coverage": "komplett",
+      "missing": ""
     },
     {
       "path": "docs/get-started/gitops-repo.md",
@@ -446,7 +455,7 @@
       "path": "docs/internal/ska-cli.md",
       "topic": "Intern ska-dispatcher; sk8 Go-CLI er separat",
       "coveredIn": [
-        "references/kubectl-access.md#sk8-cli--automatisert-pim--proxy"
+        "references/kubectl-access.md#sk8-cli--pim-og-proxy"
       ],
       "coverage": "komplett",
       "missing": ""
@@ -591,7 +600,7 @@
         "references/observability.md#observability"
       ],
       "coverage": "komplett",
-      "missing": ""
+      "missing": "Docs viser gamle Grafana-hostnavn for green/yellow og grafana.sandbox-02; skillen følger infra. Åpne poster docs-klusternavn-etter-infra og grafana-url-sandbox-ops."
     },
     {
       "path": "docs/observability/index.md",
@@ -720,7 +729,7 @@
         "references/waf.md#bundles-og-egne-regler"
       ],
       "coverage": "delvis",
-      "missing": "Dokumentert med forbehold: standard-RBAC mangler EnvoyExtensionPolicy; docs/infra er uenige om bundle-default; Envoy-runtime er ikke verifisert. Åpne poster waf-tenant-rbac, waf-bundle-default og waf-image-runtime."
+      "missing": "Dokumentert med forbehold: standard-RBAC mangler EnvoyExtensionPolicy; docs og infra er uenige om bundle-navn og default (docs detection/baseline/strict, default-on; infra owasp-detection/owasp, default none, opt-in); Envoy-runtime er ikke verifisert. Åpne poster waf-tenant-rbac, waf-bundle-default og waf-image-runtime."
     },
     {
       "path": "docs/workloads/waf/index.md",
@@ -731,7 +740,7 @@
         "references/waf.md#bundles-og-egne-regler"
       ],
       "coverage": "delvis",
-      "missing": "Dokumentert med forbehold: standard-RBAC mangler EnvoyExtensionPolicy; docs/infra er uenige om bundle-default; Envoy-runtime er ikke verifisert. Åpne poster waf-tenant-rbac, waf-bundle-default og waf-image-runtime."
+      "missing": "Dokumentert med forbehold: standard-RBAC mangler EnvoyExtensionPolicy; docs og infra er uenige om bundle-navn og default (docs detection/baseline/strict, default-on; infra owasp-detection/owasp, default none, opt-in); Envoy-runtime er ikke verifisert. Åpne poster waf-tenant-rbac, waf-bundle-default og waf-image-runtime."
     },
     {
       "path": "docs/sk8/clusters.json",
@@ -740,7 +749,7 @@
         "references/kubectl-access.md"
       ],
       "coverage": "komplett",
-      "missing": ""
+      "missing": "Filen på main har uløste merge-konfliktmarkører (ugyldig JSON); skillen bruker scripts/lib/clusters.sh som verdikilde. Åpen post docs-clusters-json-merge-konflikt."
     },
     {
       "path": "guidelines:docs/CI-CD/container-images.md",
