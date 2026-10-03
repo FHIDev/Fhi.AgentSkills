@@ -43,8 +43,6 @@ SkybertApp eksponerer ingen Ingress-annotasjoner, så et `hostname` på SkybertA
 
 external-dns kjører per kluster mot samme Azure DNS-sone (`sky.fhi.no` i `rg-domains`), med TXT-registry og `--txt-owner-id=<kluster>`. Er tenanten registrert på både grønn og rød lane, rendres samme Ingress-host på begge prod-klustrene. Klusteret som skriver recorden først eier den, og det andre hopper over den. Klustrene er ikke konfigurert likt: `aks-red-prod-01` kjører v0.21 med `--policy=sync` og sletter egne records når Ingressen forsvinner, `aks-green-prod-03` kjører v0.16.1 med `--policy=upsert-only` og oppretter og oppdaterer, men sletter aldri. Merk, `aks-green-prod-03` skriver fortsatt `--txt-owner-id=aks-green-prod-02`, så TXT-recorden viser det gamle klusternavnet.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/external-dns/
-
 Eieren står i TXT-recorden: `dig +short <host> TXT` gir en streng som inneholder `external-dns/owner=<kluster>`, for grønn prod `owner=aks-green-prod-02`.
 
 Eierskapet flyttes fra rødt til grønt uten git-endring, men flyttingen gir et kort DNS-brudd: rødt sletter A- og TXT-recorden straks Ingressen forsvinner, og hostnavnet svarer NXDOMAIN til grønt har skrevet sine (1–2 min, lenger hos klienter som cacher det negative svaret).
@@ -57,6 +55,8 @@ Eierskapet flyttes fra rødt til grønt uten git-endring, men flyttingen gir et 
 Rødt ser deretter en fremmed eier og lar recorden være. Kappløpet gjentar seg hver gang recorden slettes eller hostnavnet endres. Merk, grønn sletter aldri recorden: forsvinner Ingressen på grønt, peker recorden fortsatt dit, og rødt rører den ikke. A- og TXT-recorden må da slettes manuelt i sonen.
 
 > **Operasjonell antakelse:** Flyttingen (steg 2–4) er prøvd på en tenant registrert på både grønn og rød prod; docs beskriver ikke DNS-eierskap mellom laner. Sjekken i steg 1 og tilbakefallet i steg 4 er utledet av policy-oppførselen over, ikke prøvd.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/external-dns/
 
 ## Ingress-regler (Kyverno-håndhevet)
 
