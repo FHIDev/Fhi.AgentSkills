@@ -4,6 +4,7 @@
 
 - [Støttede domener](#støttede-domener)
 - [Public DNS-oppslag (external-dns)](#public-dns-oppslag-external-dns)
+- [DNS-eierskap for tenanter på flere laner](#dns-eierskap-for-tenanter-på-flere-laner)
 - [Ingress-regler (Kyverno-håndhevet)](#ingress-regler-kyverno-håndhevet)
 - [Nettverkspolicyer](#nettverkspolicyer)
 - [Rød sone](#rød-sone)
