@@ -32,7 +32,9 @@ Rettighetene bak knappene (tenant-admins verb på Kustomizations/OCIRepositories
 
 > Kilde: https://docs.sky.fhi.no/build/flux-dashboard/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/skybert-system/base/tenant-admin-clusterroles/
 
-Suspend med dashboardet eller `flux suspend kustomization <navn> -n tn-<tenant>`, aldri med `kubectl patch` eller `kubectl edit`. Tenantens Kustomization appliseres selv av plattformens `tenants`-Kustomization (hvert 2. minutt, `force: true`), og den applyen tar over `spec.suspend` fra kubectl: feltet forsvinner, og tenanten rekonsilierer igjen uten varsel. `flux suspend` skriver feltet med manager `flux`, og det blir stående.
+Suspend med dashboardet eller `flux suspend kustomization <navn> -n tn-<tenant>`, aldri med `kubectl patch` eller `kubectl edit`. Tenantens Kustomization appliseres selv av plattformens `tenants`-Kustomization (hvert 2. minutt). Før hver apply overtar kustomize-controller felt eid av field managers med prefikset `kubectl` (også `kubectl-patch` og `kubectl-edit`), og applyen fjerner så `spec.suspend`, som ikke står i plattformens manifest: tenanten rekonsilierer igjen uten varsel. `flux suspend` skriver feltet med manager `flux`, som ikke overtas, og det blir stående.
+
+> Kilde: https://github.com/fluxcd/kustomize-controller/blob/main/internal/controller/kustomization_controller.go (`ApplyCleanupOptions`) · https://github.com/fluxcd/pkg/blob/main/ssa/patch.go (`matchFieldManager`, prefiks-match)
 
 > **Operasjonell antakelse:** Observert på røde tenant-klustere: kubectl-suspend ble revertert innen ett intervall, `flux suspend` sto over flere.
 
