@@ -4,6 +4,7 @@
 
 - [Støttede domener](#støttede-domener)
 - [Public DNS-oppslag (external-dns)](#public-dns-oppslag-external-dns)
+- [DNS-eierskap for tenanter på flere laner](#dns-eierskap-for-tenanter-på-flere-laner)
 - [Ingress-regler (Kyverno-håndhevet)](#ingress-regler-kyverno-håndhevet)
 - [Nettverkspolicyer](#nettverkspolicyer)
 - [Rød sone](#rød-sone)
@@ -37,6 +38,25 @@ Test-issuerne finnes på alle test-klustere og sandbox; prod-issueren på alle p
 SkybertApp eksponerer ingen Ingress-annotasjoner, så et `hostname` på SkybertApp får alltid ingressens private IP. Trenger appen offentlig DNS-oppslag (f.eks. en frontend hostet utenfor FHI, eller claude.ai), la `hostname` stå tomt på SkybertApp (da rendres verken Service eller Ingress) og skriv egen `Service` (selector `skybert.fhi.no/webapp: <app>`, port = `spec.port`) og `Ingress` med `spec.ingressClassName: nginx`, TLS-blokk for hostnavnet, `cert-manager.io/cluster-issuer` (se tabellen over) og `external-dns.alpha.kubernetes.io/target: "<klusterets offentlige front-end-IP>"`. Ingressen må oppfylle [Kyverno-reglene under](#ingress-regler-kyverno-håndhevet). Front-end-IP-ene `83.118.177.220` (grønn test) og `83.118.177.234` (grønn prod) er ikke bekreftet for dagens klustre; bekreft med plattformteamet. Offentlig eksponering utenfor grønn sone er en klassifiseringsbeslutning, ikke et IP-oppslag — avklar med plattformteamet på `#ext-fhi-skybert` før du bruker mønsteret på gul eller rød.
 
 > **Operasjonell antakelse:** Ikke dokumentert for tenanter i docs, men i bruk i `tn-ki-mcp` (`Fhi.Ki.Mcp.GitOps`, test og prod) og verifisert i `tn-ehds-soksak` i grønn test med offentlig A-record, TLS og trafikk utenfra. For andre klustere (sandbox, ops-test, gul, rød): avklar IP med plattformteamet på `#ext-fhi-skybert`.
+
+## DNS-eierskap for tenanter på flere laner
+
+external-dns kjører per kluster mot samme Azure DNS-sone (`sky.fhi.no` i `rg-domains`), med TXT-registry og `--txt-owner-id=<kluster>`. Er tenanten registrert på både grønn og rød lane, rendres samme Ingress-host på begge prod-klustrene. Klusteret som skriver recorden først eier den, og det andre hopper over den. Klustrene er ikke konfigurert likt: `aks-red-prod-01` kjører v0.21 med `--policy=sync` og sletter egne records når Ingressen forsvinner, `aks-green-prod-03` kjører v0.16.1 med `--policy=upsert-only` og oppretter og oppdaterer, men sletter aldri. Merk, `aks-green-prod-03` skriver fortsatt `--txt-owner-id=aks-green-prod-02`, så TXT-recorden viser det gamle klusternavnet.
+
+Eieren står i TXT-recorden: `dig +short <host> TXT` gir en streng som inneholder `external-dns/owner=<kluster>`, for grønn prod `owner=aks-green-prod-02`.
+
+Eierskapet flyttes fra rødt til grønt uten git-endring, men flyttingen gir et kort DNS-brudd: rødt sletter A- og TXT-recorden straks Ingressen forsvinner, og hostnavnet svarer NXDOMAIN til grønt har skrevet sine (1–2 min, lenger hos klienter som cacher det negative svaret).
+
+1. Bekreft at grønn Ingress for hostnavnet finnes og svarer: `curl --resolve <host>:443:<grønn ingress-IP> https://<host>/`.
+2. Suspend tenantens Kustomization på rødt med `flux suspend` (se [Flux-verktøy](flux-tooling.md)), og slett Ingressen der.
+3. Vent til TXT-recorden viser `owner=aks-green-prod-02` og A-recorden peker på grønn ingress-IP.
+4. Resume Kustomizationen på rødt uansett utfall. Lyktes ikke steg 3, gjenskaper rødt Ingressen og recorden, og tilstanden er som før.
+
+Rødt ser deretter en fremmed eier og lar recorden være. Kappløpet gjentar seg hver gang recorden slettes eller hostnavnet endres. Merk, grønn sletter aldri recorden: forsvinner Ingressen på grønt, peker recorden fortsatt dit, og rødt rører den ikke. A- og TXT-recorden må da slettes manuelt i sonen.
+
+> **Operasjonell antakelse:** Flyttingen (steg 2–4) er prøvd på en tenant registrert på både grønn og rød prod; docs beskriver ikke DNS-eierskap mellom laner. Sjekken i steg 1 og tilbakefallet i steg 4 er utledet av policy-oppførselen over, ikke prøvd.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/external-dns/
 
 ## Ingress-regler (Kyverno-håndhevet)
 
