@@ -13,7 +13,8 @@ Kanonisk fil for StorageClasses, databasevalg og CloudNativePG (CNPG). Andre fil
 ## StorageClasses
 
 Skybert kjører AKS på **Azure Local**, og StorageClassene kommer fra fire ulike CSI-drivere.
-`kubectl get sc` på eget kluster er autoritativt — dette er forventet liste:
+Hvilke klasser som finnes varierer per kluster, og tenanter får `Forbidden` på `kubectl get sc`,
+også for én navngitt klasse. Dette er forventet liste:
 
 | StorageClass | Provisioner | Reclaim | Access | Hva det er |
 |:--|:--|:--|:--|:--|
@@ -24,6 +25,12 @@ Skybert kjører AKS på **Azure Local**, og StorageClassene kommer fra fire ulik
 | `default` | `disk.csi.akshci.com` | Delete | RWO | Node-lokal disk. Kluster-default, og den svakeste av disse |
 | `ontap-nas` | `csi.trident.netapp.io` | Delete | RWX | NFSv3 på NetApp ONTAP. Delte filer på tvers av pods |
 | `blob-fuse` | `blob.csi.azure.com` | Delete | RWX | Azure Blob montert som filsystem — se advarsel under |
+
+> **Operasjonell antakelse:** `aks-green-test-02` hadde ikke `unbacked-sc` (2026-10-06): PVC-en ble
+> stående `Pending` med `storageclass.storage.k8s.io "unbacked-sc" not found`. `default` fantes, og
+> både CNPG (uid 26) og en pod med `fsGroup: 1000` kunne skrive til den. PVC-eventene er eneste
+> måte en tenant ser om en klasse finnes; sjekk dem etter første utrulling. `storageClassName` kan
+> ikke endres på en eksisterende PVC, så en feil klasse krever at PVC-en slettes.
 
 Alle støtter volume expansion. **Ingen av dem er backup:** det finnes ingen `VolumeSnapshotClass`
 på klusterne — ingen volume snapshots og ingen point-in-time restore. Applikasjonsnivå-backup er
