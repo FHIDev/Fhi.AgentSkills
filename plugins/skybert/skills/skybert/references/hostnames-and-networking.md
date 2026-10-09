@@ -143,6 +143,8 @@ spec:
 
 green-test og green-prod har Traefik forhåndsdeployert som nød-fallback for `ingress-nginx` (plattformdrift, ikke en tenant-oppgave).
 
+**Klient-IP bak `ingress-nginx`:** podene ser aldri kallerens adresse. Controlleren kjører med tom ConfigMap (standardverdier), så `X-Forwarded-For` erstattes med adressen som koblet til nginx i stedet for å utvides, og den adressen er allerede intern: NAT hos NHN og MetalLB-tjenesten (`externalTrafficPolicy` ikke satt, altså `Cluster`) bevarer ikke kilden. Verifisert på `aks-green-test-02` (2026-10-09): hver forespørsel kom inn med `X-Forwarded-For: 10.244.x.x`. Rate-limiting eller lockout per klient-IP i appen blir dermed én felles bøtte for alle brukere. Headeren kan til gjengjeld ikke forfalskes utenfra.
+
 > Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/ · https://docs.sky.fhi.no/explanations/tools-and-components/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/aks-ops-test-02/compositions/skybertapp-beta.yaml
 
 ## Nettverkspolicyer
