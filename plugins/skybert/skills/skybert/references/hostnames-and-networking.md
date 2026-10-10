@@ -157,6 +157,8 @@ Et farget (color) klusterpar (test + prod) deler samme nettverksregler — test 
 
 Gjelder **alle klustere**, også grønn og gul: GlobalNetworkPolicy `deny-nfs-egress` (order 900) blokkerer TCP 2049 fra `tn-*`-namespaces, slik at tenanter ikke kan montere NFS-sharet selv. Kyverno-policyen `limit-calico-netpol-order` (Enforce) krever `spec.order >= 1000` på Calico `NetworkPolicy` i `tn-*`, slik at tenanter ikke kan overstyre NFS-forbudet (lavere order vinner). `default-allow-tenant-egress` (order 1200) tillater øvrig egress; i rød sone stopper `base-tenant-egress` (order 800) trafikk som ikke allerede er tillatt.
 
+Merk, på grønn begrenser en native `NetworkPolicy` ikke egress. Calico evaluerer den på order 1000 med bare Allow-regler, og trafikk den ikke treffer, går videre til `default-allow-tenant-egress`. En egress-lås i en tenant er derfor en Calico `NetworkPolicy` (`crd.projectcalico.org/v1`) med order 1000–1199 som slutter med `action: Deny`. Ingress er annerledes: grønn har ingen ingress-GNP for `tn-*`, så den implisitte avvisningen i en native ingress-policy holder. Verifisert på aks-green-test-02 (2026-10-10): med en slik Calico-policy når poden bare det som er tillatt, og øvrig egress tidsavbrytes.
+
 > Kilde: https://docs.sky.fhi.no/build/environments/ · https://docs.sky.fhi.no/internal/global-network-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/globalnetworkpolicies/base/deny-nfs-egress.yaml
 
 ## Rød sone
