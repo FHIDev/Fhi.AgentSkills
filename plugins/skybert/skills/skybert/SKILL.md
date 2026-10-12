@@ -177,7 +177,7 @@ TLS og DNS opprettes automatisk fra `hostname`. `SkybertApp` genererer en nginx-
 
 ## Persistence
 
-Tre likestilte databasealternativer: Azure managed, NHN Moderne Etatsplattform, eller PostgreSQL i klusteret med CloudNativePG (støttet på alle klustere; teamet eier backup-konto og restore-test). Sju StorageClasses; ingen av dem gir backup eller snapshots. `ontap-nas` (NFS) skal aldri brukes til databaser. Se [Persistence og CloudNativePG](references/persistence.md).
+Tre likestilte databasealternativer: Azure managed, NHN Moderne Etatsplattform, eller PostgreSQL i klusteret med CloudNativePG (støttet på alle klustere; teamet eier backup-konto og restore-test). CNPG har innebygd backup med WAL-arkivering via barman-cloud-pluginen, som er utrullet på alle klustere; les [Backup](references/persistence.md#backup) før en egen `pg_dump`-CronJob. Sju StorageClasses; ingen av dem gir backup eller snapshots. `ontap-nas` (NFS) skal aldri brukes til databaser. Se [Persistence og CloudNativePG](references/persistence.md).
 
 > Kilde: https://docs.sky.fhi.no/persistence/ · https://docs.sky.fhi.no/persistence/postgres/
 
