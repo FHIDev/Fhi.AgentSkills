@@ -72,18 +72,18 @@ Følgende regler gjelder alle Ingress-ressurser på alle klustere:
 
 ### Ingress (nginx) og Gateway API (Envoy Gateway)
 
-SkybertApp-compositionen (`skybert.fhi.no/v1alpha1`) rendrer Kubernetes `Ingress` med `ingressClassName: nginx`; `ingress-nginx` er produksjonsveien. Plattformens besluttede retning er **Gateway API**, implementert av **Envoy Gateway**. Docs (`tools-and-components`) merker Envoy Gateway og External DNS som «Handled by SkybertApp»; på `main` er det bare beta-XRD-en (`skybert-beta.fhi.no/v1beta1`, kun `aks-ops-test-02`) som genererer `HTTPRoute`/`ListenerSet` — `v1alpha1`-compositionen rendrer `Ingress`.
+SkybertApp-compositionen (`skybert.fhi.no/v1alpha1`) rendrer Kubernetes `Ingress` med `ingressClassName: nginx`; `ingress-nginx` er produksjonsveien. Plattformens besluttede retning er **Gateway API**, implementert av **Envoy Gateway**. Docs (`tools-and-components`) merker Envoy Gateway og External DNS som «Handled by SkybertApp»; det gjelder beta-XRD-en (`skybert-beta.fhi.no/v1beta1`), som genererer `HTTPRoute`/`ListenerSet` — `v1alpha1`-compositionen rendrer `Ingress`.
 
-**Aktivering per kluster:** Envoy Gateway (v1.9.1) er konfigurert på alle klustere unntatt green-test og green-prod, som bare har namespacet og bruker `ingress-nginx`. Der Envoy er aktivert, definerer plattformen delte `Gateway`-objekter og `GatewayClass`-er:
+**Aktivering per kluster:** Envoy Gateway (v1.9.2) er konfigurert på alle klustere. Der definerer plattformen delte `Gateway`-objekter og `GatewayClass`-er:
 
 | Ressurs | Aktivert hvor |
 |---------|---------------|
-| GatewayClass `fhinett` + `helsenett`, Gateway `helsenett`, `ClientTrafficPolicy` for proxy protocol | Alle klustere med Envoy (ops-test, sandbox, yellow-test/prod, red-test/prod, norsyss) |
-| GatewayClass `internett` + Gateway `internett` | Kun ops-test, sandbox og yellow-test/prod — **ikke** red-klusterne eller norsyss |
+| GatewayClass `fhinett` + `helsenett`, Gateway `helsenett`, `ClientTrafficPolicy` for proxy protocol | Alle klustere; Gateway `helsenett` mangler på `aks-mgmt-01` |
+| GatewayClass `internett` + Gateway `internett` | green-test/prod, yellow-test/prod, ops-test og sandbox — **ikke** red-klusterne, norsyss eller mgmt |
 
 **Tenant-mønsteret:** plattformen kjører delte `Gateway`-objekter (`helsenett`, `internett`) i `envoy-gateway-system` med `allowedListeners.namespaces.from: All`; tenanter knytter til seg listeners og TLS via **`ListenerSet`** i eget namespace og ruter trafikk til sine Services med **`HTTPRoute`**. RBAC-rollen `skybert:tenant-admin` gir `listenersets`, `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes` og `udproutes` — **ikke** `gateways` — samt Envoy-policyer som beskrevet i [Sikkerhet](security.md#tenant-rbac--hva-du-kan-administrere). Hostname-reglene over (inkl. flambert-blokkeringen) håndheves også på Gateway API-ruter.
 
-`fhinett` er unntaket: GatewayClass-en finnes på alle Envoy-klustere. På ops-test finnes en Gateway `fhinett` i `skybert-system`, men dens namespace-selector tillater bare `skybert-system`, `grafana` og `flux-system` som listener-kilder; den gir ikke generell tenant-tilgang. Beta-compositionen forventer en Gateway `fhinett` i tenantens eget namespace, og tenant-RBAC gir ikke `gateways` — avklar med plattformteamet (`#ext-fhi-skybert`) før du bruker fhinett.
+`fhinett` er unntaket: hver tenant har en egen Gateway `fhinett` i `tn-<tenant>` (infra-repoets `tenants/<tenant>/base/gateway-fhinett.yaml`), med egen MetalLB-IP, og den tar bare listeners fra `skybert-system` og tenantens eget namespace. Tenanten oppretter den ikke selv; tenant-RBAC gir ikke `gateways`.
 
 På rød sone når Gateway API-trafikk ikke fram til podene — se [Rød sone](#rød-sone).
 
@@ -139,13 +139,13 @@ spec:
           port: 8080
 ```
 
-**SkybertApp på Gateway API (beta):** `skybert-beta.fhi.no/v1beta1` rendrer `ListenerSet` + `HTTPRoute` i stedet for `Ingress` og har et `network`-felt med enum `fhinett` / `helsenett` / `internett`, default `fhinett`. XRD og composition finnes **kun på `aks-ops-test-02`**. Regn den som plattform-intern: tenant-RBAC gir `*`/`*` på API-gruppen `skybert.fhi.no`, og beta-CRD-en ligger i `skybert-beta.fhi.no` — en annen gruppe, som ingen tenant-rolle dekker. Skriv Gateway API-ressursene selv til beta eventuelt promoteres.
+**SkybertApp på Gateway API (beta):** `skybert-beta.fhi.no/v1beta1` rendrer `ListenerSet` + `HTTPRoute` i stedet for `Ingress` og har et `network`-felt med enum `fhinett` / `helsenett` / `internett`, default `fhinett`. XRD og composition ligger i `infra/crossplane/base/` og finnes på alle klustere, side om side med alpha; tenant-RBAC gir `*`/`*` på `skybert-beta.fhi.no`. Hostnavnet velger issuer: `*.skybert` gir `local-issuer` (intern CA), `*.skytest.fhi.no` og `*.sky.fhi.no` gir Let's Encrypt, alt annet feiler i compositionen. På fhinett skal hostnavnet slutte på klusterets suffiks, f.eks. `<app>.sandbox.skybert` eller `<app>.greentest.skybert`; DNS-recorden opprettes automatisk og peker på tenantens `fhinett`-IP. Verifisert på `aks-sandbox-02` (2026-10-14): in-place-bytte fra alpha med samme `metadata.name` var Ready og svarte 200 etter ca. 3 minutter. Migrering: https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/
 
 green-test og green-prod har Traefik forhåndsdeployert som nød-fallback for `ingress-nginx` (plattformdrift, ikke en tenant-oppgave).
 
 **Klient-IP bak `ingress-nginx`:** podene ser aldri kallerens adresse. Controlleren kjører med tom ConfigMap (standardverdier), så `X-Forwarded-For` erstattes med adressen som koblet til nginx i stedet for å utvides, og den adressen er allerede intern: NAT hos NHN og MetalLB-tjenesten (`externalTrafficPolicy` ikke satt, altså `Cluster`) bevarer ikke kilden. Verifisert på `aks-green-test-02` (2026-10-09): hver forespørsel kom inn med `X-Forwarded-For: 10.244.x.x`. Rate-limiting eller lockout per klient-IP i appen blir dermed én felles bøtte for alle brukere. Headeren kan til gjengjeld ikke forfalskes utenfra.
 
-> Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/ · https://docs.sky.fhi.no/explanations/tools-and-components/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/aks-ops-test-02/compositions/skybertapp-beta.yaml
+> Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/ · https://docs.sky.fhi.no/explanations/tools-and-components/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml
 
 ## Nettverkspolicyer
 

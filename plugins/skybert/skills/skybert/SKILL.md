@@ -171,7 +171,7 @@ Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifest
 | Sandbox og test | `*.skytest.fhi.no`, `*.fhi-k8s.com` |
 | Prod | `*.sky.fhi.no` |
 
-TLS og DNS opprettes automatisk fra `hostname`. `SkybertApp` genererer en nginx-`Ingress`. Envoy Gateway (Gateway API) finnes parallelt på de fleste klustere med GatewayClass `fhinett`, `helsenett` og `internett`; tenanter skriver `ListenerSet`/`HTTPRoute` selv, og Gateway API når ikke tenant-pods i rød sone. Rød sone: default deny egress, DNS og intern namespace-trafikk åpen, egress-unntak via plattformteamet. Alt om domener, issuere, Gateway API, beta-XRD og nettverkspolicyer: [Hostnavn og nettverk](references/hostnames-and-networking.md).
+TLS og DNS opprettes automatisk fra `hostname`. `SkybertApp` (`v1alpha1`) genererer en nginx-`Ingress`; beta (`skybert-beta.fhi.no/v1beta1`) genererer `ListenerSet`/`HTTPRoute` mot Envoy Gateway (GatewayClass `fhinett`, `helsenett`, `internett`), og finnes på alle klustere. Gateway API når ikke tenant-pods i rød sone. Rød sone: default deny egress, DNS og intern namespace-trafikk åpen, egress-unntak via plattformteamet. Alt om domener, issuere, Gateway API, beta-XRD og nettverkspolicyer: [Hostnavn og nettverk](references/hostnames-and-networking.md).
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://docs.sky.fhi.no/build/environments/
 
