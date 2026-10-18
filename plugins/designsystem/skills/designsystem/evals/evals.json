@@ -1,6 +1,6 @@
 {
   "skill_name": "designsystem",
-  "description": "Svar-evals: regresjonstest for designsystem-skillen. Kjøres som del av steg 9 i oppdater-designsystem (se kontraktsjekker.md). Les skillen slik en agent ville gjort (følg versjonsrutingen i SKILL.md) og sammenlign svaret med expected_output. Fasit er skrevet mot v0.40.0-baseline (eval 8–9 mot v0.45.3) — hvis en ny versjon endrer riktig svar, oppdater fasiten og begrunn hvorfor.",
+  "description": "Svar-evals: regresjonstest for designsystem-skillen. Kjøres som del av steg 9 i oppdater-designsystem (se kontraktsjekker.md). Les skillen slik en agent ville gjort (følg versjonsrutingen i SKILL.md) og sammenlign svaret med expected_output. Fasit er skrevet mot v0.40.0-baseline (eval 8 mot v0.45.3, eval 9 mot v0.46.0) — hvis en ny versjon endrer riktig svar, oppdater fasiten og begrunn hvorfor.",
   "evals": [
     {
       "id": 1,
@@ -13,7 +13,7 @@
       "id": 2,
       "name": "ikon-i-tekstfelt-v0.34",
       "prompt": "Hvordan legger jeg et søkeikon inni et fhi-text-input-felt? Vi bruker @folkehelseinstituttet/designsystem 0.34.0.",
-      "expected_output": "Skal svare at start/end-slottene IKKE finnes i v0.34.x (innført i v0.35.0), at ikon-markering må håndteres utenfor komponenten i 0.34, og anbefale oppgradering. Skal markere at 0.34 er utenfor støttevinduet (eldste støttede minor er 0.36). versions/v0.34.x.md kan brukes som historisk oppslag.",
+      "expected_output": "Skal svare at start/end-slottene IKKE finnes i v0.34.x (innført i v0.35.0), at ikon-markering må håndteres utenfor komponenten i 0.34, og anbefale oppgradering. Skal markere at 0.34 er utenfor støttevinduet (eldste støttede minor står i versions/INDEX.md). versions/v0.34.x.md kan brukes som historisk oppslag.",
       "files": []
     },
     {
@@ -61,7 +61,7 @@
     {
       "id": 9,
       "name": "ikon-i-tag-latest",
-      "prompt": "Jeg vil ha et klokkeikon foran teksten i en fhi-tag. package.json sier \"@folkehelseinstituttet/designsystem\": \"^0.45.3\".",
+      "prompt": "Jeg vil ha et klokkeikon foran teksten i en fhi-tag. package.json sier \"@folkehelseinstituttet/designsystem\": \"^0.46.0\".",
       "expected_output": "Fast path (latest): svar direkte fra SKILL.md og references/components/fhi-tag.md uten å lese versions/. Skal bruke slot=\"icon\", f.eks. <fhi-tag><fhi-icon-clock slot=\"icon\"></fhi-icon-clock>Utløper snart</fhi-tag>, med import av fhi-tag og fhi-icon-clock. Skal IKKE plassere ikonet i default slot (deprecated, gir console.warn).",
       "files": []
     }

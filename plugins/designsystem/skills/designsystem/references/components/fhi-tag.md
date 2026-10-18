@@ -20,7 +20,7 @@ import '@folkehelseinstituttet/designsystem/fhi-tag';
 | Default | Tekstinnholdet i taggen |
 | `icon` | Valgfritt ikon, plasseres foran teksten (fra v0.45.2) |
 
-Et `fhi-icon-*`-element i `icon`-slotten får automatisk `size="1rem"` og `margin-inline-end: var(--fhi-spacing-050)`.
+Et `fhi-icon-*`-element i `icon`-slotten får automatisk `size="1rem"`, `margin-inline-end: var(--fhi-spacing-050)` og (fra v0.45.4) `margin-inline-start: calc(-1 * var(--fhi-spacing-050))`.
 
 **Deprecated (fra v0.45.2):** Et `fhi-icon-*`-element som første innhold i default slot fungerer fortsatt
 (får samme styling), men gir `console.warn` og vil ikke støttes i en fremtidig release. Bruk `slot="icon"`.
