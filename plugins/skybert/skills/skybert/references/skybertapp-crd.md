@@ -11,6 +11,7 @@ verifisert mot XRD-en og compositionen i infra-repoet; docs-siden er sekundær d
 - [Quick Start](#quick-start)
 - [Spec Reference](#spec-reference)
 - [Generated Resources](#generated-resources)
+- [Beta (Gateway API)](#beta-gateway-api)
 
 ---
 
@@ -22,12 +23,12 @@ kind: SkybertApp
 ```
 
 Namespaced Crossplane XRD (`skybertapps.skybert.fhi.no`), servert på alle klustere. En parallell
-beta-XRD `skybert-beta.fhi.no/v1beta1` med `network`-felt finnes kun på `aks-ops-test-02` — se
-[Ingress (nginx) og Gateway API (Envoy Gateway)](hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway).
+beta-XRD (`skybertapps.skybert-beta.fhi.no`, `skybert-beta.fhi.no/v1beta1`) med `network`-felt
+finnes også på alle klustere — se [Beta (Gateway API)](#beta-gateway-api).
 WebApp (`skybert.fhi.no/v1`) er udokumentert i docs; bruk SkybertApp for nye workloads — se
 [Legacy: WebApp CRD og CSI driver](legacy-webapp-csi.md).
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/crossplane/base/xrds/
 
 ## Quick Start
 
@@ -65,7 +66,7 @@ Compositionen setter i tillegg fast `allowPrivilegeEscalation: false` og `capabi
 på alle containere, og `runAsNonRoot: true`, `runAsUser`/`runAsGroup`/`fsGroup: 1000` og
 `seccompProfile: RuntimeDefault` på poden. Imaget må derfor kunne kjøre som UID 1000.
 
-> Kilde: https://docs.sky.fhi.no/workloads/resource-sizing/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/resource-sizing/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
 
 ### Scaling
 
@@ -80,7 +81,7 @@ på alle containere, og `runAsNonRoot: true`, `runAsUser`/`runAsGroup`/`fsGroup:
 Å spesifisere `autoscaling` aktiverer HPA. Da settes Deployment-ens `replicas` til
 `autoscaling.minReplicas`, ikke `spec.replicas`.
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
 
 ### Status og scale-subresource
 
@@ -96,7 +97,7 @@ Scale-subresourcen mapper `.spec.replicas` ↔ `.status.replicas` med `.status.l
 autoskalerere kan peke `targetRef` rett på SkybertApp-ressursen — plattformens VPA gjør det. Se
 [Ressursanbefalinger (Goldilocks / VPA)](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp-alpha.yaml
 
 ### Health Probes
 
@@ -136,7 +137,7 @@ probes:
 
 For docs' .NET Health Checks-mønster, se [Health probes i .NET-apper](configuration.md#health-probes-i-net-apper).
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp-alpha.yaml
 
 ### Pod Disruption Budget
 
@@ -155,7 +156,7 @@ podDisruptionBudget:
   minAvailable: "33%"
 ```
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
 
 ### Metrics
 
@@ -187,7 +188,7 @@ Støttede domener: test `*.skytest.fhi.no` og `*.fhi-k8s.com`, produksjon `*.sky
 Compositionen velger cert-manager-issuer med tekstsøk (`contains`) etter `skytest.fhi.no`, `fhi-k8s.com` og `sky.fhi.no`, i denne rekkefølgen, og feiler dersom ingen matcher. Dette er ikke validering av domenesuffiks; bruk de støttede domenene over.
 TLS-sertifikat provisjoneres automatisk. Se [Hostnavn og nettverk](hostnames-and-networking.md).
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
 
 ### Configuration
 
@@ -208,7 +209,7 @@ config:
     }
 ```
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
 
 ### Secrets
 
@@ -244,7 +245,7 @@ secrets:
 Docs-tabellen oppgir standardnavnet uten `-<app-navn>`-suffiks; compositionen er autoritativ.
 Refererer andre ressurser til secreten, sett `secrets[].name` eksplisitt. Se [Secrets-mønstre](secrets.md).
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
 
 ### Init Containers
 
@@ -260,7 +261,7 @@ Refererer andre ressurser til secreten, sett `secrets[].name` eksplisitt. Se [Se
 | `initContainers[].readOnlyRootFilesystem` | boolean | `false` | Read-only root filesystem |
 | `initContainers[].writableDirs` | string[] | — | Skrivbare emptyDir-monteringer |
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp-alpha.yaml
 
 ### Sidecar Containers
 
@@ -278,7 +279,7 @@ Refererer andre ressurser til secreten, sett `secrets[].name` eksplisitt. Se [Se
 
 Sidecars rendres under `initContainers` med `restartPolicy: Always` når `initContainers` er angitt. Uten `initContainers` skriver compositionen dem under `containers`, fortsatt med `restartPolicy: Always`. Denne varianten er ikke runtime-verifisert; avklar med plattformteamet før bruk.
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
 
 ## Generated Resources
 
@@ -303,4 +304,27 @@ provisjoneres av tenant-bootstrap, ikke av SkybertApp — se
 For å se manifestene en konkret SkybertApp rendrer til, uten kluster-tilgang, se
 [SkybertApp rendering](skybertapp-render.md).
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
+
+## Beta (Gateway API)
+
+`skybert-beta.fhi.no/v1beta1` (`kind: SkybertApp`) har samme felt og defaults som alpha, pluss:
+
+| Felt | Type | Standard | Beskrivelse |
+|------|------|----------|-------------|
+| `network` | string | `fhinett` | `fhinett`, `helsenett` eller `internett` — hvilken Gateway `ListenerSet`-en knyttes til |
+
+Det som skiller rendringen fra alpha:
+
+| | Alpha | Beta |
+|---|---|---|
+| Eksponering | Ingress `<name>-ingress` (nginx, TLS-secret `<name>-tls`) | ListenerSet `listenerset-gw-<name>-<network>` (TLS-secret `gw-<name>-<network>-tls`) + HTTPRoute `<name>-httproute-gw-<network>` |
+| Gateway | — | `fhinett`: tenantens egen i `tn-<tenant>`; `helsenett`/`internett`: delt i `envoy-gateway-system` |
+| Issuer etter hostnavn | `skytest.fhi.no`, `fhi-k8s.com`, `sky.fhi.no` | `.skybert` → `local-issuer`, `.skytest.fhi.no`, `sky.fhi.no`; andre feiler |
+| Selector-label | `skybert.fhi.no/webapp: <name>` | `skybert-beta.fhi.no/skybertapp: <name>` |
+
+Pod-labelen `app: <name>` og scale-subresourcen er som for alpha, og Goldilocks har lesetilgang til beta-SkybertApps slik at VPA kan peke på dem. Hostnavnet må passe `network`: `fhinett` bruker klusterets `.skybert`-ending (se [Fhinett-hostnavn](hostnames-and-networking.md#fhinett-hostnavn-beta)), `helsenett` og `internett` bruker `*.skytest.fhi.no`/`*.sky.fhi.no`. Rød og Norsyss har ingen `internett`-Gateway, og på rød når Gateway API-trafikk ikke podene — se [Rød sone](hostnames-and-networking.md#rød-sone).
+
+**Migrering fra alpha.** Beta er en egen API-gruppe, så beta-claimet er et nytt objekt. Enten kjører du beta parallelt under nytt navn, validerer og fjerner alpha-manifestet (krever at appen tåler flere replikaer), eller du bytter manifestet på stedet under samme `metadata.name`. Da sletter Flux alpha-claimet og oppretter beta, og appen er nede til beta-podene er Ready og klientene bruker ny adresse. Front-enden flytter fra delt ingress-VIP til Gatewayens adresse: les den med `kubectl get gateway fhinett -n tn-<tenant>` og oppdater DNS og allowlister. Med begge claims i namespacet, bruk fullt ressursnavn (`skybertapp.skybert.fhi.no` / `skybertapp.skybert-beta.fhi.no`). Flambert-ruten `<prefiks>-tn-<tenant>.ingress.flambert` lages av plattformen, ikke av beta-SkybertApp. For WAF på beta-ruten, se [WAF](waf.md).
+
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp-beta.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml

@@ -56,8 +56,8 @@ plugins/skybert/skills/skybert/
     ├── flux-tooling.md                      (Flux dashboard, Flux MCP)
     ├── skybertapp-render.md                 (lokal rendering med crossplane render — ingen provenance i filen; synk-SHA i .oppdater-state.json)
     └── skybertapp/                          (STATISKE KOPIER fra infra-repo — se github-modus.md)
-        ├── xrd.yaml                         (kopi av infra/crossplane/base/xrds/skybertapp.yaml)
-        ├── composition.yaml                 (kopi av infra/crossplane/base/compositions/skybertapp.yaml)
+        ├── xrd.yaml                         (kopi av infra/crossplane/base/xrds/skybertapp-alpha.yaml)
+        ├── composition.yaml                 (kopi av infra/crossplane/base/compositions/skybertapp-alpha.yaml)
         └── functions.yaml                   (basert pa infra/crossplane/base/functions.yaml, omskrevet til public xpkg)
 
 Runtime-cache (opprettes, ikke committet):
@@ -289,6 +289,17 @@ oppfylt — er én av dem brutt, skal sidene leses på nytt:
    skal være nøyaktig `coverage.skillContentHash`. Er skill-filene endret i mellomtiden, er
    dekningen ikke lenger kjent.
 4. **Videreføringen merkes eksplisitt i planen** med hvilke commits sammenligningen ble gjort mot.
+
+**Skill-endringer mellom kjøringer.** Er innholdshashen endret, kan krav 3 verifiseres per fil:
+finn commit-en som sist skrev coverage-filen
+(`git log -1 --format=%H -- maintenance/skybert/.oppdater-coverage.json`), bekreft at skill-treet i
+den commit-en har innholdshashen `coverage.skillContentHash`
+(`git ls-tree -r <commit> -- plugins/skybert/skills/skybert | awk '{print $4" "$3}' | sort | sha256sum`),
+og list filene som er endret siden, mot arbeidstreet og inkludert nye filer som ikke er lagt til
+(`git diff --name-only <commit> -- plugins/skybert/skills/skybert` og
+`git ls-files --others --exclude-standard -- plugins/skybert/skills/skybert`). Rader der `coveredIn`
+peker på en endret fil, vurderes på nytt mot diffen; øvrige rader oppfyller krav 3. Noter
+commit-en og fillisten i planen.
 
 **Unntak som alltid leses på nytt:** endrede sider, nye sider, og sider med en åpen post i
 `openItems`.

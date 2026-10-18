@@ -67,7 +67,7 @@ Rød sone er default deny for egress; native `NetworkPolicy` er forbudt der, så
 `NetworkPolicy` (`kubectl get networkpolicies.crd.projectcalico.org -n tn-<tenant>`) og
 plattformens GlobalNetworkPolicies. Egress-unntak opprettes av plattformteamet — meld behov på
 `#ext-fhi-skybert`. `kubectl exec` for å teste tilkobling er ikke tilgjengelig på
-`aks-red-test-01`/`aks-red-prod-01`; bruk app-logger i Grafana og events. Se
+`aks-red-test-02`/`aks-red-prod-02`; bruk app-logger i Grafana og events. Se
 [Rød sone](hostnames-and-networking.md#rød-sone).
 
 > Kilde: https://docs.sky.fhi.no/build/environments/ · https://docs.sky.fhi.no/internal/global-network-policies/
@@ -116,7 +116,7 @@ og bruk feltene i [SkybertApp CRD-spesifikasjonen](skybertapp-crd.md). Eneste å
 `spec.config` (`x-kubernetes-preserve-unknown-fields: true`). Dekker ikke CRD-en behovet, bruk
 rå manifester ved siden av — se [Konfigurasjon](configuration.md).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp.yaml · https://docs.sky.fhi.no/workloads/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp-alpha.yaml · https://docs.sky.fhi.no/workloads/
 
 ### kubectl: tilkoblingsfeil eller «Forbidden»
 
@@ -125,7 +125,7 @@ rå manifester ved siden av — se [Konfigurasjon](configuration.md).
   ikke Arc-tilkoblede klustere. Se [Koble til klusteret](kubectl-access.md#koble-til-klusteret).
 - `Forbidden` / «User does not have access to the resource» i namespace `default` — kommandoen
   ble kjørt uten `-n tn-<tenant>`. Sett `kubectl config set-context --current --namespace=tn-<tenant>`.
-- Tilgang mangler helt på prod eller `aks-red-test-01` — PIM-aktivering kreves; se
+- Tilgang mangler helt på prod eller `aks-red-test-02` — PIM-aktivering kreves; se
   [PIM](kubectl-access.md#pim-privileged-identity-management).
 
 > **Operasjonell antakelse:** Feilmeldingene er observert mot Skybert-klustre; docs beskriver bare

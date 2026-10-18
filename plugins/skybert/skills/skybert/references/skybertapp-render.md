@@ -33,9 +33,11 @@ Rendering skjer lokalt via `crossplane render`, uten kluster-tilgang.
 
 | Fil | Rolle |
 |-----|-------|
-| `skybertapp/composition.yaml` | Crossplane Composition (go-templating pipeline), kopi av `infra/crossplane/base/compositions/skybertapp.yaml` |
-| `skybertapp/xrd.yaml` | CompositeResourceDefinition for `SkybertApp`, kopi av `infra/crossplane/base/xrds/skybertapp.yaml` |
+| `skybertapp/composition.yaml` | Crossplane Composition (go-templating pipeline), kopi av `infra/crossplane/base/compositions/skybertapp-alpha.yaml` |
+| `skybertapp/xrd.yaml` | CompositeResourceDefinition for `SkybertApp`, kopi av `infra/crossplane/base/xrds/skybertapp-alpha.yaml` |
 | `skybertapp/functions.yaml` | Function-pakker fra `infra/crossplane/base/functions.yaml`, **omskrevet til public xpkg.crossplane.io** slik at render fungerer uten ACR-login |
+
+Kopiene gjelder alpha (`skybert.fhi.no/v1alpha1`); beta-compositionen er ikke kopiert.
 
 Kopiene vedlikeholdes av `oppdater-skybert`-skillen. Vedlikeholdere finner kildecommit i
 `maintenance/skybert/.oppdater-state.json` (`github.infra.commit`) i kilderepoet
@@ -76,7 +78,7 @@ ingen levende Deployment. Det er ikke en feil.
 Er manifestet en Helm-template, render templaten til vanlig YAML først
 og render resultatet.
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
 
 ## Hva du kan og ikke kan stole på i outputen
 

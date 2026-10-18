@@ -6,7 +6,7 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-09-30
+> **Sist verifisert mot offisiell docs:** 2026-10-18
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/ (samme innhold på https://skybert.fhi.no/)
 > Denne skillen er en kuratert oppsummering for AI-agenter. Hver seksjon har enten en `> Kilde:`-lenke eller er merket `> **Operasjonell antakelse:**` (erfaring uten repo-kilde).
 
@@ -57,10 +57,10 @@ GitOps-repoet leveres med tre miljømapper. Hver mappe pakkes til sitt eget OCI-
 | Sone | Data | Test | Prod | Egress |
 |------|------|------|------|--------|
 | **Grønn** | Åpne data | `aks-green-test-02` | `aks-green-prod-03` | Åpen |
-| **Gul** | Interne data, persondata | `aks-yellow-test-03` | `aks-yellow-prod-01` | Åpen inntil videre |
-| **Rød** | Identifiserbar helseinformasjon | `aks-red-test-01` | `aks-red-prod-01` | Default deny; IP/CIDR-unntak via plattformteamet. Ingress kun fra NHN secure zone |
+| **Gul** | Interne data, persondata | `aks-yellow-test-03` | `aks-yellow-prod-02` | Åpen inntil videre |
+| **Rød** | Identifiserbar helseinformasjon | `aks-red-test-02` | `aks-red-prod-02` | Default deny; IP/CIDR-unntak via plattformteamet. Ingress kun fra NHN secure zone |
 
-Utover disse finnes `aks-sandbox-02` (alle farger), `aks-norsyss-prod-01` (eget prod-kluster i gul-lanen for Norsyss) og `aks-ops-test-02` (test-/utviklingskluster; hoster også tenanter).
+Utover disse finnes `aks-sandbox-02` (alle farger), `aks-norsyss-prod-02` (eget prod-kluster i gul-lanen for Norsyss) og `aks-ops-test-02` (test-/utviklingskluster; hoster også tenanter).
 
 Alle klustere kjører samme Kyverno-grunnpolicyer (`policies-green`); prod-klustrene har i tillegg `policies-prod` (blokkerer runtime-kommandoer) og rød sone `policies-red`. Rød sone forbyr native `NetworkPolicy`; Calico `NetworkPolicy` tillates med `spec.order` i `[1000, 1200)`. Se [Kyverno-policier](references/kyverno-policies.md) og [Rød sone](references/hostnames-and-networking.md#rød-sone). Full klusterliste med subscription-ID-er: [kubectl-tilgang](references/kubectl-access.md#tilgjengelige-klustere).
 
@@ -74,7 +74,7 @@ Alle klustere kjører samme Kyverno-grunnpolicyer (`policies-green`); prod-klust
 
 *Applikasjon:* kjører på Linux (språk og rammeverk er valgfritt), har Dockerfile og en CI-pipeline som bygger og pusher image (plattformen federerer pipelinen mot registeret). Imaget skal følge FHI-retningslinjen for container images (Trivy-scanning, immutable tags, minimalt prod-image) — se [Container images](references/container-images.md). Azure-subscriptions for Key Vault o.l. er teamets ansvar (anbefalt: én for test, én for prod). Database: Azure managed, NHN Moderne Etatsplattform eller CloudNativePG i klusteret — se [Persistence](references/persistence.md). Rød data krever komplett liste over eksterne tjenester appen når, med risikovurdering.
 
-*Teknisk:* GitHub-organisasjon FHIDev; tilgangspakke via MyAccess; PIM for prod og `aks-red-test-01` — se [kubectl-tilgang](references/kubectl-access.md#pim-privileged-identity-management).
+*Teknisk:* GitHub-organisasjon FHIDev; tilgangspakke via MyAccess; PIM for prod og `aks-red-test-02` — se [kubectl-tilgang](references/kubectl-access.md#pim-privileged-identity-management).
 
 **Steg**
 
@@ -146,9 +146,11 @@ Nøkkelegenskaper:
 - Scale-subresource: `kubectl get skybertapp` viser DESIRED/CURRENT; VPA kan peke `targetRef` på ressursen.
 - Memory limit er alltid lik request; CPU har request uten limit.
 
+Beta-varianten `skybert-beta.fhi.no/v1beta1` (alle klustere) eksponerer appen via Envoy Gateway (`ListenerSet` + `HTTPRoute`) i stedet for nginx-`Ingress`, og har ett ekstra felt, `network`. Den er en egen API-gruppe, så migrering betyr et nytt objekt — se [SkybertApp CRD — Beta](references/skybertapp-crd.md#beta-gateway-api).
+
 Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifester (Deployment, StatefulSet, Job, Helm, Kustomize) kan ligge side om side med SkybertApp i samme miljømappe — se [Konfigurasjon](references/configuration.md).
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/ · https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/ · https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/crossplane/base/
 
 ## Navnekonvensjoner
 
@@ -171,9 +173,9 @@ Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifest
 | Sandbox og test | `*.skytest.fhi.no`, `*.fhi-k8s.com` |
 | Prod | `*.sky.fhi.no` |
 
-TLS og DNS opprettes automatisk fra `hostname`. `SkybertApp` genererer en nginx-`Ingress`. Envoy Gateway (Gateway API) finnes parallelt på de fleste klustere med GatewayClass `fhinett`, `helsenett` og `internett`; tenanter skriver `ListenerSet`/`HTTPRoute` selv, og Gateway API når ikke tenant-pods i rød sone. Rød sone: default deny egress, DNS og intern namespace-trafikk åpen, egress-unntak via plattformteamet. Alt om domener, issuere, Gateway API, beta-XRD og nettverkspolicyer: [Hostnavn og nettverk](references/hostnames-and-networking.md).
+TLS og DNS opprettes automatisk fra `hostname`. Alpha-`SkybertApp` genererer en nginx-`Ingress`; beta genererer `ListenerSet` + `HTTPRoute` mot Envoy Gateway, som kjører på alle klustere. Hver tenant har en egen Gateway `fhinett` i namespacet (interne `*.skybert`-navn); `helsenett` og `internett` er delte, og rød og Norsyss har ingen `internett`. Gateway API når ikke tenant-pods i rød sone. Rød sone: default deny egress, DNS og intern namespace-trafikk åpen, egress-unntak via plattformteamet. Alt om domener, issuere, Gateway API og nettverkspolicyer: [Hostnavn og nettverk](references/hostnames-and-networking.md).
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://docs.sky.fhi.no/build/environments/
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://docs.sky.fhi.no/build/environments/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/
 
 ## Persistence
 
