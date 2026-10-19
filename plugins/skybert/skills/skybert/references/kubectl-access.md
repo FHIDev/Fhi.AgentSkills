@@ -57,10 +57,13 @@ er begrenset per kluster: i prod blokkerer Kyverno, i red-test mangler RBAC-frag
 ## Tilgjengelige klustere
 
 `scripts/lib/clusters.sh` i infra-repoet er autoritativt register (navn, resource group,
-subscription, OIDC issuer, PIM). Samme data publiseres maskinlesbart på
+subscription, OIDC issuer, PIM). Docs publiserer et maskinlesbart register på
 https://docs.sky.fhi.no/sk8/clusters.json (`name`, `resourceGroup`, `subscription`,
-`oidcIssuerUrl`, `needsPim`). `COLOR_GROUP_CLUSTERS` i samme fil definerer lanene:
-hver farge = sandbox + ett test- + ett prod-kluster.
+`oidcIssuerUrl`, `needsPim`), men det henger etter `clusters.sh`: det mangler
+`aks-green-test-02`, `aks-red-test-02`, `aks-yellow-prod-02`, `aks-red-prod-02` og
+`aks-norsyss-prod-02`, og lister utfasede klustere. Tabellene under følger `clusters.sh`.
+`COLOR_GROUP_CLUSTERS` i samme fil definerer lanene: hver farge = sandbox + ett test- + ett
+prod-kluster.
 
 > Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh
 
@@ -80,7 +83,7 @@ hver farge = sandbox + ett test- + ett prod-kluster.
 |---------|---------------|----------------|
 | aks-green-test-02 | `rg-fhi-aks-green-test-weu-02` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 | aks-yellow-test-03 | `rg-fhi-aks-yellow-test-weu-02` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
-| aks-red-test-01 | `rg-fhi-aks-red-test-weu-01` | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
+| aks-red-test-02 | `rg-fhi-aks-red-test-weu-02` | `247deb95-d7de-4d1b-9fab-1f50a24715ed` |
 | aks-ops-test-02 [¹] | `rg-fhi-aks-ops-weu-01` | `09fc3dd5-8ce9-4951-a7a6-49f95b871cbd` |
 
 > Kilde: https://docs.sky.fhi.no/get-started/connectedk8s/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/clusters.sh
@@ -90,9 +93,9 @@ hver farge = sandbox + ett test- + ett prod-kluster.
 | Kluster | Resource Group | Subscription ID |
 |---------|---------------|----------------|
 | aks-green-prod-03 | `rg-fhi-aks-green-prod-weu-02` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
-| aks-yellow-prod-01 | `rg-fhi-aks-yellow-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
-| aks-red-prod-01 | `rg-fhi-aks-red-prod-weu-01` | `88fde73a-d4a6-4aab-b8be-31810fcd7116` |
-| aks-norsyss-prod-01 [²] | `rg-fhi-aks-norsyss-prod-weu-01` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
+| aks-yellow-prod-02 | `rg-fhi-aks-yellow-prod-weu-02` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
+| aks-red-prod-02 | `rg-fhi-aks-red-prod-weu-02` | `88fde73a-d4a6-4aab-b8be-31810fcd7116` |
+| aks-norsyss-prod-02 [²] | `rg-fhi-aks-norsyss-prod-weu-02` | `c0b8ff18-a1bc-4390-ba6d-a9c252e86252` |
 
 [¹] Plattformens eget test-/utviklingskluster (første kluster ved komponentoppgraderinger). Har egen resource group og deler subscription med sandbox, green-test og yellow-test.
 
@@ -102,7 +105,7 @@ hver farge = sandbox + ett test- + ett prod-kluster.
 
 ### PIM (Privileged Identity Management)
 
-PIM-aktivering kreves for alle produksjonsklustere og for `aks-red-test-01` (`needsPim: true` i
+PIM-aktivering kreves for alle produksjonsklustere og for `aks-red-test-02` (`needsPim: true` i
 registeret). Aktiver via Azure Portal → **Privileged Identity Management** → **My Roles** → Groups
 ([direktelenke](https://portal.azure.com/#blade/Microsoft_Azure_PIMCommon/CommonMenuBlade)), og kjør
 `az logout && az login` etterpå. Formålet er logging av hvem/når/hvorfor; daglige oppgaver skal
@@ -121,11 +124,11 @@ Kubernetes service accounts). Format: `https://europe.oic.prod-arc.azure.com/<en
 | aks-green-test-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/23172a9b-f273-4124-b9fe-ca58df0854e2/` |
 | aks-yellow-test-03 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/47fb8696-2a09-4564-bece-dabab07a2ecb/` |
 | aks-ops-test-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/f0bab261-3722-49ff-afd1-fe8543c420bd/` |
-| aks-red-test-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/30e79bc7-b120-4a86-8b94-07d875ccface/` |
+| aks-red-test-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/06822e02-faa8-4b28-aa30-49969bfacaf1/` |
 | aks-green-prod-03 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/710de989-061c-439c-a2e0-b54e6f831bc4/` |
-| aks-yellow-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/3ba54ddb-2c2c-4bf5-81d0-e2f419b5f466/` |
-| aks-red-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/94639478-26a0-487a-926e-0dca36bce049/` |
-| aks-norsyss-prod-01 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/2e7d357f-5942-4fad-bc16-91b0de9a7471/` |
+| aks-yellow-prod-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/762494f3-6f7c-454f-9250-147db907b249/` |
+| aks-red-prod-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/2b1b17bb-c028-43cb-98c5-e7b1d0b2a923/` |
+| aks-norsyss-prod-02 | `https://europe.oic.prod-arc.azure.com/54475f80-1baa-4ea9-9185-c0de5cc603fe/659f0caa-a80a-44d5-a454-36751ac32578/` |
 
 Hent live (klustrene er Arc-ressurser — `az connectedk8s show`, ikke `az aks show`):
 
@@ -141,7 +144,7 @@ az connectedk8s show --name <cluster> --resource-group <rg> --subscription <sub>
 Go-CLI i infra-repoet (`utils/sk8/`), publisert som GitHub-release (`sk8/v*`-tags) på
 `FHISkybert/Fhi.Skybert.Infra` — nedlasting krever tilgang til repoet. Forutsetninger: `az` med
 `connectedk8s`-extension, `kubectl`, `gh`. Klusterregisteret hentes fra
-`https://docs.sky.fhi.no/sk8/clusters.json` (lokal cache, deretter publisert register, deretter innebygd kopi; `--refresh` tvinger ny henting og feiler i stedet for å falle tilbake til cache eller innebygd kopi). Er publisert `clusters.json` ugyldig JSON, feiler `--refresh`; uten `--refresh` brukes cache eller innebygd kopi.
+`https://docs.sky.fhi.no/sk8/clusters.json` (lokal cache, deretter publisert register, deretter innebygd kopi; `--refresh` tvinger ny henting og feiler i stedet for å falle tilbake til cache eller innebygd kopi). Den innebygde kopien brukes bare når URL-en ikke svarer, så uten cache får `sk8` det publiserte registeret, som henger etter (se [Tilgjengelige klustere](#tilgjengelige-klustere)). Mangler klusteret i `sk8 cluster list`, start proxyen manuelt med verdiene i tabellene.
 
 - **`sk8 cluster [navn]`** — interaktiv picker eller fuzzy-match på delnavn, PIM-aktivering ved
   behov (`--justification`, `--duration-hours`, `--skip-pim`), og `az connectedk8s proxy` i

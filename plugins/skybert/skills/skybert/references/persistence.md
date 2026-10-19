@@ -26,7 +26,7 @@ også for én navngitt klasse. Dette er forventet liste:
 | `ontap-nas` | `csi.trident.netapp.io` | Delete | RWX | NFSv3 på NetApp ONTAP. Delte filer på tvers av pods |
 | `blob-fuse` | `blob.csi.azure.com` | Delete | RWX | Azure Blob montert som filsystem — se advarsel under |
 
-> **Operasjonell antakelse:** `aks-green-test-02` hadde ikke `unbacked-sc` (2026-10-06): PVC-en ble
+> **Operasjonell antakelse:** `aks-green-test-02` har ikke `unbacked-sc`: PVC-en ble
 > stående `Pending` med `storageclass.storage.k8s.io "unbacked-sc" not found`. `default` fantes, og
 > både CNPG (uid 26) og en pod med `fsGroup: 1000` kunne skrive til den. PVC-eventene er eneste
 > måte en tenant ser om en klasse finnes; sjekk dem etter første utrulling. `storageClassName` kan

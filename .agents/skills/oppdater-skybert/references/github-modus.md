@@ -205,18 +205,19 @@ kjøring.
 ### Infra-repo — Sti-baserte filtermønstre
 
 ```
-# XRD-spesifikasjoner (SkybertApp + WebApp)
-infra/crossplane/base/xrds/skybertapp.yaml
+# XRD-spesifikasjoner (SkybertApp alpha + beta, WebApp)
+infra/crossplane/base/xrds/skybertapp-alpha.yaml
+infra/crossplane/base/xrds/skybertapp-beta.yaml
 infra/crossplane/base/xrds/webapp.yaml
 
 # Crossplane compositions
-infra/crossplane/base/compositions/skybertapp.yaml
+infra/crossplane/base/compositions/skybertapp-alpha.yaml
+infra/crossplane/base/compositions/skybertapp-beta.yaml
 infra/crossplane/base/compositions/webapp.yaml
 
 # Crossplane kluster-overlays — XRD-/composition-varianter som IKKE ligger i base.
-# Her rulles nye API-versjoner ut først (f.eks. skybertapp-beta.yaml med gruppe
-# skybert-beta.fhi.no/v1beta1 på aks-ops-test-02). Uten disse mønstrene fanges de
-# kun i FULL-modus, aldri i INKREMENTELL.
+# Her kan nye API-versjoner rulles ut på ett kluster før de kommer i base. Uten
+# disse mønstrene fanges de kun i FULL-modus, aldri i INKREMENTELL.
 infra/crossplane/*/xrds/*.yaml
 infra/crossplane/*/compositions/*.yaml
 
@@ -279,7 +280,7 @@ infra/kube-state-metrics/base/*-values.yaml
 infra/skybert-system/base/*.yaml
 ```
 
-**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, `infra/traefik/`, øvrige drifts-scripts, `scripts/FLOWS.md` og `scripts/skatlas/**` (intern script-dokumentasjon/SKAtlas-tooling — `FLOWS.md` kan konsulteres ved script-provenance, ikke dyplesing), samt `utils/**` utover Coraza- og sk8-filene i mønsteret over (Go-kildekode, `utils/version-checker/`, `utils/grafana-airgapped/`) og `.github/workflows/utils-sk8-*.yaml`.
+**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, øvrige drifts-scripts, `scripts/FLOWS.md` og `scripts/skatlas/**` (intern script-dokumentasjon/SKAtlas-tooling — `FLOWS.md` kan konsulteres ved script-provenance, ikke dyplesing), samt `utils/**` utover Coraza- og sk8-filene i mønsteret over (Go-kildekode, `utils/version-checker/`, `utils/grafana-airgapped/`) og `.github/workflows/utils-sk8-*.yaml`.
 
 **Ny tenant vs. innholdsendring:** `tenants/*/base/oci-repository.yaml` og `tenants/*/*/kustomization.yaml` (OCIRepository pr. tenant) og `infra/grafana/*/patch-orgs.yaml` (Entra-gruppe→org-mapping) endres typisk når en **ny tenant** legges til. Da følger de et allerede dokumentert mønster og gir normalt ingen skill-endring — og UUID-er/Entra-gruppe-IDer i `patch-orgs.yaml` filtreres bort per sikkerhetsreglene. Behandle dem kun som skill-relevante hvis selve mønsteret endres (nytt felt, ny provider, endret URL-konvensjon), ikke når en ny tenant-instans tilføyes.
 
@@ -290,7 +291,6 @@ Disse mappene skal IKKE dypleses, men skannes for tenant-impact i discovery pass
 - `infra/grafana/`, `infra/loki/`, `infra/mimir/`, `infra/alloy/` — datasource-navn, retention, label-konvensjoner som påvirker observability-veiledningen
 - `infra/cert-manager/` — issuer-navn og sertifikatflyt
 - `infra/goldilocks/` — VPA-modus (`updater`/`admissionController` av eller på avgjør om anbefalinger er rådgivende eller håndhevende), hvilke controller-kinds som er unntatt, og hvilken ressurs `targetRef` peker på
-- `infra/traefik/` — ingress-klasse (`ingressClassName: traefik`) og om Gateway API er aktivert, som påvirker tenant-ingress
 
 Toppnivå-mappen `manifests/` (migreringsplaner og frittstående manifester) skannes for tenant-impact: dokumenter med konkrete tenant-steg (f.eks. `httproute-migration.md` med `httpRoute.enabled`/`ingress.enabled`) er skill-relevante; rene plattform-runbooks er støy.
 
@@ -360,7 +360,7 @@ Den varige staten er i de to committede filene `maintenance/skybert/.oppdater-st
 
 ## CRD-versjonssporing
 
-I `infra/crossplane/base/xrds/skybertapp.yaml`, les:
+I `infra/crossplane/base/xrds/skybertapp-alpha.yaml` (og tilsvarende `skybertapp-beta.yaml`, gruppe `skybert-beta.fhi.no`), les:
 ```yaml
 spec:
   versions:
@@ -378,7 +378,7 @@ Ved endring (f.eks. v1alpha1 → v1beta1):
 
 ### Felt-nivå-diff (obligatorisk ved enhver XRD-endring)
 
-Versjonssporing er ikke nok — de fleste XRD-endringer skjer innenfor samme versjon. Når `infra/crossplane/base/xrds/skybertapp.yaml` (eller `webapp.yaml`) er endret, lag en felt-nivå-diff av `openAPIV3Schema`:
+Versjonssporing er ikke nok — de fleste XRD-endringer skjer innenfor samme versjon. Når `infra/crossplane/base/xrds/skybertapp-alpha.yaml`, `skybertapp-beta.yaml` (eller `webapp.yaml`) er endret, lag en felt-nivå-diff av `openAPIV3Schema`:
 
 - Lagt til / fjernet felt
 - Endrede `default`-verdier
@@ -398,8 +398,8 @@ Skillen inneholder statiske kopier av infra-filer, brukt av `references/skyberta
 
 | Kopi i skillen | Kilde i infra-repo |
 |----------------|--------------------|
-| `references/skybertapp/xrd.yaml` | `infra/crossplane/base/xrds/skybertapp.yaml` (kopieres som-den-er) |
-| `references/skybertapp/composition.yaml` | `infra/crossplane/base/compositions/skybertapp.yaml` (kopieres som-den-er) |
+| `references/skybertapp/xrd.yaml` | `infra/crossplane/base/xrds/skybertapp-alpha.yaml` (kopieres som-den-er) |
+| `references/skybertapp/composition.yaml` | `infra/crossplane/base/compositions/skybertapp-alpha.yaml` (kopieres som-den-er) |
 | `references/skybertapp/functions.yaml` | `infra/crossplane/base/functions.yaml` — **kopieres IKKE som-den-er**: image-referanser skal omskrives fra ACR-mirror til public `xpkg.crossplane.io` slik at render fungerer uten ACR-login |
 
 Når en kildefil over er endret (compare/discovery):
@@ -413,8 +413,8 @@ Provenance for kopiene er `github.infra.commit`/`commitDate` i `maintenance/skyb
 ```bash
 RAW=https://raw.githubusercontent.com/FHISkybert/Fhi.Skybert.Infra/main
 SKILL=plugins/skybert/skills/skybert/references/skybertapp
-curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/compositions/skybertapp.yaml" -o "$SKILL/composition.yaml"
-curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/xrds/skybertapp.yaml"         -o "$SKILL/xrd.yaml"
+curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/compositions/skybertapp-alpha.yaml" -o "$SKILL/composition.yaml"
+curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/xrds/skybertapp-alpha.yaml"         -o "$SKILL/xrd.yaml"
 # functions.yaml: sammenlign kun spec.package-versjonene og oppdater versjonsnumrene i
 # $SKILL/functions.yaml for hånd — behold xpkg.crossplane.io-prefikset.
 curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/functions.yaml" | grep package:

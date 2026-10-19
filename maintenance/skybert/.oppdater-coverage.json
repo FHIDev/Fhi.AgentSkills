@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-30T20:00:00Z",
-  "docsCommit": "fcac9816144bebafd9c26d223c6cea17a99317a9",
-  "skillContentHash": "e89e973753a73711206af098b9ef04f6beb9fdda5d61a81d4eb0df60f9362fe3",
+  "generatedAt": "2026-10-18T12:00:00Z",
+  "docsCommit": "8d658cf173a76d739b1824c8ab8d6249ac31bfcb",
+  "skillContentHash": "0cae60904fb28f67cf91ebe63225a0ae6601d893b2412d11d9160ec335f2115c",
   "pages": [
     {
       "path": "docs/auth/index.md",
@@ -50,7 +50,7 @@
         "references/flux-tooling.md"
       ],
       "coverage": "komplett",
-      "missing": "Docs viser fortsatt gamle Flux-hostnavn for green/yellow; skillen følger infra (flux-operator-overlays). Åpen post docs-klusternavn-etter-infra."
+      "missing": "Docs viser fortsatt gamle Flux-hostnavn; skillen følger infra (Ingress-host i flux-operator-overlays) og nevner .skybert-URL-ene. Åpne poster docs-klusternavn-etter-infra og flux-url-skybert."
     },
     {
       "path": "docs/build/flux-mcp.md",
@@ -154,7 +154,7 @@
         "references/kubectl-access.md"
       ],
       "coverage": "komplett",
-      "missing": "Docs viser fortsatt gamle klusternavn (green-test-01, yellow-test-02, ops-test-01, green-prod-02); skillen følger infra (scripts/lib/clusters.sh). Åpen post docs-klusternavn-etter-infra."
+      "missing": ""
     },
     {
       "path": "docs/get-started/sk8-cli.md",
@@ -350,11 +350,9 @@
     {
       "path": "docs/internal/migrate-ingress-to-traefik.md",
       "topic": "Nødprosedyre: bytt grønn ingress fra nginx til Traefik",
-      "coveredIn": [
-        "references/hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway"
-      ],
-      "coverage": "komplett",
-      "missing": "Tenant-konsekvens dekket; IP-swap og cutover er plattformdrift."
+      "coveredIn": [],
+      "coverage": "utenfor-scope",
+      "missing": "Plattformintern nødprosedyre. Infra har fjernet Traefik (infra/traefik/ og policy-exceptions/traefik.yaml), så siden er utdatert; skillen omtaler ikke Traefik."
     },
     {
       "path": "docs/internal/move-tenant-to-new-cluster.md",
@@ -600,7 +598,7 @@
         "references/observability.md#observability"
       ],
       "coverage": "komplett",
-      "missing": "Docs viser gamle Grafana-hostnavn for green/yellow og grafana.sandbox-02; skillen følger infra. Åpne poster docs-klusternavn-etter-infra og grafana-url-sandbox-ops."
+      "missing": "Docs viser gamle Grafana-hostnavn for grønn, gul og rød; skillen følger infra (GF_SERVER_ROOT_URL). Åpen post docs-klusternavn-etter-infra."
     },
     {
       "path": "docs/observability/index.md",
@@ -705,8 +703,9 @@
       "path": "docs/workloads/skybertapp/index.md",
       "topic": "SkybertApp-motivasjon og genererte ressurser",
       "coveredIn": [
-        "SKILL.md#skybert-platform-skill",
-        "references/skybertapp-crd.md"
+        "SKILL.md#skybertapp",
+        "references/skybertapp-crd.md",
+        "references/skybertapp-crd.md#beta-gateway-api"
       ],
       "coverage": "komplett",
       "missing": ""
@@ -749,7 +748,7 @@
         "references/kubectl-access.md"
       ],
       "coverage": "komplett",
-      "missing": "Filen på main har uløste merge-konfliktmarkører (ugyldig JSON); skillen bruker scripts/lib/clusters.sh som verdikilde. Åpen post docs-clusters-json-merge-konflikt."
+      "missing": "Gyldig JSON, men innholdet henger etter scripts/lib/clusters.sh: mangler aks-green-test-02, aks-red-test-02, aks-yellow-prod-02, aks-red-prod-02 og aks-norsyss-prod-02, og lister utfasede klustere. Skillen bruker clusters.sh og sier at registeret henger etter. Åpen post docs-clusters-json-merge-konflikt."
     },
     {
       "path": "guidelines:docs/CI-CD/container-images.md",
@@ -759,6 +758,26 @@
       ],
       "coverage": "delvis",
       "missing": "PR #2 er åpen; dokumenteier/avvikssystem TBD. Kravene er representert med utkastmerking."
+    },
+    {
+      "path": "docs/miscellaneous/cluster-networks.md",
+      "topic": "Node-IP-pooler og gateway-IP-er per kluster",
+      "coveredIn": [
+        "references/hostnames-and-networking.md#egress-ip-tillatt-utgående-trafikk-fra-clusterne",
+        "references/hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway"
+      ],
+      "coverage": "komplett",
+      "missing": "IP-tabellene kopieres ikke (interne IP-er); skillen gjengir reglene og lenker til siden."
+    },
+    {
+      "path": "docs/workloads/skybertapp/migrate-alpha-to-beta.md",
+      "topic": "Migrering SkybertApp alpha → beta (Gateway API)",
+      "coveredIn": [
+        "references/skybertapp-crd.md#beta-gateway-api",
+        "references/hostnames-and-networking.md#fhinett-hostnavn-beta"
+      ],
+      "coverage": "komplett",
+      "missing": "Docs lister fhinett og helsenett som tilgjengelige på rød; de røde GNP-ene slipper ikke envoy-gateway-system inn. Skillen følger infra. Åpen post docs-infra-konflikt-beta-roed."
     }
   ]
 }

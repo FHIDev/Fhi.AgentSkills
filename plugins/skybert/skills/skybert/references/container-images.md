@@ -89,7 +89,7 @@ Slik oppfylles kravene med Skybert-flyten:
   (de pakker manifester og bytter tag). Legg Trivy-steget mellom build og push, med feil ved
   Critical/High.
 
-> Kilde: https://github.com/FHIDev/Fhi.Guidelines/pull/2 (`docs/CI-CD/container-images.md` §3.6–3.8) · https://docs.sky.fhi.no/build/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp.yaml
+> Kilde: https://github.com/FHIDev/Fhi.Guidelines/pull/2 (`docs/CI-CD/container-images.md` §3.6–3.8) · https://docs.sky.fhi.no/build/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp-alpha.yaml
 
 ## Least privilege på Skybert
 

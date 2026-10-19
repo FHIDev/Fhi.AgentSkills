@@ -30,6 +30,8 @@
 | `docs/workloads/index.md` | `references/configuration.md`, `references/skybertapp-crd.md` |
 | `docs/workloads/skybertapp/index.md` | `references/skybertapp-crd.md` |
 | `docs/workloads/skybertapp/references/skybertapp.md` | `references/skybertapp-crd.md` |
+| `docs/workloads/skybertapp/migrate-alpha-to-beta.md` | `references/skybertapp-crd.md` (Beta-seksjonen), `references/hostnames-and-networking.md` (fhinett-endinger) |
+| `docs/miscellaneous/cluster-networks.md` | `references/hostnames-and-networking.md` — lenke; node- og gateway-IP-tabellene kopieres ikke (interne IP-er) |
 | `docs/workloads/waf/*.md` | `references/waf.md` — kanonisk WAF-dekning; andre filer lenker kun |
 | `docs/workloads/jobs.md` | `references/configuration.md` |
 | `docs/workloads/resource-sizing.md` | `references/observability.md`, `references/skybertapp-crd.md` |
@@ -69,16 +71,18 @@
 | `docs/internal/replace-cluster-in-place.md` | `references/security.md`, `references/persistence.md` — selektiv intern: tenant-eide federated credentials og datatap ved klusterutskifting; ikke kopier runbooken |
 | `docs/internal/component-versions.md` | VURDER — versjonsmatrise, endres hyppig; vurder lenking framfor kopiering |
 | `docs/internal/decisions/gatewayapi.md` | `references/hostnames-and-networking.md` — selektivt (Gateway API-retning); kombiner med `infra/envoy/` før konkrete påstander |
-| `docs/internal/migrate-ingress-to-traefik.md` | `references/hostnames-and-networking.md` — selektivt, merk som intern beredskap, kun tenant-impact (Traefik backup på green) |
+| `docs/internal/migrate-ingress-to-traefik.md` | Utenfor scope — infra har fjernet Traefik, så siden er utdatert |
 | `docs/miscellaneous/fhi-felles-cryptography.md` | Utenfor scope — bibliotekdokumentasjon, ikke plattformmekanisme (beholdt scope-beslutning) |
 
 ### Infra-repo
 
 | Kildesti | Kanonisk målfil (første) — øvrige får kun kryssreferanse eller én setning |
 |----------|--------------|
-| `infra/crossplane/base/xrds/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/skybertapp/xrd.yaml` (statisk kopi) |
+| `infra/crossplane/base/xrds/skybertapp-alpha.yaml` | `references/skybertapp-crd.md`, `references/skybertapp/xrd.yaml` (statisk kopi) |
+| `infra/crossplane/base/xrds/skybertapp-beta.yaml` | `references/skybertapp-crd.md` (Beta-seksjonen) |
 | `infra/crossplane/base/xrds/webapp.yaml` | `references/legacy-webapp-csi.md` |
-| `infra/crossplane/base/compositions/skybertapp.yaml` | `references/skybertapp-crd.md`, `references/platform-architecture.md`, `references/skybertapp/composition.yaml` (statisk kopi) |
+| `infra/crossplane/base/compositions/skybertapp-alpha.yaml` | `references/skybertapp-crd.md`, `references/platform-architecture.md`, `references/skybertapp/composition.yaml` (statisk kopi) |
+| `infra/crossplane/base/compositions/skybertapp-beta.yaml` | `references/skybertapp-crd.md` (Beta-seksjonen), `references/hostnames-and-networking.md` (ListenerSet/HTTPRoute-eksempelet) |
 | `infra/crossplane/base/compositions/webapp.yaml` | `references/legacy-webapp-csi.md` |
 | `infra/crossplane/base/functions.yaml` | `references/skybertapp/functions.yaml` (kopi med xpkg-omskriving), `references/skybertapp-render.md` (provenance) |
 | `infra/crossplane/*/xrds/skybertapp-*.yaml` (kluster-overlays, f.eks. `-alpha`/`-beta`) | `references/skybertapp-crd.md` |
@@ -99,7 +103,6 @@
 | `infra/flux-operator/base/*.yaml` | `references/platform-architecture.md` |
 | `infra/flux-system/*/flux-instance.yaml` | `references/platform-architecture.md` |
 | `infra/globalnetworkpolicies/base/policies-red/*.yaml` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
-| `infra/traefik/**` | `references/hostnames-and-networking.md`, `references/platform-architecture.md` |
 | `infra/envoy/**` | `references/hostnames-and-networking.md`, `references/platform-architecture.md` (Gateway API/Envoy-status, kun tenant-impact) |
 | `manifests/*.md` | VURDER — migreringsplaner, ikke auto-route (hent kun tenant-impact med konkrete tenant-steg) |
 | `utils/sk8/README.md`, `utils/sk8/data/clusters.json` | `references/kubectl-access.md` — sk8 Go-CLI + innebygd klusterregister (brukerdokumentasjon: `docs/get-started/sk8-cli.md`). Øvrig `utils/**` (Go-kode, `version-checker/`, `grafana-airgapped/`) er lavprioritet/støy |
@@ -131,7 +134,8 @@ avsnitt. Tabellen oppdateres i samme kjøring som en kanonisk plassering endres.
 | Tenant-RBAC (`skybert:tenant-admin`, cluster-admin-unntak, runtime-fragment) | `platform-architecture.md` | `security.md`, `kubectl-access.md`, `kyverno-policies.md`, `troubleshooting.md` |
 | Runtime-restriksjoner prod/red-test/norsyss | `kyverno-policies.md` | `kubectl-access.md`, `troubleshooting.md`, `security.md` |
 | Rød sone-nettverk (GNP-er, Calico-vindu, NFS, egress-unntak) | `hostnames-and-networking.md` | `SKILL.md`, `kyverno-policies.md`, `security.md` |
-| Gateway API/Envoy, beta-XRD | `hostnames-and-networking.md` | `SKILL.md`, `skybertapp-crd.md` |
+| Gateway API/Envoy, fhinett-Gatewayer, `.skybert`-endinger | `hostnames-and-networking.md` | `SKILL.md`, `skybertapp-crd.md` |
+| SkybertApp beta (felt, rendring, migrering) | `skybertapp-crd.md` | `SKILL.md`, `hostnames-and-networking.md`, `waf.md` |
 | Issuer-tabell, trust bundle | `hostnames-and-networking.md` | `SKILL.md`, `security.md` |
 | Goldilocks/VPA-mekanisme / Grafana-tabellen | `kyverno-policies.md` / `observability.md` | `platform-architecture.md`, `security.md`, `skybertapp-crd.md` |
 | StorageClasses + CloudNativePG | `persistence.md` | `SKILL.md`, `configuration.md`, `platform-architecture.md`, `hostnames-and-networking.md` |

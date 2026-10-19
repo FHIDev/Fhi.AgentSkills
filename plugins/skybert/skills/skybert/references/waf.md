@@ -2,15 +2,15 @@
 
 ## Tilgang og status
 
-Docs beskriver Coraza med OWASP Core Rule Set via `EnvoyExtensionPolicy` på Envoy Gateway-ruter. Dette dekker ikke nginx-`Ingress` fra vanlig SkybertApp. Avklar aktivering med plattformteamet før bruk: standardrollene for tenant-admin og Flux mangler `envoyextensionpolicies`, og Gateway API har egne begrensninger på rød sone. Se [nettverk](hostnames-and-networking.md#rød-sone).
+Docs beskriver Coraza med OWASP Core Rule Set via `EnvoyExtensionPolicy` på Envoy Gateway-ruter. Dette dekker ikke nginx-`Ingress` fra alpha-SkybertApp; beta-SkybertApp rendrer en `HTTPRoute` som policyen kan peke på, og docs' migreringsguide anbefaler det for offentlige ruter. Avklar aktivering med plattformteamet før bruk: standardrollene for tenant-admin og Flux mangler `envoyextensionpolicies`, og Gateway API har egne begrensninger på rød sone. Se [nettverk](hostnames-and-networking.md#rød-sone).
 
 Kildene bekrefter konfigurasjon, ikke en fungerende ende-til-ende WAF. README for plattformens Coraza-image sier at lasting og kjøring i Envoy ikke er verifisert. Docs bruker `crfhiskybert.azurecr.io/waf/coraza-proxy-wasm:0.6.0`; avklar fungerende image og tilgang før et manifest tas i bruk.
 
-> Kilde: https://docs.sky.fhi.no/workloads/waf/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/coraza-proxy-wasm/README.md
+> Kilde: https://docs.sky.fhi.no/workloads/waf/ · https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/coraza-proxy-wasm/README.md
 
 ## Plattformens policier
 
-Alle ni kluster-overlays inkluderer `policies-waf`, også klustere uten aktiv Envoy-installasjon. Dette betyr ikke at alle har en tilgjengelig WAF-tjeneste.
+Alle kluster-overlays inkluderer `policies-waf`, og Envoy Gateway er installert på alle klustere. Dette betyr ikke at alle har en tilgjengelig WAF-tjeneste.
 
 | Policy | Virkning |
 |---|---|

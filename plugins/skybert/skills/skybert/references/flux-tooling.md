@@ -42,7 +42,7 @@ Suspend med dashboardet eller `flux suspend kustomization <navn> -n tn-<tenant>`
 
 ### URL-er per kluster
 
-URL-mønster: `https://flux.<color>-<instance>.<domain>` (`<domain>` = `skytest.fhi.no` for non-prod, dvs. sandbox og test, `sky.fhi.no` for prod).
+URL-mønster: `https://flux.<color>-<nn>.<domain>`, der `<nn>` er klusternummeret (`<domain>` = `skytest.fhi.no` for non-prod, dvs. sandbox og test, `sky.fhi.no` for prod).
 
 | Sone | Miljø | URL |
 |------|-------|-----|
@@ -50,9 +50,11 @@ URL-mønster: `https://flux.<color>-<instance>.<domain>` (`<domain>` = `skytest.
 | Grønn | test | `https://flux.green-02.skytest.fhi.no` |
 | Grønn | prod | `https://flux.green-03.sky.fhi.no` |
 | Gul | test | `https://flux.yellow-03.skytest.fhi.no` |
-| Gul | prod | `https://flux.yellow-01.sky.fhi.no` |
-| Rød | test | `https://flux.red-01.skytest.fhi.no` |
-| Rød | prod | `https://flux.red-01.sky.fhi.no` (kun nåbar fra secure zone) |
+| Gul | prod | `https://flux.yellow-02.sky.fhi.no` |
+| Rød | test | `https://flux.red-02.skytest.fhi.no` |
+| Rød | prod | `https://flux.red-02.sky.fhi.no` (kun nåbar fra secure zone) |
+
+Infra eksponerer i tillegg Flux Web UI på `flux-<nn>.<sone>.skybert` via `fhinett`-Gatewayen i `skybert-system` (f.eks. `flux-02.greentest.skybert`), og OIDC-`baseurl` peker dit på de fleste klustere. Hvilken URL som gir fungerende pålogging, er ikke verifisert; sender innloggingen deg til et navn som ikke svarer, spør på `#ext-fhi-skybert`.
 
 > Kilde: https://docs.sky.fhi.no/build/flux-dashboard/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/flux-operator/
 

@@ -9,10 +9,10 @@ Skybert bruker Kyverno for policy-håndhevelse. Policiene under gjelder tenant-n
 | Overlay | Klustere |
 |---|---|
 | `policies-green` + `policy-exceptions` | Alle |
-| `policies-not-red` | Alle unntatt `aks-red-test-01`/`aks-red-prod-01` |
-| `policies-red` | `aks-red-test-01`, `aks-red-prod-01` |
-| `policies-prod` | `aks-green-prod-03`, `aks-red-prod-01`, `aks-yellow-prod-01`, `aks-norsyss-prod-01` |
-| `norsyss-runtime-access.yaml` (PolicyException) | `aks-norsyss-prod-01` |
+| `policies-not-red` | Alle unntatt `aks-red-test-02`/`aks-red-prod-02` |
+| `policies-red` | `aks-red-test-02`, `aks-red-prod-02` |
+| `policies-prod` | `aks-green-prod-03`, `aks-red-prod-02`, `aks-yellow-prod-02`, `aks-norsyss-prod-02` |
+| `norsyss-runtime-access.yaml` (PolicyException) | `aks-norsyss-prod-02` |
 
 > Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/kyverno-policies/
 
@@ -86,7 +86,7 @@ Detaljene står i [Hostnavn og nettverk — Ingress-regler](hostnames-and-networ
 
 | Policy | Hva blokkeres |
 |--------|---------------|
-| `disallow-nodeport-loadbalancer-services` | NodePort- og LoadBalancer-services i alle namespaces. Ekstern tilgang går via Ingress eller Gateway API; unntak finnes kun for plattformens ingress-controllere (nginx, Traefik, Envoy) |
+| `disallow-nodeport-loadbalancer-services` | NodePort- og LoadBalancer-services i alle namespaces. Ekstern tilgang går via Ingress eller Gateway API; unntak finnes kun for plattformens ingress-controllere (nginx, Envoy) |
 
 > Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-green/disallow-nodeport-lb.yaml
 
@@ -143,7 +143,7 @@ finnes kun for å beregne hva riktig CPU/memory *ville* vært.
 
 ## Rød sone — ekstra policier
 
-Gjelder `aks-red-test-01` og `aks-red-prod-01` (`policies-red`). Nettverksreglene de håndhever (GlobalNetworkPolicies, default deny, egress-unntak) står i [Hostnavn og nettverk — Rød sone](hostnames-and-networking.md#rød-sone) og gjentas ikke her.
+Gjelder `aks-red-test-02` og `aks-red-prod-02` (`policies-red`). Nettverksreglene de håndhever (GlobalNetworkPolicies, default deny, egress-unntak) står i [Hostnavn og nettverk — Rød sone](hostnames-and-networking.md#rød-sone) og gjentas ikke her.
 
 | Policy | Modus | Handling |
 |--------|-------|----------|
@@ -153,14 +153,14 @@ Gjelder `aks-red-test-01` og `aks-red-prod-01` (`policies-red`). Nettverksreglen
 
 **Runtime-tilgang per rød-kluster:**
 
-- `aks-red-test-01` (`policies-red` uten `policies-prod`): Kyverno blokkerer port-forward/attach/proxy. `exec` og debug-containere er ikke Kyverno-blokkert, men RBAC gir dem ikke: `skybert:tenant-admin` aggregerer der bare `aggregate-to-tenant-admin-red-test`, og runtime-fragmentet bærer `aggregate-to-tenant-admin-test-sandbox`.
-- `aks-red-prod-01` (`policies-red` + `policies-prod`): all interaktiv runtime-tilgang er Kyverno-blokkert (se under).
+- `aks-red-test-02` (`policies-red` uten `policies-prod`): Kyverno blokkerer port-forward/attach/proxy. `exec` og debug-containere er ikke Kyverno-blokkert, men RBAC gir dem ikke: `skybert:tenant-admin` aggregerer der bare `aggregate-to-tenant-admin-red-test`, og runtime-fragmentet bærer `aggregate-to-tenant-admin-test-sandbox`.
+- `aks-red-prod-02` (`policies-red` + `policies-prod`): all interaktiv runtime-tilgang er Kyverno-blokkert (se under).
 
-> Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/kyverno-policies/base/policies-red/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/aks-red-test-01/kustomization.yaml
+> Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/kyverno-policies/base/policies-red/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/aks-red-test-02/kustomization.yaml
 
 ## Produksjon — runtime-restriksjoner
 
-`policies-prod` gjelder kun prod-klustrene: aks-green-prod-03, aks-norsyss-prod-01, aks-red-prod-01 og aks-yellow-prod-01.
+`policies-prod` gjelder kun prod-klustrene: aks-green-prod-03, aks-norsyss-prod-02, aks-red-prod-02 og aks-yellow-prod-02.
 
 | Policy | Hva blokkeres |
 |--------|---------------|
@@ -170,7 +170,7 @@ Konsekvens: feilsøk i prod via logger/metrics i Grafana — se [Observability](
 
 **Test og sandbox:** exec, port-forward, attach, proxy og debug-containere er tillatt på klustrene som har RBAC-fragmentet (se [Tenant-RBAC](platform-architecture.md#tenant-rbac) for hvilke) — ingen Kyverno-policy blokkerer dem der, og `skybert:tenant-admin` aggregerer fragmentet `skybert:tenant-admin:test-sandbox:runtime-access` (`pods/exec`, `pods/attach`, `pods/portforward`, `pods/proxy`, `services/proxy`, `pods/ephemeralcontainers`). Docs (`persistence/postgres`) sier at `kubectl exec` ikke gis på noe kluster; infra-repoet er autoritativt her.
 
-**Unntak: `tn-norsyss` på `aks-norsyss-prod-01`.** PolicyException `norsyss-runtime-access` unntar
+**Unntak: `tn-norsyss` på `aks-norsyss-prod-02`.** PolicyException `norsyss-runtime-access` unntar
 namespacet fra regelen `deny-pod-portforward` i `deny-tenant-runtime-access`. Unntaket er avgrenset
 til **port-forward** — `exec`, `attach` og API-`proxy` er fortsatt blokkert der. Tilsvarende gir
 ClusterRole `skybert:tenant-admin:norsyss:runtime-access` `get`/`create` på `pods/portforward`;
@@ -191,7 +191,7 @@ Enforce, mutasjon og Audit for WAF er samlet i [WAF](waf.md#plattformens-policie
 
 PolicyExceptions er sentralt styrt av plattformteamet i `kyverno`-namespacet (håndhevet av `restrict-policy-exceptions-to-kyverno-ns`). Tenanter kan ikke self-serve unntak.
 
-Tenant-rettede unntak er sjeldne, men kan opprettes etter avtale med plattformteamet; det eneste i infra er `norsyss-runtime-access` (over). Plattformkomponenter har bredere unntak: f.eks. har `azure-arc-containerstorage`-namespacet unntak fra privileged containers, host-path, capabilities og flere andre policier, og ingress-controllerne (nginx, Traefik, Envoy) har unntak fra `disallow-nodeport-loadbalancer-services`.
+Tenant-rettede unntak er sjeldne, men kan opprettes etter avtale med plattformteamet; det eneste i infra er `norsyss-runtime-access` (over). Plattformkomponenter har bredere unntak: f.eks. har `azure-arc-containerstorage`-namespacet unntak fra privileged containers, host-path, capabilities og flere andre policier, og ingress-controllerne (nginx, Envoy) har unntak fra `disallow-nodeport-loadbalancer-services`.
 
 **Praktisk:** Hvis du trenger unntak fra en policy, kontakt plattformteamet. Forklar brukstilfelle og krav.
 
