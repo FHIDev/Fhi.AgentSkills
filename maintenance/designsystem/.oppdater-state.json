@@ -1,10 +1,10 @@
 {
   "package": "@folkehelseinstituttet/designsystem",
-  "version": "0.45.3",
-  "gitTag": "v0.45.3",
-  "tarballUrl": "https://registry.npmjs.org/@folkehelseinstituttet/designsystem/-/designsystem-0.45.3.tgz",
-  "distIntegrity": "sha512-/xf2o6/jRfYtLFaN97HXtgPB/hzDXylzSsbr187tZjqLPBBOl9UTEnwu5JQCZiOj6Upy7g4/9PIJ0B5stB71MA==",
-  "verifiedDate": "2026-09-30",
+  "version": "0.46.0",
+  "gitTag": "v0.46.0",
+  "tarballUrl": "https://registry.npmjs.org/@folkehelseinstituttet/designsystem/-/designsystem-0.46.0.tgz",
+  "distIntegrity": "sha512-C4e6YmaXoAaIt1K3JH7TOM5fwXvEBzoNFXP3gyBAAeF66vxKk+sYqHWIcGmq4ANmg3ErkUT5NZ9wJYIFawprIg==",
+  "verifiedDate": "2026-10-18",
   "archivedArtifacts": [
     "package.json",
     "custom-elements.json",

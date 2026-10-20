@@ -31,6 +31,8 @@ Alle fem har `size` og `color`. De tre overskriftskomponentene (`fhi-display`,
 | `level` | `level` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | (påkrevd) | display, title, headline | Semantisk overskriftsnivå |
 | `size` | `size` | `'large' \| 'medium' \| 'small'` | `'medium'` | alle | Visuell størrelse |
 | `color` | `color` | `string \| undefined` | `undefined` | alle | CSS-farge (bruk design tokens). Uten `color` arver komponenten tekstfarge fra forelder (`currentcolor` via komponentens CSS — arv-atferden kom i v0.39.0) |
+| `strong` | `strong` | `boolean` | `false` | body | Fet og semantisk viktig tekst (fra v0.46.0) |
+| `emphasized` | `emphasized` | `boolean` | `false` | body | Kursiv og semantisk fremhevet tekst (fra v0.46.0) |
 
 `level` og `size` er uavhengige: `level` styrer semantikken (hvilket
 overskriftsnivå skjermlesere og dokumentstruktur ser), `size` styrer det visuelle.
@@ -40,6 +42,14 @@ komponenten ingen inline-style, så vanlig CSS fungerer som fallback
 (f.eks. `fhi-body { color: var(--fhi-color-neutral-text-subtle); }`).
 I v0.39.0–v0.40.6 var property-defaulten strengen `'currentcolor'` som alltid ble satt
 som inline-style.
+
+**`strong` / `emphasized` (kun `fhi-body`, fra v0.46.0):** Slotten pakkes inn i `<strong>`
+og/eller `<em>` i shadow DOM; de kan kombineres. `strong` gir `--fhi-font-weight-bold` (600).
+`emphasized` gir kursiv via Roboto Flex' `slnt`-akse (`font-variation-settings: 'slnt' -8`,
+`font-style: unset`) — med en fallback-font uten `slnt`-akse blir teksten ikke visuelt kursiv.
+
+En `fhi-body` direkte i slotten til en annen `fhi-body` får `display: inline` (fra v0.46.0,
+uten stabilitetsgaranti — upstream dokumenterer ikke mønsteret, og slotten beskrives som ren tekst).
 
 ## Eksempler
 
@@ -58,6 +68,9 @@ som inline-style.
 <fhi-body size="small" color="var(--fhi-color-neutral-text-subtle)">
   Liten tilleggstekst.
 </fhi-body>
+<!-- v0.46.0+ -->
+<fhi-body strong>Viktig informasjon.</fhi-body>
+<fhi-body emphasized>Fremhevet tekst.</fhi-body>
 <fhi-label>Standard label</fhi-label>
 <fhi-label size="small" color="var(--fhi-color-neutral-text-subtle)">
   Liten label
