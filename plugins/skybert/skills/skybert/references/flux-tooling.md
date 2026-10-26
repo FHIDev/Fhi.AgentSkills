@@ -36,25 +36,25 @@ Rettighetene bak knappene (tenant-admins verb på Kustomizations/OCIRepositories
 
 Suspend med dashboardet eller `flux suspend kustomization <navn> -n tn-<tenant>`, aldri med `kubectl patch` eller `kubectl edit`. Tenantens Kustomization appliseres selv av plattformens `tenants`-Kustomization (hvert 2. minutt). Før hver apply overtar kustomize-controller felt eid av field managers med prefikset `kubectl` (også `kubectl-patch` og `kubectl-edit`), og applyen fjerner så `spec.suspend`, som ikke står i plattformens manifest: tenanten rekonsilierer igjen uten varsel. `flux suspend` skriver feltet med manager `flux`, som ikke overtas, og det blir stående.
 
-> **Operasjonell antakelse:** Observert på røde tenant-klustere: kubectl-suspend ble revertert innen ett intervall, `flux suspend` sto over flere.
-
-> Kilde: https://github.com/fluxcd/kustomize-controller/blob/main/internal/controller/kustomization_controller.go (`ApplyCleanupOptions`) · https://github.com/fluxcd/pkg/blob/main/ssa/patch.go (`matchFieldManager`, prefiks-match)
+> **Operasjonell antakelse:** Observert på røde tenant-klustere: kubectl-suspend ble revertert innen ett intervall, `flux suspend` sto over flere. Mekanismen er lest ut av upstream kustomize-controller (`ApplyCleanupOptions`, https://github.com/fluxcd/kustomize-controller/blob/main/internal/controller/kustomization_controller.go) og fluxcd/pkg (`matchFieldManager`, https://github.com/fluxcd/pkg/blob/main/ssa/patch.go), ikke av Skybert-kildene.
 
 ### URL-er per kluster
 
-URL-mønster: `https://flux.<color>-<nn>.<domain>`, der `<nn>` er klusternummeret (`<domain>` = `skytest.fhi.no` for non-prod, dvs. sandbox og test, `sky.fhi.no` for prod).
+Flux Web UI eksponeres to steder per kluster: en nginx-`Ingress` på `flux.<color>-<nn>.<domain>` (`<domain>` = `skytest.fhi.no` for sandbox og test, `sky.fhi.no` for prod) og en `ListenerSet` på plattformens `fhinett`-Gateway i `skybert-system` med et `.skybert`-navn. OIDC-`baseURL` er `.skybert`-navnet på alle tenant-klustere. `.skybert`-navnene følger ikke alltid klusternummeret:
 
-| Sone | Miljø | URL |
-|------|-------|-----|
-| Sandbox | sandbox | `https://flux.sandbox-02.skytest.fhi.no` |
-| Grønn | test | `https://flux.green-02.skytest.fhi.no` |
-| Grønn | prod | `https://flux.green-03.sky.fhi.no` |
-| Gul | test | `https://flux.yellow-03.skytest.fhi.no` |
-| Gul | prod | `https://flux.yellow-02.sky.fhi.no` |
-| Rød | test | `https://flux.red-02.skytest.fhi.no` |
-| Rød | prod | `https://flux.red-02.sky.fhi.no` (kun nåbar fra secure zone) |
+| Kluster | Ingress | `.skybert` (OIDC-`baseURL`) |
+|---|---|---|
+| aks-sandbox-02 | `https://flux.sandbox-02.skytest.fhi.no` | `https://flux-02.sandbox.skybert` |
+| aks-ops-test-02 | `https://flux.ops-02.skytest.fhi.no` | `https://flux-ops-02.sandbox.skybert` |
+| aks-green-test-02 | `https://flux.green-02.skytest.fhi.no` | `https://flux-02.greentest.skybert` |
+| aks-green-prod-03 | `https://flux.green-03.sky.fhi.no` | `https://flux-02.green.skybert` |
+| aks-yellow-test-03 | `https://flux.yellow-03.skytest.fhi.no` | `https://flux-03.yellowtest.skybert` |
+| aks-yellow-prod-02 | `https://flux.yellow-02.sky.fhi.no` | `https://flux-03.yellow.skybert` |
+| aks-norsyss-prod-02 | `https://flux.norsyss-02.sky.fhi.no` | `https://flux-norsyss-02.yellow.skybert` |
+| aks-red-test-02 | `https://flux.red-02.skytest.fhi.no` | `https://flux-02.redtest.skybert` |
+| aks-red-prod-02 | `https://flux.red-02.sky.fhi.no` (kun nåbar fra secure zone) | `https://flux-02.red.skybert` |
 
-Infra eksponerer i tillegg Flux Web UI på `flux-<nn>.<sone>.skybert` via `fhinett`-Gatewayen i `skybert-system` (f.eks. `flux-02.greentest.skybert`), og OIDC-`baseurl` peker dit på de fleste klustere. Hvilken URL som gir fungerende pålogging, er ikke verifisert; sender innloggingen deg til et navn som ikke svarer, spør på `#ext-fhi-skybert`.
+Innloggingen sender deg tilbake til `baseURL`. Hvilken URL som gir fungerende pålogging fra din maskin, er ikke verifisert; svarer ikke `.skybert`-navnet, spør på `#ext-fhi-skybert`.
 
 > Kilde: https://docs.sky.fhi.no/build/flux-dashboard/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/flux-operator/
 

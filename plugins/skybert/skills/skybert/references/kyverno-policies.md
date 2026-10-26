@@ -33,7 +33,7 @@ Skybert bruker Kyverno for policy-håndhevelse. Policiene under gjelder tenant-n
 
 | Policy | Handling | Scope |
 |--------|----------|-------|
-| `auto-set-default-user-and-run-as-non-root` | Setter `runAsNonRoot: true` og `runAsUser: 1000` (hvis ikke satt) | `tn-*` pods |
+| `auto-set-default-user-and-run-as-non-root` | Setter alltid `runAsNonRoot: true` i pod-`securityContext` (en eksplisitt `false` på pod-nivå overskrives) og `runAsUser: 1000` på pod-nivå hvis feltet ikke er satt | `tn-*` pods |
 | `auto-set-seccomp-runtime-default` | Setter `seccompProfile.type: RuntimeDefault` (hvis ikke satt) | Alle pods |
 | `ingress-security` (mutate) | Setter `ssl-redirect: true` og `force-ssl-redirect: true` på alle Ingress | Alle Ingress |
 | `automount-cert-chain-bundle` | Auto-monterer `trust-bundle.pem` til `/etc/ssl/certs/trust-bundle.pem` i alle containere og init-containere — se [Public CA / Trust Bundle](hostnames-and-networking.md#public-ca--trust-bundle) | `tn-*` pods |
@@ -41,8 +41,8 @@ Skybert bruker Kyverno for policy-håndhevelse. Policiene under gjelder tenant-n
 | `patch-tenant-serviceaccounts-with-acr-pull-secret` / `patch-default-serviceaccounts-with-acr-pull-secret` (leveres av `skybert-system`) | Legger `imagePullSecrets: acr-pull-secret` på ServiceAccounts i `tn-*` og på alle `default`-SA-er som mangler `imagePullSecrets` | ServiceAccounts |
 
 > **Praktisk betydning:** Du trenger vanligvis ikke sette `runAsNonRoot`, `runAsUser` eller
-> `seccompProfile` eksplisitt — Kyverno setter defaults. Å sette `runAsNonRoot: false`
-> eksplisitt gir bare et **Audit-funn** (regelen `prevent-run-as-root-override` mangler
+> `seccompProfile` eksplisitt — Kyverno setter defaults. `runAsNonRoot: false` i pod-`securityContext`
+> overskrives til `true`; på en container gir det bare et **Audit-funn** (regelen `prevent-run-as-root-override` mangler
 > `validationFailureAction` og faller tilbake til Audit — poden avvises ikke), men
 > `runAsUser: 0` avvises av `require-run-as-non-root-user` (Enforce). Ikke bygg på root-kjøring.
 
@@ -168,7 +168,7 @@ Gjelder `aks-red-test-02` og `aks-red-prod-02` (`policies-red`). Nettverksreglen
 
 Konsekvens: feilsøk i prod via logger/metrics i Grafana — se [Observability](observability.md).
 
-**Test og sandbox:** exec, port-forward, attach, proxy og debug-containere er tillatt på klustrene som har RBAC-fragmentet (se [Tenant-RBAC](platform-architecture.md#tenant-rbac) for hvilke) — ingen Kyverno-policy blokkerer dem der, og `skybert:tenant-admin` aggregerer fragmentet `skybert:tenant-admin:test-sandbox:runtime-access` (`pods/exec`, `pods/attach`, `pods/portforward`, `pods/proxy`, `services/proxy`, `pods/ephemeralcontainers`). Docs (`persistence/postgres`) sier at `kubectl exec` ikke gis på noe kluster; infra-repoet er autoritativt her.
+**Test og sandbox:** exec, port-forward, attach, proxy og debug-containere er tillatt på klustrene som har RBAC-fragmentet (se [Tenant-RBAC](platform-architecture.md#tenant-rbac) for hvilke) — ingen Kyverno-policy blokkerer dem der, og `skybert:tenant-admin` aggregerer runtime-fragmentet der. Docs (`persistence/postgres`) sier at `kubectl exec` ikke gis på noe kluster; infra-repoet er autoritativt her.
 
 **Unntak: `tn-norsyss` på `aks-norsyss-prod-02`.** PolicyException `norsyss-runtime-access` unntar
 namespacet fra regelen `deny-pod-portforward` i `deny-tenant-runtime-access`. Unntaket er avgrenset
@@ -191,7 +191,7 @@ Enforce, mutasjon og Audit for WAF er samlet i [WAF](waf.md#plattformens-policie
 
 PolicyExceptions er sentralt styrt av plattformteamet i `kyverno`-namespacet (håndhevet av `restrict-policy-exceptions-to-kyverno-ns`). Tenanter kan ikke self-serve unntak.
 
-Tenant-rettede unntak er sjeldne, men kan opprettes etter avtale med plattformteamet; det eneste i infra er `norsyss-runtime-access` (over). Plattformkomponenter har bredere unntak: f.eks. har `azure-arc-containerstorage`-namespacet unntak fra privileged containers, host-path, capabilities og flere andre policier, og ingress-controllerne (nginx, Envoy) har unntak fra `disallow-nodeport-loadbalancer-services`.
+Tenant-rettede unntak er sjeldne, men kan opprettes etter avtale med plattformteamet; det eneste i infra er `norsyss-runtime-access` (over). PolicyException `cloudnative-pg` unntar ServiceAccount `cloudnative-pg` i `cnpg-system` fra regelen `deny-pod-exec` i `deny-tenant-runtime-access` for `Pod/exec` i `tn-*`, slik at CNPG-operatoren kan exec-e i instanspodene også på prod-klustrene; tenantbrukernes exec er uendret. Plattformkomponenter har bredere unntak: f.eks. har `azure-arc-containerstorage`-namespacet unntak fra privileged containers, host-path, capabilities og flere andre policier, og ingress-controllerne (nginx, Envoy) har unntak fra `disallow-nodeport-loadbalancer-services`.
 
 **Praktisk:** Hvis du trenger unntak fra en policy, kontakt plattformteamet. Forklar brukstilfelle og krav.
 

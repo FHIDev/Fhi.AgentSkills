@@ -46,15 +46,16 @@ Imaget må i tillegg kunne kjøre som UID 1000 på Skybert, og bør tåle read-o
   base imaget, eller en pakke lenger ned i kjeden). Kommer den fra base imaget, skal nyere versjon
   eller annet base image undersøkes før det legges inn workarounds eller egne pakkeoppgraderinger
   i Dockerfilen.
-- Floating tags (`nginx:stable-alpine`) er ikke en sikkerhetsmekanisme; ved High/Critical skal
-  oppgradering undersøkes aktivt.
+- Veiledning: ikke stol på floating tags (`nginx:stable-alpine`) som eneste mekanisme for
+  sikkerhetsoppdateringer, og undersøk aktivt om imaget kan oppgraderes ved High/Critical.
+  Severity alene bør ikke avgjøre — en High bør undersøkes før den eventuelt aksepteres.
 
 | Severity | Håndtering |
 |---|---|
 | **Critical** | Build/deploy skal stoppe. Må utbedres eller eksplisitt godkjennes som avvik. |
 | **High** | Build/deploy skal som hovedregel stoppe. Må utbedres eller eksplisitt vurderes og godkjennes. |
-| **Medium** | Bør utbedres. Kan tillates midlertidig uten tilgjengelig fix eller ved lav risiko. |
-| **Low** | Følges opp ved anledning. Blokkerer normalt ikke. |
+| **Medium** | Bør utbedres. Kan normalt tillates midlertidig uten tilgjengelig fix eller ved lav risiko. |
+| **Low** | Bør følges opp ved anledning. Skal normalt ikke blokkere. |
 
 **Kontinuerlig scanning i registry:** retningslinjen krever at registeret scanner publiserte images
 løpende, i tillegg til pipeline-scanning, og at teamet varsles og følger opp med nytt base
@@ -70,7 +71,7 @@ dokumenter det ellers som avvik etter retningslinjens §4.
 
 Retningslinjens anbefalte flyt er build → Trivy-scan → stopp ved Critical/High → push til registry →
 deploy til test → funksjonelle/integrasjonstester → godkjenning → deploy **samme image** til prod.
-Et image skal ikke pushes til produksjonsregisteret uten at bygg- og scanningskravene er oppfylt,
+Imaget skal testes i et ikke-produksjonsmiljø før det deployes til prod. Et image skal ikke pushes til produksjonsregisteret uten at bygg- og scanningskravene er oppfylt,
 og unntak skal være dokumenterte, bevisste beslutninger.
 
 Slik oppfylles kravene med Skybert-flyten:
@@ -87,7 +88,7 @@ Slik oppfylles kravene med Skybert-flyten:
   [SkybertApp CRD](skybertapp-crd.md).
 - **Scanning i pipeline** ligger i app-repoets CI, ikke i GitOps-repoets `oci-push`/`update-tag`
   (de pakker manifester og bytter tag). Legg Trivy-steget mellom build og push, med feil ved
-  Critical/High.
+  Critical og som hovedregel ved High.
 
 > Kilde: https://github.com/FHIDev/Fhi.Guidelines/pull/2 (`docs/CI-CD/container-images.md` §3.6–3.8) · https://docs.sky.fhi.no/build/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp-alpha.yaml
 

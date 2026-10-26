@@ -144,11 +144,13 @@ For docs' .NET Health Checks-mønster, se [Health probes i .NET-apper](configura
 | Felt | Type | Standard | Beskrivelse |
 |------|------|----------|-------------|
 | `podDisruptionBudget.enabled` | boolean | auto | Eksplisitt aktiver/deaktiver PDB |
-| `podDisruptionBudget.minAvailable` | int eller "X%" | `"33%"` | Minimum tilgjengelige pods under voluntary disruptions |
-| `podDisruptionBudget.maxUnavailable` | int eller "X%" | — | Maksimum utilgjengelige pods |
+| `podDisruptionBudget.minAvailable` | `"X%"` (heltall rendres som streng av compositionen og avvises trolig av PDB-valideringen; bruk prosent) | `"33%"` | Minimum tilgjengelige pods under voluntary disruptions |
+| `podDisruptionBudget.maxUnavailable` | `"X%"` (heltall rendres som streng av compositionen og avvises trolig av PDB-valideringen; bruk prosent) | — | Maksimum utilgjengelige pods |
 
 PDB opprettes automatisk når `replicas > 1` eller `autoscaling.minReplicas > 1`, med mindre
-`enabled` er satt eksplisitt. `minAvailable` og `maxUnavailable` er gjensidig utelukkende.
+`enabled` er satt eksplisitt. Sett bare ett av `minAvailable` og `maxUnavailable`: schemaet stopper ikke
+begge, men da bruker compositionen `maxUnavailable` og ignorerer `minAvailable`. `maxUnavailable: 0`
+tolkes som «ikke satt» og gir `minAvailable: "33%"`.
 
 ```yaml
 replicas: 3
@@ -194,7 +196,7 @@ TLS-sertifikat provisjoneres automatisk. Se [Hostnavn og nettverk](hostnames-and
 
 | Felt | Type | Standard | Beskrivelse |
 |------|------|----------|-------------|
-| `config` | object | — | Nøkkel-verdi-par for konfigurasjon |
+| `config` | map[string]string | — | Nøkkel-verdi-par for konfigurasjon; verdiene må være strenger — sett tall og booleans i anførselstegn (`PORT: "8080"`, `ENABLED: "true"`) |
 
 Config-verdier monteres som filer i `/config` og injiseres som miljøvariabler i alle containere
 (hovedcontainer, init og sidecar).
@@ -323,7 +325,7 @@ Det som skiller rendringen fra alpha:
 | Issuer etter hostnavn | `skytest.fhi.no`, `fhi-k8s.com`, `sky.fhi.no` | `.skybert` → `local-issuer`, `.skytest.fhi.no`, `sky.fhi.no`; andre feiler |
 | Selector-label | `skybert.fhi.no/webapp: <name>` | `skybert-beta.fhi.no/skybertapp: <name>` |
 
-Pod-labelen `app: <name>` og scale-subresourcen er som for alpha, og Goldilocks har lesetilgang til beta-SkybertApps slik at VPA kan peke på dem. Hostnavnet må passe `network`: `fhinett` bruker klusterets `.skybert`-ending (se [Fhinett-hostnavn](hostnames-and-networking.md#fhinett-hostnavn-beta)), `helsenett` og `internett` bruker `*.skytest.fhi.no`/`*.sky.fhi.no`. Rød og Norsyss har ingen `internett`-Gateway, og på rød når Gateway API-trafikk ikke podene — se [Rød sone](hostnames-and-networking.md#rød-sone).
+Pod-labelen `app: <name>` og scale-subresourcen er som for alpha, og Goldilocks har lesetilgang til beta-SkybertApps slik at VPA kan peke på dem. Compositionen velger issuer bare ut fra hostnavnet, ikke ut fra `network`; et `.skybert`-navn fra feil kluster rendres derfor uten feil, men publiseres ikke i DNS. Docs anbefaler klusterets `.skybert`-ending for `fhinett` (se [Fhinett-hostnavn](hostnames-and-networking.md#fhinett-hostnavn-beta)) og `*.skytest.fhi.no`/`*.sky.fhi.no` for `helsenett` og `internett`. ListenerSet-en har én listener, `https` (HTTPS/443, TLS Terminate, `allowedRoutes: Same`), og HTTPRoute-en matcher `PathPrefix /` på hostnavnet; bruk `sectionName: https` når en policy skal treffe listeneren. Rød og Norsyss har ingen `internett`-Gateway, og på rød når Gateway API-trafikk ikke podene — se [Rød sone](hostnames-and-networking.md#rød-sone).
 
 **Migrering fra alpha.** Beta er en egen API-gruppe, så beta-claimet er et nytt objekt. Enten kjører du beta parallelt under nytt navn, validerer og fjerner alpha-manifestet (krever at appen tåler flere replikaer), eller du bytter manifestet på stedet under samme `metadata.name`. Da sletter Flux alpha-claimet og oppretter beta, og appen er nede til beta-podene er Ready og klientene bruker ny adresse. Front-enden flytter fra delt ingress-VIP til Gatewayens adresse: les den med `kubectl get gateway fhinett -n tn-<tenant>` og oppdater DNS og allowlister. Med begge claims i namespacet, bruk fullt ressursnavn (`skybertapp.skybert.fhi.no` / `skybertapp.skybert-beta.fhi.no`). Flambert-ruten `<prefiks>-tn-<tenant>.ingress.flambert` lages av plattformen, ikke av beta-SkybertApp. For WAF på beta-ruten, se [WAF](waf.md).
 

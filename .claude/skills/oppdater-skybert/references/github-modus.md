@@ -131,6 +131,7 @@ Før detaljert lesing: oppdage hva som faktisk finnes.
    - CUE, Jsonnet, Rego eller andre policy/config-språk
    - CRD-er og API-definisjoner utover de forventede stiene
 4. Lag et **signal inventory**: Hvilke filer/mønstre inneholder agentnyttig kunnskap, og hvilke er støy?
+5. Sammenlign `infra/flux-system/<prod-kluster>/kustomization.yaml` med `infra/flux-system/kustomizations-infra/` og noter komponenter som mangler på prod-klustrene (prod-overlayene lister infra-Kustomizations eksplisitt). Påstander som «på alle klustere» verifiseres mot dette.
 
 ### Retningslinje-repo discovery
 
@@ -223,6 +224,8 @@ infra/crossplane/*/compositions/*.yaml
 
 # Kyverno-policier som påvirker tenanter
 infra/kyverno-policies/base/policies-*/**/*.yaml
+# PolicyExceptions (tenant-rettede og operator-unntak som berører tenant-workloads)
+infra/kyverno-policies/base/policy-exceptions/*.yaml
 # + relevante overlays per kluster der de avviker fra base
 
 # Tenant-admin RBAC (aggregerte ClusterRole-fragmenter — hva tenanter kan administrere)
@@ -241,6 +244,14 @@ infra/tenant-bootstrap/base/tenants/*.yaml
 # Flux Operator og FluxInstance
 infra/flux-operator/base/*.yaml
 infra/flux-system/*/flux-instance.yaml
+# Flux Web UI per kluster (Ingress, ListenerSet, OIDC-baseURL)
+infra/flux-operator/*/kustomization.yaml
+# Utrulling per kluster: prod-overlayene lister infra-Kustomizations eksplisitt
+infra/flux-system/*/kustomization.yaml
+
+# Grafana-URL per kluster (GF_SERVER_ROOT_URL, ListenerSet-hostname); patch-orgs.yaml er ny-tenant-støy
+infra/grafana/*/patch-env.yaml
+infra/grafana/*/kustomization.yaml
 
 # Envoy Gateway / Gateway API (ingress-migrering)
 infra/envoy/base/*.yaml
@@ -252,6 +263,8 @@ scripts/tenant--*.sh
 # X-Scope-OrgID, org_mapping) etter refaktorering. Følg disse når en provenance-
 # referanse peker på et tenant-script og logikken er flyttet hit.
 scripts/lib/grafana/*.sh
+# Sonetabell for .skybert-navn (fhinett)
+scripts/lib/fhinett.sh
 # Andre scripts/lib/*.sh leses selektivt bare når de sources av en endret
 # tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk.
 
@@ -261,9 +274,14 @@ scripts/lib/grafana/*.sh
 utils/coraza-proxy-wasm/**
 utils/sk8/README.md
 utils/sk8/data/clusters.json
+# Kontrakten bak ConfigMap-dashboards i Grafana
+utils/grafana-dashboard-syncer/README.md
 
 # CloudNativePG — støttet tenant-komponent (operator, values, plugin-versjoner)
 infra/cloudnative-pg/**
+
+# Blob CSI — blob-fuse-klassen og hvilke klustere som har den
+infra/blob-csi-driver/**
 
 # KubeVirt — smoke test på et utvalg klustere (hvilke klustere har operator/CRD-er); tenant-tilgang
 # styres av skybert:tenant-admin:kubevirt i infra/skybert-system/base/tenant-admin-clusterroles/
@@ -280,7 +298,7 @@ infra/kube-state-metrics/base/*-values.yaml
 infra/skybert-system/base/*.yaml
 ```
 
-**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/`, `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, øvrige drifts-scripts, `scripts/FLOWS.md` og `scripts/skatlas/**` (intern script-dokumentasjon/SKAtlas-tooling — `FLOWS.md` kan konsulteres ved script-provenance, ikke dyplesing), samt `utils/**` utover Coraza- og sk8-filene i mønsteret over (Go-kildekode, `utils/version-checker/`, `utils/grafana-airgapped/`) og `.github/workflows/utils-sk8-*.yaml`.
+**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/` (utover `patch-env.yaml`/`kustomization.yaml` i mønsteret over), `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, øvrige drifts-scripts, `scripts/FLOWS.md` og `scripts/skatlas/**` (intern script-dokumentasjon/SKAtlas-tooling — `FLOWS.md` kan konsulteres ved script-provenance, ikke dyplesing), samt `utils/**` utover Coraza-, sk8- og grafana-dashboard-syncer-filene i mønsteret over (Go-kildekode, `utils/version-checker/`, `utils/grafana-airgapped/`) og `.github/workflows/utils-sk8-*.yaml`.
 
 **Ny tenant vs. innholdsendring:** `tenants/*/base/oci-repository.yaml` og `tenants/*/*/kustomization.yaml` (OCIRepository pr. tenant) og `infra/grafana/*/patch-orgs.yaml` (Entra-gruppe→org-mapping) endres typisk når en **ny tenant** legges til. Da følger de et allerede dokumentert mønster og gir normalt ingen skill-endring — og UUID-er/Entra-gruppe-IDer i `patch-orgs.yaml` filtreres bort per sikkerhetsreglene. Behandle dem kun som skill-relevante hvis selve mønsteret endres (nytt felt, ny provider, endret URL-konvensjon), ikke når en ny tenant-instans tilføyes.
 
@@ -292,7 +310,7 @@ Disse mappene skal IKKE dypleses, men skannes for tenant-impact i discovery pass
 - `infra/cert-manager/` — issuer-navn og sertifikatflyt
 - `infra/goldilocks/` — VPA-modus (`updater`/`admissionController` av eller på avgjør om anbefalinger er rådgivende eller håndhevende), hvilke controller-kinds som er unntatt, og hvilken ressurs `targetRef` peker på
 
-Toppnivå-mappen `manifests/` (migreringsplaner og frittstående manifester) skannes for tenant-impact: dokumenter med konkrete tenant-steg (f.eks. `httproute-migration.md` med `httpRoute.enabled`/`ingress.enabled`) er skill-relevante; rene plattform-runbooks er støy.
+Nye toppnivåmapper fanges av discovery pass (punkt 1 under «Infra-repo discovery»).
 
 Ren driftskonfigurasjon (replicas, resources, intern tuning) i disse mappene er støy og hoppes over.
 

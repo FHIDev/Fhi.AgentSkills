@@ -1,6 +1,6 @@
 # Plattformarkitektur
 
-Kanonisk fil for GitOps-flyt, OCI-flyt, Flux-intervaller, tenant-bootstrap og tenant-RBAC. Klusterliste og tilkobling: [kubectl-access](kubectl-access.md#tilgjengelige-klustere).
+Klusterliste og tilkobling: [kubectl-access](kubectl-access.md#tilgjengelige-klustere).
 
 ## Innhold
 
@@ -61,7 +61,7 @@ Flux installeres og oppgraderes via Flux Operator med multi-tenancy aktivert. `F
 
 - Alle Flux Kustomizations kjører som namespace-lokal ServiceAccount `flux-reconciler`; tenanter kan ikke opprette ressurser i andre namespaces.
 - Remote bases er deaktivert — all YAML må ligge i GitOps-repoet.
-- Tenantens `OCIRepository` ligger i `tn-<tenant>`, sammen med Flux `Kustomization`. `sourceRef` bruker samme namespace. Unntaket `--no-cross-namespace-refs=false` er fjernet; multi-tenancy sperrer referanser på tvers av namespaces.
+- Tenantens `OCIRepository` ligger i `tn-<tenant>`, sammen med Flux `Kustomization`. `sourceRef` bruker samme namespace; multi-tenancy sperrer referanser på tvers av namespaces.
 - `source-controller` bruker controller-level Workload Identity mot ACR (ikke per-tenant identitet).
 
 > Kilde: https://docs.sky.fhi.no/internal/flux/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/flux-system/base/flux-instance.yaml
@@ -124,7 +124,7 @@ tenants/<tenant>/
 
 `<tenant>-azure` får Workload Identity-annotasjoner per kluster ved onboarding. Entra-gruppen i `entra-access-rolebinding.yaml` styres av tenantens access package i MyAccess — det avgjør hvem som får kubectl-tilgang til namespacene og Grafana-orgene.
 
-Fire baser (`fida-analyserom`, `fida-epiplus`, `healthdcat-assistant`, `johan-exempl`) binder begge RoleBindings til `cluster-admin`. `scripts/tenant--bootstrap--yaml.sh` genererer `skybert:tenant-flux-reconciler` for Flux og `skybert:tenant-admin` for Entra-gruppen (RoleBinding-navn `flux-reconciler` og `entra-access`). Les tenantens faktiske `rolebinding.yaml` og `entra-access-rolebinding.yaml` før du konkluderer om rettigheter.
+Fire baser (`fida-analyserom`, `fida-epiplus`, `healthdcat-assistant`, `johan-exempl`) binder begge RoleBindings til `cluster-admin`; `fida-notarius` binder bare `flux-reconciler` til `cluster-admin`, mens `entra-access` peker på `skybert:tenant-admin`. `scripts/tenant--bootstrap--yaml.sh` genererer `skybert:tenant-flux-reconciler` for Flux og `skybert:tenant-admin` for Entra-gruppen (RoleBinding-navn `flux-reconciler` og `entra-access`). Les tenantens faktiske `rolebinding.yaml` og `entra-access-rolebinding.yaml` før du konkluderer om rettigheter.
 
 > Kilde: https://docs.sky.fhi.no/internal/managing-tenants/ · https://docs.sky.fhi.no/get-started/blaloypa/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/tenants/exempl/base/
 
@@ -139,7 +139,7 @@ Fragmentene:
 
 | Fragment | Aggregeres til | Gir |
 |---|---|---|
-| `skybert:tenant-admin:core` | alle miljøroller + flux-reconciler | Namespaced baseline uten wildcards: workloads, services, ingresses, configmaps, secrets, PVC, HPA, PDB, roles/rolebindings, native + Calico NetworkPolicies, cert-manager (`certificates`, `issuers`, `bundles`), Gateway API-ruter og `listenersets`, lesing av `gateways` (adressen til tenantens `fhinett`-Gateway står i `.status.addresses`), Envoy `securitypolicies` og `clienttrafficpolicies`, `secretproviderclasses`, `externalsecrets`/`secretstores`, alle `skybert.fhi.no`- og `skybert-beta.fhi.no`-ressurser, Flux `alerts`/`providers`, Flux `kustomizations` (alle verb — patch for suspend/resume, create/delete for egne ekstra), Flux `ocirepositories` (get/list/watch/patch/update — ikke create/delete, plattform-bootstrappet), `pushsecrets` (kun lese + delete). Lesetilgang: `resourcequotas`, `limitranges`, `verticalpodautoscalers`, `policyreports`, `metrics.k8s.io/pods`, SelfSubjectAccessReview. |
+| `skybert:tenant-admin:core` | alle miljøroller + flux-reconciler | Namespaced baseline med eksplisitte ressurser og verb (unntak: `*`/`*` på API-gruppene `skybert.fhi.no` og `skybert-beta.fhi.no`): workloads, services, ingresses, configmaps, secrets, PVC, HPA, PDB, roles/rolebindings, native + Calico NetworkPolicies, cert-manager (`certificates`, `issuers`, `bundles`), Gateway API-ruter og `listenersets`, lesing av `gateways` (adressen til tenantens `fhinett`-Gateway står i `.status.addresses`), Envoy `securitypolicies` og `clienttrafficpolicies`, `secretproviderclasses`, `externalsecrets`/`secretstores`, alle `skybert.fhi.no`- og `skybert-beta.fhi.no`-ressurser, Flux `alerts`/`providers`, Flux `kustomizations` (alle verb — patch for suspend/resume, create/delete for egne ekstra), Flux `ocirepositories` (get/list/watch/patch/update — ikke create/delete, plattform-bootstrappet), `pushsecrets` (kun lese + delete). Lesetilgang: `resourcequotas`, `limitranges`, `verticalpodautoscalers`, `policyreports`, `metrics.k8s.io/pods`, SelfSubjectAccessReview. |
 | `skybert:tenant-admin:cnpg` | alle miljøroller + flux-reconciler | CNPG- og barman-ressurser (`clusters`, `backups`, `scheduledbackups`, `poolers`, `databases`, `objectstores` m.m.), alle klustere. Se [Persistence](persistence.md#cloudnativepg). |
 | `skybert:tenant-admin:kubevirt` | ingen — ikke aggregert; plattformteamet binder den per tenant med RoleBinding i infra-repoets `tenants/<tenant>/base/` (opt-in) | `kubevirt.io` `virtualmachines` (get/list/watch/create/update/patch/delete/deletecollection), `virtualmachineinstances` (kun get/list/watch), `subresources.kubevirt.io` `virtualmachines/start`, `/stop`, `/restart` (update) og `virtualmachineinstances/console` (get, for `virtctl console`). Bevisst utelatt: `virtualmachineexports`, snapshots, clones, backups og migrasjoner. KubeVirt er installert kun på `aks-green-test-02`, `aks-ops-test-02` og `aks-sandbox-02`. |
 | `skybert:tenant-admin:test-sandbox:runtime-access` | kun `test-sandbox` | `pods/exec`, `pods/attach`, `pods/portforward`, `pods/proxy`, `services/proxy`, `pods/ephemeralcontainers` (kubectl debug). Gjelder green-test-02, yellow-test-03, ops-test-02 og sandbox-02. `aks-red-test-02` har **ikke** fragmentet: exec feiler der på RBAC selv om Kyverno tillater exec i red-test. |
@@ -159,12 +159,12 @@ I prod-klustrene blokkerer Kyverno runtime-tilgang i tillegg til RBAC — se [Ky
 
 ### Tenant-onboarding — plattformoperasjon
 
-Plattformteamet oppretter tenanter med `ska tenant new -t <tenant> -c <farge> -g <entra-gruppe>` (`scripts/tenant--new.sh`), idempotent i seks steg:
+Plattformteamet oppretter tenanter med `ska tenant new -t <tenant> -c <farge> -g <entra-gruppe>` (`scripts/tenant--new.sh`), eller med `--clusters <kluster …>` i stedet for `-c` for en eksplisitt klusterliste, idempotent i seks steg:
 
-1. **GitOps-repo** — `Fhi.<Tenant>.GitOps` opprettes fra malen, **før** Azure-steget: nyopprettede repoer får et OIDC-subject med immutable numeriske ID-er (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`) som ikke finnes før repoet gjør det.
-2. **Azure** — Managed Identity `tn-<tenant>-acr-push` med to federated credentials (`main-oci-push` navnebasert, `main-oci-push-immutable` ID-basert; subject matches eksakt, feil format gir `AADSTS700213`), ACR Repository Writer avgrenset til `<tenant>/`, Reader for Helm-charts, Reader på mgmt-subscription. Setter `AZURE_CLIENT_ID`/`AZURE_TENANT_ID`/`AZURE_SUBSCRIPTION_ID` som repo-variabler i GitOps-repoet.
+1. **GitOps-repo** — `Fhi.<Tenant>.GitOps` opprettes fra malen, **før** Azure-steget: det ID-baserte OIDC-subjectet (se [Sikkerhet — Managed Identities](security.md#managed-identities-leveres-av-plattformteamet)) finnes ikke før repoet gjør det.
+2. **Azure** — Managed Identity `tn-<tenant>-acr-push` med to federated credentials (`main-oci-push` navnebasert, `main-oci-push-immutable` ID-basert), ACR Repository Writer avgrenset til `<tenant>/`, Reader for Helm-charts, Reader på mgmt-subscription. Setter `AZURE_CLIENT_ID`/`AZURE_TENANT_ID`/`AZURE_SUBSCRIPTION_ID` som repo-variabler i GitOps-repoet.
 3. **Base-manifester** — `tenants/<tenant>/base/` og OCIRepository-stub (`tenant--bootstrap--yaml.sh`).
-4. **Kluster-onboarding** — per kluster i fargegruppen (`COLOR_GROUP_CLUSTERS` i `scripts/lib/clusters.sh`: sandbox + fargens test + prod): Managed Identity `tn-<tenant>-skybert-sa-<env>` med federated credential for Workload Identity, kluster-overlay under `tenants/<tenant>/<kluster>/`, med URL-patch for tenantens OCIRepository og flambert-hostnavnet `<prefiks>-tn-<tenant>.ingress.flambert` (prefiks fra klusternavnet, f.eks. `greentest`, `redprod`, `sandbox`) i overlayets `kustomization.yaml` (`tenant--add--to-cluster.sh`).
+4. **Kluster-onboarding** — per kluster i fargegruppen (`COLOR_GROUP_CLUSTERS` i `scripts/lib/clusters.sh`: sandbox + fargens test + prod) eller i `--clusters`-listen: Managed Identity `tn-<tenant>-skybert-sa-<env>` med federated credential for Workload Identity, kluster-overlay under `tenants/<tenant>/<kluster>/`, med URL-patch for tenantens OCIRepository og flambert-hostnavnet `<prefiks>-tn-<tenant>.ingress.flambert` (prefiks fra klusternavnet, f.eks. `greentest`, `redprod`, `sandbox`) i overlayets `kustomization.yaml` (`tenant--add--to-cluster.sh`).
 5. **Grafana** — per kluster: Grafana-org, Loki- og Mimir-datasource filtrert til `tn-<tenant>` (`X-Scope-OrgID`), og Entra-gruppe → org i `infra/grafana/<kluster>/patch-orgs.yaml` (`tenant--bootstrap--grafana.sh`). Kjøres separat kun når en tenant legges til et nytt kluster.
 6. **PR** — én samlet PR for alle infra-endringer.
 

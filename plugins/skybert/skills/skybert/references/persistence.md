@@ -1,7 +1,5 @@
 # Persistence og CloudNativePG
 
-Kanonisk fil for StorageClasses, databasevalg og CloudNativePG (CNPG). Andre filer lenker hit.
-
 ## Innhold
 
 - [StorageClasses](#storageclasses)
@@ -23,8 +21,9 @@ også for én navngitt klasse. Dette er forventet liste:
 | `unbacked-sc` | `wyvern.csi.azure.com` | Delete | RWO | Block-volum kun på Azure Local-klusteret, ingen cloud-kopi |
 | `unbacked-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Samme med Retain |
 | `default` | `disk.csi.akshci.com` | Delete | RWO | Node-lokal disk. Kluster-default, og den svakeste av disse |
+| `disk-retain` | `disk.csi.akshci.com` | Retain | RWO | Samme driver som `default`, men PV-en overlever PVC-en. Finnes bare på `aks-ops-test-02` og `aks-norsyss-prod-02` |
 | `ontap-nas` | `csi.trident.netapp.io` | Delete | RWX | NFSv3 på NetApp ONTAP. Delte filer på tvers av pods |
-| `blob-fuse` | `blob.csi.azure.com` | Delete | RWX | Azure Blob montert som filsystem — se advarsel under |
+| `blob-fuse` | `blob.csi.azure.com` | Delete | RWX | Azure Blob montert som filsystem. Klassen ligger bare i infra-overlayene for `aks-sandbox-02`, `aks-ops-test-02`, `aks-green-test-02` og `aks-yellow-prod-02` — se advarsel under |
 
 > **Operasjonell antakelse:** `aks-green-test-02` har ikke `unbacked-sc`: PVC-en ble
 > stående `Pending` med `storageclass.storage.k8s.io "unbacked-sc" not found`. `default` fantes, og
@@ -36,10 +35,8 @@ Alle støtter volume expansion. **Ingen av dem er backup:** det finnes ingen `Vo
 på klusterne — ingen volume snapshots og ingen point-in-time restore. Applikasjonsnivå-backup er
 ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
 
-- **`Delete` vs `Retain`:** `Delete` fjerner PV-en (og dataene) når PVC-en slettes. `Retain` lar
-  PV-en stå som `Released` — den holder disk, koster penger og gjenbrukes aldri automatisk. Velg
-  `Retain` når en utilsiktet `kubectl delete pvc` eller `prune: true` ikke skal være slutten på
-  dataene, og rydd manuelt: `kubectl get pv | grep Released`.
+- **`Delete` vs `Retain`:** velg `Retain` når en utilsiktet `kubectl delete pvc` eller Flux-`prune: true`
+  ikke skal være slutten på dataene; en `Released` PV gjenbrukes aldri automatisk og må ryddes manuelt.
 - **Databaser og skrivesensitivt:** `cloud-backed-sc`, eller `cloud-backed-retain-sc` når PVC-tap
   ikke skal bety datatap. **Aldri database på `ontap-nas`:** klassen er definert med
   `mountOptions: [nfsvers=3, nolock]`, så den gir ingen av konsistensgarantiene en database
@@ -54,17 +51,17 @@ ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
 - **Delte filer flere pods:** `ontap-nas` — eneste klasse med `ReadWriteMany` for vanlig filtilgang.
   Trident-backenden er konfigurert med `accessMode: ReadWriteMany`; bruk `accessModes: [ReadWriteMany]`
   på PVC-er mot klassen, og overstyr Helm-charts som defaulter til `ReadWriteOnce`.
-- **`blob-fuse` peker på delt konto** definert én gang for hele plattformen (alle klustere og
-  tenanter lander samme sted), og har ikke-POSIX-semantikk (ingen locking, ingen partial writes).
+- **`blob-fuse` peker på delt konto** definert én gang i base (alle klustere som har klassen, og alle
+  tenanter, lander samme sted), og har ikke-POSIX-semantikk (ingen locking, ingen partial writes).
   Avklar på `#ext-fhi-skybert` før bruk.
-
-> Kilde: https://docs.sky.fhi.no/persistence/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/nas-sc.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/ontap-nas-backend.yaml · https://docs.sky.fhi.no/internal/replace-cluster-in-place/
 
 > **Operasjonell antakelse:** Ikke-root-funnet er observert på `cloud-backed-retain-sc` på green-test
 > (rot eid av uid 4294967294; interne `disk.csi.akshci.com`-PVC-er i
 > `azure-arc-containerstorage`). `unbacked-*` bruker samme driver, men er ikke prøvd. Ikke beskrevet i docs.
 
 **Ved klusterutskifting:** Den interne runbooken beskriver ingen prosedyre for å hente tilbake `ontap-nas`-volumer etter at det gamle klusteret er borte. Forvent datatap uten egen backup; eventuell berging fra et fortsatt tilgjengelig gammelt kluster er ikke verifisert.
+
+> Kilde: https://docs.sky.fhi.no/persistence/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/nas-sc.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/ontap-nas-backend.yaml · https://docs.sky.fhi.no/internal/replace-cluster-in-place/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/cloudnative-pg/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/blob-csi-driver/
 
 ## Databasevalg
 
@@ -81,7 +78,7 @@ CNPG automatiserer operatoren replikering/failover/backup, men du eier lagringsk
 restore-testen. CNPG er kun for PostgreSQL — alt annet betyr fortsatt Azure, NHN eller en prat på
 `#ext-fhi-skybert`.
 
-Docs-konflikt: `get-started/prerequisites/application.md` sier fortsatt «Databases should be
+Docs-konflikt: `get-started/prerequisites/application.md` sier «Databases should be
 hosted outside Kubernetes for now». Persistence-sidene er mer spesifikke og legges til grunn her.
 
 > Kilde: https://docs.sky.fhi.no/persistence/ · https://docs.sky.fhi.no/get-started/prerequisites/application/
@@ -175,7 +172,7 @@ spec:
     limits: { memory: 1Gi }
 ```
 
-> **Operasjonell antakelse:** Eksempelet er ikke kjørt på nytt etter funnet om
+> **Operasjonell antakelse:** Eksempelet er ikke verifisert mot funnet om
 > [ikke-root på `cloud-backed-*`](#storageclasses). CNPG kjører PostgreSQL som ikke-root (uid 26)
 > og er avhengig av `fsGroup`, så `initdb` kan feile på PGDATA. Verifiser i sandbox eller test før
 > klassen brukes i prod, og meld på `#ext-fhi-skybert` hvis den feiler.
@@ -201,7 +198,7 @@ Docs sier `kubectl exec` ikke gis til tenanter på noe kluster; infra gir det i 
 test- og sandbox-klustrene unntatt red-test (se
 [Tenant-RBAC](platform-architecture.md#tenant-rbac) for hvilke). Bruk mønsteret
 som virker overalt: kjør SQL fra en kortlivet klient-pod mot `pg-rw` (engangs-pod med
-`kubectl run` + `psql`, les passordet fra `pg-app`-secreten). `enableSuperuserAccess` er `false`
+`kubectl run` + `psql`, les passordet fra `pg-app`-secreten). Operatorens egen exec mot instanspodene er unntatt fra Kyverno-blokkeringen på prod (se [PolicyExceptions](kyverno-policies.md#policyexceptions)); unntaket gjelder ikke brukere. `enableSuperuserAccess` er `false`
 som default; settes den til `true`, lander passordet i `pg-superuser`-secreten.
 
 > Kilde: https://docs.sky.fhi.no/persistence/postgres/
@@ -311,7 +308,7 @@ Instansene eksponerer metrics på port **9187**. Alloy oppdager targets fra pod-
 (`prometheus.io/scrape: "true"` + `prometheus.io/port: "9187"` via `inheritedMetadata`);
 `spec.monitoring.enablePodMonitor` gjør ingenting — det finnes ingen Prometheus Operator.
 
-På rød sone tillater infra-policyen `alloy-scrape-ingress` TCP fra Alloy til tenant-podene, også port 9187. Docs beskriver fortsatt scraping som blokkert; manifestene åpner nettverksveien, men bekrefter ikke at et bestemt target er oppe. Behold scrape-annotasjonene og kontroller target og metrics i Grafana. Se [Rød sone](hostnames-and-networking.md#rød-sone).
+På rød sone tillater infra-policyen `alloy-scrape-ingress` TCP fra Alloy til tenant-podene, også port 9187. Docs beskriver scraping som blokkert; manifestene åpner nettverksveien, men bekrefter ikke at et bestemt target er oppe. Behold scrape-annotasjonene og kontroller target og metrics i Grafana. Se [Rød sone](hostnames-and-networking.md#rød-sone).
 
 > Kilde: https://docs.sky.fhi.no/persistence/postgres/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/globalnetworkpolicies/base/policies-red/alloy.yaml
 

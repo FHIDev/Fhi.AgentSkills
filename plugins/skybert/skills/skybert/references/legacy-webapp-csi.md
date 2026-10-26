@@ -1,6 +1,6 @@
 # Legacy: WebApp CRD og CSI driver
 
-WebApp (`skybert.fhi.no/v1`) er ikke dokumentert i docs (docs dokumenterer kun SkybertApp), men XRD og composition ligger fortsatt i `infra/crossplane/base/` og er rullet ut på alle klustere. Bruk SkybertApp for nye workloads. Secrets Store CSI driver og `SecretProviderClass` er merket deprecated for tenanter i RBAC-kommentaren («Remove once all tenants have migrated to external-secrets»), men driveren er installert på alle klustere og `skybert:tenant-admin` har fortsatt full CRUD på `secretproviderclasses`. Nye deployments bruker [SkybertApp](skybertapp-crd.md) med `secrets[]`, som henter fra Key Vault og oppretter SecretStore/ExternalSecret (ESO) automatisk; raw Deployments med CSI-volum migreres til ESO (se [Secrets-mønstre](secrets.md)). Denne filen finnes for eksisterende workloads og migrering.
+WebApp (`skybert.fhi.no/v1`) er ikke dokumentert i docs (docs dokumenterer kun SkybertApp), men XRD og composition ligger i `infra/crossplane/base/` og er rullet ut på alle klustere. Bruk SkybertApp for nye workloads. Secrets Store CSI driver og `SecretProviderClass` er merket deprecated for tenanter i RBAC-kommentaren («Remove once all tenants have migrated to external-secrets»), men driveren er installert på alle klustere og `skybert:tenant-admin` har full CRUD på `secretproviderclasses`. Nye deployments bruker [SkybertApp](skybertapp-crd.md) med `secrets[]`, som henter fra Key Vault og oppretter SecretStore/ExternalSecret (ESO) automatisk; raw Deployments med CSI-volum migreres til ESO (se [Secrets-mønstre](secrets.md)). Denne filen finnes for eksisterende workloads og migrering.
 
 > Kilde: https://docs.sky.fhi.no/workloads/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/secrets-store-csi-driver/
 
@@ -52,7 +52,7 @@ Health probes finnes ikke i schemaet.
 | Felt | Type | Standard | Beskrivelse |
 |------|------|----------|-------------|
 | `initContainers[]` | array | — | Samme feltsett som `container` (`name`, `image`, `command`, `resources`, `secrets`, `readOnlyRootFilesystem`); `name`, `image` og `readOnlyRootFilesystem` er påkrevd |
-| `sidecarContainers[]` | array | — | Samme feltsett som `initContainers`; rendres som native sidecar (`restartPolicy: Always`) |
+| `sidecarContainers[]` | array | — | Samme feltsett som `initContainers`; rendres som native sidecar (`restartPolicy: Always`) under `initContainers` når `initContainers` er angitt, ellers under `containers` (ikke runtime-verifisert) |
 | `ingress.enabled` | boolean | `false` | Oppretter Service + nginx-Ingress; `hostname` påkrevd når `true` |
 | `ingress.hostname` | string | — | TLS-sertifikat via cert-manager-issuer valgt etter domene (`skytest.fhi.no`, `fhi-k8s.com`, `sky.fhi.no`); andre domener feiler i render |
 | `config[]` | array av `{key, value}` | — | ConfigMap `<app>-config`, montert på `/config` og satt som env vars i alle containere |
