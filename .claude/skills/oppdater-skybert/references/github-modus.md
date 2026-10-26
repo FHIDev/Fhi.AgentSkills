@@ -131,7 +131,7 @@ Før detaljert lesing: oppdage hva som faktisk finnes.
    - CUE, Jsonnet, Rego eller andre policy/config-språk
    - CRD-er og API-definisjoner utover de forventede stiene
 4. Lag et **signal inventory**: Hvilke filer/mønstre inneholder agentnyttig kunnskap, og hvilke er støy?
-5. Sammenlign `infra/flux-system/<prod-kluster>/kustomization.yaml` med `infra/flux-system/kustomizations-infra/` og noter komponenter som mangler på prod-klustrene (prod-overlayene lister infra-Kustomizations eksplisitt). Påstander som «på alle klustere» verifiseres mot dette.
+5. Sammenlign `infra/flux-system/<prod-kluster>/kustomization.yaml` med `infra/flux-system/base/kustomizations-infra/` og noter komponenter som mangler på prod-klustrene (prod-overlayene lister infra-Kustomizations eksplisitt). Påstander som «på alle klustere» verifiseres mot dette.
 
 ### Retningslinje-repo discovery
 

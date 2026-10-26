@@ -93,10 +93,16 @@ oppretter og federerer identiteten, men setter ikke opp tilganger. Bruk vault-na
 ## Rotasjon og oppdatering
 
 Når en secret endres i Azure Key Vault, oppdateres mountede secret-filer automatisk i containeren.
+Miljøvariabler fra `mountAsEnv: true` oppdateres ikke; containeren får nye verdier først ved neste pod-start.
 Hvis applikasjonen ikke leser filendringer fortløpende, kan **Reloader** (plattformkomponent)
 restarte poden automatisk når den monterte secreten endres — docs omtaler dette som å «enable
 reloader» på workloaden. Flux-overlayene for `aks-green-prod-03`, `aks-yellow-prod-02` og
 `aks-red-prod-02` tar ikke med Reloader-Kustomizationen; om Reloader kjører der, er ikke verifisert —
 avklar på `#ext-fhi-skybert` før du bygger på automatisk restart i disse klustrene.
 
-> Kilde: https://docs.sky.fhi.no/miscellaneous/vault_secrets/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/reloader/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/flux-system/
+Reloader kjører med standardargumenter og reagerer bare på annotasjoner på workloaden, f.eks.
+`reloader.stakater.com/auto: "true"` på en raw Deployment. SkybertApp-compositionene setter ingen
+slik annotasjon, og XRD-en har ikke felt for annotasjoner på Deployment, så kildene beskriver ingen
+måte å slå på Reloader for en SkybertApp. Avklar fremgangsmåten på `#ext-fhi-skybert`.
+
+> Kilde: https://docs.sky.fhi.no/miscellaneous/vault_secrets/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/reloader/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/flux-system/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/crossplane/base/compositions/

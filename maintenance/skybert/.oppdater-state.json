@@ -233,7 +233,7 @@
       "status": "deferred",
       "category": "VURDER",
       "target": "references/secrets.md; references/persistence.md",
-      "source": "infra/flux-system/aks-{green-prod-03,yellow-prod-02,red-prod-02,norsyss-prod-02}/kustomization.yaml mot infra/flux-system/kustomizations-infra/",
+      "source": "infra/flux-system/aks-{green-prod-03,yellow-prod-02,red-prod-02,norsyss-prod-02}/kustomization.yaml mot infra/flux-system/base/kustomizations-infra/",
       "summary": "Prod-overlayene i infra/flux-system lister infra-Kustomizations eksplisitt: reloader.yaml mangler på aks-green-prod-03, aks-yellow-prod-02 og aks-red-prod-02, og blob-csi-driver.yaml mangler på aks-red-prod-02 og aks-norsyss-prod-02. infra/reloader/ har overlay for alle klustere. secrets.md sier at det ikke er verifisert om Reloader kjører der. Meld til plattformteamet; lukkes når infra eller plattformteamet har avklart.",
       "firstSeen": "2026-10-25",
       "lastSeen": "2026-10-25"

@@ -144,13 +144,18 @@ For docs' .NET Health Checks-mønster, se [Health probes i .NET-apper](configura
 | Felt | Type | Standard | Beskrivelse |
 |------|------|----------|-------------|
 | `podDisruptionBudget.enabled` | boolean | auto | Eksplisitt aktiver/deaktiver PDB |
-| `podDisruptionBudget.minAvailable` | `"X%"` (heltall rendres som streng av compositionen og avvises trolig av PDB-valideringen; bruk prosent) | `"33%"` | Minimum tilgjengelige pods under voluntary disruptions |
-| `podDisruptionBudget.maxUnavailable` | `"X%"` (heltall rendres som streng av compositionen og avvises trolig av PDB-valideringen; bruk prosent) | — | Maksimum utilgjengelige pods |
+| `podDisruptionBudget.minAvailable` | int eller "X%" (bruk "X%", se under) | `"33%"` | Minimum tilgjengelige pods under voluntary disruptions |
+| `podDisruptionBudget.maxUnavailable` | int eller "X%" (bruk "X%", se under) | — | Maksimum utilgjengelige pods |
 
 PDB opprettes automatisk når `replicas > 1` eller `autoscaling.minReplicas > 1`, med mindre
 `enabled` er satt eksplisitt. Sett bare ett av `minAvailable` og `maxUnavailable`: schemaet stopper ikke
 begge, men da bruker compositionen `maxUnavailable` og ignorerer `minAvailable`. `maxUnavailable: 0`
 tolkes som «ikke satt» og gir `minAvailable: "33%"`.
+
+Bruk prosent. Schemaet godtar heltall, men compositionen quoter verdien (`| quote`), så
+`minAvailable: 2` rendres som strengen `"2"`. Kubernetes godtar en streng i en PDB bare som prosent
+(`ValidatePositiveIntOrPercent`), så PDB-en avvises av API-serveren. Docs sier at heltall virker;
+compositionen er autoritativ. Kjeden er lest ut av compositionen og Kubernetes' validering, ikke prøvd i kluster.
 
 ```yaml
 replicas: 3
