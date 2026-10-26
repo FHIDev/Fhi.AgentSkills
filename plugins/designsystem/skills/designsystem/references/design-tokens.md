@@ -59,7 +59,7 @@ Stopp-skala: `010`, `050`, `100`, `150`, `200`–`900` (i trinn på 100). Lavere
 | `warning` | `yellow` / `orange` |
 | `danger` | `red` |
 
-`greybeige`, `teal` og `purple` har ingen semantiske tokens i v0.46.0.
+`greybeige`, `teal` og `purple` har ingen semantiske tokens i v0.47.0.
 
 ### Semantiske tokens — navnemønster
 
