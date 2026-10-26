@@ -73,8 +73,13 @@ Bruk ikon i alle eller ingen av alternativene i en gruppe. Ikon uten tekst gir
   `value` settes tilbake til det.
 - `change` utløses også **uten brukerhandling**: ved første automatiske valg (hvis
   lytteren er registrert før elementet kobles til, slik rammeverk ofte gjør), ved
-  programmatisk `value` og ved `item.selected = true`. Den utløses ikke når valget er
-  uendret. Ved toveis binding: sammenlign med forrige verdi før du oppdaterer state.
+  programmatisk `value` og ved `item.selected = true`. Ved toveis binding: sammenlign
+  med forrige verdi før du oppdaterer state.
+- `change` følger **valgt element**, ikke verdien: endres `value` (eller tekst) på
+  alternativet som allerede er valgt, oppdateres gruppens `value` **uten** `change`.
+  Bytte til et annet alternativ med samme verdi (f.eks. når det valgte fjernes)
+  utløser derimot `change`. Ved dynamiske alternativer: les `value` på nytt etter
+  endringer, ikke bare i `change`-lytteren.
 - Endringer i items' `selected`, `value` og tekstinnhold, og items som legges til
   eller fjernes, fanges opp automatisk.
 
@@ -99,8 +104,10 @@ import '@folkehelseinstituttet/designsystem/fhi-icon-chart-line';
   <fhi-segmented-control-item value="month">Måned</fhi-segmented-control-item>
 </fhi-segmented-control>
 
+<!-- Visningsbytte: startinnholdet står i markup og matcher value="table".
+     Handleren er idempotent, så et ekstra change ved første valg gjør ingen skade. -->
 <fhi-label id="visning-label">Visning</fhi-label>
-<fhi-segmented-control aria-labelledby="visning-label" variant="subtle">
+<fhi-segmented-control id="visning" aria-labelledby="visning-label" variant="subtle" value="table">
   <fhi-segmented-control-item value="table">
     <fhi-icon-sheet slot="icon"></fhi-icon-sheet>
     Tabell
@@ -110,10 +117,14 @@ import '@folkehelseinstituttet/designsystem/fhi-icon-chart-line';
     Graf
   </fhi-segmented-control-item>
 </fhi-segmented-control>
+<div id="tabell">…tabellvisning…</div>
+<div id="graf" hidden>…grafvisning…</div>
 
 <script>
-  document.querySelector('fhi-segmented-control')
-    .addEventListener('change', e => console.log(e.target.value));
+  document.getElementById('visning').addEventListener('change', e => {
+    document.getElementById('tabell').hidden = e.target.value !== 'table';
+    document.getElementById('graf').hidden = e.target.value !== 'chart';
+  });
 </script>
 ```
 
