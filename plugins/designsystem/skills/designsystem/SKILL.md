@@ -2,17 +2,17 @@
 name: designsystem
 description: Ekspert på FHI Designsystem (@folkehelseinstituttet/designsystem, designsystem.fhi.no). Bruk ved installasjon eller oppsett av designsystemet, bruk av FHI-komponenter (fhi-button, fhi-text-input, fhi-checkbox, etc.), bruk av FHI design tokens (farger, typografi, spacing), ikoner, rammeverk-integrasjon (React, Angular, Blazor), eller spørsmål om komponenter brukeren har sett i designsystemets Storybook. Gjelder også når brukeren sier «FHI-komponent» eller bygger skjema/UI i en FHI-app uten å nevne designsystemet eksplisitt.
 ---
-<!-- Basert på @folkehelseinstituttet/designsystem v0.46.0 -->
+<!-- Basert på @folkehelseinstituttet/designsystem v0.47.0 -->
 
 # FHI Designsystem — Brukerveiledning
 
 Bruk FHI Designsystem i egne prosjekter. Designsystemet er basert på standard web components og fungerer i alle rammeverk.
 
-> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.46.0 — latest)
+> **Pakke:** `@folkehelseinstituttet/designsystem` (v0.47.0 — latest)
 > **Dokumentasjon:** https://designsystem.fhi.no/
 > **GitHub:** https://github.com/FHIDev/Fhi.Designsystem
 > **Figma:** https://www.figma.com/design/VgQG6XeEbFOmHIrxyAOACR/FHI-Designsystem
-> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.46.0` (2026-10-18)
+> **Verifisert mot:** `@folkehelseinstituttet/designsystem@0.47.0` (2026-10-26)
 > **Støttepolicy:** Latest + 9 tidligere minor (totalt 10 minor). Se [`versions/INDEX.md`](versions/INDEX.md) for støttede versjoner.
 >
 > **Versjonsbehandling:**
@@ -102,6 +102,8 @@ For React, Angular eller Blazor, se [Rammeverk-oppsett](references/framework-set
 | Visuell | [`fhi-tag`](references/components/fhi-tag.md) | Status-/kategorimerke |
 | Visuell | [`fhi-tooltip`](references/components/fhi-tooltip.md) | Tooltip med auto-posisjonering |
 | Visuell | [`fhi-modal-dialog`](references/components/fhi-modal-dialog.md) | Modal dialog |
+| Visning | [`fhi-segmented-control`](references/components/fhi-segmented-control.md) | Ett valg som filtrerer eller bytter visning; ikke skjemafelt — fra v0.47.0 |
+| Visning | [`fhi-segmented-control-item`](references/components/fhi-segmented-control.md) | Alternativ i `fhi-segmented-control` |
 | Data | [`fhi-data-table`](references/components/fhi-data-table.md) | Tabell-container (caption, striped) — fra v0.37.0 |
 | Data | [`fhi-data-table-row`](references/components/fhi-data-table.md) | Tabellrad (`variant` header/body) |
 | Data | [`fhi-data-table-cell`](references/components/fhi-data-table.md) | Tabellcelle |

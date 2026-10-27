@@ -1,6 +1,6 @@
 {
   "skill_name": "designsystem",
-  "description": "Svar-evals: regresjonstest for designsystem-skillen. Kjøres som del av steg 9 i oppdater-designsystem (se kontraktsjekker.md). Les skillen slik en agent ville gjort (følg versjonsrutingen i SKILL.md) og sammenlign svaret med expected_output. Fasit er skrevet mot v0.40.0-baseline (eval 8 mot v0.45.3, eval 9 mot v0.46.0) — hvis en ny versjon endrer riktig svar, oppdater fasiten og begrunn hvorfor.",
+  "description": "Svar-evals: regresjonstest for designsystem-skillen. Kjøres som del av steg 9 i oppdater-designsystem (se kontraktsjekker.md). Les skillen slik en agent ville gjort (følg versjonsrutingen i SKILL.md) og sammenlign svaret med expected_output. Fasit er skrevet mot v0.40.0-baseline (eval 8 mot v0.45.3, eval 9–12 mot v0.47.0) — hvis en ny versjon endrer riktig svar, oppdater fasiten og begrunn hvorfor.",
   "evals": [
     {
       "id": 1,
@@ -61,8 +61,29 @@
     {
       "id": 9,
       "name": "ikon-i-tag-latest",
-      "prompt": "Jeg vil ha et klokkeikon foran teksten i en fhi-tag. package.json sier \"@folkehelseinstituttet/designsystem\": \"^0.46.0\".",
+      "prompt": "Jeg vil ha et klokkeikon foran teksten i en fhi-tag. package.json sier \"@folkehelseinstituttet/designsystem\": \"^0.47.0\".",
       "expected_output": "Fast path (latest): svar direkte fra SKILL.md og references/components/fhi-tag.md uten å lese versions/. Skal bruke slot=\"icon\", f.eks. <fhi-tag><fhi-icon-clock slot=\"icon\"></fhi-icon-clock>Utløper snart</fhi-tag>, med import av fhi-tag og fhi-icon-clock. Skal IKKE plassere ikonet i default slot (deprecated, gir console.warn).",
+      "files": []
+    },
+    {
+      "id": 10,
+      "name": "segmented-control-versjon",
+      "prompt": "Jeg vil la brukeren bytte mellom Dag, Uke og Måned over en graf. Hvilken FHI-komponent bruker jeg? package.json sier \"@folkehelseinstituttet/designsystem\": \"^0.46.0\".",
+      "expected_output": "Skal følge versjonsrutingen: 0.46.x er ikke latest, så INDEX.md/FEATURES.md konsulteres. Skal svare at fhi-segmented-control/fhi-segmented-control-item IKKE finnes i 0.46.x (innført i v0.47.0), og at fhi-radio er alternativet i 0.46. Skal bruke standard svarformat (For din versjon / I latest / Oppgraderingsnotat): i latest (0.47.0) brukes fhi-segmented-control med fhi-segmented-control-item, f.eks. value=\"day\"/\"week\"/\"month\", importert fra sine entrypoints.",
+      "files": []
+    },
+    {
+      "id": 11,
+      "name": "segmented-control-skjema",
+      "prompt": "Vi bruker designsystemet 0.47.0. Kan jeg bruke fhi-segmented-control med name=\"periode\" i et <form> slik at valget sendes med ved submit?",
+      "expected_output": "Fast path (latest). Skal svare nei: fhi-segmented-control er ikke form-assosiert, har ingen name-attributt og deltar ikke i FormData. Skal anbefale fhi-radio (samme name i gruppen) for valg som skal sendes eller valideres i skjema, i tråd med docs, og forklare at Segmented Control er for lokal filtrering eller visningsbytte. Skal IKKE foreslå å legge til name på segmented control.",
+      "files": []
+    },
+    {
+      "id": 12,
+      "name": "segmented-control-programmatisk-change",
+      "prompt": "Vi bruker designsystemet 0.47.0. Vi setter value på fhi-segmented-control fra URL-state og lytter på change for å oppdatere URL-en. Nå får vi change uten at brukeren har klikket, også ved første lasting. Hvorfor?",
+      "expected_output": "Fast path (latest). Skal forklare at change også utløses uten brukerhandling: ved første automatiske valg når lytteren er registrert før elementet kobles til, ved programmatisk value og ved item.selected = true. Skal anbefale å sammenligne med forrige verdi før state/URL oppdateres (eller idempotent håndtering). Bør nevne at change følger valgt element: endret value på allerede valgt alternativ gir ingen change, mens bytte til et annet alternativ med samme verdi gjør det.",
       "files": []
     }
   ]
