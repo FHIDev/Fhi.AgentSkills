@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-18T12:00:00Z",
-  "docsCommit": "8d658cf173a76d739b1824c8ab8d6249ac31bfcb",
-  "skillContentHash": "0cae60904fb28f67cf91ebe63225a0ae6601d893b2412d11d9160ec335f2115c",
+  "generatedAt": "2026-10-26T07:15:00Z",
+  "docsCommit": "be3e8b713ffd875773f7b398babc462d4854db83",
+  "skillContentHash": "88df71e6fd022535806568907d291d1f6eb74d5b92cbda4767869f2872d75a4e",
   "pages": [
     {
       "path": "docs/auth/index.md",
@@ -50,7 +50,7 @@
         "references/flux-tooling.md"
       ],
       "coverage": "komplett",
-      "missing": "Docs viser fortsatt gamle Flux-hostnavn; skillen følger infra (Ingress-host i flux-operator-overlays) og nevner .skybert-URL-ene. Åpne poster docs-klusternavn-etter-infra og flux-url-skybert."
+      "missing": "Docs viser gamle Flux-hostnavn; skillen følger infra (flux-operator-overlays) og lister både Ingress- og .skybert-URL (OIDC-baseURL) per kluster. Åpne poster docs-klusternavn-etter-infra og flux-url-skybert."
     },
     {
       "path": "docs/build/flux-mcp.md",
@@ -595,10 +595,10 @@
       "path": "docs/observability/grafana.md",
       "topic": "Grafana-URL-er, dashboards, ConfigMap-syncer",
       "coveredIn": [
-        "references/observability.md#observability"
+        "references/observability.md#grafana"
       ],
       "coverage": "komplett",
-      "missing": "Docs viser gamle Grafana-hostnavn for grønn, gul og rød; skillen følger infra (GF_SERVER_ROOT_URL). Åpen post docs-klusternavn-etter-infra."
+      "missing": "Docs viser grafana.<color>-<nn>.<domain> og gamle klusternavn; infra eksponerer Grafana bare på .skybert-navn (Ingress fjernet), og skillen følger infra. Åpen post docs-klusternavn-etter-infra."
     },
     {
       "path": "docs/observability/index.md",
@@ -745,10 +745,10 @@
       "path": "docs/sk8/clusters.json",
       "topic": "Publisert klusterregister (name, resourceGroup, needsPim m.m.)",
       "coveredIn": [
-        "references/kubectl-access.md"
+        "references/kubectl-access.md#tilgjengelige-klustere"
       ],
       "coverage": "komplett",
-      "missing": "Gyldig JSON, men innholdet henger etter scripts/lib/clusters.sh: mangler aks-green-test-02, aks-red-test-02, aks-yellow-prod-02, aks-red-prod-02 og aks-norsyss-prod-02, og lister utfasede klustere. Skillen bruker clusters.sh og sier at registeret henger etter. Åpen post docs-clusters-json-merge-konflikt."
+      "missing": ""
     },
     {
       "path": "guidelines:docs/CI-CD/container-images.md",
@@ -756,8 +756,8 @@
       "coveredIn": [
         "references/container-images.md#container-images--fhi-retningslinje-og-skybert"
       ],
-      "coverage": "delvis",
-      "missing": "PR #2 er åpen; dokumenteier/avvikssystem TBD. Kravene er representert med utkastmerking."
+      "coverage": "komplett",
+      "missing": "Utkast i PR #2; kravene er representert med utkastmerking og skille mellom KRAV og VEILEDNING."
     },
     {
       "path": "docs/miscellaneous/cluster-networks.md",

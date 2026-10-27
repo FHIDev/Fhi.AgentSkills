@@ -32,6 +32,8 @@ TLS-sertifikater provisjoneres automatisk via cert-manager. SkybertApp velger is
 
 Test-issuerne finnes på alle test-klustere og sandbox, prod-issueren på alle prod-klustere og `local-issuer` på alle. Beta-SkybertApp har ingen issuer for `fhi-k8s.com`; et slikt hostnavn feiler i compositionen.
 
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/cert-manager/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml
+
 ### Fhinett-hostnavn (beta)
 
 Med `network: fhinett` skal hostnavnet slutte på klusterets `.skybert`-sone. external-dns-private publiserer bare navn i den sonen (`--domain-filter` per kluster):
@@ -46,13 +48,13 @@ Med `network: fhinett` skal hostnavnet slutte på klusterets `.skybert`-sone. ex
 | red-prod | `red.skybert` |
 | sandbox, ops-test | `sandbox.skybert` |
 
-`*.skytest.fhi.no` er fortsatt tillatt på fhinett-ruter, men docs anbefaler å gå bort fra det. `network: helsenett` og `internett` bruker `*.skytest.fhi.no` og `*.sky.fhi.no`.
+`*.skytest.fhi.no` er tillatt på fhinett-ruter, men docs fraråder det. `network: helsenett` og `internett` bruker `*.skytest.fhi.no` og `*.sky.fhi.no`.
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/cert-manager/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/external-dns-private/
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/external-dns-private/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/fhinett.sh
 
 ## Public DNS-oppslag (external-dns)
 
-Alpha-SkybertApp eksponerer ingen Ingress-annotasjoner, så et `hostname` på den får alltid ingressens private IP. Trenger appen offentlig DNS-oppslag (f.eks. en frontend hostet utenfor FHI, eller claude.ai), la `hostname` stå tomt på SkybertApp (da rendres verken Service eller Ingress) og skriv egen `Service` (selector `skybert.fhi.no/webapp: <app>`, port = `spec.port`) og `Ingress` med `spec.ingressClassName: nginx`, TLS-blokk for hostnavnet, `cert-manager.io/cluster-issuer` (se tabellen over) og `external-dns.alpha.kubernetes.io/target: "<klusterets offentlige front-end-IP>"`. Ingressen må oppfylle [Kyverno-reglene under](#ingress-regler-kyverno-håndhevet). Front-end-IP-ene `83.118.177.220` (grønn test) og `83.118.177.234` (grønn prod) er ikke bekreftet for dagens klustre; bekreft med plattformteamet. Offentlig eksponering utenfor grønn sone er en klassifiseringsbeslutning, ikke et IP-oppslag — avklar med plattformteamet på `#ext-fhi-skybert` før du bruker mønsteret på gul eller rød.
+Alpha-SkybertApp eksponerer ingen Ingress-annotasjoner, så et `hostname` på den får alltid ingressens private IP. Trenger appen offentlig DNS-oppslag (f.eks. en frontend hostet utenfor FHI, eller claude.ai), la `hostname` stå tomt på SkybertApp (da rendres verken Service eller Ingress) og skriv egen `Service` (selector `skybert.fhi.no/webapp: <app>`, port = `spec.port`) og `Ingress` med `spec.ingressClassName: nginx`, TLS-blokk for hostnavnet, `cert-manager.io/cluster-issuer` (se tabellen over) og `external-dns.alpha.kubernetes.io/target: "<klusterets offentlige front-end-IP>"`. Ingressen må oppfylle [Kyverno-reglene under](#ingress-regler-kyverno-håndhevet). Front-end-IP-ene `83.118.177.220` (grønn test) og `83.118.177.234` (grønn prod) er ikke bekreftet; bekreft med plattformteamet. Offentlig eksponering utenfor grønn sone er en klassifiseringsbeslutning, ikke et IP-oppslag — avklar med plattformteamet på `#ext-fhi-skybert` før du bruker mønsteret på gul eller rød.
 
 > **Operasjonell antakelse:** Ikke dokumentert for tenanter i docs, men i bruk i `tn-ki-mcp` (`Fhi.Ki.Mcp.GitOps`, test og prod) og verifisert i `tn-ehds-soksak` i grønn test med offentlig A-record, TLS og trafikk utenfra. For andre klustere (sandbox, ops-test, gul, rød): avklar IP med plattformteamet på `#ext-fhi-skybert`.
 
@@ -62,7 +64,7 @@ Med beta-SkybertApp eller egne `ListenerSet`/`HTTPRoute` på de delte Gatewayene
 
 ## DNS-eierskap for tenanter på flere laner
 
-external-dns kjører per kluster mot samme Azure DNS-sone (`sky.fhi.no` i `rg-domains`), med TXT-registry og samme base på alle tenant-klustere: v0.21, `--policy=sync` og kildene `ingress` og `gateway-httproute`. Er tenanten registrert på både grønn og rød lane, rendres samme host på begge prod-klustrene. Klusteret som skriver recorden først eier den, og det andre hopper over den. Begge sletter egne records når Ingressen forsvinner. TXT-eieren er ikke dagens klusternavn: `aks-green-prod-03` skriver `--txt-owner-id=aks-green-prod-02` og `aks-red-prod-02` skriver `aks-red-prod-01`.
+external-dns kjører per kluster mot samme Azure DNS-sone (`sky.fhi.no` i `rg-domains`), med TXT-registry og samme base på alle tenant-klustere: v0.21, `--policy=sync` og kildene `ingress` og `gateway-httproute`. Er tenanten registrert på både grønn og rød lane, rendres samme host på begge prod-klustrene. Klusteret som skriver recorden først eier den, og det andre hopper over den. Begge sletter egne records når Ingressen forsvinner. TXT-eieren er ikke klusterets eget navn: `aks-green-prod-03` skriver `--txt-owner-id=aks-green-prod-02` og `aks-red-prod-02` skriver `aks-red-prod-01`.
 
 Eieren står i TXT-recorden: `dig +short <host> TXT` gir en streng som inneholder `external-dns/owner=<kluster>`, for grønn prod `owner=aks-green-prod-02`.
 
@@ -162,8 +164,6 @@ spec:
           port: 8080
 ```
 
-**SkybertApp på Gateway API (beta):** `skybert-beta.fhi.no/v1beta1` rendrer `ListenerSet` + `HTTPRoute` i stedet for `Ingress` og har et `network`-felt med enum `fhinett` / `helsenett` / `internett`, default `fhinett`. XRD og composition ligger i `infra/crossplane/base/` og finnes på alle klustere, og tenant-RBAC gir `*`/`*` på `skybert-beta.fhi.no`. Felt, rendring og migrering: [SkybertApp CRD — Beta](skybertapp-crd.md#beta-gateway-api).
-
 **Klient-IP bak `ingress-nginx`:** podene ser aldri kallerens adresse. Controlleren kjører med tom ConfigMap (standardverdier), så `X-Forwarded-For` erstattes med adressen som koblet til nginx i stedet for å utvides, og den adressen er allerede intern: NAT hos NHN og MetalLB-tjenesten (`externalTrafficPolicy` ikke satt, altså `Cluster`) bevarer ikke kilden. Rate-limiting eller lockout per klient-IP i appen blir dermed én felles bøtte for alle brukere. Headeren kan til gjengjeld ikke forfalskes utenfra.
 
 > **Operasjonell antakelse:** Observert på `aks-green-test-02`: hver forespørsel kom inn med `X-Forwarded-For: 10.244.x.x`.
@@ -204,7 +204,7 @@ Merk, på grønn begrenser en native `NetworkPolicy` ikke egress. Calico evaluer
 | `<ns>-internal-ingress` | Ingress | 1200 | Kyverno-generert; tillater trafikk innen eget namespace uten protokollfilter, etter tenantens ingress-policyer |
 | `base-tenant-ingress` | Ingress | 1201 | Tillater TCP fra `ingress-nginx`-namespacet, deretter Deny |
 
-Begge røde kluster-overlays inkluderer disse basene. Docs beskriver en eldre forskjell mellom red-test og red-prod; tabellen følger infra-manifestene. Tenantens Calico-regler med order 1000–1199 kan dermed begrense også ingress innen eget namespace.
+Begge røde kluster-overlays inkluderer disse basene. Docs beskriver en forskjell mellom red-test og red-prod som manifestene ikke har; tabellen følger infra-manifestene. Tenantens Calico-regler med order 1000–1199 kan dermed begrense også ingress innen eget namespace.
 
 **Unntak opprettes av plattformteamet** som GlobalNetworkPolicy med `order: 500` (evalueres før base-policyene). Ikke self-service — kontakt `#ext-fhi-skybert`:
 
@@ -217,23 +217,21 @@ Begge røde kluster-overlays inkluderer disse basene. Docs beskriver en eldre fo
 
 **Gateway API når ikke fram:** `base-tenant-ingress` tillater kun ingress fra `ingress-nginx`-namespacet, og ingen GNP slipper `envoy-gateway-system` inn. `ListenerSet` og `HTTPRoute` applyer uten feil, men ingen trafikk når podene. Det gjelder også beta-SkybertApp, uansett `network`, selv om docs' migreringsguide lister `fhinett` og `helsenett` som tilgjengelige på rød. På rød er alpha-SkybertApp (`Ingress`) veien — eventuelt en Calico `NetworkPolicy` med `spec.order` i `[1000, 1200)` som tillater ingress fra `envoy-gateway-system`, avklart med `#ext-fhi-skybert`.
 
-> **Operasjonell antakelse:** Gateway API-konsekvensen er utledet fra GNP-ene i `policies-red/` (kun `ingress-nginx` er tillatt som kilde); docs' migreringsguide sier ikke at trafikken stoppes på rød.
-
 > Kilde: https://docs.sky.fhi.no/build/environments/ · https://docs.sky.fhi.no/internal/global-network-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/globalnetworkpolicies/base/policies-red/
 
 ## Egress-IP (tillatt utgående trafikk fra clusterne)
 
 Trafikk fra workloads forlater klusteret med IP-en til noden poden kjører på. Skal en tjeneste utenfor klusteret (database, API, filshare) begrense tilgang på IP, åpne for hele node-IP-poolen til klusteret, ikke én node — noder byttes ved oppgradering og skalering. Poolene står i [Cluster networks](https://docs.sky.fhi.no/miscellaneous/cluster-networks/).
 
-> Kilde: https://docs.sky.fhi.no/miscellaneous/cluster-networks/
-
 Mot tjenester på internett er trafikken oppgitt å gå ut via felles egress-IP `83.118.167.10` (f.eks. Azure SQL-brannmurregler). Bekreft verdien med plattformteamet (`#ext-fhi-skybert`) før den legges i en brannmurregel; rød sone krever i tillegg en GlobalNetworkPolicy før trafikken slipper ut.
 
 > **Operasjonell antakelse:** Verdien er oppgitt av bidragsyter fra intern plattformkunnskap og finnes verken i docs eller infra-repoet; docs beskriver bare node-IP-ene.
 
+> Kilde: https://docs.sky.fhi.no/miscellaneous/cluster-networks/
+
 ## Service Mesh
 
-Skybert kjører **ikke** service mesh. Linkerd er fjernet fra plattformen.
+Skybert kjører **ikke** service mesh.
 
 > Kilde: https://docs.sky.fhi.no/internal/service-mesh/
 
@@ -241,7 +239,7 @@ Skybert kjører **ikke** service mesh. Linkerd er fjernet fra plattformen.
 
 CA-sertifikater lagres i `/etc/ssl/certs/` i containere. Du er ansvarlig for å holde `ca-certificates`-pakken oppdatert.
 
-**Trust bundle:** Plattformen vedlikeholder `trust-bundle.pem` med FHIs interne CA-er (`fhi.no` og `red.fhi.sec`) **og** den vanlige listen av offentlige CA-er. Kyverno-policyen `automount-cert-chain-bundle` monterer den fra ConfigMap `internal-cert-bundle` til `/etc/ssl/certs/trust-bundle.pem` (read-only, `subPath`) i alle containere og init-containere i `tn-*`-pods, med mindre poden allerede har et volum med navn `internal-cert-bundle`.
+**Trust bundle:** Plattformen vedlikeholder `trust-bundle.pem` med FHIs interne CA-er (`fhi.no` og `red.fhi.sec`) **og** den vanlige listen av offentlige CA-er. Kyverno-policyen `automount-cert-chain-bundle` monterer den fra ConfigMap `internal-cert-bundle` til `/etc/ssl/certs/trust-bundle.pem` (read-only, `subPath`) i alle containere og init-containere i `tn-*`-pods, med mindre poden allerede har et volum med navn `internal-cert-bundle`. ConfigMapen har i tillegg nøklene `trust-bundle.jks` og `trust-bundle.p12` med de samme CA-ene; de monteres ikke automatisk — monter nøkkelen selv fra ConfigMap `internal-cert-bundle` i et volum med et annet navn.
 
 **Bruk trust-bundle:** Sett `SSL_CERT_FILE=/etc/ssl/certs/trust-bundle.pem` (eller tilsvarende for ditt rammeverk) for å bruke den kuraterte listen i stedet for image-standardene. Siden bundelen også har offentlige CA-er, bryter ikke offentlige TLS-kall.
 

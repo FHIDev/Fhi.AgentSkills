@@ -31,7 +31,7 @@ Velg bundle med annotasjonen `waf.skybert.fhi.no/bundle`: `owasp-detection` elle
 | owasp-detection | 1 | 5 / 4 | true |
 | owasp | 1 | 5 / 4 | true |
 
-Begge setter `SecRuleEngine DetectionOnly` og `failOpen: true`; preamble, terskler, engine og failOpen er i dag like i de to bundlene. CRS-funn håndheves dermed ikke som blokkerende regelmotor, og feil i Wasm-filteret stenger ikke trafikk. Infra-kommentaren sier at `owasp` skal settes til `SecRuleEngine On` når blokkering slås på. Ikke beskriv dette som at WAF blokkerer i dag.
+Begge setter `SecRuleEngine DetectionOnly` og `failOpen: true`; preamble, terskler, engine og failOpen er like i de to bundlene. CRS-funn håndheves dermed ikke som blokkerende regelmotor, og feil i Wasm-filteret stenger ikke trafikk. Infra-kommentaren sier at `owasp` skal settes til `SecRuleEngine On` når blokkering slås på. Ikke beskriv WAF som blokkerende.
 
 Tenant-regler legges i `config.directives_map.app`. Er `waf.skybert.fhi.no/bundle` satt til `owasp-detection` eller `owasp`, bygger `inject-tenant-waf-bundle` `default` fra preamble, app-reglene og til slutt engine, og setter `default_directives: default` og `failOpen`; uten en slik annotasjon endrer policyen verken `directives_map` eller `default_directives`. Tenantens regel-ID-er er 1–99999; CRS bruker 900000–999999. Bruk målrettede unntak, og én policy per rute som beskrevet i docs. Ved flere policyer beskriver docs at den eldste vinner.
 

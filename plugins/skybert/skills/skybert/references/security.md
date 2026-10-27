@@ -41,9 +41,6 @@ spec:
       serviceAccountName: <tenant>-azure
 ```
 
-Podene eksponerer standard Azure Workload Identity-token og miljøvariabler, så .NET
-`DefaultAzureCredential`/`WorkloadIdentityCredential` og `az` CLI autentiserer uten ekstra konfigurasjon.
-
 > Kilde: https://docs.sky.fhi.no/auth/workload-identity/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--add--to-cluster.sh
 
 ### Tilgang til Azure-ressurser
@@ -69,13 +66,13 @@ Plattformen leverer to typer managed identities per tenant:
 - **Workload identities per miljø** `tn-<tenant>-skybert-sa-<env>` — se
   [Oppsett i applikasjon](#oppsett-i-applikasjon).
 
-> **Merk (GitHub OIDC-subject):** GitHub byttet standardformat på OIDC-subject. Nyopprettede repoer
+> **Merk (GitHub OIDC-subject):** GitHub har to formater på OIDC-subject. Repoer opprettet etter skjæringsdatoen i bootstrap-scriptet (Kilde under)
 > presenterer et subject med immutable numeriske ID-er (`repo:<org>@<org-id>/<repo>@<repo-id>:ref:...`);
-> eldre repoer beholder det navnebaserte subjectet til de renames eller flyttes — da går de over på
+> øvrige repoer har det navnebaserte subjectet til de renames eller flyttes — da går de over på
 > ID-formatet. Subject matches eksakt — en federert credential med feil format gir `AADSTS700213`
 > ved token-utveksling. Plattformens bootstrap oppretter begge variantene for GitOps-repoet; ved
 > federering av nye, renamede eller flyttede app-repoer må ID-varianten med — docs-siden viser bare
-> navnebasert subject. Skjæringsdatoen står i bootstrap-scriptet (Kilde under).
+> navnebasert subject.
 
 > Kilde: https://docs.sky.fhi.no/internal/attach-application-repo/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--bootstrap--azure.sh
 
@@ -101,13 +98,10 @@ runtime-restriksjoner per miljø står i [Kyverno-policier](kyverno-policies.md)
 
 ## Anbefalt sikkerhetskonfigurasjon
 
-Kyverno håndhever Pod Security Standards på alle klustere. Det som **avvises** (Enforce): `runAsUser: 0`
-(feltet må være tomt eller > 0), `privileged`, `hostPath`, `hostNetwork`/`hostPID`/`hostIPC`, `hostPort`,
-`allowPrivilegeEscalation: true`, `seccompProfile.type: Unconfined` og capabilities utover
-PSS-baseline. Det som **settes automatisk**: `runAsNonRoot: true` og `runAsUser: 1000` (hvis utelatt)
-for pods i `tn-*`, og `seccompProfile.type: RuntimeDefault` (hvis utelatt) for alle pods. Det som bare
-gir **Audit-funn**: manglende `readOnlyRootFilesystem: true` og eksplisitt `runAsNonRoot: false` på
-container — ikke bygg på root-kjøring likevel; `runAsUser: 0` avvises.
+Kyverno håndhever Pod Security Standards på alle klustere — avvisninger, mutasjoner og Audit-funn står i
+[Kyverno-policier — Pod Security](kyverno-policies.md#pod-security-alle-klustere). Kort: `runAsUser: 0` og
+privilegerte innstillinger avvises, `runAsNonRoot: true` settes alltid på pod-nivå i `tn-*`, og
+`runAsUser: 1000` og `seccompProfile.type: RuntimeDefault` settes når de mangler. Ikke bygg på root-kjøring.
 
 Anbefalt for raw Deployment (SkybertApp setter tilsvarende selv; bruk `readOnlyRootFilesystem: true`
 og `writableDirs` i spec):
@@ -138,7 +132,7 @@ Pods puller fra `crfhiskybert.azurecr.io` uten at du konfigurerer noe: plattform
 `acr-pull-secret` (dockerconfigjson fra shared Key Vault, refresh 24t), replikerer den til alle
 namespaces (kubernetes-replicator), og to Kyverno-ClusterPolicies patcher
 `imagePullSecrets: acr-pull-secret` på ServiceAccounts i `tn-*` (og `default`-SA-en overalt).
-**En SA som allerede har egne `imagePullSecrets` røres ikke** — ved `ImagePullBackOff` mot
-private ACR-images: sjekk både at secreten finnes og at workloadens SA faktisk refererer til den.
+**En SA som allerede har egne `imagePullSecrets` røres ikke.** Feilsøking:
+[ImagePullBackOff](troubleshooting.md#pod-starter-ikke-imagepullbackoff).
 
 > Kilde: https://docs.sky.fhi.no/internal/skybert-system/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/sa-patcher-policy.yaml

@@ -68,13 +68,11 @@ Flux-intervaller og hva som skjer i klusteret er beskrevet i
 
 ### OCI-artifact navnekonvensjon
 
-Artefaktene pushes til `crfhiskybert.azurecr.io/<tenant>/gitops_<env>:latest`, f.eks.
-`crfhiskybert.azurecr.io/exempl/gitops_prod:latest`. Mappenavn styrer artefaktnavn, så ikke endre dem.
-Plattformens `OCIRepository` for tenanten (én per kluster, i namespace `tn-<tenant>`) peker på
-nøyaktig denne URL-en. Kyverno-policyen `flux-verify-sources` (Enforce) tillater bare `OCIRepository`-URL-er
-under `oci://crfhiskybert.azurecr.io/`.
+Artefaktene pushes til `crfhiskybert.azurecr.io/<tenant>/gitops_<env>:latest`; mappenavnet styrer
+artefaktnavnet, så ikke endre det. OCIRepository og kildekravet (`flux-verify-sources`):
+[Plattformarkitektur — OCI-artifact flyt](platform-architecture.md#oci-artifact-flyt).
 
-> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/tenants/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-green/flux-verify-sources.yaml
+> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/
 
 ## update-tag.yaml - Automatisk tag-oppdatering
 

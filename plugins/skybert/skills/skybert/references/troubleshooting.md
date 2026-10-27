@@ -1,9 +1,8 @@
 # Feilsøking
 
-Du har kun tilgang til ressurser i eget namespace (`tn-<tenant>`). Runtime-kommandoer (`exec`,
-`port-forward`, `attach`, debug-containere) er begrenset per kluster — se
+Tilkobling til klusteret: [kubectl-tilgang](kubectl-access.md#koble-til-klusteret). Runtime-kommandoer
+(`exec`, `port-forward`, `attach`, debug-containere) per kluster:
 [Kyverno-policier — runtime-restriksjoner](kyverno-policies.md#produksjon--runtime-restriksjoner).
-Tilkobling til klusteret: [kubectl-tilgang](kubectl-access.md#koble-til-klusteret).
 
 ## Innhold
 
@@ -16,8 +15,7 @@ Tilkobling til klusteret: [kubectl-tilgang](kubectl-access.md#koble-til-klustere
 
 1. **GitHub-workflow:** sjekk at `oci-push` i GitOps-repoet fullførte, og at OCI-artefaktet
    `<tenant>/gitops_<env>` ble pushet til ACR.
-2. **Flux:** artefaktet hentes og applyes automatisk innen ~5 minutter (OCIRepository 3 min +
-   Kustomization 2 min). Vil du ikke vente, trigg rekonsiliering selv i Flux-dashboardet; `sk8 status --tenant <tenant>`
+2. **Flux:** artefaktet hentes og applyes automatisk innen ~5 minutter. Vil du ikke vente, trigg rekonsiliering selv i Flux-dashboardet; `sk8 status --tenant <tenant>`
    viser status. Se
    [Rekonsilieringsintervall](platform-architecture.md#rekonsilieringsintervall) og
    [Flux-verktøy](flux-tooling.md).
@@ -76,9 +74,8 @@ plattformens GlobalNetworkPolicies. Egress-unntak opprettes av plattformteamet �
 
 Kyverno avviser pods med `runAsUser: 0` («Running as root is not allowed»). Fiks i denne
 rekkefølgen: `USER 1000` i Dockerfile, `runAsUser: 1000` i pod-spec, `runAsNonRoot: true`.
-Feiler deploy, rett imaget — ikke omgå policyen i YAML. Kyverno setter `runAsNonRoot: true` og
-`runAsUser: 1000` automatisk i `tn-*` når feltene mangler; å sette `runAsNonRoot: false`
-eksplisitt gir Audit-funn, ikke avvisning. Se [Kyverno-policier](kyverno-policies.md).
+Feiler deploy, rett imaget — ikke omgå policyen i YAML. Mutasjonene og Audit-reglene står i
+[Kyverno-policier — Automatiske mutasjoner](kyverno-policies.md#automatiske-mutasjoner-kyverno-setter-automatisk).
 
 > Kilde: https://docs.sky.fhi.no/troubleshooting/non-root/ · https://docs.sky.fhi.no/internal/kyverno-policies/
 

@@ -21,13 +21,9 @@ Rendering skjer lokalt via `crossplane render`, uten kluster-tilgang.
 
 ## Forutsetninger
 
-- `crossplane` CLI (v2). Installer: `curl -sL https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh | sh`.
-  Kommandoreferanse: https://docs.crossplane.io/latest/cli/command-reference/#render
-- `helm` (kun hvis SkybertApp-manifestet er en Helm-template)
-- Docker daemon — `crossplane render` starter Function-pods som
-  containers lokalt
+- `crossplane` CLI v2 ([kommandoreferanse](https://docs.crossplane.io/latest/cli/command-reference/#render)), `helm` hvis SkybertApp-manifestet er en Helm-template, og en kjørende Docker daemon.
 
-> **Operasjonell antakelse:** Kildene dokumenterer ikke lokal rendering; CLI-versjonen følger plattformens Crossplane 2.x, resten er standard `crossplane render`-krav.
+> **Operasjonell antakelse:** Kildene dokumenterer ikke lokal rendering; CLI-versjonen følger plattformens Crossplane 2.x.
 
 ## Statiske kopier i skillen
 
@@ -90,12 +86,8 @@ og render resultatet.
 - `status.labelSelector` på composite-echoen — den utledes rent fra navnet (`skybert.fhi.no/webapp=<name>`)
 
 **Ikke stol på:**
-- `ownerReferences.uid` — render skriver alltid `""`
-- `status`-blokken på composite — render stubber den som `Ready=True`
+- `status`, `ownerReferences`, `managedFields` og Crossplane-injiserte labels — render stubber eller utelater dem
 - `status.replicas` på composite-echoen — alltid `0`, se over
-- `metadata.resourceVersion`, `managedFields` osv. — finnes ikke
-- Crossplane-injiserte labels/annotations kan avvike litt fra det
-  klusteret faktisk setter
 
 Dette er debug/forståelse-verktøy, ikke en bit-for-bit kopi av
 kluster-state.
@@ -107,10 +99,6 @@ kluster-state.
 **`unauthorized` ved pull av function image** — betyr at du fortsatt bruker
 ACR-mirror-varianten. Pek på `$SKILL_DIR/functions.yaml` (public xpkg),
 eller kjør `az acr login --name crfhiskybert` før render.
-
-**`cannot start Function ...: docker: Cannot connect to the Docker daemon`**
-— Docker kjører ikke. `crossplane render` starter Function-pods som
-lokale containere.
 
 **Rendret Deployment har `envFrom: null` / `volumes: null`** — kosmetisk.
 Go-templatet emitterer header-nøklene selv når listene er tomme.

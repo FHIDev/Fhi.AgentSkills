@@ -6,9 +6,9 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-10-18
+> **Sist verifisert mot offisiell docs:** 2026-10-25
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/ (samme innhold på https://skybert.fhi.no/)
-> Denne skillen er en kuratert oppsummering for AI-agenter. Hver seksjon har enten en `> Kilde:`-lenke eller er merket `> **Operasjonell antakelse:**` (erfaring uten repo-kilde).
+> Denne skillen er en kuratert oppsummering for AI-agenter. Hver faktaseksjon har enten en `> Kilde:`-lenke eller er merket `> **Operasjonell antakelse:**` (erfaring uten repo-kilde); navigasjonsseksjoner har ingen av delene.
 
 **KRITISK**: Alle endringer går gjennom Git → GitHub Actions → Flux. Bruk aldri `kubectl apply` for permanente endringer.
 
@@ -18,6 +18,8 @@ Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din op
 
 **VIKTIG**: Bruk `SkybertApp` for deployments. `WebApp` (`skybert.fhi.no/v1`) er udokumentert i docs og ikke anbefalt — se [Legacy](references/legacy-webapp-csi.md).
 
+> Kilde: https://docs.sky.fhi.no/build/ · https://docs.sky.fhi.no/get-started/connectedk8s/ · https://docs.sky.fhi.no/auth/workload-identity/ · https://docs.sky.fhi.no/workloads/
+
 ---
 
 ## Om Skybert
@@ -26,7 +28,7 @@ Skybert er en Kubernetes-basert applikasjonsplattform hos FHI:
 - **Kubernetes** — AKS på Azure Local, koblet til Azure med Azure Arc. Tilgang går via `az connectedk8s proxy`, ikke `az aks get-credentials`.
 - **GitOps** med Flux: manifester i et GitOps-repo per tenant, pakket som OCI-artefakter og synket til klusteret.
 - **Azure-integrasjon**: Workload Identity, Key Vault via External Secrets, Azure Container Registry (`crfhiskybert.azurecr.io`).
-- **Observability**: Loki (logger), Mimir (metrics) og Grafana på hvert kluster. Tempo (tracing) er planlagt, ikke tilgjengelig.
+- **Observability**: Loki (logger), Mimir (metrics) og Grafana på hvert kluster. Tempo (tracing) er ikke tilgjengelig for tenanter — se [Observability](references/observability.md#tracing-med-tempo).
 
 > Kilde: https://docs.sky.fhi.no/explanations/what-is-skybert/ · https://docs.sky.fhi.no/explanations/tools-and-components/ · https://docs.sky.fhi.no/get-started/connectedk8s/
 
@@ -60,7 +62,7 @@ GitOps-repoet leveres med tre miljømapper. Hver mappe pakkes til sitt eget OCI-
 | **Gul** | Interne data, persondata | `aks-yellow-test-03` | `aks-yellow-prod-02` | Åpen inntil videre |
 | **Rød** | Identifiserbar helseinformasjon | `aks-red-test-02` | `aks-red-prod-02` | Default deny; IP/CIDR-unntak via plattformteamet. Ingress kun fra NHN secure zone |
 
-Utover disse finnes `aks-sandbox-02` (alle farger), `aks-norsyss-prod-02` (eget prod-kluster i gul-lanen for Norsyss) og `aks-ops-test-02` (test-/utviklingskluster; hoster også tenanter).
+Utover disse finnes `aks-sandbox-02` (alle farger), `aks-norsyss-prod-02` (eget prod-kluster for Norsyss utenfor fargelanene, med samme RBAC-miljølabel `yellow-prod` som gul prod) og `aks-ops-test-02` (test-/utviklingskluster; hoster også tenanter).
 
 Alle klustere kjører samme Kyverno-grunnpolicyer (`policies-green`); prod-klustrene har i tillegg `policies-prod` (blokkerer runtime-kommandoer) og rød sone `policies-red`. Rød sone forbyr native `NetworkPolicy`; Calico `NetworkPolicy` tillates med `spec.order` i `[1000, 1200)`. Se [Kyverno-policier](references/kyverno-policies.md) og [Rød sone](references/hostnames-and-networking.md#rød-sone). Full klusterliste med subscription-ID-er: [kubectl-tilgang](references/kubectl-access.md#tilgjengelige-klustere).
 
@@ -161,17 +163,12 @@ Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifest
 | Container-image | `crfhiskybert.azurecr.io/<tenant>/<app>:<tag>` | `crfhiskybert.azurecr.io/exempl/api:1.2.3` |
 | OCI-artefakt (manifester) | `crfhiskybert.azurecr.io/<tenant>/gitops_<env>` | `…/exempl/gitops_test` |
 | Service Account (Workload Identity) | `<tenant>-azure` | `exempl-azure` |
-| Managed Identity per miljø | `tn-<tenant>-skybert-sa-<env>` (offentlig docs viser navnet uten `tn-`; infra er autoritativ) | `tn-exempl-skybert-sa-test` |
+| Managed Identity per miljø | `tn-<tenant>-skybert-sa-<env>` | `tn-exempl-skybert-sa-test` |
 | Hostnavn | valgfritt navn under `*.skytest.fhi.no`/`*.fhi-k8s.com` (non-prod) eller `*.sky.fhi.no` (prod) | `api.skytest.fhi.no` |
 
 > Kilde: https://docs.sky.fhi.no/build/ · https://docs.sky.fhi.no/auth/workload-identity/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--add--to-cluster.sh
 
 ## Ingress og nettverk
-
-| Miljø | Domener |
-|-------|---------|
-| Sandbox og test | `*.skytest.fhi.no`, `*.fhi-k8s.com` |
-| Prod | `*.sky.fhi.no` |
 
 TLS og DNS opprettes automatisk fra `hostname`. Alpha-`SkybertApp` genererer en nginx-`Ingress`; beta genererer `ListenerSet` + `HTTPRoute` mot Envoy Gateway, som kjører på alle klustere. Hver tenant har en egen Gateway `fhinett` i namespacet (interne `*.skybert`-navn); `helsenett` og `internett` er delte, og rød og Norsyss har ingen `internett`. Gateway API når ikke tenant-pods i rød sone. Rød sone: default deny egress, DNS og intern namespace-trafikk åpen, egress-unntak via plattformteamet. Alt om domener, issuere, Gateway API og nettverkspolicyer: [Hostnavn og nettverk](references/hostnames-and-networking.md).
 
@@ -179,7 +176,7 @@ TLS og DNS opprettes automatisk fra `hostname`. Alpha-`SkybertApp` genererer en 
 
 ## Persistence
 
-Tre likestilte databasealternativer: Azure managed, NHN Moderne Etatsplattform, eller PostgreSQL i klusteret med CloudNativePG (støttet på alle klustere; teamet eier backup-konto og restore-test). CNPG har innebygd backup med WAL-arkivering via barman-cloud-pluginen, som er utrullet på alle klustere; les [Backup](references/persistence.md#backup) før en egen `pg_dump`-CronJob. Sju StorageClasses; ingen av dem gir backup eller snapshots. `ontap-nas` (NFS) skal aldri brukes til databaser. Se [Persistence og CloudNativePG](references/persistence.md).
+Tre likestilte databasealternativer: Azure managed, NHN Moderne Etatsplattform, eller PostgreSQL i klusteret med CloudNativePG (støttet på alle klustere; teamet eier backup-konto og restore-test). CNPG har innebygd backup med WAL-arkivering via barman-cloud-pluginen, som er utrullet på alle klustere; les [Backup](references/persistence.md#backup) før en egen `pg_dump`-CronJob. Ingen av StorageClassene gir backup eller snapshots, og hvilke som finnes varierer per kluster. `ontap-nas` (NFS) skal aldri brukes til databaser. Se [Persistence og CloudNativePG](references/persistence.md).
 
 > Kilde: https://docs.sky.fhi.no/persistence/ · https://docs.sky.fhi.no/persistence/postgres/
 

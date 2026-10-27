@@ -57,11 +57,10 @@ er begrenset per kluster: i prod blokkerer Kyverno, i red-test mangler RBAC-frag
 ## Tilgjengelige klustere
 
 `scripts/lib/clusters.sh` i infra-repoet er autoritativt register (navn, resource group,
-subscription, OIDC issuer, PIM). Docs publiserer et maskinlesbart register på
+subscription, OIDC issuer, PIM). Docs publiserer de samme oppføringene maskinlesbart på
 https://docs.sky.fhi.no/sk8/clusters.json (`name`, `resourceGroup`, `subscription`,
-`oidcIssuerUrl`, `needsPim`), men det henger etter `clusters.sh`: det mangler
-`aks-green-test-02`, `aks-red-test-02`, `aks-yellow-prod-02`, `aks-red-prod-02` og
-`aks-norsyss-prod-02`, og lister utfasede klustere. Tabellene under følger `clusters.sh`.
+`oidcIssuerUrl`, `needsPim`). Plattformklusteret `aks-mgmt-01` står i begge, men hoster ikke
+tenanter og er utelatt fra tabellene under, som følger `clusters.sh`.
 `COLOR_GROUP_CLUSTERS` i samme fil definerer lanene: hver farge = sandbox + ett test- + ett
 prod-kluster.
 
@@ -144,7 +143,7 @@ az connectedk8s show --name <cluster> --resource-group <rg> --subscription <sub>
 Go-CLI i infra-repoet (`utils/sk8/`), publisert som GitHub-release (`sk8/v*`-tags) på
 `FHISkybert/Fhi.Skybert.Infra` — nedlasting krever tilgang til repoet. Forutsetninger: `az` med
 `connectedk8s`-extension, `kubectl`, `gh`. Klusterregisteret hentes fra
-`https://docs.sky.fhi.no/sk8/clusters.json` (lokal cache, deretter publisert register, deretter innebygd kopi; `--refresh` tvinger ny henting og feiler i stedet for å falle tilbake til cache eller innebygd kopi). Den innebygde kopien brukes bare når URL-en ikke svarer, så uten cache får `sk8` det publiserte registeret, som henger etter (se [Tilgjengelige klustere](#tilgjengelige-klustere)). Mangler klusteret i `sk8 cluster list`, start proxyen manuelt med verdiene i tabellene.
+`https://docs.sky.fhi.no/sk8/clusters.json` (lokal cache, deretter publisert register, deretter innebygd kopi; `--refresh` tvinger ny henting og feiler i stedet for å falle tilbake til cache eller innebygd kopi). Den innebygde kopien brukes bare når URL-en ikke svarer og ingen cache finnes. En utdatert cache kan mangle klustere; kjør `sk8 cluster list --refresh`, og start proxyen manuelt med verdiene i [Tilgjengelige klustere](#tilgjengelige-klustere) hvis klusteret fortsatt mangler.
 
 - **`sk8 cluster [navn]`** — interaktiv picker eller fuzzy-match på delnavn, PIM-aktivering ved
   behov (`--justification`, `--duration-hours`, `--skip-pim`), og `az connectedk8s proxy` i
@@ -161,9 +160,9 @@ Go-CLI i infra-repoet (`utils/sk8/`), publisert som GitHub-release (`sk8/v*`-tag
   context: anbefalinger og policy-brudd, gruppert på melding og merket **Recommendation** eller
   **Planned enforced**, med berørte workloads under. VPA-/Goldilocks-anbefalinger vises ikke her —
   se [Observability](observability.md#ressursanbefalinger-i-grafana).
-- **`sk8 suspend --tenant <tenant>` / `sk8 resume --tenant <tenant>`** — pauser/gjenopptar
-  Flux-rekonsiliering av tenantens Kustomization på gjeldende context. Samme som Flux-dashboardet
-  gjør — se [Flux-verktøy](flux-tooling.md#flux-dashboard).
+- **`sk8 suspend --tenant <tenant>` / `sk8 resume --tenant <tenant>`** — setter `spec.suspend` på
+  tenantens Kustomization på gjeldende context med `kubectl patch`. Skal suspenden holde over
+  plattformens neste apply, se [Suspend som holder](flux-tooling.md#suspend-som-holder).
 
 `--tenant` husker sist brukte tenant. Bash-dispatcheren `ska` (`ska tenant new` →
 `scripts/tenant--new.sh`) er plattformteamets verktøy og ikke det samme som `sk8`.

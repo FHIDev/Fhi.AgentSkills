@@ -1,8 +1,8 @@
 # Observability
 
-Hvert kluster kjører sin egen, komplette LGTM-stack: **Loki** (logger), **Mimir** (metrics) og **Grafana** (UI). **Tempo** (traces) er ikke bekreftet som tilgjengelig tenant-tjeneste; infra har Tempo-manifester for ops-test. **Alloy** kjører som DaemonSet på hvert kluster, samler logger og metrics og skriver dem til Loki og Mimir i samme kluster — det finnes ingen sentral ingestion på tvers av klustere. Grafana er inngangspunktet: Explore, Logs Drilldown, dashboards og alerts.
+Hvert kluster kjører sin egen, komplette LGTM-stack: **Loki** (logger), **Mimir** (metrics) og **Grafana** (UI). **Tempo** (traces) er ikke bekreftet som tilgjengelig tenant-tjeneste — se [Tracing med Tempo](#tracing-med-tempo). **Alloy** kjører som DaemonSet på hvert kluster, samler logger og metrics og skriver dem til Loki og Mimir i samme kluster — det finnes ingen sentral ingestion på tvers av klustere. Grafana er inngangspunktet: Explore, Logs Drilldown, dashboards og alerts.
 
-> Kilde: https://docs.sky.fhi.no/observability/ · https://docs.sky.fhi.no/internal/observability/alloy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/tempo/
+> Kilde: https://docs.sky.fhi.no/observability/ · https://docs.sky.fhi.no/internal/observability/alloy/
 
 ## Innhold
 
@@ -36,7 +36,9 @@ Applikasjoner logger til stdout/stderr. Alloy scraper container-loggene automati
 
 Loki kjører med `auth_enabled: true`. Alloy setter Loki-tenant lik `namespace`-labelen på hver logglinje, og Grafana-datasourcen i tenantens org sender headeren `X-Scope-OrgID: tn-<tenant>` — du ser kun egne logger og trenger ikke konfigurere noe selv. Oppbevaring: 31 dager (`retention_period: 744h`).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/loki/base/loki-18.7.6-values.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/grafana/datasource.sh
+Logger fra Envoy-podene til tenantens egen `fhinett`-Gateway havner i tenantens Loki-org: podene kjører i `envoy-gateway-system`, men Alloy skriver om `namespace`-labelen til Gatewayens namespace (pod-labelen `gateway.envoyproxy.io/owning-gateway-namespace`). Envoy-podene til de delte Gatewayene `helsenett` og `internett` eies av `envoy-gateway-system` og er ikke synlige for tenanten. Omskrivingen gjelder logger, ikke metrics.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/loki/base/loki-18.7.6-values.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/grafana/datasource.sh · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/alloy/base/alloy-1.2.1-values.yaml
 
 ### OTLP log ingestion (eksperimentelt)
 
@@ -67,14 +69,6 @@ Labelene beholdes på serien (`label_remove: false`). Metrics er spørrbare i Gr
 ### Konfigurasjon
 
 Eksponer et Prometheus-kompatibelt `/metrics`-endepunkt med et standard klientbibliotek, og legg annotasjonene på pod-template (`.spec.template.metadata.annotations`), ikke på Deployment-metadata:
-
-```yaml
-metadata:
-  annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "8080"
-    prometheus.io/path: "/metrics"
-```
 
 | Annotation | Påkrevet | Default | Beskrivelse |
 |------------|----------|---------|-------------|
@@ -119,29 +113,31 @@ Plattformteamet planlegger autoskalering på egne metrics (request rate, kø-dyb
 
 ## Tracing med Tempo
 
-Distribuert tracing via **Tempo** er ikke bekreftet som tilgjengelig tenant-tjeneste. Infra har Tempo-manifester for ops-test; dette bekrefter ikke en tilgjengelig tenant-tjeneste. Instrumenter appen med OpenTelemetry (auto-instrumentering for ASP.NET, Spring Boot, Flask m.fl.) så traces fungerer når Tempo slås på, men ikke regn med funksjonalitet i dag. Er tracing viktig for teamet, si fra i `#ext-fhi-skybert`.
+Distribuert tracing via **Tempo** er ikke bekreftet som tilgjengelig tenant-tjeneste: docs merker den som ikke tilgjengelig, og infra har Tempo-manifester bare for ops-test. Instrumenter gjerne appen med OpenTelemetry (auto-instrumentering for ASP.NET, Spring Boot, Flask m.fl.), men ikke regn med at traces kan leses. Er tracing viktig for teamet, si fra i `#ext-fhi-skybert`.
 
 > Kilde: https://docs.sky.fhi.no/observability/tracing/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/tempo/
 
 ## Grafana
 
-Hvert kluster har sin egen Grafana-instans på `https://grafana.<color>-<nn>.<domain>`, der `<nn>` er klusternummeret og `<domain>` er `skytest.fhi.no` for non-prod og `sky.fhi.no` for prod:
+Hvert kluster har sin egen Grafana-instans, eksponert via plattformens `fhinett`-Gateway i `skybert-system` på klusterets `.skybert`-sone (se [Fhinett-hostnavn](hostnames-and-networking.md#fhinett-hostnavn-beta)). Ops-test og Norsyss deler sone med sandbox og gul prod og har derfor `ops`/`norsyss` i navnet:
 
 | Kluster | Grafana-URL |
 |---------|-------------|
-| aks-sandbox-02 | `https://grafana.sandbox-02.skytest.fhi.no` |
-| aks-ops-test-02 | `https://grafana.ops-02.skytest.fhi.no` |
-| aks-green-test-02 | `https://grafana.green-02.skytest.fhi.no` |
-| aks-green-prod-03 | `https://grafana.green-03.sky.fhi.no` |
-| aks-yellow-test-03 | `https://grafana.yellow-03.skytest.fhi.no` |
-| aks-yellow-prod-02 | `https://grafana.yellow-02.sky.fhi.no` |
-| aks-norsyss-prod-02 | `https://grafana.norsyss-02.sky.fhi.no` |
-| aks-red-test-02 | `https://grafana.red-02.skytest.fhi.no` |
-| aks-red-prod-02 | `https://grafana.red-02.sky.fhi.no` (kun nåbar fra secure zone) |
+| aks-sandbox-02 | `https://grafana-02.sandbox.skybert` |
+| aks-ops-test-02 | `https://grafana-ops-02.sandbox.skybert` |
+| aks-green-test-02 | `https://grafana-02.greentest.skybert` |
+| aks-green-prod-03 | `https://grafana-03.green.skybert` |
+| aks-yellow-test-03 | `https://grafana-03.yellowtest.skybert` |
+| aks-yellow-prod-02 | `https://grafana-02.yellow.skybert` |
+| aks-norsyss-prod-02 | `https://grafana-norsyss-02.yellow.skybert` |
+| aks-red-test-02 | `https://grafana-02.redtest.skybert` (kun nåbar fra secure zone) |
+| aks-red-prod-02 | `https://grafana-02.red.skybert` (kun nåbar fra secure zone) |
+
+Docs viser `grafana.<color>-<nn>.<domain>` (`skytest.fhi.no`/`sky.fhi.no`) og andre klusternavn; infra har ingen Ingress for Grafana, så tabellen følger infra.
 
 Du logger inn med FHI-bruker (Entra ID) og lander i Grafana-organisasjonen som tilhører tenanten. Alerts settes opp av tenanten selv i egen org.
 
-> Kilde: https://docs.sky.fhi.no/observability/grafana/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/grafana/
+> Kilde: https://docs.sky.fhi.no/observability/grafana/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/grafana/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/fhinett.sh
 
 ### Grafana multi-tenancy
 

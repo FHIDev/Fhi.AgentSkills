@@ -89,23 +89,29 @@
 | `infra/crossplane/*/compositions/*.yaml` (kluster-overlays) | `references/skybertapp-crd.md` |
 | `infra/goldilocks/base/*-values.yaml` | `references/kyverno-policies.md`, `references/observability.md`, `references/platform-architecture.md` |
 | `infra/cloudnative-pg/**` | `references/persistence.md` (kanonisk; `platform-architecture.md` har kun én komponentrad) |
+| `infra/blob-csi-driver/**` | `references/persistence.md` — `blob-fuse` og hvilke klustere som har klassen |
 | `infra/kube-state-metrics/base/*-values.yaml` | `references/observability.md` — CustomResourceState-metrics (VPA-gauges, PolicyReport) er tenant-synlige i Grafana |
 | `infra/kyverno-policies/base/policies-waf/**`, `utils/coraza-proxy-wasm/**` | `references/waf.md` — Coraza, bundles, policy-status og image-begrensninger |
 | `infra/kyverno-policies/base/policies-*/**/*.yaml` | `references/kyverno-policies.md`, `references/security.md` |
+| `infra/kyverno-policies/base/policy-exceptions/*.yaml` | `references/kyverno-policies.md#policyexceptions`; operator-unntak som berører tenant-workloads får én setning i den berørte filen (f.eks. `persistence.md` for CNPG) |
 | `infra/skybert-system/base/tenant-admin-clusterroles/*.yaml` | `references/platform-architecture.md`, `references/security.md`, `references/kyverno-policies.md` |
 | `infra/kubevirt/**`, `crds/base/kubevirt-*` | `references/platform-architecture.md` — kun installasjonsstatus (hvilke klustere) i Tenant-RBAC-raden for `skybert:tenant-admin:kubevirt`; tilgangsreglene kommer fra `kubevirt-access-rules.yaml` via raden over |
 | `tenants/*/base/*.yaml` | `references/platform-architecture.md` |
 | `scripts/tenant--*.sh` | `references/platform-architecture.md` |
+| `scripts/lib/fhinett.sh` | `references/hostnames-and-networking.md#fhinett-hostnavn-beta` — sonetabell for `.skybert` |
 | `scripts/lib/grafana/*.sh` | Ikke egen målfil — hjelpebibliotek der avledede fakta (X-Scope-OrgID, org_mapping) havner etter refaktorering. Brukes til provenance-referanser i `references/observability.md` / `references/platform-architecture.md`. Andre `scripts/lib/*.sh` leses bare selektivt når de sources av en endret tenant-scriptflyt og inneholder dokumentasjonsrelevant logikk |
 | `tenants/*/base/oci-repository.yaml`, `tenants/*/*/kustomization.yaml`, `infra/grafana/*/patch-orgs.yaml` | Normalt ingen routing (ny tenant-instans = dokumentert mønster). Kun ved mønsterendring → `references/platform-architecture.md`. Se seleksjonsreglene i [github-modus.md](github-modus.md) |
 | `infra/tenant-bootstrap/base/*.yaml` | `references/platform-architecture.md` |
 | `infra/tenant-bootstrap/base/tenants/*.yaml` | `references/platform-architecture.md` |
 | `infra/flux-operator/base/*.yaml` | `references/platform-architecture.md` |
+| `infra/flux-operator/*/kustomization.yaml` | `references/flux-tooling.md` — Flux Web UI-URL-er (Ingress og ListenerSet) og OIDC-`baseURL` per kluster |
 | `infra/flux-system/*/flux-instance.yaml` | `references/platform-architecture.md` |
+| `infra/flux-system/*/kustomization.yaml` | Komponentstatus i den kanoniske filen for komponenten (`secrets.md` for Reloader, `persistence.md` for blob-csi). Se punkt 5 under «Infra-repo discovery» i [github-modus.md](github-modus.md) |
+| `infra/grafana/*/patch-env.yaml`, `infra/grafana/*/kustomization.yaml` | `references/observability.md#grafana` — Grafana-URL per kluster. `patch-orgs.yaml` er ny-tenant-støy (se raden for `tenants/*/base/oci-repository.yaml`) |
 | `infra/globalnetworkpolicies/base/policies-red/*.yaml` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
 | `infra/envoy/**` | `references/hostnames-and-networking.md`, `references/platform-architecture.md` (Gateway API/Envoy-status, kun tenant-impact) |
-| `manifests/*.md` | VURDER — migreringsplaner, ikke auto-route (hent kun tenant-impact med konkrete tenant-steg) |
 | `utils/sk8/README.md`, `utils/sk8/data/clusters.json` | `references/kubectl-access.md` — sk8 Go-CLI + innebygd klusterregister (brukerdokumentasjon: `docs/get-started/sk8-cli.md`). Øvrig `utils/**` (Go-kode, `version-checker/`, `grafana-airgapped/`) er lavprioritet/støy |
+| `utils/grafana-dashboard-syncer/README.md` | `references/observability.md` — kontrakten bak ConfigMap-dashboards |
 
 ### Retningslinje-repo (Fhi.Guidelines)
 
