@@ -50,6 +50,10 @@ Med `network: fhinett` skal hostnavnet slutte på klusterets `.skybert`-sone. ex
 
 `*.skytest.fhi.no` er tillatt på fhinett-ruter, men docs fraråder det. `network: helsenett` og `internett` bruker `*.skytest.fhi.no` og `*.sky.fhi.no`.
 
+`local-issuer` signerer med en intern CA, «Skybert ICA Test» på sandbox og yellow-test, som en vanlig Linux-trust store ikke har. `curl` mot et `.skybert`-navn fra en arbeidsstasjon feiler derfor med exit 60 (`ssl_verify_result` 20) selv om appen svarer; røyktest med `-k`, eller legg CA-en til før en sjekk som skal stole på sertifikatet.
+
+> **Operasjonell antakelse:** Observert fra WSL 2026-10-30 mot beta-SkybertApps på `aks-sandbox-02` og `aks-yellow-test-03`; utstederen på prod-klustrene er ikke sjekket.
+
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/external-dns-private/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/fhinett.sh
 
 ## Public DNS-oppslag (external-dns)
