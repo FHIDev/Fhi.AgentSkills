@@ -39,21 +39,22 @@ import '@folkehelseinstituttet/designsystem/fhi-button';
 
 ## Form reset
 
-`<fhi-button type="reset">` utløser komponentenes reset-callbacker. De
+`<fhi-button type="reset">` utløser komponentenes reset-callbacker. Noen av dem
 gjenoppretter ikke alltid opprinnelig tilstand:
 
-- `fhi-checkbox` setter alltid `checked=false`, også når boksen var
+- `fhi-checkbox` gjenoppretter `checked`-attributtet fra v0.47.1. I v0.47.0 og
+  eldre setter reset alltid `checked=false`, også når boksen var
   forhåndsavkrysset.
 - `fhi-radio` gjenoppretter gruppens forhåndsvalg når et alternativ hadde
-  `checked`-attributtet. Uten forhåndsvalg beholdes brukerens valg etter reset,
-  også i FormData.
+  `checked`-attributtet. Uten forhåndsvalg avvelges gruppen fra v0.47.1; i
+  v0.47.0 og eldre beholdes brukerens valg etter reset, også i FormData.
 - `fhi-text-area` leser gjeldende `value`-attributt ved reset, eller bruker tom
   streng når attributtet mangler. En verdi satt bare via JavaScript-propertyen
   blir dermed ikke reset-verdien.
 - `fhi-select` tilbakestiller til opprinnelig valgt alternativ (eller `''`).
 
-Checkbox- og radio-avvikene er bekreftet i publiserte pakker fra v0.41.2 til
-v0.43.5 som ble prøvd under oppdateringen; de er ikke nye i v0.43.
+Checkbox- og radio-avvikene i v0.47.0 og eldre er bekreftet i publiserte
+pakker fra v0.41.2 til v0.43.5 og i v0.47.0; de ble rettet i v0.47.1.
 
 ## Programmatisk Select-verdi
 

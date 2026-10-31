@@ -33,10 +33,17 @@ komponenten `console.error`, men viser fortsatt hjelpeteksten.
 ## Form reset
 
 Har gruppen et forhåndsvalgt alternativ via `checked`-attributtet,
-gjenopprettes dette ved form-reset. Har ingen radio dette attributtet,
-beholdes brukerens valg etter reset, også i FormData. Reset tømmer dermed
-ikke en gruppe som opprinnelig var uten valg. Dette er bekreftet i alle
-prøvde versjoner fra v0.41.2 til v0.43.5.
+gjenopprettes dette ved form-reset. Har flere radioer attributtet, vinner den
+siste i gruppen.
+
+Fra v0.47.1 avvelges hele gruppen ved reset når ingen radio har
+`checked`-attributtet. Et valg satt bare via JavaScript-propertyen blir
+dermed ikke reset-verdien.
+
+I v0.47.0 og eldre beholdes brukerens valg etter reset, også i FormData, når
+ingen radio har attributtet. Reset tømmer dermed ikke en gruppe som
+opprinnelig var uten valg. Dette er bekreftet i prøvde versjoner fra v0.41.2
+til v0.43.5 og i v0.47.0.
 
 ## Eksempler
 
