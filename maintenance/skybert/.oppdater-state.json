@@ -1,21 +1,21 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-10-26T07:15:00Z",
+  "updatedAt": "2026-10-31T12:00:00Z",
   "mode": "github",
   "lastFullscanDate": "2026-10-25",
-  "sistVerifisert": "2026-10-25",
+  "sistVerifisert": "2026-10-31",
   "github": {
     "docs": {
       "repo": "FHISkybert/Fhi.Skybert.Docs",
       "branch": "main",
-      "commit": "be3e8b713ffd875773f7b398babc462d4854db83",
-      "commitDate": "2026-10-25T07:25:47Z"
+      "commit": "1cfc371488e198322fb45010e0fab299d282ac20",
+      "commitDate": "2026-10-31T07:15:42Z"
     },
     "infra": {
       "repo": "FHISkybert/Fhi.Skybert.Infra",
       "branch": "main",
-      "commit": "7faa9429366970358427cb9552599c3e7de3d332",
-      "commitDate": "2026-10-23T12:42:22Z"
+      "commit": "757cc34ce588eeff45ff0c104be66103fda7337d",
+      "commitDate": "2026-10-30T09:51:44Z"
     },
     "guidelines": {
       "repo": "FHIDev/Fhi.Guidelines",
@@ -36,7 +36,7 @@
       "source": "docs/internal/dev-gatewayapi.md",
       "summary": "Docs-siden er fortsatt en WIP-skisse med ett mermaid-diagram over ListenerSet-topologi; topologien er allerede dekket i hostnames-and-networking.md. Ingen endring. Revurderes når siden får reelt innhold.",
       "firstSeen": "2026-08-15",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "docs-infra-konflikt-exec-rbac",
@@ -46,7 +46,7 @@
       "source": "docs/persistence/postgres.md vs infra/skybert-system/base/tenant-admin-clusterroles/test-sandbox-runtime-access.yaml",
       "summary": "Docs sier «kubectl exec is not granted to tenants on any cluster»; infra gir pods/exec via fragmentet skybert:tenant-admin:test-sandbox:runtime-access på green-test-02, yellow-test-03, ops-test-02 og sandbox-02 (ikke aks-red-test-02). Skillen følger infra og nevner konflikten i kyverno-policies.md og persistence.md. Revurderes når docs eller infra endres.",
       "firstSeen": "2026-09-03",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "docs-konflikt-cortex-tenant-rekkefolge",
@@ -56,7 +56,7 @@
       "source": "docs/internal/observability/mimir.md + infra/mimir/base/cortex-tenant-0.8.0-values.yaml",
       "summary": "Docs-siden motsier seg selv om cortex-tenant velger namespace- eller tenant-label først; infra (label_list: [namespace, tenant]) og Alloy-kommentaren sier namespace først. Skillen følger infra. Revurderes når docs rettes.",
       "firstSeen": "2026-09-03",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "docs-infra-konflikt-tempo",
@@ -66,7 +66,7 @@
       "source": "docs/observability/tracing.md + infra/tempo/aks-ops-test-02/",
       "summary": "Docs merker Tempo «Planned — not yet available»; infra har base (namespace + helm-manifest 2.1.0) og kun ett kluster-overlay (aks-ops-test-02). Skillen sier ikke bekreftet tenant-tjeneste og lenker infra/tempo. Revurderes når docs oppdateres eller flere overlays kommer.",
       "firstSeen": "2026-09-03",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "guidelines-container-images-utkast",
@@ -76,17 +76,7 @@
       "source": "FHIDev/Fhi.Guidelines PR #2 (docs/CI-CD/container-images.md, branch retningslinje_images)",
       "summary": "RL-CICD-001 er tatt inn fra åpen PR #2 (head 94cb353 uendret, status Utkast); stien finnes ikke på main, og Kilde-linjene peker på PR-URL. Når stien finnes på main: sett branch til main i state, skriv om Kilde-lenkene til blob/main og oppdater statusomtalen øverst i filen. Lukkes PR-en uten merge: avgjør om filen beholdes.",
       "firstSeen": "2026-09-17",
-      "lastSeen": "2026-10-25"
-    },
-    {
-      "id": "waf-tenant-rbac",
-      "status": "deferred",
-      "category": "VURDER",
-      "target": "references/waf.md",
-      "source": "docs/workloads/waf/index.md + infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml",
-      "summary": "core-access-rules.yaml er endret (lesing av gateways, skybert-beta.fhi.no), men gir fortsatt ikke envoyextensionpolicies til tenant-admin eller flux-reconciler. Docs (waf/index.md og migrate-alpha-to-beta.md) anbefaler EnvoyExtensionPolicy på beta-ruter; uten avklaring feiler tenant-manifester med Forbidden. waf.md sier avklar med plattformteamet. Revurderes når RBAC-fragmentene endres.",
-      "firstSeen": "2026-09-21",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "docs-infra-roed-nettverk",
@@ -96,7 +86,7 @@
       "source": "docs/internal/global-network-policies.md + docs/persistence/postgres.md + infra/globalnetworkpolicies/ + infra/kyverno-policies/base/policies-red/",
       "summary": "docs/internal/global-network-policies.md sier red-prod fortsatt genererer <ns>-internal-access (600) og at bare red-test har split; infra: begge røde overlays inkluderer policies-red med split-GNP (internal-egress 600, internal-ingress 1200, base-tenant-ingress 1201) og Alloy-unntak (order 500). docs/persistence/postgres.md sier fortsatt at Alloy-scrape er blokkert på rød. Skillen følger infra. Revurderes når docs samstemmes. Diagrammet gnps.drawio.svg er endret, teksten er det ikke.",
       "firstSeen": "2026-09-21",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "waf-bundle-default",
@@ -106,7 +96,7 @@
       "source": "docs/workloads/waf/index.md + infra/kyverno-policies/base/policies-waf/inject-tenant-waf-bundle.yaml",
       "summary": "Docs (waf/index.md) sier bundles detection/baseline/strict, default baseline (strict på rød), injisert automatisk, og at ingen annotasjonsverdi betyr «ingen WAF». Infra (inject-tenant-waf-bundle.yaml, PR #1282) har owasp-detection/owasp, default none = ingen injisering, opt-in i alle klustere; begge er DetectionOnly og failOpen: true. waf.md følger infra og beskriver konflikten. Revurderes når docs rettes.",
       "firstSeen": "2026-09-21",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "waf-image-runtime",
@@ -116,7 +106,7 @@
       "source": "infra/utils/coraza-proxy-wasm/README.md + docs/workloads/waf/index.md",
       "summary": "utils/coraza-proxy-wasm/README.md sier at det bygde imaget ikke er verifisert å laste og kjøre i Envoy; docs bruker crfhiskybert.azurecr.io/waf/coraza-proxy-wasm:0.6.0. waf.md gir ingen driftspåstand. Revurderes når README bekrefter verifisering.",
       "firstSeen": "2026-09-21",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "skybertapp-sidecar-rendering",
@@ -126,7 +116,7 @@
       "source": "infra/crossplane/base/compositions/skybertapp-alpha.yaml",
       "summary": "Compositionen rendrer sidecarContainers under initContainers når initContainers er satt; uten initContainers havner de under containers, fortsatt med restartPolicy: Always. Manifesteffekten er lest fra malen; API-aksept og runtime er ikke testet. skybertapp-crd.md merker varianten som ikke verifisert.",
       "firstSeen": "2026-09-21",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "acr-local-pull-role",
@@ -136,7 +126,7 @@
       "source": "Eksisterende operasjonell antakelse + docs/internal/steps-adding-new-tenant.md + scripts/tenant--bootstrap--azure.sh",
       "summary": "AcrPull-instruksen for lokal pull i kubectl-access.md er en merket operasjonell antakelse. docs/internal/steps-adding-new-tenant.md gir push-identiteten Container Registry Repository Writer/Reader med repository-betingelse, som bare virker i ACR-modusen «RBAC Registry + ABAC Repository Permissions»; i den modusen respekteres ikke AcrPull. Motstriden er utledet, ikke bevist. Instruksen beholdes. Bekreft modus med az acr show -n crfhiskybert --query roleAssignmentMode eller med plattformteamet.",
       "firstSeen": "2026-09-21",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "docs-dpia-scope",
@@ -146,7 +136,7 @@
       "source": "docs/get-started/prerequisites/organization.md + docs/legal/dpia.md",
       "summary": "docs/get-started/prerequisites/organization.md sier DPIA «if your application processes personal data»; docs/legal/dpia.md sier «in a way that may result in high risk». SKILL.md lenker til DPIA-veiledningen framfor å avgjøre plikten. Revurderes når docs samstemmes.",
       "firstSeen": "2026-09-21",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "docs-kryptering-scope",
@@ -156,7 +146,7 @@
       "source": "docs/legal/index.md + docs/internal/service-mesh.md",
       "summary": "docs/legal/index.md gir et bredere krypteringsløfte enn de verifiserte TLS-/mesh-mekanismene i docs/internal/service-mesh.md. Skillen dokumenterer konkrete mekanismer uten universell garanti. Revurderes når docs presiserer.",
       "firstSeen": "2026-09-21",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "docs-klusternavn-etter-infra",
@@ -166,7 +156,7 @@
       "source": "docs/get-started/blaloypa.md, build/flux-dashboard.md, observability/grafana.md mot infra scripts/lib/clusters.sh og infra/grafana/<kluster>/",
       "summary": "docs/get-started/connectedk8s.md og sk8/clusters.json følger infra. blaloypa.md, build/flux-dashboard.md og observability/grafana.md viser gamle klustere og hostnavn (bl.a. aks-green-test-01, aks-red-test-01, aks-yellow-prod-01). observability/grafana.md viser i tillegg URL-skjemaet grafana.<color>-<nn>.<domain>, mens infra eksponerer Grafana bare på .skybert-navn (Ingress fjernet fra infra/grafana/base). Skillen følger infra (konfliktregelen). Revurderes når docs er samstemt.",
       "firstSeen": "2026-09-30",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "frontend-ip-og-provenance-etter-klusterbytte",
@@ -176,7 +166,7 @@
       "source": "Eksisterende operasjonelle antakelser mot scripts/lib/clusters.sh",
       "summary": "Front-end-IP-ene 83.118.177.220/.234 er ikke bekreftet for aks-green-test-02/aks-green-prod-03. Skillen sier nå det og bruker sonenavn (grønn test/prod) i provenance. Avklar IP-ene med plattformteamet.",
       "firstSeen": "2026-09-30",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "kubevirt-status",
@@ -186,17 +176,7 @@
       "source": "infra/skybert-system/base/tenant-admin-clusterroles/kubevirt-access-rules.yaml + infra/kubevirt/**",
       "summary": "Filkommentaren kaller KubeVirt en smoke test på et utvalg klustere; ingen docs-side finnes. Skillen beskriver bare RBAC-fragmentet og hvilke klustere som har KubeVirt, ikke tenant-tilgjengelighet. Revurderes når docs dekker KubeVirt.",
       "firstSeen": "2026-09-30",
-      "lastSeen": "2026-10-25"
-    },
-    {
-      "id": "docs-infra-konflikt-beta-roed",
-      "status": "deferred",
-      "category": "VURDER",
-      "target": "references/hostnames-and-networking.md; references/skybertapp-crd.md",
-      "source": "docs/workloads/skybertapp/migrate-alpha-to-beta.md mot infra/globalnetworkpolicies/base/policies-red/base-tenant-policy.yaml",
-      "summary": "Docs lister fhinett og helsenett som tilgjengelige på aks-red-test-02/aks-red-prod-02; base-tenant-ingress (order 1201) slipper bare ingress-nginx inn, og ingen GNP nevner envoy-gateway-system. Skillen følger infra og sier at beta-SkybertApp ikke får trafikk på rød. Avklar med plattformteamet; revurderes når docs eller GNP-ene endres.",
-      "firstSeen": "2026-10-18",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "egress-ip-node-pool",
@@ -206,7 +186,7 @@
       "source": "docs/miscellaneous/cluster-networks.md mot eksisterende operasjonell antakelse",
       "summary": "Docs sier at utgående trafikk har nodens IP og at brannmurer skal åpnes for hele node-IP-poolen. Skillen beholder felles egress-IP 83.118.167.10 som antakelse for internett-mål. Bekreft IP-en med plattformteamet.",
       "firstSeen": "2026-10-18",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "flux-url-skybert",
@@ -216,7 +196,7 @@
       "source": "infra/flux-operator/<kluster>/kustomization.yaml (baseurl, Ingress og ListenerSet)",
       "summary": "Flux Web UI har både Ingress flux.<color>-<nn>.<domain> og ListenerSet med .skybert-navn; OIDC-baseURL er https://<.skybert-navn> på alle tenant-klustere, og navnene følger ikke alltid klusternummeret (aks-green-prod-03 → flux-02.green.skybert, aks-yellow-prod-02 → flux-03.yellow.skybert). flux-tooling.md lister begge. Avklar hvilken URL som gir fungerende pålogging fra brukermaskiner.",
       "firstSeen": "2026-10-18",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "beta-statiske-kopier",
@@ -224,9 +204,9 @@
       "category": "VURDER",
       "target": "references/skybertapp-render.md; references/skybertapp/",
       "source": "infra/crossplane/base/xrds/skybertapp-beta.yaml + compositions/skybertapp-beta.yaml",
-      "summary": "Statiske kopier for crossplane render dekker bare alpha. Brukeren valgte å utsette beta-kopier til docs gjør beta til standard.",
+      "summary": "Statiske kopier for crossplane render og minimal-eksemplet i SKILL.md dekker bare alpha. Docs (migrate-alpha-to-beta.md) ber tenanter migrere før alpha-spesifikasjonen slettes, men referansesiden og Blåløypa-eksemplene i docs er fortsatt alpha. Brukeren utsatte igjen 2026-10-31: revurderes når docs-referansesiden er beta eller alpha-XRD-en fjernes fra infra.",
       "firstSeen": "2026-10-18",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
     },
     {
       "id": "reloader-prod-flux",
@@ -236,7 +216,17 @@
       "source": "infra/flux-system/aks-{green-prod-03,yellow-prod-02,red-prod-02,norsyss-prod-02}/kustomization.yaml mot infra/flux-system/base/kustomizations-infra/",
       "summary": "Prod-overlayene i infra/flux-system lister infra-Kustomizations eksplisitt: reloader.yaml mangler på aks-green-prod-03, aks-yellow-prod-02 og aks-red-prod-02, og blob-csi-driver.yaml mangler på aks-red-prod-02 og aks-norsyss-prod-02. infra/reloader/ har overlay for alle klustere. secrets.md sier at det ikke er verifisert om Reloader kjører der. Meld til plattformteamet; lukkes når infra eller plattformteamet har avklart.",
       "firstSeen": "2026-10-25",
-      "lastSeen": "2026-10-25"
+      "lastSeen": "2026-10-31"
+    },
+    {
+      "id": "cert-manager-challenges-rbac",
+      "status": "deferred",
+      "category": "VURDER",
+      "target": "references/platform-architecture.md",
+      "source": "infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml (#1366) mot crds/base/cert-manager-v1.20.3-crds.yaml",
+      "summary": "core-access-rules.yaml gir get/list/watch på challenges under apiGroups cert-manager.io, men CRD-en er challenges.acme.cert-manager.io; ingen RBAC-fragment gir acme.cert-manager.io, så tenanter får fortsatt Forbidden. Skillen nevner ikke challenges. Meldes til plattformteamet; når gruppen er rettet, legg challenges (lesing) til core-raden.",
+      "firstSeen": "2026-10-31",
+      "lastSeen": "2026-10-31"
     }
   ]
 }
