@@ -48,7 +48,7 @@ Med `network: fhinett` skal hostnavnet slutte på klusterets `.skybert`-sone. ex
 | red-prod | `red.skybert` |
 | sandbox, ops-test | `sandbox.skybert` |
 
-`*.skytest.fhi.no` er tillatt på fhinett-ruter, men docs fraråder det. `network: helsenett` og `internett` bruker `*.skytest.fhi.no` og `*.sky.fhi.no`.
+`*.skytest.fhi.no` og `*.sky.fhi.no` er tillatt på fhinett-ruter, men docs anbefaler `.skybert` for tjenester som bare skal nås på fhinett: navnet lekker ikke til ekstern DNS, sertifikatet utstedes raskere, og docs varsler at de offentlige domenene kan bli forbudt for fhinett. `network: helsenett` og `internett` krever `*.skytest.fhi.no` eller `*.sky.fhi.no`.
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/external-dns-private/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/lib/fhinett.sh
 
@@ -106,11 +106,9 @@ Alpha-SkybertApp (`skybert.fhi.no/v1alpha1`) rendrer Kubernetes `Ingress` med `i
 
 **Tenant-mønsteret:** plattformen kjører delte `Gateway`-objekter (`helsenett`, `internett`) i `envoy-gateway-system` med `allowedListeners.namespaces.from: All`; tenanter knytter til seg listeners og TLS via **`ListenerSet`** i eget namespace og ruter trafikk til sine Services med **`HTTPRoute`**. RBAC-rollen `skybert:tenant-admin` gir `listenersets`, `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes` og `udproutes`, men bare lesetilgang (`get`/`list`/`watch`) til `gateways`, samt Envoy-policyer som beskrevet i [Sikkerhet](security.md#tenant-rbac--hva-du-kan-administrere). Hostname-reglene over (inkl. flambert-blokkeringen) håndheves også på Gateway API-ruter.
 
-`fhinett` er unntaket: der er Gatewayen tenantens egen. Hver tenant-base i infra har en Gateway `fhinett` i `tn-<tenant>` (`tenants/<tenant>/base/gateway-fhinett.yaml`, generert ved bootstrap); tenanten kan lese den, men ikke endre den. EnvoyProxy-en for klassen har ikke `mergeGateways`, så hver slik Gateway får egne Envoy-pods i `envoy-gateway-system` og egen IP fra klusterets fhinett-pool; en Envoy-policy på den når ingen annen tenant. Adressen står i kolonnen `ADDRESS` fra `kubectl get gateway fhinett -n tn-<tenant>`; poolene per kluster står i [Cluster networks](https://docs.sky.fhi.no/miscellaneous/cluster-networks/). Gatewayen kommer med plattformens listener `http` (port 80, ruter bare fra `skybert-system`), der `HTTPRoute`-en `flambert-tn-<tenant>-ingress` gir hostnavnet `<klusterprefiks>-tn-<tenant>.ingress.flambert` en A-record mot Gatewayens IP (external-dns-private). Tenanten legger til egne listeners med `ListenerSet` (`parentRef: fhinett`); `ClientTrafficPolicy` kan peke på `ListenerSet`-en direkte (Envoy Gateway 1.9.2), så plattformens listener forblir urørt. Alle klustere har i tillegg en Gateway `fhinett` i `skybert-system` for plattformtjenester, som bare tar listeners fra `skybert-system`, `grafana` og `flux-system`.
+`fhinett` er unntaket: der er Gatewayen tenantens egen. Hver tenant-base i infra har en Gateway `fhinett` i `tn-<tenant>` (`tenants/<tenant>/base/gateway-fhinett.yaml`, generert ved bootstrap); tenanten kan lese den, men ikke endre den. EnvoyProxy-en for klassen har ikke `mergeGateways`, så hver slik Gateway får egne Envoy-pods i `envoy-gateway-system` og egen IP fra klusterets fhinett-pool; en Envoy-policy på den når ingen annen tenant. Adressen står i kolonnen `ADDRESS` fra `kubectl get gateway fhinett -n tn-<tenant>`; poolene per kluster står i [Cluster networks](https://docs.sky.fhi.no/miscellaneous/cluster-networks/). Gatewayen kommer med plattformens listener `http` (port 80, ruter bare fra `skybert-system`), der `HTTPRoute`-en `flambert-tn-<tenant>-ingress` gir hostnavnet `<klusterprefiks>-tn-<tenant>.ingress.flambert` en A-record mot Gatewayens IP (external-dns-private); docs anbefaler dette navnet i brannmuråpninger mot tenantens fhinett-IP, fordi plattformen holder recorden oppdatert når tenanten flyttes, appen bytter hostnavn eller klusteret bygges på nytt. Tenanten legger til egne listeners med `ListenerSet` (`parentRef: fhinett`); `ClientTrafficPolicy` kan peke på `ListenerSet`-en direkte (Envoy Gateway 1.9.2), så plattformens listener forblir urørt. Alle klustere har i tillegg en Gateway `fhinett` i `skybert-system` for plattformtjenester, som bare tar listeners fra `skybert-system`, `grafana` og `flux-system`.
 
 > **Operasjonell antakelse:** At flambert-navnet kan brukes fra andre klustere i stedet for IP-en, er prøvd fra green-test (`greentest-tn-fida-analyserom.ingress.flambert`); infra viser bare DNS-recorden.
-
-På rød sone når Gateway API-trafikk ikke fram til podene — se [Rød sone](#rød-sone).
 
 `ListenerSet` + `HTTPRoute`, slik beta-compositionen rendrer dem. cert-manager-issueren annoteres på `ListenerSet`, ikke på ruten:
 
@@ -168,7 +166,7 @@ spec:
 
 > **Operasjonell antakelse:** Observert på `aks-green-test-02`: hver forespørsel kom inn med `X-Forwarded-For: 10.244.x.x`.
 
-> Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/ · https://docs.sky.fhi.no/explanations/tools-and-components/ · https://docs.sky.fhi.no/miscellaneous/cluster-networks/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
+> Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/ · https://docs.sky.fhi.no/explanations/tools-and-components/ · https://docs.sky.fhi.no/miscellaneous/cluster-networks/ · https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
 
 ## Nettverkspolicyer
 
@@ -202,7 +200,7 @@ Merk, på grønn begrenser en native `NetworkPolicy` ikke egress. Calico evaluer
 | `base-tenant-egress` | Egress | 800 | Tillater DNS (UDP 53 til kube-dns i `kube-system`), deretter Deny |
 | `deny-nfs-egress` | Egress | 900 | Blokkerer TCP 2049 (alle klustere) |
 | `<ns>-internal-ingress` | Ingress | 1200 | Kyverno-generert; tillater trafikk innen eget namespace uten protokollfilter, etter tenantens ingress-policyer |
-| `base-tenant-ingress` | Ingress | 1201 | Tillater TCP fra `ingress-nginx`-namespacet, deretter Deny |
+| `base-tenant-ingress` | Ingress | 1201 | Tillater TCP fra namespacene `ingress-nginx` og `envoy-gateway-system`, deretter Deny |
 
 Begge røde kluster-overlays inkluderer disse basene. Docs beskriver en forskjell mellom red-test og red-prod som manifestene ikke har; tabellen følger infra-manifestene. Tenantens Calico-regler med order 1000–1199 kan dermed begrense også ingress innen eget namespace.
 
@@ -215,7 +213,7 @@ Begge røde kluster-overlays inkluderer disse basene. Docs beskriver en forskjel
 
 **Tenant-NetworkPolicies i rød sone:** Native Kubernetes `NetworkPolicy` (`networking.k8s.io/v1`) er forbudt. Tenanter kan opprette **Calico `NetworkPolicy`** (`crd.projectcalico.org/v1`) for å finjustere ingress — kun med `Ingress`-regler og `spec.order` i `[1000, 1200)`: under 1000 avvises av `limit-calico-netpol-order` (alle klustere), 1200 og over av `sub-1200-calico-netpol-in-tenants` (rød). Egress styres kun via GlobalNetworkPolicy fra plattformteamet. Kyverno-policyene står i [Kyverno-policier — Rød sone](kyverno-policies.md#rød-sone--ekstra-policier).
 
-**Gateway API når ikke fram:** `base-tenant-ingress` tillater kun ingress fra `ingress-nginx`-namespacet, og ingen GNP slipper `envoy-gateway-system` inn. `ListenerSet` og `HTTPRoute` applyer uten feil, men ingen trafikk når podene. Det gjelder også beta-SkybertApp, uansett `network`, selv om docs' migreringsguide lister `fhinett` og `helsenett` som tilgjengelige på rød. På rød er alpha-SkybertApp (`Ingress`) veien — eventuelt en Calico `NetworkPolicy` med `spec.order` i `[1000, 1200)` som tillater ingress fra `envoy-gateway-system`, avklart med `#ext-fhi-skybert`.
+**Gateway API:** `base-tenant-ingress` slipper inn TCP fra `envoy-gateway-system`, der Envoy-podene til de delte Gatewayene og tenantens `fhinett`-Gateway kjører. `ListenerSet`/`HTTPRoute` og beta-SkybertApp med `network: fhinett` eller `helsenett` når dermed podene på rød; `internett` finnes ikke der.
 
 > Kilde: https://docs.sky.fhi.no/build/environments/ · https://docs.sky.fhi.no/internal/global-network-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/globalnetworkpolicies/base/policies-red/
 

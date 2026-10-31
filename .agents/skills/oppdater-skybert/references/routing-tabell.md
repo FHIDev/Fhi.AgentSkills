@@ -109,6 +109,7 @@
 | `infra/flux-system/*/kustomization.yaml` | Komponentstatus i den kanoniske filen for komponenten (`secrets.md` for Reloader, `persistence.md` for blob-csi). Se punkt 5 under «Infra-repo discovery» i [github-modus.md](github-modus.md) |
 | `infra/grafana/*/patch-env.yaml`, `infra/grafana/*/kustomization.yaml` | `references/observability.md#grafana` — Grafana-URL per kluster. `patch-orgs.yaml` er ny-tenant-støy (se raden for `tenants/*/base/oci-repository.yaml`) |
 | `infra/globalnetworkpolicies/base/policies-red/*.yaml` | `references/hostnames-and-networking.md`, `references/kyverno-policies.md` |
+| `infra/globalnetworkpolicies/<kluster>/*.yaml` | Normalt ingen routing — tenant-spesifikke unntak (order 500) følger mønsteret i `references/hostnames-and-networking.md#rød-sone`. Inneholder interne IP-er; kopieres aldri. Kun ved nytt mønster (ny order, ny selector-type, nytt plattform-unntak) → `references/hostnames-and-networking.md` |
 | `infra/envoy/**` | `references/hostnames-and-networking.md`, `references/platform-architecture.md` (Gateway API/Envoy-status, kun tenant-impact) |
 | `utils/sk8/README.md`, `utils/sk8/data/clusters.json` | `references/kubectl-access.md` — sk8 Go-CLI + innebygd klusterregister (brukerdokumentasjon: `docs/get-started/sk8-cli.md`). Øvrig `utils/**` (Go-kode, `version-checker/`, `grafana-airgapped/`) er lavprioritet/støy |
 | `utils/grafana-dashboard-syncer/README.md` | `references/observability.md` — kontrakten bak ConfigMap-dashboards |
