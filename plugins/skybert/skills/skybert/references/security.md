@@ -92,7 +92,7 @@ tenantens faktiske RoleBindings er autoritative. Hva rollen gir, hvordan den agg
 bootstrap-flyten står i [Plattformarkitektur — Tenant-bootstrap](platform-architecture.md#tenant-bootstrap);
 runtime-restriksjoner per miljø står i [Kyverno-policier](kyverno-policies.md).
 
-`securitypolicies` og `clienttrafficpolicies` (`gateway.envoyproxy.io`) er med i RBAC-settet med full CRUD. `envoyextensionpolicies` og `backendtrafficpolicies` er ikke med. Tilgangsbegrensningen for WAF er beskrevet i [WAF](waf.md#tilgang-og-status). `SecurityPolicy` er ikke en dokumentert autentiseringstjeneste fra plattformen; avklar bruken med plattformteamet.
+Envoy-policyene tenanten kan administrere (`gateway.envoyproxy.io`) står i core-raden i [Tenant-RBAC](platform-architecture.md#tenant-rbac); forbeholdene for WAF står i [WAF](waf.md#tilgang-og-status). `SecurityPolicy` er ikke en dokumentert autentiseringstjeneste fra plattformen; avklar bruken med plattformteamet.
 
 > Kilde: https://docs.sky.fhi.no/internal/skybert-system/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
 

@@ -2,7 +2,7 @@
 
 ## Tilgang og status
 
-Docs beskriver Coraza med OWASP Core Rule Set via `EnvoyExtensionPolicy` på Envoy Gateway-ruter. Dette dekker ikke nginx-`Ingress` fra alpha-SkybertApp; beta-SkybertApp rendrer en `HTTPRoute` som policyen kan peke på, og docs' migreringsguide anbefaler det for offentlige ruter. Avklar aktivering med plattformteamet før bruk: standardrollene for tenant-admin og Flux mangler `envoyextensionpolicies`, og Gateway API har egne begrensninger på rød sone. Se [nettverk](hostnames-and-networking.md#rød-sone).
+Docs beskriver Coraza med OWASP Core Rule Set via `EnvoyExtensionPolicy` på Envoy Gateway-ruter. Dette dekker ikke nginx-`Ingress` fra alpha-SkybertApp; beta-SkybertApp rendrer en `HTTPRoute` som policyen kan peke på, og docs' migreringsguide anbefaler WAF i hvert fall for `internett`- og `helsenett`-ruter. Tenant-admin og `flux-reconciler` har full CRUD på `envoyextensionpolicies` (se [Tenant-RBAC](platform-architecture.md#tenant-rbac)). Avklar aktivering med plattformteamet før bruk.
 
 Kildene bekrefter konfigurasjon, ikke en fungerende ende-til-ende WAF. README for plattformens Coraza-image sier at lasting og kjøring i Envoy ikke er verifisert. Docs bruker `crfhiskybert.azurecr.io/waf/coraza-proxy-wasm:0.6.0`; avklar fungerende image og tilgang før et manifest tas i bruk.
 

@@ -21,7 +21,7 @@ også for én navngitt klasse. Dette er forventet liste:
 | `unbacked-sc` | `wyvern.csi.azure.com` | Delete | RWO | Block-volum kun på Azure Local-klusteret, ingen cloud-kopi |
 | `unbacked-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Samme med Retain |
 | `default` | `disk.csi.akshci.com` | Delete | RWO | Node-lokal disk. Kluster-default, og den svakeste av disse |
-| `disk-retain` | `disk.csi.akshci.com` | Retain | RWO | Samme driver som `default`, men PV-en overlever PVC-en. Finnes bare på `aks-ops-test-02` og `aks-norsyss-prod-02` |
+| `disk-retain` | `disk.csi.akshci.com` | Retain | RWO | Samme driver som `default`, men PV-en overlever PVC-en. Finnes på alle klustere |
 | `ontap-nas` | `csi.trident.netapp.io` | Delete | RWX | NFSv3 på NetApp ONTAP. Delte filer på tvers av pods |
 | `blob-fuse` | `blob.csi.azure.com` | Delete | RWX | Azure Blob montert som filsystem. Klassen ligger bare i infra-overlayene for `aks-sandbox-02`, `aks-ops-test-02`, `aks-green-test-02` og `aks-yellow-prod-02` — se advarsel under |
 

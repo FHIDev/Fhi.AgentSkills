@@ -6,7 +6,7 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-10-25
+> **Sist verifisert mot offisiell docs:** 2026-10-31
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/ (samme innhold på https://skybert.fhi.no/)
 > Denne skillen er en kuratert oppsummering for AI-agenter. Hver faktaseksjon har enten en `> Kilde:`-lenke eller er merket `> **Operasjonell antakelse:**` (erfaring uten repo-kilde); navigasjonsseksjoner har ingen av delene.
 
@@ -148,7 +148,7 @@ Nøkkelegenskaper:
 - Scale-subresource: `kubectl get skybertapp` viser DESIRED/CURRENT; VPA kan peke `targetRef` på ressursen.
 - Memory limit er alltid lik request; CPU har request uten limit.
 
-Beta-varianten `skybert-beta.fhi.no/v1beta1` (alle klustere) eksponerer appen via Envoy Gateway (`ListenerSet` + `HTTPRoute`) i stedet for nginx-`Ingress`, og har ett ekstra felt, `network`. Den er en egen API-gruppe, så migrering betyr et nytt objekt — se [SkybertApp CRD — Beta](references/skybertapp-crd.md#beta-gateway-api).
+Beta-varianten `skybert-beta.fhi.no/v1beta1` (alle klustere) eksponerer appen via Envoy Gateway (`ListenerSet` + `HTTPRoute`) i stedet for nginx-`Ingress`, og har ett ekstra felt, `network`. Den er en egen API-gruppe, så migrering betyr et nytt objekt, og docs ber tenanter migrere før alpha-spesifikasjonen slettes — se [SkybertApp CRD — Beta](references/skybertapp-crd.md#beta-gateway-api).
 
 Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifester (Deployment, StatefulSet, Job, Helm, Kustomize) kan ligge side om side med SkybertApp i samme miljømappe — se [Konfigurasjon](references/configuration.md).
 
@@ -170,7 +170,7 @@ Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifest
 
 ## Ingress og nettverk
 
-TLS og DNS opprettes automatisk fra `hostname`. Alpha-`SkybertApp` genererer en nginx-`Ingress`; beta genererer `ListenerSet` + `HTTPRoute` mot Envoy Gateway, som kjører på alle klustere. Hver tenant har en egen Gateway `fhinett` i namespacet (interne `*.skybert`-navn); `helsenett` og `internett` er delte, og rød og Norsyss har ingen `internett`. Gateway API når ikke tenant-pods i rød sone. Rød sone: default deny egress, DNS og intern namespace-trafikk åpen, egress-unntak via plattformteamet. Alt om domener, issuere, Gateway API og nettverkspolicyer: [Hostnavn og nettverk](references/hostnames-and-networking.md).
+TLS og DNS opprettes automatisk fra `hostname`. Alpha-`SkybertApp` genererer en nginx-`Ingress`; beta genererer `ListenerSet` + `HTTPRoute` mot Envoy Gateway, som kjører på alle klustere. Hver tenant har en egen Gateway `fhinett` i namespacet (interne `*.skybert`-navn); `helsenett` og `internett` er delte, og rød og Norsyss har ingen `internett`. Rød sone: default deny egress, DNS og intern namespace-trafikk åpen, egress-unntak via plattformteamet. Alt om domener, issuere, Gateway API og nettverkspolicyer: [Hostnavn og nettverk](references/hostnames-and-networking.md).
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://docs.sky.fhi.no/build/environments/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/
 

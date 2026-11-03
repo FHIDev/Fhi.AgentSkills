@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-26T07:15:00Z",
-  "docsCommit": "be3e8b713ffd875773f7b398babc462d4854db83",
-  "skillContentHash": "88df71e6fd022535806568907d291d1f6eb74d5b92cbda4767869f2872d75a4e",
+  "generatedAt": "2026-10-31T12:00:00Z",
+  "docsCommit": "1cfc371488e198322fb45010e0fab299d282ac20",
+  "skillContentHash": "99eed87a0d911c4ed80ec83bead69118f5c1d620fdaae34f8cdce2364426cbd1",
   "pages": [
     {
       "path": "docs/auth/index.md",
@@ -728,7 +728,7 @@
         "references/waf.md#bundles-og-egne-regler"
       ],
       "coverage": "delvis",
-      "missing": "Dokumentert med forbehold: standard-RBAC mangler EnvoyExtensionPolicy; docs og infra er uenige om bundle-navn og default (docs detection/baseline/strict, default-on; infra owasp-detection/owasp, default none, opt-in); Envoy-runtime er ikke verifisert. Åpne poster waf-tenant-rbac, waf-bundle-default og waf-image-runtime."
+      "missing": "Dokumentert med forbehold: docs og infra er uenige om bundle-navn og default (docs detection/baseline/strict, default-on; infra owasp-detection/owasp, default none, opt-in); Envoy-runtime er ikke verifisert. Åpne poster waf-bundle-default og waf-image-runtime."
     },
     {
       "path": "docs/workloads/waf/index.md",
@@ -739,7 +739,7 @@
         "references/waf.md#bundles-og-egne-regler"
       ],
       "coverage": "delvis",
-      "missing": "Dokumentert med forbehold: standard-RBAC mangler EnvoyExtensionPolicy; docs og infra er uenige om bundle-navn og default (docs detection/baseline/strict, default-on; infra owasp-detection/owasp, default none, opt-in); Envoy-runtime er ikke verifisert. Åpne poster waf-tenant-rbac, waf-bundle-default og waf-image-runtime."
+      "missing": "Dokumentert med forbehold: docs og infra er uenige om bundle-navn og default (docs detection/baseline/strict, default-on; infra owasp-detection/owasp, default none, opt-in); Envoy-runtime er ikke verifisert. Åpne poster waf-bundle-default og waf-image-runtime."
     },
     {
       "path": "docs/sk8/clusters.json",
@@ -774,10 +774,11 @@
       "topic": "Migrering SkybertApp alpha → beta (Gateway API)",
       "coveredIn": [
         "references/skybertapp-crd.md#beta-gateway-api",
-        "references/hostnames-and-networking.md#fhinett-hostnavn-beta"
+        "references/hostnames-and-networking.md#fhinett-hostnavn-beta",
+        "references/hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway"
       ],
       "coverage": "komplett",
-      "missing": "Docs lister fhinett og helsenett som tilgjengelige på rød; de røde GNP-ene slipper ikke envoy-gateway-system inn. Skillen følger infra. Åpen post docs-infra-konflikt-beta-roed."
+      "missing": ""
     }
   ]
 }
