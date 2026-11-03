@@ -6,7 +6,7 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-10-31
+> **Sist verifisert mot offisiell docs:** 2026-11-03
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/ (samme innhold på https://skybert.fhi.no/)
 > Denne skillen er en kuratert oppsummering for AI-agenter. Hver faktaseksjon har enten en `> Kilde:`-lenke eller er merket `> **Operasjonell antakelse:**` (erfaring uten repo-kilde); navigasjonsseksjoner har ingen av delene.
 
@@ -176,9 +176,9 @@ TLS og DNS opprettes automatisk fra `hostname`. Alpha-`SkybertApp` genererer en 
 
 ## Persistence
 
-Tre likestilte databasealternativer: Azure managed, NHN Moderne Etatsplattform, eller PostgreSQL i klusteret med CloudNativePG (støttet på alle klustere; teamet eier backup-konto og restore-test). CNPG har innebygd backup med WAL-arkivering via barman-cloud-pluginen, som er utrullet på alle klustere; les [Backup](references/persistence.md#backup) før en egen `pg_dump`-CronJob. Ingen av StorageClassene gir backup eller snapshots, og hvilke som finnes varierer per kluster. `ontap-nas` (NFS) skal aldri brukes til databaser. Se [Persistence og CloudNativePG](references/persistence.md).
+Tre likestilte databasealternativer: Azure managed, NHN Moderne Etatsplattform, eller PostgreSQL i klusteret med CloudNativePG (støttet på alle klustere; teamet eier backup-konto og restore-test). CNPG har innebygd backup med WAL-arkivering via barman-cloud-pluginen, som er utrullet på alle klustere; les [Backup](references/persistence.md#backup) før en egen `pg_dump`-CronJob. Ingen av StorageClassene gir backup eller snapshots, bare `default` og `ontap-nas` er produksjonsklasser i docs (`cloud-backed-*` og `unbacked-*` er beta), og hvilke som finnes varierer per kluster. `ontap-nas` (NFS) skal aldri brukes til databaser. Se [Persistence og CloudNativePG](references/persistence.md).
 
-> Kilde: https://docs.sky.fhi.no/persistence/ · https://docs.sky.fhi.no/persistence/postgres/
+> Kilde: https://docs.sky.fhi.no/persistence/storage/ · https://docs.sky.fhi.no/persistence/databases/ · https://docs.sky.fhi.no/persistence/postgres/
 
 ## Workload Identity og secrets
 

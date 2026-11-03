@@ -14,16 +14,18 @@ Skybert kjører AKS på **Azure Local**, og StorageClassene kommer fra fire ulik
 Hvilke klasser som finnes varierer per kluster, og tenanter får `Forbidden` på `kubectl get sc`,
 også for én navngitt klasse. Dette er forventet liste:
 
-| StorageClass | Provisioner | Reclaim | Access | Hva det er |
-|:--|:--|:--|:--|:--|
-| `cloud-backed-sc` | `wyvern.csi.azure.com` | Delete | RWO | Volum med Azure-kopi — overlever node-tap. I podden NFSv4.2, se ikke-root under. **Start her.** |
-| `cloud-backed-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Samme, men PV-en overlever PVC-en |
-| `unbacked-sc` | `wyvern.csi.azure.com` | Delete | RWO | Block-volum kun på Azure Local-klusteret, ingen cloud-kopi |
-| `unbacked-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Samme med Retain |
-| `default` | `disk.csi.akshci.com` | Delete | RWO | Node-lokal disk. Kluster-default, og den svakeste av disse |
-| `disk-retain` | `disk.csi.akshci.com` | Retain | RWO | Samme driver som `default`, men PV-en overlever PVC-en. Finnes på alle klustere |
-| `ontap-nas` | `csi.trident.netapp.io` | Delete | RWX | NFSv3 på NetApp ONTAP. Delte filer på tvers av pods |
-| `blob-fuse` | `blob.csi.azure.com` | Delete | RWX | Azure Blob montert som filsystem. Klassen ligger bare i infra-overlayene for `aks-sandbox-02`, `aks-ops-test-02`, `aks-green-test-02` og `aks-yellow-prod-02` — se advarsel under |
+| StorageClass | Provisioner | Reclaim | Access | Status | Hva det er |
+|:--|:--|:--|:--|:--|:--|
+| `cloud-backed-sc` | `wyvern.csi.azure.com` | Delete | RWO | Beta | Volum med Azure-kopi — overlever node-tap. I podden NFSv4.2, se ikke-root under. **Start her** ifølge docs, men klassen er beta |
+| `cloud-backed-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Beta | Samme, men PV-en overlever PVC-en |
+| `unbacked-sc` | `wyvern.csi.azure.com` | Delete | RWO | Beta | Block-volum kun på Azure Local-klusteret, ingen cloud-kopi |
+| `unbacked-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Beta | Samme med Retain |
+| `default` | `disk.csi.akshci.com` | Delete | RWO | Produksjon | Node-lokal disk. Kluster-default, og den svakeste av disse |
+| `disk-retain` | `disk.csi.akshci.com` | Retain | RWO | Ikke oppgitt | Samme driver som `default`, men PV-en overlever PVC-en. Finnes på alle klustere |
+| `ontap-nas` | `csi.trident.netapp.io` | Delete | RWX | Produksjon | NFSv3 på NetApp ONTAP. Delte filer på tvers av pods |
+| `blob-fuse` | `blob.csi.azure.com` | Delete | RWX | Ikke anbefalt for kritiske data | Azure Blob montert som filsystem. Klassen ligger bare i infra-overlayene for `aks-sandbox-02`, `aks-ops-test-02`, `aks-green-test-02` og `aks-yellow-prod-02` — se advarsel under |
+
+All persistent lagring regnes som ustabil og uten automatisk backup. `default` er lokal nodelagring og `ontap-nas` ligger på NHNs NetApp; `cloud-backed-*` og `unbacked-*` er under beta-testing. Docs peker på `cloud-backed-sc` som startpunkt, men klassen er beta.
 
 > **Operasjonell antakelse:** `aks-green-test-02` har ikke `unbacked-sc`: PVC-en ble
 > stående `Pending` med `storageclass.storage.k8s.io "unbacked-sc" not found`. `default` fantes, og
@@ -38,7 +40,7 @@ ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
 - **`Delete` vs `Retain`:** velg `Retain` når en utilsiktet `kubectl delete pvc` eller Flux-`prune: true`
   ikke skal være slutten på dataene; en `Released` PV gjenbrukes aldri automatisk og må ryddes manuelt.
 - **Databaser og skrivesensitivt:** `cloud-backed-sc`, eller `cloud-backed-retain-sc` når PVC-tap
-  ikke skal bety datatap. **Aldri database på `ontap-nas`:** klassen er definert med
+  ikke skal bety datatap (begge er beta, se Status i tabellen). **Aldri database på `ontap-nas`:** klassen er definert med
   `mountOptions: [nfsvers=3, nolock]`, så den gir ingen av konsistensgarantiene en database
   trenger — i verste fall åpner to prosesser samme datakatalog — og CNPG støtter ikke NFS for PGDATA.
 - **Ikke-root på `cloud-backed-*`:** docs kaller klassen blokkvolum, men i podden er den NFSv4.2
@@ -47,7 +49,7 @@ ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
   `runAsUser: 0`, så tenanten kan ikke chown-e via init-container — meld behovet på
   `#ext-fhi-skybert`. `ontap-nas` gir rot `0777` og virker uten root, men er fortsatt uaktuell
   for databaser (over).
-- **Cache/scratch:** `unbacked-sc` eller `default`.
+- **Cache/scratch:** `unbacked-sc` (beta) eller `default`.
 - **Delte filer flere pods:** `ontap-nas` — eneste klasse med `ReadWriteMany` for vanlig filtilgang.
   Trident-backenden er konfigurert med `accessMode: ReadWriteMany`; bruk `accessModes: [ReadWriteMany]`
   på PVC-er mot klassen, og overstyr Helm-charts som defaulter til `ReadWriteOnce`.
@@ -61,7 +63,7 @@ ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
 
 **Ved klusterutskifting:** Den interne runbooken beskriver ingen prosedyre for å hente tilbake `ontap-nas`-volumer etter at det gamle klusteret er borte. Forvent datatap uten egen backup; eventuell berging fra et fortsatt tilgjengelig gammelt kluster er ikke verifisert.
 
-> Kilde: https://docs.sky.fhi.no/persistence/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/nas-sc.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/ontap-nas-backend.yaml · https://docs.sky.fhi.no/internal/replace-cluster-in-place/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/cloudnative-pg/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/blob-csi-driver/
+> Kilde: https://docs.sky.fhi.no/persistence/storage/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/nas-sc.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/trident/base/ontap-nas-backend.yaml · https://docs.sky.fhi.no/internal/replace-cluster-in-place/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/cloudnative-pg/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/blob-csi-driver/
 
 ## Databasevalg
 
@@ -81,7 +83,7 @@ restore-testen. CNPG er kun for PostgreSQL — alt annet betyr fortsatt Azure, N
 Docs-konflikt: `get-started/prerequisites/application.md` sier «Databases should be
 hosted outside Kubernetes for now». Persistence-sidene er mer spesifikke og legges til grunn her.
 
-> Kilde: https://docs.sky.fhi.no/persistence/ · https://docs.sky.fhi.no/get-started/prerequisites/application/
+> Kilde: https://docs.sky.fhi.no/persistence/databases/ · https://docs.sky.fhi.no/get-started/prerequisites/application/
 
 ## CloudNativePG
 
@@ -175,7 +177,8 @@ spec:
 > **Operasjonell antakelse:** Eksempelet er ikke verifisert mot funnet om
 > [ikke-root på `cloud-backed-*`](#storageclasses). CNPG kjører PostgreSQL som ikke-root (uid 26)
 > og er avhengig av `fsGroup`, så `initdb` kan feile på PGDATA. Verifiser i sandbox eller test før
-> klassen brukes i prod, og meld på `#ext-fhi-skybert` hvis den feiler.
+> klassen brukes i prod, og meld på `#ext-fhi-skybert` hvis den feiler. `cloud-backed-retain-sc` er
+> i tillegg beta (se [StorageClasses](#storageclasses)).
 
 Operatoren lager tre Services: `pg-rw` (skriving, følger primary gjennom failover), `pg-ro`
 (lesing fra replikaer), `pg-r` (hvilken som helst instans). En failover dropper eksisterende
