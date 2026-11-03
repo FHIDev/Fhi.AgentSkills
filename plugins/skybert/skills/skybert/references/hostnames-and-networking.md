@@ -199,6 +199,7 @@ Merk, på grønn begrenser en native `NetworkPolicy` ikke egress. Calico evaluer
 | Policy | Type | Order | Effekt |
 |--------|------|-------|--------|
 | `alloy-scrape-ingress` | Ingress | 500 | Tillater TCP fra namespace `alloy` til `tn-*`, uten portavgrensning |
+| `base-tenant-alloy` | Ingress | 500 | Tillater TCP fra namespace `alloy` til `tn-*` (overlapper `alloy-scrape-ingress`, men bruker `namespaceSelector`) |
 | `alloy-otlp-egress` | Egress | 500 | Tillater TCP fra `tn-*` til Alloy på 4317/4318 |
 | `<ns>-internal-egress` | Egress | 600 | Kyverno-generert; tillater trafikk innen eget namespace uten protokollfilter |
 | `base-tenant-egress` | Egress | 800 | Tillater DNS (UDP 53 til kube-dns i `kube-system`), deretter Deny |

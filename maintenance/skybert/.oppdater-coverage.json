@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-31T12:00:00Z",
-  "docsCommit": "1cfc371488e198322fb45010e0fab299d282ac20",
-  "skillContentHash": "99eed87a0d911c4ed80ec83bead69118f5c1d620fdaae34f8cdce2364426cbd1",
+  "generatedAt": "2026-11-03T09:13:45Z",
+  "docsCommit": "4779331522621cb92664db43eb3ffd15cbe608f5",
+  "skillContentHash": "88dba5c86b293a5fb7aa29067cf90427784418c41a77b32530701b44d2717ed2",
   "pages": [
     {
       "path": "docs/auth/index.md",
@@ -637,10 +637,20 @@
       "missing": "tilgjengelighet for tenants er uavklart."
     },
     {
-      "path": "docs/persistence/index.md",
-      "topic": "StorageClasses, ontap-nas, ekstern database anbefalt",
+      "path": "docs/persistence/databases.md",
+      "topic": "Tre støttede databasealternativer (CNPG, Azure managed, NHN)",
       "coveredIn": [
-        "SKILL.md#skybert-platform-skill"
+        "references/persistence.md#databasevalg",
+        "SKILL.md#persistence"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/persistence/index.md",
+      "topic": "Lenkeside til storage, databases og postgres",
+      "coveredIn": [
+        "SKILL.md#persistence"
       ],
       "coverage": "komplett",
       "missing": ""
@@ -653,6 +663,16 @@
       ],
       "coverage": "delvis",
       "missing": "Skillen følger infra for exec/RBAC og Alloy-scraping; docs-konfliktene beholdes i openItems."
+    },
+    {
+      "path": "docs/persistence/storage.md",
+      "topic": "StorageClasses med status (Beta/Produksjon), notis om ustabil lagring uten backup, Delete vs Retain, valg",
+      "coveredIn": [
+        "references/persistence.md#storageclasses",
+        "SKILL.md#persistence"
+      ],
+      "coverage": "komplett",
+      "missing": ""
     },
     {
       "path": "docs/tags/index.md",
