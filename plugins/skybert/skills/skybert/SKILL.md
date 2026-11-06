@@ -114,19 +114,20 @@ Legg manifester (SkybertApp, Deployments, Services …) i miljømappen og push t
 
 ## SkybertApp
 
-`SkybertApp` (`skybert.fhi.no/v1alpha1`) samler deployment, service, ingress med TLS, secrets fra Key Vault, autoskalering og sikkerhetshardening i én ressurs:
+`SkybertApp` (`skybert-beta.fhi.no/v1beta1`) samler deployment, service/Gateway-eksponering, secrets fra Key Vault, autoskalering og sikkerhetshardening i én ressurs:
 
 ```yaml
-apiVersion: skybert.fhi.no/v1alpha1
+apiVersion: skybert-beta.fhi.no/v1beta1
 kind: SkybertApp
 metadata:
   name: myapp
   namespace: tn-mytenant
 spec:
+  network: fhinett
   image:
     repository: crfhiskybert.azurecr.io/mytenant/myapp
     tag: "1.0.0"
-  hostname: myapp.skytest.fhi.no
+  hostname: myapp.skybert
   probes:
     liveness:
       path: /health/live
@@ -143,12 +144,13 @@ spec:
 Nøkkelegenskaper:
 - Secrets: oppgi vault og nøkler; SecretStore og ExternalSecret opprettes automatisk.
 - Workload Identity alltid aktivert (label + `serviceAccountName: <tenant>-azure`).
+- `network` avgjør eksponeringsnett; `hostname` trengs for Gateway/API-eksponering og TLS.
 - `probes` (liveness/readiness/startup) er valgfrie; `writableDirs` for read-only rot; `args`; `metrics.port` gir Prometheus-annotasjoner automatisk.
 - `autoscaling` (HPA) og automatisk PodDisruptionBudget når `replicas > 1` eller `autoscaling.minReplicas > 1`.
 - Scale-subresource: `kubectl get skybertapp` viser DESIRED/CURRENT; VPA kan peke `targetRef` på ressursen.
 - Memory limit er alltid lik request; CPU har request uten limit.
 
-Beta-varianten `skybert-beta.fhi.no/v1beta1` (alle klustere) eksponerer appen via Envoy Gateway (`ListenerSet` + `HTTPRoute`) i stedet for nginx-`Ingress`, og har ett ekstra felt, `network`. Den er en egen API-gruppe, så migrering betyr et nytt objekt, og docs ber tenanter migrere før alpha-spesifikasjonen slettes — se [SkybertApp CRD — Beta](references/skybertapp-crd.md#beta-gateway-api).
+Alpha-varianten `skybert.fhi.no/v1alpha1` er fortsatt i bruk for eksisterende workloads, men nye og migrerte workloads skal bruke beta-APIet (`skybert-beta.fhi.no/v1beta1`) med `network`-felt — se [SkybertApp CRD — Beta](references/skybertapp-crd.md#beta-gateway-api).
 
 Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifester (Deployment, StatefulSet, Job, Helm, Kustomize) kan ligge side om side med SkybertApp i samme miljømappe — se [Konfigurasjon](references/configuration.md).
 

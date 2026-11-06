@@ -1,15 +1,15 @@
 apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: skybertapps.skybert.fhi.no
+  name: skybertapps.skybert-beta.fhi.no
 spec:
   scope: Namespaced
-  group: skybert.fhi.no
+  group: skybert-beta.fhi.no
   names:
     kind: SkybertApp
     plural: skybertapps
   versions:
-  - name: v1alpha1
+  - name: v1beta1
     served: true
     referenceable: true
     additionalPrinterColumns:
@@ -271,6 +271,13 @@ spec:
                   In production: sky.fhi.no
                 type: string
                 default: ""
+              
+              network:
+                description: | 
+                  Which network the SkybertApp should be connected to: fhinett, hnett (helsenett), inett (internet).
+                type: string
+                enum: ["fhinett", "helsenett", "internett"]
+                default: "fhinett"
 
               # ============================================
               # CONFIGURATION
