@@ -28,5 +28,6 @@ Fhi.AgentSkills/
 
 ## Bidrag og PR-tilgang
 
-- For å opprette PR-er i dette repoet må du ha riktig tilgang
-- Kontakt `team-a@fhi.no` for å få tilgang til å lage PR
+- Repoet er offentlig. Eksterne bidragsytere forker repoet og åpner PR fra forken
+- FHI-vedlikeholdere får skrivetilgang via teamet `Fhi.AgentSkills-Write`. Kontakt `team-a@fhi.no` for å bli lagt til
+- `main` er beskyttet av ruleset: endringer må gå via PR med godkjenning og grønne valideringssjekker
