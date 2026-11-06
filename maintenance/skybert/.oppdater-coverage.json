@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-03T09:13:45Z",
-  "docsCommit": "4779331522621cb92664db43eb3ffd15cbe608f5",
-  "skillContentHash": "88dba5c86b293a5fb7aa29067cf90427784418c41a77b32530701b44d2717ed2",
+  "generatedAt": "2026-11-06T10:34:32Z",
+  "docsCommit": "f8afc70d325a66cc6e8a0609a3aef70aeb2b754d",
+  "skillContentHash": "713b9612d77321100c0ed17c22a71cae79f4674ee5faa61e82561497e1b9987a",
   "pages": [
     {
       "path": "docs/auth/index.md",
@@ -671,8 +671,8 @@
         "references/persistence.md#storageclasses",
         "SKILL.md#persistence"
       ],
-      "coverage": "komplett",
-      "missing": ""
+      "coverage": "delvis",
+      "missing": "«Choosing»: docs anbefaler nå CloudNativePG og `default` for databaser og `default` for cache; persistence.md gjengir fortsatt cloud-backed-sc som startpunkt (åpen post docs-storage-start-here; rettes i egen PR)."
     },
     {
       "path": "docs/tags/index.md",
@@ -737,7 +737,7 @@
         "references/skybertapp-crd.md"
       ],
       "coverage": "delvis",
-      "missing": "Feltdekning og issuer-utvalg kontrollert mot XRD/composition. Sidecar-varianten uten initContainers har eksplisitt runtime-forbehold; åpen post skybertapp-sidecar-rendering."
+      "missing": "Feltdekning og issuer-utvalg kontrollert mot beta-XRD/-composition. Sidecar-varianten uten initContainers har eksplisitt runtime-forbehold; åpen post skybertapp-sidecar-rendering. Docs-infra-avvik: network påkrevd mot default (docs-infra-network-required) og PDB-heltall (skybertapp-pdb-quote)."
     },
     {
       "path": "docs/workloads/waf/examples.md",
@@ -748,7 +748,7 @@
         "references/waf.md#bundles-og-egne-regler"
       ],
       "coverage": "delvis",
-      "missing": "Dokumentert med forbehold: docs og infra er uenige om bundle-navn og default (docs detection/baseline/strict, default-on; infra owasp-detection/owasp, default none, opt-in); Envoy-runtime er ikke verifisert. Åpne poster waf-bundle-default og waf-image-runtime."
+      "missing": "Dokumentert med forbehold: docs og infra er uenige om bundle-navn og default (docs detection/baseline/strict, default-on; infra owasp-detection/owasp, default none, opt-in); Envoy-runtime er ikke verifisert. Åpne poster waf-bundle-default og waf-image-runtime. «Allow large uploads» er ikke gjengitt (åpen post waf-large-uploads)."
     },
     {
       "path": "docs/workloads/waf/index.md",
@@ -788,6 +788,44 @@
       ],
       "coverage": "komplett",
       "missing": "IP-tabellene kopieres ikke (interne IP-er); skillen gjengir reglene og lenker til siden."
+    },
+    {
+      "path": "docs/miscellaneous/domains.md",
+      "topic": "Domener per nettverk (fhinett .skybert-endinger per kluster, offentlige domener)",
+      "coveredIn": [
+        "references/hostnames-and-networking.md#støttede-domener",
+        "references/hostnames-and-networking.md#fhinett-hostnavn-beta"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/miscellaneous/gatewayapi.md",
+      "topic": "Gateway API: fhinett/internett/helsenett, ListenerSet + HTTPRoute, eksempler",
+      "coveredIn": [
+        "references/hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway"
+      ],
+      "coverage": "komplett",
+      "missing": "Docs sier parentRef.namespace skybert-system for internett/helsenett; infra har envoy-gateway-system, og skillen følger infra (åpen post docs-infra-konflikt-gatewayapi-parentref). «Cool features»-listen er ufullstendig i docs og ikke gjengitt."
+    },
+    {
+      "path": "docs/miscellaneous/flambert.md",
+      "topic": "Flambert-FQDN for innkommende brannmuråpninger",
+      "coveredIn": [
+        "references/hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway"
+      ],
+      "coverage": "komplett",
+      "missing": ""
+    },
+    {
+      "path": "docs/miscellaneous/firewall-openings.md",
+      "topic": "Brannmuråpninger til og fra apper (node-IP-pool, flambert, røde klustre)",
+      "coveredIn": [
+        "references/hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway",
+        "references/hostnames-and-networking.md#egress-ip-tillatt-utgående-trafikk-fra-clusterne"
+      ],
+      "coverage": "komplett",
+      "missing": "NHN-forespørselsmalen og labelformatet gjengis ikke (lenke til docs); IP-ene kopieres ikke."
     },
     {
       "path": "docs/workloads/skybertapp/migrate-alpha-to-beta.md",

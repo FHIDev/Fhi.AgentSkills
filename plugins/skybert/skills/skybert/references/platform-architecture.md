@@ -37,7 +37,7 @@ De fleste team trenger bare Git/GitOps, SkybertApp og Grafana i starten. Andre k
 | Flux | GitOps-motoren som applyer tenantens manifester. Tenant-admin kan bruke Flux `Kustomization`, notifications (`Alert`/`Provider`) og Flux Web UI innen eget namespace. |
 | External Secrets | Synker Azure Key Vault-secrets til Kubernetes `Secret`. SkybertApp oppretter `ExternalSecret`/`SecretStore` automatisk ved inline secrets. |
 | cert-manager | Utsteder og fornyer TLS-sertifikater. Automatisk for SkybertApp-hostnames; avanserte oppsett kan bruke `Certificate`/`Issuer`. |
-| Envoy Gateway / Gateway API | Kjører på alle klustere. Hver tenant har en egen `fhinett`-Gateway i namespacet; `helsenett` og `internett` er delte. Tenanter bruker `ListenerSet` og `HTTPRoute` i eget namespace. Alpha-SkybertApp rendrer `Ingress`, beta rendrer `ListenerSet` + `HTTPRoute`. Se [Hostnavn og nettverk](hostnames-and-networking.md). |
+| Envoy Gateway / Gateway API | Kjører på alle klustere. Hver tenant har en egen `fhinett`-Gateway i namespacet; `helsenett` og `internett` er delte. Tenanter bruker `ListenerSet` og `HTTPRoute` i eget namespace. Beta-SkybertApp (gjeldende) rendrer `ListenerSet` + `HTTPRoute`; alpha (legacy) rendrer `Ingress`. Se [Hostnavn og nettverk](hostnames-and-networking.md). |
 | External DNS | Oppretter DNS-records for hostnames. Vanligvis usynlig. |
 | Kyverno | Policy engine. Tenanter kan lese `PolicyReport`, men ikke endre cluster-policyer. |
 | Goldilocks / VPA | Recommend-only; anbefalingene leses i Grafana. Se [Kyverno-policier](kyverno-policies.md#ressursanbefalinger-goldilocks--vpa). |
@@ -84,7 +84,7 @@ Flux støtter HelmRepositories og HelmReleases, men plattformen anbefaler dem ik
 
 ## Crossplane
 
-SkybertApp finnes som to Crossplane CompositeResourceDefinitions (XRD) med hver sin Composition i pipeline-modus (`function-go-templating`): alpha `skybert.fhi.no/v1alpha1` (`skybertapp-alpha.yaml`) og beta `skybert-beta.fhi.no/v1beta1` (`skybertapp-beta.yaml`). Begge ligger i `infra/crossplane/base/` og finnes på alle klustere. Tenanter bruker SkybertApp, ikke Crossplane direkte. WebApp (udokumentert i docs): se [Legacy WebApp/CSI](legacy-webapp-csi.md).
+SkybertApp finnes som to Crossplane CompositeResourceDefinitions (XRD) med hver sin Composition i pipeline-modus (`function-go-templating`): alpha `skybert.fhi.no/v1alpha1` (`skybertapp-alpha.yaml`) og beta `skybert-beta.fhi.no/v1beta1` (`skybertapp-beta.yaml`). Begge ligger i `infra/crossplane/base/` og finnes på alle klustere. Beta er gjeldende og alpha er legacy; se [SkybertApp CRD](skybertapp-crd.md#beta-gateway-api). Tenanter bruker SkybertApp, ikke Crossplane direkte. WebApp (udokumentert i docs): se [Legacy WebApp/CSI](legacy-webapp-csi.md).
 
 > Kilde: https://docs.sky.fhi.no/explanations/tools-and-components/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/crossplane/base/
 
@@ -116,6 +116,7 @@ tenants/<tenant>/
 │   ├── flux-kustomization.yaml        # sourceRef: OCIRepository <tenant>-gitops i samme namespace
 │   ├── oci-repository.yaml            # OCIRepository i tn-<tenant>
 │   ├── gateway-fhinett.yaml           # Gateway fhinett i tn-<tenant> (egne Envoy-pods og IP)
+│   ├── httproute-http-upgrade.yaml     # HTTPRoute i skybert-system: http → https (308)
 │   ├── httproute-flambert-ingress.yaml # HTTPRoute i skybert-system mot fhinett-Gatewayens listener http
 │   └── kustomization.yaml
 └── <kluster>/

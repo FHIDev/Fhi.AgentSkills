@@ -24,7 +24,7 @@ ExternalSecret per innslag (`refreshInterval: 10m`), begge med `authType: Worklo
 standard (`mountAsFiles: true`); `mountAsEnv: true` injiserer den i tillegg som miljøvariabler, og
 `mountPath` overstyrer filstien. Feltoversikt og eksempel: [SkybertApp CRD — Secrets](skybertapp-crd.md#secrets).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml
 
 ### Navn på genererte secrets
 
@@ -33,7 +33,7 @@ Genererte navn på Secret og ExternalSecret (uten `secrets[].name`) står i
 referere til secreten ved navn, sett `secrets[].name` eksplisitt** — da er du uavhengig av
 composition-versjonen.
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml
 
 ## Manuell: SecretStore + ExternalSecret (ESO)
 

@@ -31,48 +31,48 @@ Rendering skjer lokalt via `crossplane render`, uten kluster-tilgang.
 |-----|-------|
 | `skybertapp/composition.yaml` | Crossplane Composition (go-templating pipeline), kopi av `infra/crossplane/base/compositions/skybertapp-beta.yaml` |
 | `skybertapp/xrd.yaml` | CompositeResourceDefinition for `SkybertApp`, kopi av `infra/crossplane/base/xrds/skybertapp-beta.yaml` |
-| `skybertapp/functions.yaml` | Function-pakker fra `infra/crossplane/base/functions.yaml`, omskrevet til public xpkg.crossplane.io for lokal rendering uten ACR-login |
+| `skybertapp/functions.yaml` | Function-pakker fra `infra/crossplane/base/functions.yaml`, **omskrevet til public xpkg.crossplane.io** slik at render fungerer uten ACR-login |
 
-Kopiene gjelder beta-APIet (`skybert-beta.fhi.no/v1beta1`) med `network`-felt, `hostname` og Gateway API-rendring. Alpha-APIet er fortsatt tilgjengelig i legacy-/migrasjonsdokumentasjonen, men ikke som den distribuerte lokale referansen.
+Kopiene gjelder beta (`skybert-beta.fhi.no/v1beta1`); alpha-compositionen er ikke kopiert.
 
-Kopiene vedlikeholdes av `oppdater-skybert`-skillen. Vedlikeholdere finner kildecommit i `maintenance/skybert/.oppdater-state.json` (`github.infra.commit`) i repoet Fhi.Skybert.Infra.
+Kopiene vedlikeholdes av `oppdater-skybert`-skillen. Vedlikeholdere finner kildecommit i
+`maintenance/skybert/.oppdater-state.json` (`github.infra.commit`) i kilderepoet
+Fhi.AgentSkills. Denne vedlikeholdsfilen følger ikke med pluginen og trengs ikke for rendering.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/crossplane/base/
 
 ## Eksempel: rått XR
 
 `SKILL_DIR` er stien til `plugins/skybert/skills/skybert/references/skybertapp` der skillen er installert. Lagre
-beta Quick Start-manifestet som `myapp.yaml`:
+Quick Start-manifestet fra CRD-referansen som `myapp.yaml`:
 
-```yaml
-apiVersion: skybert-beta.fhi.no/v1beta1
-kind: SkybertApp
-metadata:
-  name: myapp
-  namespace: tn-mytenant
-spec:
-  network: fhinett
-  image:
-    repository: crfhiskybert.azurecr.io/mytenant/myapp
-    tag: v1.0.0
-```
+Se [Quick Start](skybertapp-crd.md#quick-start) for manifestet.
 
 ```bash
-crossplane render   myapp.yaml   $SKILL_DIR/composition.yaml   $SKILL_DIR/functions.yaml
+crossplane render \
+  myapp.yaml \
+  $SKILL_DIR/composition.yaml \
+  $SKILL_DIR/functions.yaml
 ```
 
 Forventet output:
 
 | Kind | Navn |
 |------|------|
-| SkybertApp | `myapp` (echo av composite) |
+| SkybertApp | `myapp` (echo av composite, med `status.replicas` og `status.labelSelector`) |
 | Deployment | `myapp-deployment` |
 
-Uten `hostname`, `config`, `secrets` eller `autoscaling` rendres ikke ListenerSet/HTTPRoute,
-`ConfigMap`, `SecretStore`/`ExternalSecret` eller `HorizontalPodAutoscaler`.
-`PodDisruptionBudget` rendres heller ikke uten relevante betingelser.
+Uten `hostname`, `config`, `secrets` eller `autoscaling` rendres ikke `Service`/`ListenerSet`/`HTTPRoute`,
+`ConfigMap`, `SecretStore`/`ExternalSecret` eller `HorizontalPodAutoscaler`. `PodDisruptionBudget`
+rendres heller ikke uten `replicas > 1`, `autoscaling.minReplicas > 1` eller eksplisitt
+`podDisruptionBudget.enabled: true`. Legg til feltene i XR-et for å se disse grenene; `hostname: myapp.sandbox.skybert` gir `Service`, `ListenerSet` og `HTTPRoute`.
 
-`status.replicas` på composite-echoen blir ofte `0` i render fordi compositionen leser `readyReplicas` fra den komponerte Deployment-en, og render har ingen levende Deployment. Det er ikke en feil.
+`status.replicas` på composite-echoen blir **alltid `0`** i render: compositionen leser
+`readyReplicas` fra den komponerte Deployment-en via `getComposedResource`, og i render finnes
+ingen levende Deployment. Det er ikke en feil.
+
+Er manifestet en Helm-template, render templaten til vanlig YAML først
+og render resultatet.
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml
 
@@ -81,23 +81,31 @@ Uten `hostname`, `config`, `secrets` eller `autoscaling` rendres ikke ListenerSe
 **Stol på:**
 - Hvilke Kinds som genereres og hvilke betingelser som trigger dem
 - Navnemønstre (`<name>-deployment`, `<vault-lowercase>-secret-<i>-<name>` osv.)
-- Feltverdier som kommer fra XR-et eller XRD-defaults
-- `status.labelSelector` på composite-echoen
+- Field values som kommer fra XR-et eller XRD-defaults
+- Issuer-valg etter compositionens tekstsøk i hostname; se [Networking](skybertapp-crd.md#networking)
+- `status.labelSelector` på composite-echoen — den utledes rent fra navnet (`skybert-beta.fhi.no/skybertapp=<name>`)
 
 **Ikke stol på:**
-- `status`, `ownerReferences`, `managedFields` og Crossplane-injiserte labels i render-outputen
-- `status.replicas` på composite-echoen — den kan stå `0` i render
+- `status`, `ownerReferences`, `managedFields` og Crossplane-injiserte labels — render stubber eller utelater dem
+- `status.replicas` på composite-echoen — alltid `0`, se over
 
-Dette er et debug/forståelse-verktøy, ikke en bit-for-bit kopi av kluster-state.
+Dette er debug/forståelse-verktøy, ikke en bit-for-bit kopi av
+kluster-state.
 
-> **Operasjonell antakelse:** Generell `crossplane render`-oppførsel observert mot beta-compositionen; ikke dokumentert i kildene.
+> **Operasjonell antakelse:** Generell `crossplane render`-oppførsel observert mot SkybertApp-compositionen; ikke dokumentert i kildene.
 
 ## Feilsøking
 
-**`unauthorized` ved pull av function image** — betyr at du fortsatt bruker ACR-mirror-varianten. Pek på `$SKILL_DIR/functions.yaml` (public xpkg).
+**`unauthorized` ved pull av function image** — betyr at du fortsatt bruker
+ACR-mirror-varianten. Pek på `$SKILL_DIR/functions.yaml` (public xpkg),
+eller kjør `az acr login --name crfhiskybert` før render.
 
-**Rendret output inneholder bare `SkybertApp` + `Deployment`** — betyr at XR-et ditt ikke trigger noen av de betingede grenene (`hostname`, `config`, `secrets`, `autoscaling` eller PDB-betingelsen). Ikke en feil.
+**Rendret Deployment har `envFrom: null` / `volumes: null`** — kosmetisk.
+Go-templatet emitterer header-nøklene selv når listene er tomme.
 
-**`network` eller `hostname` mangler** — beta-APIet krever normalt `network` i manifestet og `hostname` løfter eksponering og TLS via Gateway API.
+**Rendret output inneholder bare `SkybertApp` + `Deployment`** — betyr at
+XR-et ditt ikke trigger noen av de betingede grenene (`hostname`, `config`,
+`secrets`, `autoscaling`, eller PDB-betingelsen `replicas > 1` /
+`autoscaling.minReplicas > 1` / `podDisruptionBudget.enabled: true`). Ikke en feil.
 
 > **Operasjonell antakelse:** Feilbildene er erfaring fra lokal render mot skillens kopier; kildene dokumenterer ikke lokal rendering.

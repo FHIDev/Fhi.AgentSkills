@@ -56,8 +56,8 @@ plugins/skybert/skills/skybert/
     ├── flux-tooling.md                      (Flux dashboard, Flux MCP)
     ├── skybertapp-render.md                 (lokal rendering med crossplane render — ingen provenance i filen; synk-SHA i .oppdater-state.json)
     └── skybertapp/                          (STATISKE KOPIER fra infra-repo — se github-modus.md)
-        ├── xrd.yaml                         (kopi av infra/crossplane/base/xrds/skybertapp-alpha.yaml)
-        ├── composition.yaml                 (kopi av infra/crossplane/base/compositions/skybertapp-alpha.yaml)
+        ├── xrd.yaml                         (kopi av infra/crossplane/base/xrds/skybertapp-beta.yaml)
+        ├── composition.yaml                 (kopi av infra/crossplane/base/compositions/skybertapp-beta.yaml)
         └── functions.yaml                   (basert pa infra/crossplane/base/functions.yaml, omskrevet til public xpkg)
 
 Runtime-cache (opprettes, ikke committet):

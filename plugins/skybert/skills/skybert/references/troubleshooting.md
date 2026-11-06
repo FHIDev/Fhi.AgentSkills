@@ -19,7 +19,7 @@ Tilkobling til klusteret: [kubectl-tilgang](kubectl-access.md#koble-til-klustere
    viser status. Se
    [Rekonsilieringsintervall](platform-architecture.md#rekonsilieringsintervall) og
    [Flux-verktøy](flux-tooling.md).
-3. **Ressurser i namespacet:** `kubectl get skybertapp,pods,ingress -n tn-<tenant>` og
+3. **Ressurser i namespacet:** `kubectl get skybertapp,pods,httproute,listenerset -n tn-<tenant>` og
    `kubectl get events -n tn-<tenant> --sort-by='.lastTimestamp'`. Feilende Kustomization viser
    feilmeldingen i Flux-dashboardet.
 4. **Secrets:** `kubectl get externalsecrets -n tn-<tenant>` viser om Key Vault-oppslaget
@@ -113,7 +113,7 @@ og bruk feltene i [SkybertApp CRD-spesifikasjonen](skybertapp-crd.md). Eneste å
 `spec.config` (`x-kubernetes-preserve-unknown-fields: true`). Dekker ikke CRD-en behovet, bruk
 rå manifester ved siden av — se [Konfigurasjon](configuration.md).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp-alpha.yaml · https://docs.sky.fhi.no/workloads/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp-beta.yaml · https://docs.sky.fhi.no/workloads/
 
 ### kubectl: tilkoblingsfeil eller «Forbidden»
 

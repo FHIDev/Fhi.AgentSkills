@@ -18,21 +18,22 @@
 
 | Miljø | Domener |
 |-------|---------|
-| Test og sandbox | `*.skytest.fhi.no`, `*.fhi-k8s.com` |
+| Test og sandbox | `*.skytest.fhi.no` (`*.fhi-k8s.com` bare i alpha) |
 | Produksjon | `*.sky.fhi.no` |
+| `fhinett` (alle miljøer) | klusterets `.skybert`-ending, se [Fhinett-hostnavn](#fhinett-hostnavn-beta) |
 
 TLS-sertifikater provisjoneres automatisk via cert-manager. SkybertApp velger issuer ut fra `hostname`; på egne `Ingress`- eller `ListenerSet`-ressurser setter du `cert-manager.io/cluster-issuer` selv:
 
 | Domene | Cluster-issuer |
 |--------|--------|
 | `*.skytest.fhi.no` | `skytest-fhi-letsencrypt-azuredns-issuer` |
-| `*.fhi-k8s.com` | `fhi-k8s-letsencrypt-azuredns-issuer` |
+| `*.fhi-k8s.com` (kun alpha) | `fhi-k8s-letsencrypt-azuredns-issuer` |
 | `*.sky.fhi.no` | `sky-fhi-letsencrypt-azuredns-issuer` |
 | `*.<sone>.skybert` (fhinett, se under) | `local-issuer` |
 
 Test-issuerne finnes på alle test-klustere og sandbox, prod-issueren på alle prod-klustere og `local-issuer` på alle. Beta-SkybertApp har ingen issuer for `fhi-k8s.com`; et slikt hostnavn feiler i compositionen.
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/cert-manager/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/cert-manager/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml · https://docs.sky.fhi.no/miscellaneous/domains/
 
 ### Fhinett-hostnavn (beta)
 
@@ -40,7 +41,7 @@ Med `network: fhinett` skal hostnavnet slutte på klusterets `.skybert`-sone. ex
 
 | Kluster | Ending |
 |---|---|
-| green-test | `greentest.skybert` |
+| green-test, mgmt | `greentest.skybert` |
 | green-prod | `green.skybert` |
 | yellow-test | `yellowtest.skybert` |
 | yellow-prod, norsyss-prod | `yellow.skybert` |
@@ -58,7 +59,7 @@ Med `network: fhinett` skal hostnavnet slutte på klusterets `.skybert`-sone. ex
 
 ## Public DNS-oppslag (external-dns)
 
-Alpha-SkybertApp eksponerer ingen Ingress-annotasjoner, så et `hostname` på den får alltid ingressens private IP. Trenger appen offentlig DNS-oppslag (f.eks. en frontend hostet utenfor FHI, eller claude.ai), la `hostname` stå tomt på SkybertApp (da rendres verken Service eller Ingress) og skriv egen `Service` (selector `skybert.fhi.no/webapp: <app>`, port = `spec.port`) og `Ingress` med `spec.ingressClassName: nginx`, TLS-blokk for hostnavnet, `cert-manager.io/cluster-issuer` (se tabellen over) og `external-dns.alpha.kubernetes.io/target: "<klusterets offentlige front-end-IP>"`. Ingressen må oppfylle [Kyverno-reglene under](#ingress-regler-kyverno-håndhevet). Front-end-IP-ene `83.118.177.220` (grønn test) og `83.118.177.234` (grønn prod) er ikke bekreftet; bekreft med plattformteamet. Offentlig eksponering utenfor grønn sone er en klassifiseringsbeslutning, ikke et IP-oppslag — avklar med plattformteamet på `#ext-fhi-skybert` før du bruker mønsteret på gul eller rød.
+For alpha (legacy): SkybertApp eksponerer ingen Ingress-annotasjoner, så et `hostname` på den får alltid ingressens private IP. Trenger appen offentlig DNS-oppslag (f.eks. en frontend hostet utenfor FHI, eller claude.ai), la `hostname` stå tomt på SkybertApp (da rendres verken Service eller Ingress) og skriv egen `Service` (selector `skybert.fhi.no/webapp: <app>`, port = `spec.port`) og `Ingress` med `spec.ingressClassName: nginx`, TLS-blokk for hostnavnet, `cert-manager.io/cluster-issuer` (se tabellen over) og `external-dns.alpha.kubernetes.io/target: "<klusterets offentlige front-end-IP>"`. Ingressen må oppfylle [Kyverno-reglene under](#ingress-regler-kyverno-håndhevet). Front-end-IP-ene `83.118.177.220` (grønn test) og `83.118.177.234` (grønn prod) er ikke bekreftet; bekreft med plattformteamet. Offentlig eksponering utenfor grønn sone er en klassifiseringsbeslutning, ikke et IP-oppslag — avklar med plattformteamet på `#ext-fhi-skybert` før du bruker mønsteret på gul eller rød.
 
 > **Operasjonell antakelse:** Ikke dokumentert for tenanter i docs, men i bruk i `tn-ki-mcp` (`Fhi.Ki.Mcp.GitOps`, test og prod) og verifisert i `tn-ehds-soksak` i grønn test med offentlig A-record, TLS og trafikk utenfra. For andre klustere (sandbox, ops-test, gul, rød): avklar IP med plattformteamet på `#ext-fhi-skybert`.
 
@@ -99,7 +100,7 @@ Følgende regler gjelder alle Ingress-ressurser på alle klustere:
 
 ### Ingress (nginx) og Gateway API (Envoy Gateway)
 
-Alpha-SkybertApp (`skybert.fhi.no/v1alpha1`) rendrer Kubernetes `Ingress` med `ingressClassName: nginx` via `ingress-nginx`. Plattformens besluttede retning er **Gateway API**, implementert av **Envoy Gateway**: beta-SkybertApp (`skybert-beta.fhi.no/v1beta1`, alle klustere) rendrer `ListenerSet` + `HTTPRoute` — se [SkybertApp CRD — Beta](skybertapp-crd.md#beta-gateway-api).
+Alpha-SkybertApp (`skybert.fhi.no/v1alpha1`, legacy) rendrer Kubernetes `Ingress` med `ingressClassName: nginx` via `ingress-nginx`. Docs sier at Ingress ikke blir støttet mye lenger; retningen er **Gateway API**, implementert av **Envoy Gateway**: beta-SkybertApp (`skybert-beta.fhi.no/v1beta1`, alle klustere) rendrer `ListenerSet` + `HTTPRoute` — se [SkybertApp CRD — Beta](skybertapp-crd.md#beta-gateway-api).
 
 **Aktivering per kluster:** Envoy Gateway (v1.9.2) og GatewayClass-ene `fhinett` og `helsenett` ligger i base og finnes på alle klustere. Kluster-overlayene legger til de delte Gatewayene:
 
@@ -107,10 +108,17 @@ Alpha-SkybertApp (`skybert.fhi.no/v1alpha1`) rendrer Kubernetes `Ingress` med `i
 |---------|---------------|
 | Gateway `helsenett`, `ClientTrafficPolicy` for proxy protocol | Alle tenant-klustere (sandbox, ops-test, green-test/prod, yellow-test/prod, red-test/prod, norsyss) |
 | GatewayClass `internett` + Gateway `internett` | sandbox, ops-test, green-test/prod og yellow-test/prod — **ikke** red-klusterne eller norsyss |
+| Kun `fhinett` (ingen delte Gatewayer) | `aks-mgmt-01` |
 
 **Tenant-mønsteret:** plattformen kjører delte `Gateway`-objekter (`helsenett`, `internett`) i `envoy-gateway-system` med `allowedListeners.namespaces.from: All`; tenanter knytter til seg listeners og TLS via **`ListenerSet`** i eget namespace og ruter trafikk til sine Services med **`HTTPRoute`**. RBAC-rollen `skybert:tenant-admin` gir `listenersets`, `httproutes`, `grpcroutes`, `tcproutes`, `tlsroutes` og `udproutes`, men bare lesetilgang (`get`/`list`/`watch`) til `gateways`, samt Envoy-policyer som beskrevet i [Sikkerhet](security.md#tenant-rbac--hva-du-kan-administrere). Hostname-reglene over (inkl. flambert-blokkeringen) håndheves også på Gateway API-ruter.
 
 `fhinett` er unntaket: der er Gatewayen tenantens egen. Hver tenant-base i infra har en Gateway `fhinett` i `tn-<tenant>` (`tenants/<tenant>/base/gateway-fhinett.yaml`, generert ved bootstrap); tenanten kan lese den, men ikke endre den. EnvoyProxy-en for klassen har ikke `mergeGateways`, så hver slik Gateway får egne Envoy-pods i `envoy-gateway-system` og egen IP fra klusterets fhinett-pool; en Envoy-policy på den når ingen annen tenant. Adressen står i kolonnen `ADDRESS` fra `kubectl get gateway fhinett -n tn-<tenant>`; poolene per kluster står i [Cluster networks](https://docs.sky.fhi.no/miscellaneous/cluster-networks/). Gatewayen kommer med plattformens listener `http` (port 80, ruter bare fra `skybert-system`), der `HTTPRoute`-en `flambert-tn-<tenant>-ingress` gir hostnavnet `<klusterprefiks>-tn-<tenant>.ingress.flambert` en A-record mot Gatewayens IP (external-dns-private); docs anbefaler dette navnet i brannmuråpninger mot tenantens fhinett-IP, fordi plattformen holder recorden oppdatert når tenanten flyttes, appen bytter hostnavn eller klusteret bygges på nytt. Tenanten legger til egne listeners med `ListenerSet` (`parentRef: fhinett`); `ClientTrafficPolicy` kan peke på `ListenerSet`-en direkte (Envoy Gateway 1.9.2), så plattformens listener forblir urørt. Alle klustere har i tillegg en Gateway `fhinett` i `skybert-system` for plattformtjenester, som bare tar listeners fra `skybert-system`, `grafana` og `flux-system`.
+
+Alle Gatewayer har i tillegg en `http`-listener på port 80 og en `HTTPRoute` `http-to-https` som redirecter til HTTPS (308). For `fhinett` ligger ruten i `skybert-system` og lages av plattformen per tenant, så tenanten trenger ingen konfigurasjon.
+
+Flambert-navnet har formen `<fargemiljø>-tn-<tenant>.ingress.flambert`, med fargemiljø `sandbox`, `opstest`, `greentest`, `greenprod`, `yellowtest`, `yellowprod`, `redtest`, `redprod` eller `norsyssprod`. Bruk det i brannmuråpninger til appen; den utgående varianten er ikke implementert. For trafikk fra appen åpner du for klusterets node-IP-pool ([Cluster networks](https://docs.sky.fhi.no/miscellaneous/cluster-networks/)).
+
+Docs (`gatewayapi.md`) sier at `parentRef.namespace` skal være `skybert-system` for `internett` og `helsenett`; infra har de delte Gatewayene i `envoy-gateway-system`, og skillen følger infra.
 
 > **Operasjonell antakelse:** At flambert-navnet kan brukes fra andre klustere i stedet for IP-en, er prøvd fra green-test (`greentest-tn-fida-analyserom.ingress.flambert`); infra viser bare DNS-recorden.
 
@@ -170,7 +178,7 @@ spec:
 
 > **Operasjonell antakelse:** Observert på `aks-green-test-02`: hver forespørsel kom inn med `X-Forwarded-For: 10.244.x.x`.
 
-> Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/ · https://docs.sky.fhi.no/explanations/tools-and-components/ · https://docs.sky.fhi.no/miscellaneous/cluster-networks/ · https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml
+> Kilde: https://docs.sky.fhi.no/internal/decisions/gatewayapi/ · https://docs.sky.fhi.no/explanations/tools-and-components/ · https://docs.sky.fhi.no/miscellaneous/cluster-networks/ · https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/skybert-system/base/tenant-admin-clusterroles/core-access-rules.yaml · https://docs.sky.fhi.no/miscellaneous/flambert/ · https://docs.sky.fhi.no/miscellaneous/firewall-openings/ · https://docs.sky.fhi.no/miscellaneous/gatewayapi/
 
 ## Nettverkspolicyer
 

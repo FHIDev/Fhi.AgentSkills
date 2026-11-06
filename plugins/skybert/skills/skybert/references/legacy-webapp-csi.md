@@ -73,7 +73,7 @@ Deployment `<app>-deployment` (selector-label `skybert.fhi.no/webapp: <app>`, po
 
 | Aspekt | WebApp | SkybertApp |
 |--------|--------|-----------|
-| API-versjon | `v1` | `v1alpha1` |
+| API-versjon | `v1` | `v1beta1` |
 | Struktur | Hovedcontainer nestet under `container.` | Flat |
 | Resources | `requests`/`limits` for cpu og memory | `resources.cpu` (kun request) og `resources.memory` (request = limit) |
 | Health probes | Ikke støttet | `probes.{liveness,readiness,startup}` |
@@ -90,7 +90,7 @@ Deployment `<app>-deployment` (selector-label `skybert.fhi.no/webapp: <app>`, po
 
 ## Migrering fra WebApp til SkybertApp
 
-1. `apiVersion` → `skybert.fhi.no/v1alpha1`, `kind` → `SkybertApp`.
+1. `apiVersion` → `skybert-beta.fhi.no/v1beta1`, `kind` → `SkybertApp`, og sett `spec.network` (se [SkybertApp CRD](skybertapp-crd.md#networking)).
 2. Flytt `container.image`, `container.port`, `container.command` og `container.readOnlyRootFilesystem` til toppnivå.
 3. `container.resources.requests/limits.{cpu,memory}` → `resources.cpu` (kun request, ingen CPU-limit) og `resources.memory` (request = limit). Juster verdiene etter «Request vs Recommendation» i Grafana når appen har kjørt en stund.
 4. `ingress.enabled: true` + `ingress.hostname` → `hostname`.
