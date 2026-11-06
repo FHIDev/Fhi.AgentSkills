@@ -16,7 +16,7 @@ også for én navngitt klasse. Dette er forventet liste:
 
 | StorageClass | Provisioner | Reclaim | Access | Status | Hva det er |
 |:--|:--|:--|:--|:--|:--|
-| `cloud-backed-sc` | `wyvern.csi.azure.com` | Delete | RWO | Beta | Volum med Azure-kopi — overlever node-tap. I podden NFSv4.2, se ikke-root under. **Start her** ifølge docs, men klassen er beta |
+| `cloud-backed-sc` | `wyvern.csi.azure.com` | Delete | RWO | Beta | Volum med Azure-kopi — overlever node-tap. I podden NFSv4.2, se ikke-root under. Klassen er beta |
 | `cloud-backed-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Beta | Samme, men PV-en overlever PVC-en |
 | `unbacked-sc` | `wyvern.csi.azure.com` | Delete | RWO | Beta | Block-volum kun på Azure Local-klusteret, ingen cloud-kopi |
 | `unbacked-retain-sc` | `wyvern.csi.azure.com` | Retain | RWO | Beta | Samme med Retain |
@@ -25,7 +25,7 @@ også for én navngitt klasse. Dette er forventet liste:
 | `ontap-nas` | `csi.trident.netapp.io` | Delete | RWX | Produksjon | NFSv3 på NetApp ONTAP. Delte filer på tvers av pods |
 | `blob-fuse` | `blob.csi.azure.com` | Delete | RWX | Ikke anbefalt for kritiske data | Azure Blob montert som filsystem. Klassen ligger bare i infra-overlayene for `aks-sandbox-02`, `aks-ops-test-02`, `aks-green-test-02` og `aks-yellow-prod-02` — se advarsel under |
 
-All persistent lagring regnes som ustabil og uten automatisk backup. `default` er lokal nodelagring og `ontap-nas` ligger på NHNs NetApp; `cloud-backed-*` og `unbacked-*` er under beta-testing. Docs peker på `cloud-backed-sc` som startpunkt, men klassen er beta.
+All persistent lagring regnes som ustabil og uten automatisk backup. `default` er lokal nodelagring og `ontap-nas` ligger på NHNs NetApp; `cloud-backed-*` og `unbacked-*` er under beta-testing, og docs anbefaler ingen av dem som startpunkt.
 
 > **Operasjonell antakelse:** `aks-green-test-02` har ikke `unbacked-sc`: PVC-en ble
 > stående `Pending` med `storageclass.storage.k8s.io "unbacked-sc" not found`. `default` fantes, og
@@ -39,8 +39,9 @@ ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
 
 - **`Delete` vs `Retain`:** velg `Retain` når en utilsiktet `kubectl delete pvc` eller Flux-`prune: true`
   ikke skal være slutten på dataene; en `Released` PV gjenbrukes aldri automatisk og må ryddes manuelt.
-- **Databaser og skrivesensitivt:** `cloud-backed-sc`, eller `cloud-backed-retain-sc` når PVC-tap
-  ikke skal bety datatap (begge er beta, se Status i tabellen). **Aldri database på `ontap-nas`:** klassen er definert med
+- **Databaser og skrivesensitivt:** ta kontakt med plattformteamet om CloudNativePG, og bruk `default`
+  inntil videre (docs). `cloud-backed-retain-sc` er beta, og `postgres.md` bruker den fortsatt i
+  CNPG-eksempelet — se [CloudNativePG](#cloudnativepg). **Aldri database på `ontap-nas`:** klassen er definert med
   `mountOptions: [nfsvers=3, nolock]`, så den gir ingen av konsistensgarantiene en database
   trenger — i verste fall åpner to prosesser samme datakatalog — og CNPG støtter ikke NFS for PGDATA.
 - **Ikke-root på `cloud-backed-*`:** docs kaller klassen blokkvolum, men i podden er den NFSv4.2
@@ -49,7 +50,7 @@ ditt ansvar; for PostgreSQL gjør [CloudNativePG](#cloudnativepg) akkurat det.
   `runAsUser: 0`, så tenanten kan ikke chown-e via init-container — meld behovet på
   `#ext-fhi-skybert`. `ontap-nas` gir rot `0777` og virker uten root, men er fortsatt uaktuell
   for databaser (over).
-- **Cache/scratch:** `unbacked-sc` (beta) eller `default`.
+- **Cache/scratch:** `default`.
 - **Delte filer flere pods:** `ontap-nas` — eneste klasse med `ReadWriteMany` for vanlig filtilgang.
   Trident-backenden er konfigurert med `accessMode: ReadWriteMany`; bruk `accessModes: [ReadWriteMany]`
   på PVC-er mot klassen, og overstyr Helm-charts som defaulter til `ReadWriteOnce`.

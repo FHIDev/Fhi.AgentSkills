@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "updatedAt": "2026-11-06T10:34:32Z",
+  "updatedAt": "2026-11-06T10:56:18Z",
   "mode": "github",
   "lastFullscanDate": "2026-10-25",
   "sistVerifisert": "2026-11-06",
@@ -229,16 +229,6 @@
       "lastSeen": "2026-11-06"
     },
     {
-      "id": "docs-storage-start-here",
-      "status": "deferred",
-      "category": "KORRIGER",
-      "target": "references/persistence.md",
-      "source": "docs/persistence/storage.md + docs/persistence/postgres.md",
-      "summary": "Docs har fjernet «Start here» og anbefaler nå CloudNativePG og `default` for databaser og `default` for cache (storage.md). persistence.md (StorageClasses-tabellen, «Databaser og skrivesensitivt», «Cache/scratch») er ikke oppdatert ennå og rettes i egen PR utenfor #93.",
-      "firstSeen": "2026-11-03",
-      "lastSeen": "2026-11-06"
-    },
-    {
       "id": "skybertapp-pdb-quote",
       "status": "deferred",
       "category": "VURDER",
@@ -279,12 +269,12 @@
       "lastSeen": "2026-11-06"
     },
     {
-      "id": "waf-large-uploads",
+      "id": "docs-konflikt-cnpg-storage",
       "status": "deferred",
-      "category": "UTVID",
-      "target": "references/waf.md#bundles-og-egne-regler",
-      "source": "docs/workloads/waf/examples.md («Allow large uploads»)",
-      "summary": "Docs viser å slå av body-inspeksjon for store opplastinger (ctl:requestBodyAccess=Off per sti, eller SecRequestBodyAccess Off). Ikke tatt inn i PR #93; tas i egen PR sammen med persistence.md.",
+      "category": "VURDER",
+      "target": "references/persistence.md#storageclasses",
+      "source": "docs/persistence/storage.md vs docs/persistence/postgres.md",
+      "summary": "storage.md anbefaler «Talk to us about CloudNativePG, and use `default` for now» for databaser; postgres.md bruker `cloud-backed-retain-sc` i CNPG-eksempelet og beskriver den som lagringen for CNPG. Skillen gjengir begge og lenker mellom dem. Spørsmål til plattformteamet: skal CNPG-eksempelet bruke `default` til cloud-backed er ute av beta? Revurderes når docs rettes.",
       "firstSeen": "2026-11-06",
       "lastSeen": "2026-11-06"
     }
