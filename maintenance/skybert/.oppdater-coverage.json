@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generatedAt": "2026-11-06T10:34:32Z",
   "docsCommit": "f8afc70d325a66cc6e8a0609a3aef70aeb2b754d",
-  "skillContentHash": "713b9612d77321100c0ed17c22a71cae79f4674ee5faa61e82561497e1b9987a",
+  "skillContentHash": "1e52be41ec9e95428813b57f4676809e428c02c4259a292c3d3271dd9870d956",
   "pages": [
     {
       "path": "docs/auth/index.md",

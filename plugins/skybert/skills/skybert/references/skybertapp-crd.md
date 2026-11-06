@@ -41,7 +41,7 @@ spec:
     tag: v1.0.0
 ```
 
-`network` er `fhinett`, `helsenett` eller `internett`. XRD-en har default `fhinett`, mens docs kaller feltet påkrevd; sett det alltid eksplisitt. Uten `hostname` rendres verken Service, ListenerSet eller HTTPRoute. `fhinett`-hostnavn skal ha klusterets `.skybert`-ending, ikke et bart `.skybert`: se [Fhinett-hostnavn](hostnames-and-networking.md#fhinett-hostnavn-beta).
+`network` er `fhinett`, `helsenett` eller `internett`. XRD-en har default `fhinett`, mens docs kaller feltet påkrevd; sett det alltid eksplisitt. Uten `hostname` rendres verken Service, ListenerSet eller HTTPRoute. `fhinett`-hostnavn bruker normalt klusterets `.skybert`-ending; et bart `.skybert` er feil og publiseres ikke i DNS. Offentlige plattformdomener er tillatt på `fhinett`, men frarådet: se [Fhinett-hostnavn](hostnames-and-networking.md#fhinett-hostnavn-beta).
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp-beta.yaml
 
@@ -173,7 +173,7 @@ podDisruptionBudget:
 
 `fhinett` holder tjenesten internt i FHI/NIPH; `helsenett` og `internett` publiseres via plattformens offentlige domener.
 
-Støttede domener: `fhinett` bruker klusterets `.skybert`-ending (tabell: [Fhinett-hostnavn](hostnames-and-networking.md#fhinett-hostnavn-beta)); `helsenett` og `internett` bruker `*.skytest.fhi.no` (test) eller `*.sky.fhi.no` (produksjon).
+Støttede domener: `fhinett` bruker normalt klusterets `.skybert`-ending (tabell: [Fhinett-hostnavn](hostnames-and-networking.md#fhinett-hostnavn-beta)); `helsenett` og `internett` bruker `*.skytest.fhi.no` (test) eller `*.sky.fhi.no` (produksjon).
 Compositionen velger cert-manager-issuer bare ut fra hostnavnet, ikke `network`: `.skybert` → `local-issuer`, `.skytest.fhi.no` → `skytest-fhi-letsencrypt-azuredns-issuer`, `sky.fhi.no` → `sky-fhi-letsencrypt-azuredns-issuer`, og alt annet feiler. Et `.skybert`-navn fra feil kluster rendres derfor uten feil, men publiseres ikke i DNS. TLS-sertifikat provisjoneres automatisk. Se [Hostnavn og nettverk](hostnames-and-networking.md).
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://docs.sky.fhi.no/miscellaneous/domains/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml

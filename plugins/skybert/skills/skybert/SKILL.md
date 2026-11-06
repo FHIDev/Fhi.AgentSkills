@@ -144,7 +144,7 @@ spec:
 Nøkkelegenskaper:
 - Secrets: oppgi vault og nøkler; SecretStore og ExternalSecret opprettes automatisk.
 - Workload Identity alltid aktivert (label + `serviceAccountName: <tenant>-azure`).
-- `network` (`fhinett`, `helsenett`, `internett`) avgjør eksponeringsnett; XRD-en har default `fhinett`, men sett det alltid eksplisitt. `hostname` trengs for Gateway-eksponering og TLS, og `fhinett` krever klusterets `.skybert`-ending (`myapp.sandbox.skybert`, ikke `myapp.skybert`).
+- `network` (`fhinett`, `helsenett`, `internett`) avgjør eksponeringsnett; XRD-en har default `fhinett`, men sett det alltid eksplisitt. `hostname` trengs for Gateway-eksponering og TLS, og `fhinett` bruker normalt klusterets `.skybert`-ending (`myapp.sandbox.skybert`); et bart `myapp.skybert` er feil og publiseres ikke i DNS. Offentlige plattformdomener er tillatt på `fhinett`, men frarådet.
 - `probes` (liveness/readiness/startup) er valgfrie; `writableDirs` for read-only rot; `args`; `metrics.port` gir Prometheus-annotasjoner automatisk.
 - `autoscaling` (HPA) og automatisk PodDisruptionBudget når `replicas > 1` eller `autoscaling.minReplicas > 1`.
 - Scale-subresource: `kubectl get skybertapp` viser DESIRED/CURRENT; VPA kan peke `targetRef` på ressursen.
@@ -166,7 +166,7 @@ Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifest
 | OCI-artefakt (manifester) | `crfhiskybert.azurecr.io/<tenant>/gitops_<env>` | `…/exempl/gitops_test` |
 | Service Account (Workload Identity) | `<tenant>-azure` | `exempl-azure` |
 | Managed Identity per miljø | `tn-<tenant>-skybert-sa-<env>` | `tn-exempl-skybert-sa-test` |
-| Hostnavn | `fhinett`: klusterets `.skybert`-ending; `helsenett`/`internett`: `*.skytest.fhi.no` (non-prod) eller `*.sky.fhi.no` (prod) | `api.sandbox.skybert`, `api.skytest.fhi.no` |
+| Hostnavn | `fhinett`: normalt klusterets `.skybert`-ending; `helsenett`/`internett`: `*.skytest.fhi.no` (non-prod) eller `*.sky.fhi.no` (prod) | `api.sandbox.skybert`, `api.skytest.fhi.no` |
 
 > Kilde: https://docs.sky.fhi.no/build/ · https://docs.sky.fhi.no/auth/workload-identity/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--add--to-cluster.sh
 
