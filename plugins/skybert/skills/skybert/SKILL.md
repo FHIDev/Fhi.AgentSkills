@@ -6,7 +6,7 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-11-03
+> **Sist verifisert mot offisiell docs:** 2026-11-06
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/ (samme innhold på https://skybert.fhi.no/)
 > Denne skillen er en kuratert oppsummering for AI-agenter. Hver faktaseksjon har enten en `> Kilde:`-lenke eller er merket `> **Operasjonell antakelse:**` (erfaring uten repo-kilde); navigasjonsseksjoner har ingen av delene.
 
@@ -114,19 +114,20 @@ Legg manifester (SkybertApp, Deployments, Services …) i miljømappen og push t
 
 ## SkybertApp
 
-`SkybertApp` (`skybert.fhi.no/v1alpha1`) samler deployment, service, ingress med TLS, secrets fra Key Vault, autoskalering og sikkerhetshardening i én ressurs:
+`SkybertApp` (`skybert-beta.fhi.no/v1beta1`) samler deployment, service/Gateway-eksponering, secrets fra Key Vault, autoskalering og sikkerhetshardening i én ressurs:
 
 ```yaml
-apiVersion: skybert.fhi.no/v1alpha1
+apiVersion: skybert-beta.fhi.no/v1beta1
 kind: SkybertApp
 metadata:
   name: myapp
   namespace: tn-mytenant
 spec:
+  network: fhinett
   image:
     repository: crfhiskybert.azurecr.io/mytenant/myapp
     tag: "1.0.0"
-  hostname: myapp.skytest.fhi.no
+  hostname: myapp.sandbox.skybert
   probes:
     liveness:
       path: /health/live
@@ -143,12 +144,13 @@ spec:
 Nøkkelegenskaper:
 - Secrets: oppgi vault og nøkler; SecretStore og ExternalSecret opprettes automatisk.
 - Workload Identity alltid aktivert (label + `serviceAccountName: <tenant>-azure`).
+- `network` (`fhinett`, `helsenett`, `internett`) avgjør eksponeringsnett; XRD-en har default `fhinett`, men sett det alltid eksplisitt. `hostname` trengs for Gateway-eksponering og TLS, og `fhinett` bruker normalt klusterets `.skybert`-ending (`myapp.sandbox.skybert`); et bart `myapp.skybert` er feil og publiseres ikke i DNS. Offentlige plattformdomener er tillatt på `fhinett`, men frarådet.
 - `probes` (liveness/readiness/startup) er valgfrie; `writableDirs` for read-only rot; `args`; `metrics.port` gir Prometheus-annotasjoner automatisk.
 - `autoscaling` (HPA) og automatisk PodDisruptionBudget når `replicas > 1` eller `autoscaling.minReplicas > 1`.
 - Scale-subresource: `kubectl get skybertapp` viser DESIRED/CURRENT; VPA kan peke `targetRef` på ressursen.
 - Memory limit er alltid lik request; CPU har request uten limit.
 
-Beta-varianten `skybert-beta.fhi.no/v1beta1` (alle klustere) eksponerer appen via Envoy Gateway (`ListenerSet` + `HTTPRoute`) i stedet for nginx-`Ingress`, og har ett ekstra felt, `network`. Den er en egen API-gruppe, så migrering betyr et nytt objekt, og docs ber tenanter migrere før alpha-spesifikasjonen slettes — se [SkybertApp CRD — Beta](references/skybertapp-crd.md#beta-gateway-api).
+Alpha-varianten `skybert.fhi.no/v1alpha1` er legacy og slettes når alle tenanter er migrert (uten fastsatt dato); nye og migrerte workloads skal bruke beta-APIet (`skybert-beta.fhi.no/v1beta1`) med `network`-felt — se [SkybertApp CRD — Beta](references/skybertapp-crd.md#beta-gateway-api).
 
 Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifester (Deployment, StatefulSet, Job, Helm, Kustomize) kan ligge side om side med SkybertApp i samme miljømappe — se [Konfigurasjon](references/configuration.md).
 
@@ -164,13 +166,13 @@ Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifest
 | OCI-artefakt (manifester) | `crfhiskybert.azurecr.io/<tenant>/gitops_<env>` | `…/exempl/gitops_test` |
 | Service Account (Workload Identity) | `<tenant>-azure` | `exempl-azure` |
 | Managed Identity per miljø | `tn-<tenant>-skybert-sa-<env>` | `tn-exempl-skybert-sa-test` |
-| Hostnavn | valgfritt navn under `*.skytest.fhi.no`/`*.fhi-k8s.com` (non-prod) eller `*.sky.fhi.no` (prod) | `api.skytest.fhi.no` |
+| Hostnavn | `fhinett`: normalt klusterets `.skybert`-ending; `helsenett`/`internett`: `*.skytest.fhi.no` (non-prod) eller `*.sky.fhi.no` (prod) | `api.sandbox.skybert`, `api.skytest.fhi.no` |
 
 > Kilde: https://docs.sky.fhi.no/build/ · https://docs.sky.fhi.no/auth/workload-identity/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--add--to-cluster.sh
 
 ## Ingress og nettverk
 
-TLS og DNS opprettes automatisk fra `hostname`. Alpha-`SkybertApp` genererer en nginx-`Ingress`; beta genererer `ListenerSet` + `HTTPRoute` mot Envoy Gateway, som kjører på alle klustere. Hver tenant har en egen Gateway `fhinett` i namespacet (interne `*.skybert`-navn); `helsenett` og `internett` er delte, og rød og Norsyss har ingen `internett`. Rød sone: default deny egress, DNS og intern namespace-trafikk åpen, egress-unntak via plattformteamet. Alt om domener, issuere, Gateway API og nettverkspolicyer: [Hostnavn og nettverk](references/hostnames-and-networking.md).
+TLS og DNS opprettes automatisk fra `hostname`. `SkybertApp` (beta) genererer `ListenerSet` + `HTTPRoute` mot Envoy Gateway, som kjører på alle klustere; alpha (legacy) genererer en nginx-`Ingress`. Hver tenant har en egen Gateway `fhinett` i namespacet (interne `*.skybert`-navn); `helsenett` og `internett` er delte, og rød og Norsyss har ingen `internett`. Rød sone: default deny egress, DNS og intern namespace-trafikk åpen, egress-unntak via plattformteamet. Alt om domener, issuere, Gateway API og nettverkspolicyer: [Hostnavn og nettverk](references/hostnames-and-networking.md).
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://docs.sky.fhi.no/build/environments/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/
 
@@ -217,7 +219,7 @@ For prosjekter på Skybert anbefales det å legge disse verdiene i prosjektets `
 | Tenant | `<tenant-navn>` |
 | Sikkerhetssone | Grønn / Gul / Rød |
 | Namespace (alle miljøer) | `tn-<tenant>` |
-| Test hostname | `<app>.skytest.fhi.no` |
+| Test hostname | `<app>.<klusterending>.skybert` (fhinett) eller `<app>.skytest.fhi.no` |
 | Prod hostname | `<app>.sky.fhi.no` |
 | ACR image | `crfhiskybert.azurecr.io/<tenant>/<app>` |
 | Azure tenant ID | `<azure-tenant-id>` |

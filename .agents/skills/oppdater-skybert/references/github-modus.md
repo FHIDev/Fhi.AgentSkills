@@ -254,7 +254,7 @@ infra/grafana/*/patch-env.yaml
 infra/grafana/*/kustomization.yaml
 
 # Envoy Gateway / Gateway API (ingress-migrering)
-infra/envoy/base/*.yaml
+infra/envoy/base/**/*.yaml
 infra/envoy/*/kustomization.yaml
 
 # Tenant-scripts (normativ bootstrap-logikk)
@@ -378,16 +378,16 @@ Den varige staten er i de to committede filene `maintenance/skybert/.oppdater-st
 
 ## CRD-versjonssporing
 
-I `infra/crossplane/base/xrds/skybertapp-alpha.yaml` (og tilsvarende `skybertapp-beta.yaml`, gruppe `skybert-beta.fhi.no`), les:
+I `infra/crossplane/base/xrds/skybertapp-beta.yaml` (gjeldende, gruppe `skybert-beta.fhi.no`; og tilsvarende `skybertapp-alpha.yaml`, legacy, gruppe `skybert.fhi.no`), les:
 ```yaml
 spec:
   versions:
-    - name: v1alpha1    # <-- dette er SkybertApp API-versjonen
+    - name: v1beta1     # <-- dette er SkybertApp API-versjonen (beta er gjeldende)
       served: true
       referenceable: true
 ```
 
-Parse `spec.versions[].name` der `served: true` og `referenceable: true`. Sammenlign med API-versjonen dokumentert i `plugins/skybert/skills/skybert/SKILL.md` og `references/skybertapp-crd.md` (f.eks. `apiVersion: skybert.fhi.no/v1alpha1` i eksemplene).
+Parse `spec.versions[].name` der `served: true` og `referenceable: true`. Sammenlign med API-versjonen dokumentert i `plugins/skybert/skills/skybert/SKILL.md` og `references/skybertapp-crd.md` (f.eks. `apiVersion: skybert-beta.fhi.no/v1beta1` i eksemplene).
 
 Ved endring (f.eks. v1alpha1 → v1beta1):
 - Opprett endringspost med `crd-versjon`-flagg
@@ -416,8 +416,8 @@ Skillen inneholder statiske kopier av infra-filer, brukt av `references/skyberta
 
 | Kopi i skillen | Kilde i infra-repo |
 |----------------|--------------------|
-| `references/skybertapp/xrd.yaml` | `infra/crossplane/base/xrds/skybertapp-alpha.yaml` (kopieres som-den-er) |
-| `references/skybertapp/composition.yaml` | `infra/crossplane/base/compositions/skybertapp-alpha.yaml` (kopieres som-den-er) |
+| `references/skybertapp/xrd.yaml` | `infra/crossplane/base/xrds/skybertapp-beta.yaml` (kopieres som-den-er) |
+| `references/skybertapp/composition.yaml` | `infra/crossplane/base/compositions/skybertapp-beta.yaml` (kopieres som-den-er) |
 | `references/skybertapp/functions.yaml` | `infra/crossplane/base/functions.yaml` — **kopieres IKKE som-den-er**: image-referanser skal omskrives fra ACR-mirror til public `xpkg.crossplane.io` slik at render fungerer uten ACR-login |
 
 Når en kildefil over er endret (compare/discovery):
@@ -431,8 +431,8 @@ Provenance for kopiene er `github.infra.commit`/`commitDate` i `maintenance/skyb
 ```bash
 RAW=https://raw.githubusercontent.com/FHISkybert/Fhi.Skybert.Infra/main
 SKILL=plugins/skybert/skills/skybert/references/skybertapp
-curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/compositions/skybertapp-alpha.yaml" -o "$SKILL/composition.yaml"
-curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/xrds/skybertapp-alpha.yaml"         -o "$SKILL/xrd.yaml"
+curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/compositions/skybertapp-beta.yaml" -o "$SKILL/composition.yaml"
+curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/xrds/skybertapp-beta.yaml"         -o "$SKILL/xrd.yaml"
 # functions.yaml: sammenlign kun spec.package-versjonene og oppdater versjonsnumrene i
 # $SKILL/functions.yaml for hånd — behold xpkg.crossplane.io-prefikset.
 curl -sH "Authorization: token $(gh auth token)" "$RAW/infra/crossplane/base/functions.yaml" | grep package:

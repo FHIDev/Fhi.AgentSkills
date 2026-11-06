@@ -31,6 +31,9 @@
 | `docs/workloads/skybertapp/index.md` | `references/skybertapp-crd.md` |
 | `docs/workloads/skybertapp/references/skybertapp.md` | `references/skybertapp-crd.md` |
 | `docs/workloads/skybertapp/migrate-alpha-to-beta.md` | `references/skybertapp-crd.md` (Beta-seksjonen), `references/hostnames-and-networking.md` (fhinett-endinger) |
+| `docs/miscellaneous/domains.md` | `references/hostnames-and-networking.md#fhinett-hostnavn-beta` (kanonisk for `.skybert`-endinger) |
+| `docs/miscellaneous/gatewayapi.md` | `references/hostnames-and-networking.md` — kombiner med `infra/envoy/**`; ved konflikt (f.eks. `parentRef.namespace`) følger skillen infra |
+| `docs/miscellaneous/flambert.md`, `docs/miscellaneous/firewall-openings.md` | `references/hostnames-and-networking.md` — flambert-navn og brannmuråpninger; node-IP-ene kopieres ikke |
 | `docs/miscellaneous/cluster-networks.md` | `references/hostnames-and-networking.md` — lenke; node- og gateway-IP-tabellene kopieres ikke (interne IP-er) |
 | `docs/workloads/waf/*.md` | `references/waf.md` — kanonisk WAF-dekning; andre filer lenker kun |
 | `docs/workloads/jobs.md` | `references/configuration.md` |
@@ -78,11 +81,11 @@
 
 | Kildesti | Kanonisk målfil (første) — øvrige får kun kryssreferanse eller én setning |
 |----------|--------------|
-| `infra/crossplane/base/xrds/skybertapp-alpha.yaml` | `references/skybertapp-crd.md`, `references/skybertapp/xrd.yaml` (statisk kopi) |
-| `infra/crossplane/base/xrds/skybertapp-beta.yaml` | `references/skybertapp-crd.md` (Beta-seksjonen) |
+| `infra/crossplane/base/xrds/skybertapp-alpha.yaml` | `references/skybertapp-crd.md` (Legacy-seksjonen; alpha er legacy og kopieres ikke) |
+| `infra/crossplane/base/xrds/skybertapp-beta.yaml` | `references/skybertapp-crd.md`, `references/skybertapp/xrd.yaml` (statisk kopi) |
 | `infra/crossplane/base/xrds/webapp.yaml` | `references/legacy-webapp-csi.md` |
-| `infra/crossplane/base/compositions/skybertapp-alpha.yaml` | `references/skybertapp-crd.md`, `references/platform-architecture.md`, `references/skybertapp/composition.yaml` (statisk kopi) |
-| `infra/crossplane/base/compositions/skybertapp-beta.yaml` | `references/skybertapp-crd.md` (Beta-seksjonen), `references/hostnames-and-networking.md` (ListenerSet/HTTPRoute-eksempelet) |
+| `infra/crossplane/base/compositions/skybertapp-alpha.yaml` | `references/skybertapp-crd.md` (Legacy-seksjonen), `references/platform-architecture.md` |
+| `infra/crossplane/base/compositions/skybertapp-beta.yaml` | `references/skybertapp-crd.md`, `references/skybertapp/composition.yaml` (statisk kopi), `references/hostnames-and-networking.md` (ListenerSet/HTTPRoute-eksempelet) |
 | `infra/crossplane/base/compositions/webapp.yaml` | `references/legacy-webapp-csi.md` |
 | `infra/crossplane/base/functions.yaml` | `references/skybertapp/functions.yaml` (kopi med xpkg-omskriving), `references/skybertapp-render.md` (provenance) |
 | `infra/crossplane/*/xrds/skybertapp-*.yaml` (kluster-overlays, f.eks. `-alpha`/`-beta`) | `references/skybertapp-crd.md` |
@@ -142,7 +145,7 @@ avsnitt. Tabellen oppdateres i samme kjøring som en kanonisk plassering endres.
 | Runtime-restriksjoner prod/red-test/norsyss | `kyverno-policies.md` | `kubectl-access.md`, `troubleshooting.md`, `security.md` |
 | Rød sone-nettverk (GNP-er, Calico-vindu, NFS, egress-unntak) | `hostnames-and-networking.md` | `SKILL.md`, `kyverno-policies.md`, `security.md` |
 | Gateway API/Envoy, fhinett-Gatewayer, `.skybert`-endinger | `hostnames-and-networking.md` | `SKILL.md`, `skybertapp-crd.md` |
-| SkybertApp beta (felt, rendring, migrering) | `skybertapp-crd.md` | `SKILL.md`, `hostnames-and-networking.md`, `waf.md` |
+| SkybertApp (felt, rendring, migrering; beta er gjeldende, alpha legacy) | `skybertapp-crd.md` | `SKILL.md`, `hostnames-and-networking.md`, `waf.md` |
 | Issuer-tabell, trust bundle | `hostnames-and-networking.md` | `SKILL.md`, `security.md` |
 | Goldilocks/VPA-mekanisme / Grafana-tabellen | `kyverno-policies.md` / `observability.md` | `platform-architecture.md`, `security.md`, `skybertapp-crd.md` |
 | StorageClasses + CloudNativePG | `persistence.md` | `SKILL.md`, `configuration.md`, `platform-architecture.md`, `hostnames-and-networking.md` |

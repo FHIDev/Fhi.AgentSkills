@@ -29,11 +29,11 @@ Rendering skjer lokalt via `crossplane render`, uten kluster-tilgang.
 
 | Fil | Rolle |
 |-----|-------|
-| `skybertapp/composition.yaml` | Crossplane Composition (go-templating pipeline), kopi av `infra/crossplane/base/compositions/skybertapp-alpha.yaml` |
-| `skybertapp/xrd.yaml` | CompositeResourceDefinition for `SkybertApp`, kopi av `infra/crossplane/base/xrds/skybertapp-alpha.yaml` |
+| `skybertapp/composition.yaml` | Crossplane Composition (go-templating pipeline), kopi av `infra/crossplane/base/compositions/skybertapp-beta.yaml` |
+| `skybertapp/xrd.yaml` | CompositeResourceDefinition for `SkybertApp`, kopi av `infra/crossplane/base/xrds/skybertapp-beta.yaml` |
 | `skybertapp/functions.yaml` | Function-pakker fra `infra/crossplane/base/functions.yaml`, **omskrevet til public xpkg.crossplane.io** slik at render fungerer uten ACR-login |
 
-Kopiene gjelder alpha (`skybert.fhi.no/v1alpha1`); beta-compositionen er ikke kopiert.
+Kopiene gjelder beta (`skybert-beta.fhi.no/v1beta1`); alpha-compositionen er ikke kopiert.
 
 Kopiene vedlikeholdes av `oppdater-skybert`-skillen. Vedlikeholdere finner kildecommit i
 `maintenance/skybert/.oppdater-state.json` (`github.infra.commit`) i kilderepoet
@@ -62,10 +62,10 @@ Forventet output:
 | SkybertApp | `myapp` (echo av composite, med `status.replicas` og `status.labelSelector`) |
 | Deployment | `myapp-deployment` |
 
-Uten `hostname`, `config`, `secrets` eller `autoscaling` rendres ikke `Service`/`Ingress`,
+Uten `hostname`, `config`, `secrets` eller `autoscaling` rendres ikke `Service`/`ListenerSet`/`HTTPRoute`,
 `ConfigMap`, `SecretStore`/`ExternalSecret` eller `HorizontalPodAutoscaler`. `PodDisruptionBudget`
 rendres heller ikke uten `replicas > 1`, `autoscaling.minReplicas > 1` eller eksplisitt
-`podDisruptionBudget.enabled: true`. Legg til feltene i XR-et for å se disse grenene.
+`podDisruptionBudget.enabled: true`. Legg til feltene i XR-et for å se disse grenene; `hostname: myapp.sandbox.skybert` gir `Service`, `ListenerSet` og `HTTPRoute`.
 
 `status.replicas` på composite-echoen blir **alltid `0`** i render: compositionen leser
 `readyReplicas` fra den komponerte Deployment-en via `getComposedResource`, og i render finnes
@@ -74,7 +74,7 @@ ingen levende Deployment. Det er ikke en feil.
 Er manifestet en Helm-template, render templaten til vanlig YAML først
 og render resultatet.
 
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
+> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml
 
 ## Hva du kan og ikke kan stole på i outputen
 
@@ -82,8 +82,8 @@ og render resultatet.
 - Hvilke Kinds som genereres og hvilke betingelser som trigger dem
 - Navnemønstre (`<name>-deployment`, `<vault-lowercase>-secret-<i>-<name>` osv.)
 - Field values som kommer fra XR-et eller XRD-defaults
-- Ingress-issuer-valg etter compositionens tekstsøk i hostname; se [Ingress](skybertapp-crd.md#ingress)
-- `status.labelSelector` på composite-echoen — den utledes rent fra navnet (`skybert.fhi.no/webapp=<name>`)
+- Issuer-valg etter compositionens tekstsøk i hostname; se [Networking](skybertapp-crd.md#networking)
+- `status.labelSelector` på composite-echoen — den utledes rent fra navnet (`skybert-beta.fhi.no/skybertapp=<name>`)
 
 **Ikke stol på:**
 - `status`, `ownerReferences`, `managedFields` og Crossplane-injiserte labels — render stubber eller utelater dem

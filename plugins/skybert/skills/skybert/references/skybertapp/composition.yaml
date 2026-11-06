@@ -1,10 +1,10 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: skybertapp.skybert.fhi.no
+  name: skybertapp.skybert-beta.fhi.no
 spec:
   compositeTypeRef:
-    apiVersion: skybert.fhi.no/v1alpha1
+    apiVersion: skybert-beta.fhi.no/v1beta1
     kind: SkybertApp
   mode: Pipeline
   pipeline:
@@ -22,6 +22,8 @@ spec:
           {{- $name := $meta.name }}
           {{- $namespace := $meta.namespace | default "default" }}
           {{- $tenantSA := $namespace | trimPrefix "tn-" | printf "%s-azure" }}
+          {{- $network := $spec.network | default "fhinett"}}
+          {{- $issuer := ""}}
 
           ---
           apiVersion: apps/v1
@@ -30,7 +32,7 @@ spec:
             name: {{ $name }}-deployment
             namespace: {{ $namespace }}
             labels:
-              skybert.fhi.no/webapp: {{ $name }}
+              skybert-beta.fhi.no/skybertapp: {{ $name }}
             annotations:
               gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-deployment
               gotemplating.fn.crossplane.io/ready: "True"
@@ -38,11 +40,11 @@ spec:
             replicas: {{ if $spec.autoscaling }}{{ $spec.autoscaling.minReplicas | default 1 }}{{ else }}{{ $spec.replicas | default 1 }}{{ end }}
             selector:
               matchLabels:
-                skybert.fhi.no/webapp: {{ $name }}
+                skybert-beta.fhi.no/skybertapp: {{ $name }}
             template:
               metadata:
                 labels:
-                  skybert.fhi.no/webapp: {{ $name }}
+                  skybert-beta.fhi.no/skybertapp: {{ $name }}
                   app: {{ $name }}
                   azure.workload.identity/use: "true"
                 {{- if $spec.metrics }}
@@ -346,48 +348,79 @@ spec:
             {{- end }}
           {{- end }}
 
+
+
+
           {{- if $spec.hostname }}
           {{- $hostname := $spec.hostname }}
-          {{- $issuer := "" }}
-          {{- if contains "skytest.fhi.no" $hostname }}
+          {{- if contains ".skybert" $hostname }}
+          {{- $issuer = "local-issuer"}}
+          {{- else if contains ".skytest.fhi.no" $hostname}}
           {{- $issuer = "skytest-fhi-letsencrypt-azuredns-issuer" }}
-          {{- else if contains "fhi-k8s.com" $hostname }}
-          {{- $issuer = "fhi-k8s-letsencrypt-azuredns-issuer" }}
           {{- else if contains "sky.fhi.no" $hostname }}
           {{- $issuer = "sky-fhi-letsencrypt-azuredns-issuer" }}
           {{- else }}
           {{- fail (printf "No matching issuer found for hostname %s" $hostname) }}
           {{- end }}
           ---
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
-            name: {{ $name }}-ingress
+            name: {{ $name }}-httproute-gw-{{ $network}}
             namespace: {{ $namespace }}
             annotations:
-              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-ingress
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-HTTPRoute
               gotemplating.fn.crossplane.io/ready: "True"
-              cert-manager.io/cluster-issuer: {{ $issuer }}
-              nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-              nginx.ingress.kubernetes.io/ssl-redirect: "true"
           spec:
-            ingressClassName: nginx
+            parentRefs:
+              - name: listenerset-gw-{{ $name }}-{{ $network }}
+                kind: ListenerSet
+                group: gateway.networking.k8s.io
+            hostnames:
+              - "{{ $hostname }}" # To pick correct listener if multiple on gateway/listenerset
             rules:
-            - host: {{ $hostname }}
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: {{ $name }}-svc
-                      port:
-                        number: {{ $spec.port | default 8080 }}
-            tls:
-            - hosts:
-              - {{ $hostname }}
-              secretName: {{ $name }}-tls
-
+              - backendRefs:
+                  - group: ""
+                    kind: Service
+                    name: {{ $name }}-svc
+                    port: {{ $spec.port | default 8080 }}
+                    weight: 1
+                matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+          ---
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: ListenerSet
+          metadata:
+            name: listenerset-gw-{{ $name }}-{{ $network }}
+            namespace: {{ $namespace }}
+            annotations:
+              cert-manager.io/cluster-issuer: {{ $issuer }}
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-ListenerSet
+              gotemplating.fn.crossplane.io/ready: "True"
+          spec:
+            parentRef:
+              name: {{ $network }}
+              {{- if eq $network "fhinett" }}
+              namespace: {{ $namespace }}
+              {{- else }}
+              namespace: envoy-gateway-system
+              {{- end}}
+              kind: Gateway 
+              group: gateway.networking.k8s.io
+            listeners:
+              - name: https
+                hostname: {{ $hostname }}
+                protocol: HTTPS
+                port: 443
+                allowedRoutes:
+                  namespaces:
+                    from: Same
+                tls:
+                  mode: Terminate
+                  certificateRefs:
+                    - name: gw-{{ $name }}-{{ $network }}-tls
           ---
           apiVersion: v1
           kind: Service
@@ -399,7 +432,7 @@ spec:
               gotemplating.fn.crossplane.io/ready: "True"
           spec:
             selector:
-              skybert.fhi.no/webapp: {{ $name }}
+              skybert-beta.fhi.no/skybertapp: {{ $name }}
             ports:
             - port: {{ $spec.port | default 8080 }}
               targetPort: {{ $spec.port | default 8080 }}
@@ -463,7 +496,7 @@ spec:
             {{- end }}
             selector:
               matchLabels:
-                skybert.fhi.no/webapp: {{ $name }}
+                skybert-beta.fhi.no/skybertapp: {{ $name }}
           {{- end }}
 
           {{- /* Collect unique vaults into a dict */ -}}
@@ -550,11 +583,11 @@ spec:
             {{- $replicas = dig "status" "readyReplicas" 0 . }}
           {{- end }}
           ---
-          apiVersion: skybert.fhi.no/v1alpha1
+          apiVersion: skybert-beta.fhi.no/v1beta1
           kind: SkybertApp
           status:
             replicas: {{ $replicas }}
-            labelSelector: skybert.fhi.no/webapp={{ $name }}
+            labelSelector: skybert-beta.fhi.no/skybertapp={{ $name }}
 
   - step: auto-ready
     functionRef:
