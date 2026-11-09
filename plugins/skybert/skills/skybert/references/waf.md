@@ -37,6 +37,8 @@ Tenant-regler legges i `config.directives_map.app`. Er `waf.skybert.fhi.no/bundl
 
 Request body-limit er 13107200 byte, no-files-limit 131072. Begge bundlene har `SecResponseBodyAccess Off` (ingen response-inspeksjon) og tillater GET/HEAD/POST/OPTIONS/PUT/PATCH/DELETE i CRS-konfigurasjonen.
 
+Større opplastinger må slå av body-inspeksjon: per sti med `ctl:requestBodyAccess=Off` (anbefalt) eller for hele ruten med `SecRequestBodyAccess Off`. Da inspiserer ikke WAF-en body, og appen må validere innholdet selv.
+
 Plattformbildet bygger inn GeoIP-støtte; bruk `%{GEO.COUNTRY_CODE}` ved substitusjon. Vis attribusjon til db-ip.com der GeoIP-resultater vises. Konkrete regler og unntak finnes i [plattformens eksempler](https://docs.sky.fhi.no/workloads/waf/examples/); prøv dem først etter at tilgang og image er avklart.
 
 > Kilde: https://docs.sky.fhi.no/workloads/waf/examples/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-waf/inject-tenant-waf-bundle.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/coraza-proxy-wasm/README.md
