@@ -87,8 +87,7 @@ Plattformen leverer to typer managed identities per tenant:
 Tenantens Entra-gruppe bindes ved bootstrap til ClusterRole `skybert:tenant-admin` via en RoleBinding i
 `tn-<tenant>`; plattformen lager bindingen, du skal ikke lage en egen. Rollen aggregeres av
 rettighetsfragmenter som varierer per kluster (runtime-subressurser som `exec`/`portforward` finnes
-bare i test/sandbox-aggregeringen), og enkelte tenant-baser har unntak med `cluster-admin` —
-tenantens faktiske RoleBindings er autoritative. Hva rollen gir, hvordan den aggregeres og
+bare i test/sandbox-aggregeringen). Hva rollen gir, hvordan den aggregeres og
 bootstrap-flyten står i [Plattformarkitektur — Tenant-bootstrap](platform-architecture.md#tenant-bootstrap);
 runtime-restriksjoner per miljø står i [Kyverno-policier](kyverno-policies.md).
 

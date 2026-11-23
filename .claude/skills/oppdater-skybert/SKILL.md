@@ -39,7 +39,7 @@ plugins/skybert/skills/skybert/
 ├── SKILL.md                                 (onboarding, konsepter, Blaloypa, navnekonvensjoner)
 └── references/
     ├── skybertapp-crd.md                    (SkybertApp XRD-spec)
-    ├── legacy-webapp-csi.md                 (legacy WebApp CRD + CSI driver, migreringsguide)
+    ├── legacy-webapp-csi.md                 (konvertering fra WebApp/alpha, CSI driver)
     ├── configuration.md                     (deployment-metoder)
     ├── secrets.md                           (secrets-moenstre)
     ├── security.md                          (Workload Identity, sikkerhet)

@@ -2,7 +2,7 @@
 
 ## SkybertApp
 
-SkybertApp er anbefalt måte å deploye på. GitOps-repoet leveres med `sandbox/`, `test/` og `prod/` som hver inneholder et minimalt SkybertApp-eksempel; start i `sandbox/`, endre image-referansen til `crfhiskybert.azurecr.io/<tenant>/<app>:<tag>`, push og legg til konfigurasjon etter behov. Minimalt manifest og full feltreferanse: se [SkybertApp CRD](skybertapp-crd.md#quick-start). WebApp CRD er udokumentert i docs og ikke anbefalt — se [Legacy: WebApp CRD og CSI driver](legacy-webapp-csi.md).
+SkybertApp er anbefalt måte å deploye på. GitOps-repoet leveres med `sandbox/`, `test/` og `prod/` som hver inneholder et minimalt SkybertApp-eksempel; start i `sandbox/`, endre image-referansen til `crfhiskybert.azurecr.io/<tenant>/<app>:<tag>`, push og legg til konfigurasjon etter behov. Minimalt manifest og full feltreferanse: se [SkybertApp CRD](skybertapp-crd.md#quick-start). WebApp-manifester må konverteres — se [Legacy](legacy-webapp-csi.md).
 
 > Kilde: https://docs.sky.fhi.no/build/ · https://docs.sky.fhi.no/workloads/
 
@@ -14,7 +14,7 @@ Probe-stiene velger du selv, og stien i `SkybertApp.spec.probes` må være den a
 
 ## Raw Deployment
 
-Native Kubernetes-manifester (Deployment, StatefulSet, DaemonSet, Service, Ingress osv.) legges i samme miljømappe som SkybertApp og deployes på samme måte — bruk dem når SkybertApp ikke dekker behovet, f.eks. StatefulSet eller DaemonSet. Det SkybertApp ellers gjør for deg må da gjøres manuelt: Workload Identity aktiveres med label og `serviceAccountName` på pod-template (se [Azure Workload Identity](security.md#azure-workload-identity)), og Key Vault-secrets settes opp med SecretStore/ExternalSecret (se [Secrets-mønstre](secrets.md)).
+Native Kubernetes-manifester (Deployment, StatefulSet, DaemonSet, Service, `ListenerSet`/`HTTPRoute` osv.; nye `Ingress` avvises, se [Ingress-regler](hostnames-and-networking.md#ingress-regler-kyverno-håndhevet)) legges i samme miljømappe som SkybertApp og deployes på samme måte — bruk dem når SkybertApp ikke dekker behovet, f.eks. StatefulSet eller DaemonSet. Det SkybertApp ellers gjør for deg må da gjøres manuelt: Workload Identity aktiveres med label og `serviceAccountName` på pod-template (se [Azure Workload Identity](security.md#azure-workload-identity)), og Key Vault-secrets settes opp med SecretStore/ExternalSecret (se [Secrets-mønstre](secrets.md)).
 
 > Kilde: https://docs.sky.fhi.no/workloads/ · https://docs.sky.fhi.no/auth/workload-identity/
 

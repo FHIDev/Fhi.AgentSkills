@@ -206,15 +206,11 @@ kjøring.
 ### Infra-repo — Sti-baserte filtermønstre
 
 ```
-# XRD-spesifikasjoner (SkybertApp alpha + beta, WebApp)
-infra/crossplane/base/xrds/skybertapp-alpha.yaml
+# XRD-spesifikasjon (SkybertApp beta)
 infra/crossplane/base/xrds/skybertapp-beta.yaml
-infra/crossplane/base/xrds/webapp.yaml
 
 # Crossplane compositions
-infra/crossplane/base/compositions/skybertapp-alpha.yaml
 infra/crossplane/base/compositions/skybertapp-beta.yaml
-infra/crossplane/base/compositions/webapp.yaml
 
 # Crossplane kluster-overlays — XRD-/composition-varianter som IKKE ligger i base.
 # Her kan nye API-versjoner rulles ut på ett kluster før de kommer i base. Uten
@@ -244,7 +240,7 @@ infra/tenant-bootstrap/base/tenants/*.yaml
 # Flux Operator og FluxInstance
 infra/flux-operator/base/*.yaml
 infra/flux-system/*/flux-instance.yaml
-# Flux Web UI per kluster (Ingress, ListenerSet, OIDC-baseURL)
+# Flux Web UI per kluster (ListenerSet, OIDC-baseURL)
 infra/flux-operator/*/kustomization.yaml
 # Utrulling per kluster: prod-overlayene lister infra-Kustomizations eksplisitt
 infra/flux-system/*/kustomization.yaml
@@ -298,7 +294,7 @@ infra/kube-state-metrics/base/*-values.yaml
 infra/skybert-system/base/*.yaml
 ```
 
-**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/` (utover `patch-env.yaml`/`kustomization.yaml` i mønsteret over), `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, øvrige drifts-scripts, `scripts/FLOWS.md` og `scripts/skatlas/**` (intern script-dokumentasjon/SKAtlas-tooling — `FLOWS.md` kan konsulteres ved script-provenance, ikke dyplesing), samt `utils/**` utover Coraza-, sk8- og grafana-dashboard-syncer-filene i mønsteret over (Go-kildekode, `utils/version-checker/`, `utils/grafana-airgapped/`) og `.github/workflows/utils-sk8-*.yaml`.
+**Lavprioritet i infra (ikke hardt ekskludert):** `crds/`, `infra/alloy/`, `infra/loki/`, `infra/mimir/`, `infra/grafana/` (utover `patch-env.yaml`/`kustomization.yaml` i mønsteret over), `infra/cert-manager/`, `infra/external-secrets/`, `infra/ingress-nginx/`, øvrige drifts-scripts, `scripts/FLOWS.md` og `scripts/skatlas/**` (intern script-dokumentasjon/SKAtlas-tooling — `FLOWS.md` kan konsulteres ved script-provenance, ikke dyplesing), samt `utils/**` utover Coraza-, sk8- og grafana-dashboard-syncer-filene i mønsteret over (Go-kildekode, `utils/version-checker/`, `utils/grafana-airgapped/`) og `.github/workflows/utils-sk8-*.yaml`, samt `infra/gha-runner-system/`, `infra/gha-runners/` og `.github/workflows/test-arc-runners.yaml` (plattformens ARC-runnere; ingen tenant-docs).
 
 **Ny tenant vs. innholdsendring:** `tenants/*/base/oci-repository.yaml` og `tenants/*/*/kustomization.yaml` (OCIRepository pr. tenant) og `infra/grafana/*/patch-orgs.yaml` (Entra-gruppe→org-mapping) endres typisk når en **ny tenant** legges til. Da følger de et allerede dokumentert mønster og gir normalt ingen skill-endring — og UUID-er/Entra-gruppe-IDer i `patch-orgs.yaml` filtreres bort per sikkerhetsreglene. Behandle dem kun som skill-relevante hvis selve mønsteret endres (nytt felt, ny provider, endret URL-konvensjon), ikke når en ny tenant-instans tilføyes.
 
@@ -378,7 +374,7 @@ Den varige staten er i de to committede filene `maintenance/skybert/.oppdater-st
 
 ## CRD-versjonssporing
 
-I `infra/crossplane/base/xrds/skybertapp-beta.yaml` (gjeldende, gruppe `skybert-beta.fhi.no`; og tilsvarende `skybertapp-alpha.yaml`, legacy, gruppe `skybert.fhi.no`), les:
+I `infra/crossplane/base/xrds/skybertapp-beta.yaml` (gruppe `skybert-beta.fhi.no`), les:
 ```yaml
 spec:
   versions:
@@ -396,7 +392,7 @@ Ved endring (f.eks. v1alpha1 → v1beta1):
 
 ### Felt-nivå-diff (obligatorisk ved enhver XRD-endring)
 
-Versjonssporing er ikke nok — de fleste XRD-endringer skjer innenfor samme versjon. Når `infra/crossplane/base/xrds/skybertapp-alpha.yaml`, `skybertapp-beta.yaml` (eller `webapp.yaml`) er endret, lag en felt-nivå-diff av `openAPIV3Schema`:
+Versjonssporing er ikke nok — de fleste XRD-endringer skjer innenfor samme versjon. Når `infra/crossplane/base/xrds/skybertapp-beta.yaml` er endret, lag en felt-nivå-diff av `openAPIV3Schema`:
 
 - Lagt til / fjernet felt
 - Endrede `default`-verdier

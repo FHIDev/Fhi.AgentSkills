@@ -103,7 +103,7 @@ kube-state-metrics eksponerer Kyverno `PolicyReport` til Mimir via CustomResourc
 
 Filtrer tenant-visninger med `namespace=~"tn-.*"`. Dette gjør policy-funn (f.eks. `resource-limits`- og `recommend-network-policy`-audits) synlige i Grafana uten kubectl.
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kube-state-metrics/base/kube-state-metrics-7.3.0-values.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kube-state-metrics/base/kube-state-metrics-9.0.0-values.yaml
 
 ### Custom-metrics-HPA (planlagt)
 
@@ -133,7 +133,7 @@ Hvert kluster har sin egen Grafana-instans, eksponert via plattformens `fhinett`
 | aks-red-test-02 | `https://grafana-02.redtest.skybert` (kun nåbar fra secure zone) |
 | aks-red-prod-02 | `https://grafana-02.red.skybert` (kun nåbar fra secure zone) |
 
-Docs viser `grafana.<color>-<nn>.<domain>` (`skytest.fhi.no`/`sky.fhi.no`) og andre klusternavn; infra har ingen Ingress for Grafana, så tabellen følger infra.
+Docs viser de samme `.skybert`-adressene, med to avvik: `grafana-02.green.skybert` for grønn prod (infra: `grafana-03`) og klusternavnet `aks-red-prod-01` (infra: `aks-red-prod-02`). Tabellen følger infra.
 
 Du logger inn med FHI-bruker (Entra ID) og lander i Grafana-organisasjonen som tilhører tenanten. Alerts settes opp av tenanten selv i egen org.
 

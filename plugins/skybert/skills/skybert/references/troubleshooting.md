@@ -55,8 +55,14 @@ har lesetilgang på vaulten — det er tenanten som gir den. Se [Secrets-mønstr
 3. Trigg rekonsiliering manuelt i dashboardet, eller suspend/resume med
    `sk8 suspend`/`sk8 resume --tenant <tenant>`. Tenant-RBAC gir `reconcile`, `suspend` og
    `resume` på egne Kustomizations og OCIRepositories.
+4. `OCIRepository` med `SourceVerified=False` og `failed to verify the signature using provider 'cosign'`:
+   artefaktet er usignert, eller signert av en annen workflow enn en i `FHIDev/Fhi.<Tenant>.GitOps`.
+   Siste godkjente artefakt blir stående. Sjekk at `oci-push` kjørte signeringssteget, og meld fra på
+   `#ext-fhi-skybert` hvis GitOps-repoet er omdøpt.
+5. Manifest med `apiVersion: skybert.fhi.no/v1alpha1` eller `kind: WebApp`: API-et finnes ikke, og
+   manifestet må konverteres — se [Legacy](legacy-webapp-csi.md).
 
-> Kilde: https://docs.sky.fhi.no/build/flux-dashboard/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/sk8/README.md
+> Kilde: https://docs.sky.fhi.no/build/flux-dashboard/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/sk8/README.md · https://docs.sky.fhi.no/internal/oci-signing/
 
 ### Nettverkstilkobling feiler i rød sone
 

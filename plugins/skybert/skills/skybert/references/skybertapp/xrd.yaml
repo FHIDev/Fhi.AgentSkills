@@ -485,7 +485,7 @@ spec:
             description: Observed state written by the composition (scale subresource / VPA).
             properties:
               replicas:
-                description: Observed ready replica count from the composed Deployment.
+                description: Observed replica count from the composed Deployment.
                 type: integer
               labelSelector:
                 description: Serialized label selector matching the app pods (for /scale and VPA).
