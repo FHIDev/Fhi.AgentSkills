@@ -73,20 +73,15 @@ external-dns kjører per kluster mot samme Azure DNS-sone (`sky.fhi.no` i `rg-do
 
 Eieren står i TXT-recorden: `dig +short <host> TXT` gir en streng som inneholder `external-dns/owner=<kluster>`, for grønn prod `owner=aks-green-prod-02`.
 
-Eierskapet flyttes fra rødt til grønt uten git-endring, men flyttingen gir et kort DNS-brudd: rødt sletter A- og TXT-recorden straks Ingressen forsvinner, og hostnavnet svarer NXDOMAIN til grønt har skrevet sine (1–2 min, lenger hos klienter som cacher det negative svaret).
+Når recorden først er skrevet, ser det andre klusteret en fremmed eier og lar den være. Kappløpet gjentar seg hver gang recorden slettes eller hostnavnet endres. Forsvinner ruten på eierklusteret, sletter det recorden, og det andre klusteret kan ta den så lenge tenanten fortsatt er registrert der.
 
-1. Bekreft at grønn Ingress for hostnavnet finnes og svarer: `curl --resolve <host>:443:<grønn ingress-IP> https://<host>/`.
-2. Suspend tenantens Kustomization på rødt med `flux suspend` (se [Flux-verktøy](flux-tooling.md)), og slett Ingressen der.
-3. Vent til TXT-recorden viser `owner=aks-green-prod-02` og A-recorden peker på grønn ingress-IP.
-4. Resume Kustomizationen på rødt uansett utfall. Lyktes ikke steg 3, gjenskaper rødt Ingressen og recorden, og tilstanden er som før.
+Før eierskap diskuteres, kontroller eier og mål: TXT-recorden over viser eieren, og `curl --resolve <host>:443:<målklusterets ingress-IP> https://<host>/` viser om målklusteret svarer for hostnavnet.
 
-Rødt ser deretter en fremmed eier og lar recorden være. Kappløpet gjentar seg hver gang recorden slettes eller hostnavnet endres. Forsvinner Ingressen på grønt, sletter grønt recorden, og rødt kan ta den igjen så lenge tenanten fortsatt er registrert der.
+**Ikke slett Ingressen på eierklusteret for å flytte eierskapet.** Nye `Ingress`-ressurser avvises i `tn-*` (`deny-tenant-ingress`, også for `flux-reconciler`), så en slettet Ingress kan ikke gjenskapes: overtar ikke det andre klusteret recorden, er både ruten og veien tilbake borte. Flytting av eierskap tas med plattformteamet på `#ext-fhi-skybert`.
 
-Prosedyren gjelder hostnavn som eksponeres med `Ingress`. Nye `Ingress`-ressurser avvises i `tn-*` (`deny-tenant-ingress`, også for `flux-reconciler`), så en Ingress som slettes i steg 2 gjenskapes ikke ved resume i steg 4: tilbakefallet der holder ikke. For hostnavn på `HTTPRoute` er flyttingen ikke prøvd.
+> **Operasjonell antakelse:** Docs beskriver ikke DNS-eierskap mellom laner; beskrivelsen er utledet av external-dns-konfigurasjonen. En flytting ved å slette Ingressen på rødt er tidligere prøvd på en tenant registrert på både grønn og rød prod, men er ikke trygg med dagens `deny-tenant-ingress`. For hostnavn på `HTTPRoute` er flytting ikke prøvd.
 
-> **Operasjonell antakelse:** Flyttingen (steg 2–4) er prøvd på en tenant registrert på både grønn og rød prod; docs beskriver ikke DNS-eierskap mellom laner. Sjekken i steg 1, tilbakefallet i steg 4 og grønns sletting er utledet av policy-oppførselen over, ikke prøvd.
-
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/external-dns/
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/external-dns/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-green/deny-tenant-ingress.yaml
 
 ## Ingress-regler (Kyverno-håndhevet)
 

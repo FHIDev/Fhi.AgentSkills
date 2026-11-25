@@ -19,7 +19,7 @@ Feltnavnene til venstre for pilen er fra WebApp-manifestet som konverteres.
 9. `initContainers[]`/`sidecarContainers[]`: samme struktur, men `resources` bytter form som i steg 3, og per-container `secrets` finnes ikke — SkybertApp-secrets monteres i alle containere.
 10. Legg til `probes` — WebApp-manifestet har ingen.
 
-> **Operasjonell antakelse:** WebApp-feltnavnene er lest fra XRD-en og compositionen mens de lå i infra-repoet; de finnes ikke på `main` og kan ikke re-verifiseres. SkybertApp-siden av hvert steg følger [SkybertApp CRD](skybertapp-crd.md).
+> **Operasjonell antakelse:** WebApp-feltnavnene er lest fra XRD-en og compositionen. De er fjernet fra `main` i [PR 1462](https://github.com/FHISkybert/Fhi.Skybert.Infra/pull/1462/files), men finnes på commit-en før: [xrds/webapp.yaml](https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bbb09ff3e89d3622a80358582ae6f4f2073c902c/infra/crossplane/base/xrds/webapp.yaml) og [compositions/webapp.yaml](https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bbb09ff3e89d3622a80358582ae6f4f2073c902c/infra/crossplane/base/compositions/webapp.yaml). SkybertApp-siden av hvert steg følger [SkybertApp CRD](skybertapp-crd.md).
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://docs.sky.fhi.no/workloads/resource-sizing/
 

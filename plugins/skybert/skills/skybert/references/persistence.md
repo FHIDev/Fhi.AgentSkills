@@ -330,9 +330,11 @@ På rød sone tillater infra-policyen `alloy-scrape-ingress` TCP fra Alloy til t
 `base-tenant-policy` default-denier ingress og egress i `tn-*`, så CNPG trenger tre hull (alle `order: 500`).
 Alle er opt-in på namespace-labelen `skybert.fhi.no/needs-cnpg=true`, som plattformteamet setter i
 `tenants/<tenant>/base/namespace.yaml`, og gjelder bare pods med labelen `cnpg.io/cluster` — ikke
-andre pods i namespacet. Kyverno `restrict-cnpg-pod-label` avviser pods med den labelen som ikke er
-opprettet av CNPG-operatoren eller `job-controller`, og Jobs som ikke er opprettet av operatoren, så
-labelen gir ikke egne pods de samme åpningene:
+andre pods i namespacet. Kyverno `restrict-cnpg-pod-label` vurderer både `CREATE` og `UPDATE`: en Pod
+med labelen avvises hvis forespørselen ikke kommer fra CNPG-operatoren eller `job-controller`, og en Job
+med labelen i pod-malen (`spec.template.metadata.labels`) avvises hvis den ikke kommer fra operatoren.
+Labelen gir derfor ikke egne pods de samme åpningene, og en tenant kan få avvist endringer på en Job
+som CNPG har opprettet:
 
 | GlobalNetworkPolicy | Retning | Effekt |
 |---|---|---|

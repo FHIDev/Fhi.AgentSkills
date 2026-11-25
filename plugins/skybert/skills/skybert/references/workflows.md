@@ -46,8 +46,8 @@ sette noe her selv.
 
 ```
 App-repo: bygg og push image → repository_dispatch (update_tag) til GitOps-repo
-GitOps-repo: update-tag.yaml committer ny tag i <env>/ → oci-push.yaml pusher gitops_<env> til ACR
-Kluster: Flux henter artefaktet og applyer
+GitOps-repo: update-tag.yaml committer ny tag i <env>/ → oci-push.yaml pusher gitops_<env> til ACR og signerer digestene
+Kluster: Flux verifiserer signaturen, henter artefaktet og applyer
 ```
 
 Flux-intervaller og hva som skjer i klusteret er beskrevet i
@@ -63,8 +63,12 @@ Flux-intervaller og hva som skjer i klusteret er beskrevet i
 - Gjenkjenner Helm (`Chart.yaml`) og Kustomize (`kustomization.yaml`) og kjører `helm template` /
   `kustomize build` før pakking. Annen YAML pakkes som den er.
 - Pusher med tenantens managed identity via `AZURE_*`-variablene.
+- Signerer de pushede digestene med Cosign (keyless via GitHub OIDC og Sigstore) etter at alle tre er
+  pushet. I malen skjer dette i samme steg som byggingen og pushen. Feiler signeringen, ligger usignerte
+  artefakter i ACR, og Flux blir stående på sist godkjente — se
+  [Feilsøking](troubleshooting.md#flux-applyer-ikke-endringen).
 
-> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/
+> Kilde: https://docs.sky.fhi.no/get-started/gitops-repo/ · https://docs.sky.fhi.no/internal/oci-signing/
 
 ### OCI-artifact navnekonvensjon
 

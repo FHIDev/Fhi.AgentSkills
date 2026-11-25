@@ -149,6 +149,8 @@ Go-CLI i infra-repoet (`utils/sk8/`), publisert som GitHub-release (`sk8/v*`-tag
   bakgrunnen. Kjøres den på nytt mens proxyen lever, kan den bytte kubectl-context i stedet.
   `sk8 cluster list` viser registeret. På PIM-klustere venter `sk8` til du har aktivert rollen i
   Azure Portal og bekrefter; det er veien for tenant-brukere, som får eligibility via Entra-grupper.
+  Bekreftelsen krever en interaktiv terminal (TTY). Uten TTY krever et PIM-kluster `--pim`, så en
+  tenant-bruker må kjøre `sk8 cluster` i sin egen terminal, ikke fra en agent eller et skript uten TTY.
   `--pim`/`-p` aktiverer i stedet Owner på klusterets subscription (med `--justification` og
   `--duration-hours`) og gjelder ikke tenant-brukere. Docs beskriver `--skip-pim`; flagget finnes
   ikke i release `sk8/v0.3.1`.

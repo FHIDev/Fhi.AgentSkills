@@ -244,7 +244,7 @@
       "category": "VURDER",
       "target": "references/workflows.md",
       "source": "infra/gha-runner-system/**, infra/gha-runners/**, .github/workflows/test-arc-runners.yaml",
-      "summary": "Infra har ARC-runnere for GitHub-org FHIDev (scale set skybert-green på aks-green-test-02 og skybert-internal på aks-ops-test-02, BuildKit-sidecar), men ingen docs. Hvem som kan bruke runnerne og til hva står ikke i kildene, så workflows.md omtaler dem ikke. Revurderes når docs dekker runnerne.",
+      "summary": "Infra har ARC-runnere (BuildKit-sidecar) uten docs. Base har scale sets for både FHIDev og FHISkybert; aks-green-test-02 beholder begge og døper dem om til skybert-green, mens aks-ops-test-02 sletter FHIDev-settet og bare kjører FHISkybert-runneren som skybert-internal. Hvem som kan bruke runnerne og til hva står ikke i kildene, så workflows.md omtaler dem ikke. Revurderes når docs dekker runnerne.",
       "firstSeen": "2026-11-23",
       "lastSeen": "2026-11-23"
     },
@@ -254,7 +254,7 @@
       "category": "VURDER",
       "target": "references/hostnames-and-networking.md",
       "source": "infra/kyverno-policies/base/policies-green/deny-tenant-ingress.yaml + eksisterende operasjonell antakelse (DNS-eierskap mellom laner)",
-      "summary": "Flytteprosedyren for DNS-eierskap mellom laner er skrevet for Ingress; deny-tenant-ingress hindrer at en slettet Ingress gjenskapes, og skillen har fått et forbehold. Prosedyren er ikke prøvd for hostnavn på HTTPRoute. Skriv den om når flyttingen er prøvd med HTTPRoute i kluster.",
+      "summary": "Flytteprosedyren for DNS-eierskap mellom laner (slett Ingress på rødt) er fjernet: deny-tenant-ingress hindrer at en slettet Ingress gjenskapes, så tilbakeføring er umulig. Skillen beskriver eierskapet, hvordan eier og mål kontrolleres, og henviser flytting til plattformteamet. Beskriv en ny prosedyre først når plattformteamet har verifisert både overtakelse og tilbakeføring for rutetypen (Ingress eller HTTPRoute).",
       "firstSeen": "2026-11-23",
       "lastSeen": "2026-11-23"
     }
