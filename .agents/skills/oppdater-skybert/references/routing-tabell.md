@@ -81,12 +81,8 @@
 
 | Kildesti | Kanonisk målfil (første) — øvrige får kun kryssreferanse eller én setning |
 |----------|--------------|
-| `infra/crossplane/base/xrds/skybertapp-alpha.yaml` | `references/skybertapp-crd.md` (Legacy-seksjonen; alpha er legacy og kopieres ikke) |
 | `infra/crossplane/base/xrds/skybertapp-beta.yaml` | `references/skybertapp-crd.md`, `references/skybertapp/xrd.yaml` (statisk kopi) |
-| `infra/crossplane/base/xrds/webapp.yaml` | `references/legacy-webapp-csi.md` |
-| `infra/crossplane/base/compositions/skybertapp-alpha.yaml` | `references/skybertapp-crd.md` (Legacy-seksjonen), `references/platform-architecture.md` |
 | `infra/crossplane/base/compositions/skybertapp-beta.yaml` | `references/skybertapp-crd.md`, `references/skybertapp/composition.yaml` (statisk kopi), `references/hostnames-and-networking.md` (ListenerSet/HTTPRoute-eksempelet) |
-| `infra/crossplane/base/compositions/webapp.yaml` | `references/legacy-webapp-csi.md` |
 | `infra/crossplane/base/functions.yaml` | `references/skybertapp/functions.yaml` (kopi med xpkg-omskriving), `references/skybertapp-render.md` (provenance) |
 | `infra/crossplane/*/xrds/skybertapp-*.yaml` (kluster-overlays, f.eks. `-alpha`/`-beta`) | `references/skybertapp-crd.md` |
 | `infra/crossplane/*/compositions/*.yaml` (kluster-overlays) | `references/skybertapp-crd.md` |
@@ -107,7 +103,7 @@
 | `infra/tenant-bootstrap/base/*.yaml` | `references/platform-architecture.md` |
 | `infra/tenant-bootstrap/base/tenants/*.yaml` | `references/platform-architecture.md` |
 | `infra/flux-operator/base/*.yaml` | `references/platform-architecture.md` |
-| `infra/flux-operator/*/kustomization.yaml` | `references/flux-tooling.md` — Flux Web UI-URL-er (Ingress og ListenerSet) og OIDC-`baseURL` per kluster |
+| `infra/flux-operator/*/kustomization.yaml` | `references/flux-tooling.md` — Flux Web UI-URL-er (ListenerSet) og OIDC-`baseURL` per kluster |
 | `infra/flux-system/*/flux-instance.yaml` | `references/platform-architecture.md` |
 | `infra/flux-system/*/kustomization.yaml` | Komponentstatus i den kanoniske filen for komponenten (`secrets.md` for Reloader, `persistence.md` for blob-csi). Se punkt 5 under «Infra-repo discovery» i [github-modus.md](github-modus.md) |
 | `infra/grafana/*/patch-env.yaml`, `infra/grafana/*/kustomization.yaml` | `references/observability.md#grafana` — Grafana-URL per kluster. `patch-orgs.yaml` er ny-tenant-støy (se raden for `tenants/*/base/oci-repository.yaml`) |
@@ -141,15 +137,15 @@ avsnitt. Tabellen oppdateres i samme kjøring som en kanonisk plassering endres.
 | Promotion-payload, GitHub App, `repository`-semantikk | `workflows.md` | `SKILL.md` (kort sammendrag), `troubleshooting.md` |
 | SecretStore/ExternalSecret-YAML, Key Vault-ansvar | `secrets.md` | `SKILL.md`, `security.md` |
 | Workload Identity (automatisk/manuell, SA-navn, MI-navn) | `security.md` | `SKILL.md`, `configuration.md`, `skybertapp-crd.md`, `legacy-webapp-csi.md` |
-| Tenant-RBAC (`skybert:tenant-admin`, cluster-admin-unntak, runtime-fragment) | `platform-architecture.md` | `security.md`, `kubectl-access.md`, `kyverno-policies.md`, `troubleshooting.md` |
+| Tenant-RBAC (`skybert:tenant-admin`, runtime-fragment) | `platform-architecture.md` | `security.md`, `kubectl-access.md`, `kyverno-policies.md`, `troubleshooting.md` |
 | Runtime-restriksjoner prod/red-test/norsyss | `kyverno-policies.md` | `kubectl-access.md`, `troubleshooting.md`, `security.md` |
 | Rød sone-nettverk (GNP-er, Calico-vindu, NFS, egress-unntak) | `hostnames-and-networking.md` | `SKILL.md`, `kyverno-policies.md`, `security.md` |
 | Gateway API/Envoy, fhinett-Gatewayer, `.skybert`-endinger | `hostnames-and-networking.md` | `SKILL.md`, `skybertapp-crd.md` |
-| SkybertApp (felt, rendring, migrering; beta er gjeldende, alpha legacy) | `skybertapp-crd.md` | `SKILL.md`, `hostnames-and-networking.md`, `waf.md` |
+| SkybertApp (felt, rendring, migrering; beta er eneste API) | `skybertapp-crd.md` | `SKILL.md`, `hostnames-and-networking.md`, `waf.md` |
 | Issuer-tabell, trust bundle | `hostnames-and-networking.md` | `SKILL.md`, `security.md` |
 | Goldilocks/VPA-mekanisme / Grafana-tabellen | `kyverno-policies.md` / `observability.md` | `platform-architecture.md`, `security.md`, `skybertapp-crd.md` |
 | StorageClasses + CloudNativePG | `persistence.md` | `SKILL.md`, `configuration.md`, `platform-architecture.md`, `hostnames-and-networking.md` |
-| WebApp/CSI-status | `legacy-webapp-csi.md` | `SKILL.md` (én setning), `configuration.md`, `secrets.md`, `security.md`, `skybertapp-crd.md` |
+| WebApp-/alpha-konvertering og CSI-status | `legacy-webapp-csi.md` | `SKILL.md` (én setning), `configuration.md`, `secrets.md`, `security.md`, `skybertapp-crd.md` |
 | Feilsøking, tilkoblingsfeil / ACR-pull lokalt | `troubleshooting.md` / `kubectl-access.md` | `SKILL.md` (prosa, ikke kommandoer) |
 | Minimal SkybertApp | `SKILL.md` + `skybertapp-crd.md` | `configuration.md`, `secrets.md` |
 | WAF (Coraza/OWASP CRS, bundles, tilgang og policy-status) | `waf.md` | `SKILL.md`, `security.md`, `kyverno-policies.md`, `hostnames-and-networking.md` |

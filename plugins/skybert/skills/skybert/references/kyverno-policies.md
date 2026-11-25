@@ -77,16 +77,18 @@ Skybert bruker Kyverno for policy-håndhevelse. Policiene under gjelder tenant-n
 |--------|---------------|
 | `ingress-security` | Ingress uten TLS-match, uten ingressClassName, med wildcard-hosts |
 | `deny-flambert-hostnames-in-tenant-namespaces` | Hostname `*.flambert` i `tn-*` — håndheves på `Ingress`, `HTTPRoute`/`TLSRoute`/`GRPCRoute` og `ListenerSet` |
+| `deny-tenant-ingress` | Nye `Ingress` i `tn-*` (kun `CREATE`); eksisterende kan endres og slettes |
+| `gateway-security` | Wildcard i `hostnames` på `HTTPRoute`/`TLSRoute`/`GRPCRoute` og i listener-`hostname` på `ListenerSet` (alle namespaces) |
 
 Detaljene står i [Hostnavn og nettverk — Ingress-regler](hostnames-and-networking.md#ingress-regler-kyverno-håndhevet).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-green/ingress-security.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-green/deny-flambert-hostnames.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/kyverno-policies/base/policies-green/
 
 ### Service-typer (alle klustere)
 
 | Policy | Hva blokkeres |
 |--------|---------------|
-| `disallow-nodeport-loadbalancer-services` | NodePort- og LoadBalancer-services i alle namespaces. Ekstern tilgang går via Ingress eller Gateway API; unntak finnes kun for plattformens ingress-controllere (nginx, Envoy) |
+| `disallow-nodeport-loadbalancer-services` | NodePort- og LoadBalancer-services i alle namespaces. Ekstern tilgang går via Gateway API (eksisterende Ingress består); unntak finnes kun for plattformens ingress-controllere (nginx, Envoy) |
 
 > Kilde: https://docs.sky.fhi.no/internal/kyverno-policies/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-green/disallow-nodeport-lb.yaml
 
@@ -114,7 +116,7 @@ Detaljene står i [Hostnavn og nettverk — Ingress-regler](hostnames-and-networ
 | Policy | Overlay | Hva sjekkes |
 |--------|---------|-------------|
 | `resource-limits` | `policies-green` | Containere (inkl. init og ephemeral) i `tn-*` skal ha CPU- og memory-requests og memory limit; flagger CPU limit > 2 eller memory limit > 2Gi |
-| `suggest-ro-rootfs` | `policies-green` | Anbefaler `readOnlyRootFilesystem: true` for `tn-*`-workloads |
+| `suggest-ro-rootfs-pod`, `suggest-ro-rootfs-pod-template`, `suggest-ro-rootfs-cronjob` | `policies-green` | Anbefaler `readOnlyRootFilesystem: true` for `tn-*`-workloads: én policy for `Pod`, én for pod-template i ReplicaSet/Deployment/StatefulSet/DaemonSet/Job og én for CronJob. Funn i PolicyReport står under disse navnene |
 | `rbac-security` | `policies-green` | Ingen `*` i Role-regler i `tn-*`; ingen ClusterRoleBinding til `cluster-admin`; RoleBinding må navngi namespace |
 | `recommend-network-policy` | `policies-not-red` | Bakgrunnsskann (`admission: false`): rapporterer `tn-*`-namespaces uten verken Kubernetes- eller Calico-`NetworkPolicy`. Funnet lander i PolicyReport i tenant-namespacet (matcher `default`-SA-en). På rød dekkes isolasjon av GNP-er i stedet |
 | `prevent-run-as-root-override` (regel i `auto-set-default-user-and-run-as-non-root`) | `policies-green` | `runAsNonRoot: false` på containere (alle pods) |
@@ -150,6 +152,8 @@ Gjelder `aks-red-test-02` og `aks-red-prod-02` (`policies-red`). Nettverksreglen
 | `generate-tenant-internal-gnp` | Generate | Oppretter separate ingress- og egress-GNP-er per `tn-*`; rekkefølge og effekt står i [Rød sone](hostnames-and-networking.md#rød-sone) |
 | `sub-1200-calico-netpol-in-tenants` | Enforce | Avviser native Kubernetes `NetworkPolicy` i `tn-*`; Calico `NetworkPolicy` må ha kun `Ingress`-regler og `spec.order < 1200` (gulvet 1000 kommer fra `limit-calico-netpol-order`) |
 | `restrict-tenant-runtime-access` | Enforce | Blokkerer `kubectl port-forward`, `attach` og API-`proxy` (pod og service) i `tn-*`. Blokkerer **ikke** `kubectl exec` eller ephemeral debug-containere — policybeskrivelsen nevner ephemeral containers, men reglene gjør det ikke |
+| `restrict-apiserver-pod-label` | Enforce | Labelen `skybert.fhi.no/needs-apiserver=true` i pod-template på Deployment, StatefulSet, DaemonSet og CronJob kan bare innføres av `flux-reconciler` i samme namespace eller Crossplane; på Job også av `cronjob-controller`. ReplicaSets og Pods med labelen kan bare opprettes av de innebygde controllerne. Objekter som allerede har labelen kan oppdateres fritt. Se [Rød sone](hostnames-and-networking.md#rød-sone) |
+| `restrict-cnpg-pod-label` | Enforce | Gjelder `CREATE` og `UPDATE` i `tn-*`. En Pod med labelen `cnpg.io/cluster` kan bare opprettes eller endres av CNPG-operatoren eller `job-controller`. En Job med ikke-tom `spec.template.metadata.labels["cnpg.io/cluster"]` kan bare opprettes eller endres av CNPG-operatoren, så en tenant kan få avvist endringer på en Job som CNPG har opprettet. Labelen åpner CNPG-GNP-ene — se [Persistence](persistence.md#rød-sone-globalnetworkpolicies) |
 
 **Runtime-tilgang per rød-kluster:**
 

@@ -39,7 +39,7 @@ plugins/skybert/skills/skybert/
 ├── SKILL.md                                 (onboarding, konsepter, Blaloypa, navnekonvensjoner)
 └── references/
     ├── skybertapp-crd.md                    (SkybertApp XRD-spec)
-    ├── legacy-webapp-csi.md                 (legacy WebApp CRD + CSI driver, migreringsguide)
+    ├── legacy-webapp-csi.md                 (konvertering fra WebApp/alpha, CSI driver)
     ├── configuration.md                     (deployment-metoder)
     ├── secrets.md                           (secrets-moenstre)
     ├── security.md                          (Workload Identity, sikkerhet)
@@ -446,7 +446,7 @@ Rapporteres som egen seksjon i UPDATE-PLAN.md med per-endring: fil, type (routin
 | Repo 403/404 (docs/infra) | Fall tilbake til web-scraping-modus |
 | Fhi.Guidelines 403/404 | Fortsett i GitHub-modus for docs/infra. Ikke foreslå `KORRIGER`/`FJERN` (`feil`/`utdatert`/`ustøttet`) for retningslinje-basert innhold; merk det «ikke verifisert i denne kjøringen» i planen |
 | Retningslinje-sti finnes verken på `main` eller på branchen i state | `VURDER`-post (PR lukket eller avvist?). Aldri `FJERN` før brukeren har avgjort |
-| Normativ fil 404 (XRD, compositions) | Stopp, rapporter (kun GitHub-modus) |
+| Normativ fil 404 (XRD, compositions) | Finn commit-en som fjernet filen (`gh api repos/<repo>/commits?path=<sti>&per_page=1`) og bekreft i diffen at filen også er fjernet fra `kustomization.yaml`-listene. Bekreftet tilsiktet sletting: behandle API-et som utgått, og lenk til slettediffen og til filen på commit-en før. Ellers: stopp, rapporter (kun GitHub-modus) |
 | Ikke-kritisk fil 404 | Logg som manglende, fortsett |
 | SHA-compare feiler | Fall tilbake til FULL modus |
 | State-fil ugyldig/uparsebar | Behandle som forste kjoring (FULL); migrer fra ev. gammel HTML-kommentar |

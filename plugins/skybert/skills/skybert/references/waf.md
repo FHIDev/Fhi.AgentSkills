@@ -2,7 +2,7 @@
 
 ## Tilgang og status
 
-Docs beskriver Coraza med OWASP Core Rule Set via `EnvoyExtensionPolicy` på Envoy Gateway-ruter. Dette dekker ikke nginx-`Ingress` fra alpha-SkybertApp; beta-SkybertApp rendrer en `HTTPRoute` som policyen kan peke på, og docs' migreringsguide anbefaler WAF i hvert fall for `internett`- og `helsenett`-ruter. Tenant-admin og `flux-reconciler` har full CRUD på `envoyextensionpolicies` (se [Tenant-RBAC](platform-architecture.md#tenant-rbac)). Avklar aktivering med plattformteamet før bruk.
+Docs beskriver Coraza som Wasm-utvidelse via `EnvoyExtensionPolicy` på Envoy Gateway. Policyen peker på tenantens `HTTPRoute` (SkybertApp rendrer en), eller på en `Gateway` eller `Backend`. Anbefalt bruk er egne regler for det appen faktisk godtar — stier, metoder, content types, størrelser og parameterformat; OWASP Core Rule Set (CRS) er et opt-in-bundle, ikke default. Docs' migreringsguide anbefaler WAF i hvert fall for `internett`- og `helsenett`-ruter. Tenant-admin og `flux-reconciler` har full CRUD på `envoyextensionpolicies` (se [Tenant-RBAC](platform-architecture.md#tenant-rbac)). Avklar aktivering med plattformteamet før bruk.
 
 Kildene bekrefter konfigurasjon, ikke en fungerende ende-til-ende WAF. README for plattformens Coraza-image sier at lasting og kjøring i Envoy ikke er verifisert. Docs bruker `crfhiskybert.azurecr.io/waf/coraza-proxy-wasm:0.6.0`; avklar fungerende image og tilgang før et manifest tas i bruk.
 
@@ -24,21 +24,23 @@ Dekking via Gateway/Backend som docs omtaler, telles ikke av denne Audit-regelen
 
 ## Bundles og egne regler
 
-Velg bundle med annotasjonen `waf.skybert.fhi.no/bundle`: `owasp-detection` eller `owasp`. Uten annotasjonen, eller med en annen verdi, injiserer `inject-tenant-waf-bundle` ingen bundle og endrer ikke `EnvoyExtensionPolicy`-en; bundle er dermed opt-in i alle klustere, også rød. Docs beskriver `detection`/`baseline`/`strict` og automatisk injisering (default `baseline`, `strict` på rød); de navnene finnes ikke i policyen, og en annotasjon med et av dem gir ingen bundle. Følg infra, og avklar valg og konsekvenser med plattformteamet.
+**Egne regler.** Uten bundle-annotasjon injiserer plattformen ingenting: du setter selv `default_directives: app`, `SecRuleEngine` og reglene i `config.directives_map.app`. Docs' forløp er `SecRuleEngine DetectionOnly`, kontroll av loggene for treff på legitim trafikk, deretter `SecRuleEngine On`. `failOpen: true` slipper trafikken gjennom hvis Wasm-modulen feiler; `false` stenger. Tenantens regel-ID-er er 1–99999; CRS bruker 900000–999999. Regler legges i `config`, ikke i et eget image. Én policy per rute: ved flere beholder Envoy Gateway den eldste og ignorerer resten uten varsel.
+
+WAF-en kjører i Gatewayen ruten henger på, ikke i appen, og hver regel evalueres på hver forespørsel. På de delte Gatewayene `internett` og `helsenett` rammer dyre regler alle tenanter i klusteret; på egen `fhinett`-Gateway rammer de deg selv. Docs' råd: slå på `SecRequestBodyAccess` bare der det trengs og hold `SecRequestBodyLimit` lav (body bufres i Gatewayens minne), aldri `SecResponseBodyAccess On`, match i fase 1 (metode, sti, headere), avgrens regler til stier med `@beginsWith`, foretrekk enkle operatorer (`@streq`, `@within`, `@beginsWith`, `@pm`, `@ipMatch`) framfor `@rx`, hold regelsettet lite, og bruk `nolog` på regler som bare passerer eller setter variabler.
+
+**OWASP CRS-bundle (opt-in).** Sett annotasjonen `waf.skybert.fhi.no/bundle` til `owasp-detection` eller `owasp`. Uten annotasjonen, eller med en annen verdi (default `none`), injiserer `inject-tenant-waf-bundle` ingen bundle og endrer ikke `EnvoyExtensionPolicy`-en; bundle er dermed opt-in i alle klustere, også rød.
 
 | Bundle | Paranoia level | Inbound/outbound terskel | failOpen |
 |---|---|---|---|
 | owasp-detection | 1 | 5 / 4 | true |
 | owasp | 1 | 5 / 4 | true |
 
-Begge setter `SecRuleEngine DetectionOnly` og `failOpen: true`; preamble, terskler, engine og failOpen er like i de to bundlene. CRS-funn håndheves dermed ikke som blokkerende regelmotor, og feil i Wasm-filteret stenger ikke trafikk. Infra-kommentaren sier at `owasp` skal settes til `SecRuleEngine On` når blokkering slås på. Ikke beskriv WAF som blokkerende.
+Begge setter `SecRuleEngine DetectionOnly` og `failOpen: true`; preamble, terskler, engine og failOpen er like i de to bundlene. CRS-funn håndheves dermed ikke som blokkerende regelmotor, og feil i Wasm-filteret stenger ikke trafikk. Infra-kommentaren sier at `owasp` skal settes til `SecRuleEngine On` når blokkering slås på; docs knytter det til at WAF-logger flyter til Grafana. Ikke beskriv bundlene som blokkerende.
 
-Tenant-regler legges i `config.directives_map.app`. Er `waf.skybert.fhi.no/bundle` satt til `owasp-detection` eller `owasp`, bygger `inject-tenant-waf-bundle` `default` fra preamble, app-reglene og til slutt engine, og setter `default_directives: default` og `failOpen`; uten en slik annotasjon endrer policyen verken `directives_map` eller `default_directives`. Tenantens regel-ID-er er 1–99999; CRS bruker 900000–999999. Bruk målrettede unntak, og én policy per rute som beskrevet i docs. Ved flere policyer beskriver docs at den eldste vinner.
+Med bundle bygger policyen `directives_map.default` fra preamble, tenantens `app`-regler og til slutt engine, og setter `default_directives: default` og `failOpen: true`; en egen `SecRuleEngine`-linje i `app` overstyres dermed. Flagger CRS legitim trafikk: legg et målrettet unntak (én regel, sti eller felt) i `app`, eller fjern annotasjonen.
 
-Request body-limit er 13107200 byte, no-files-limit 131072. Begge bundlene har `SecResponseBodyAccess Off` (ingen response-inspeksjon) og tillater GET/HEAD/POST/OPTIONS/PUT/PATCH/DELETE i CRS-konfigurasjonen.
-
-Større opplastinger må slå av body-inspeksjon: per sti med `ctl:requestBodyAccess=Off` (anbefalt) eller for hele ruten med `SecRequestBodyAccess Off`. Da inspiserer ikke WAF-en body, og appen må validere innholdet selv.
+Request body-limit i bundlene er 13107200 byte, no-files-limit 131072. Begge har `SecResponseBodyAccess Off` (ingen response-inspeksjon) og tillater GET/HEAD/POST/OPTIONS/PUT/PATCH/DELETE i CRS-konfigurasjonen. Større opplastinger: slå av body-inspeksjon for opplastingsstien med `ctl:requestBodyAccess=Off`. Da inspiserer ikke WAF-en body, og appen må validere innholdet selv.
 
 Plattformbildet bygger inn GeoIP-støtte; bruk `%{GEO.COUNTRY_CODE}` ved substitusjon. Vis attribusjon til db-ip.com der GeoIP-resultater vises. Konkrete regler og unntak finnes i [plattformens eksempler](https://docs.sky.fhi.no/workloads/waf/examples/); prøv dem først etter at tilgang og image er avklart.
 
-> Kilde: https://docs.sky.fhi.no/workloads/waf/examples/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-waf/inject-tenant-waf-bundle.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/coraza-proxy-wasm/README.md
+> Kilde: https://docs.sky.fhi.no/workloads/waf/ · https://docs.sky.fhi.no/workloads/waf/examples/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-waf/inject-tenant-waf-bundle.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/coraza-proxy-wasm/README.md

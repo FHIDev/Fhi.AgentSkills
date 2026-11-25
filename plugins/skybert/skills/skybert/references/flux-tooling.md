@@ -40,21 +40,21 @@ Suspend med dashboardet eller `flux suspend kustomization <navn> -n tn-<tenant>`
 
 ### URL-er per kluster
 
-Flux Web UI eksponeres to steder per kluster: en nginx-`Ingress` på `flux.<color>-<nn>.<domain>` (`<domain>` = `skytest.fhi.no` for sandbox og test, `sky.fhi.no` for prod) og en `ListenerSet` på plattformens `fhinett`-Gateway i `skybert-system` med et `.skybert`-navn. OIDC-`baseURL` er `.skybert`-navnet på alle tenant-klustere. `.skybert`-navnene følger ikke alltid klusternummeret:
+Flux Web UI eksponeres per kluster med en `ListenerSet` på plattformens `fhinett`-Gateway i `skybert-system`, på et `.skybert`-navn som også er OIDC-`baseURL`. Navnene følger ikke alltid klusternummeret:
 
-| Kluster | Ingress | `.skybert` (OIDC-`baseURL`) |
-|---|---|---|
-| aks-sandbox-02 | `https://flux.sandbox-02.skytest.fhi.no` | `https://flux-02.sandbox.skybert` |
-| aks-ops-test-02 | `https://flux.ops-02.skytest.fhi.no` | `https://flux-ops-02.sandbox.skybert` |
-| aks-green-test-02 | `https://flux.green-02.skytest.fhi.no` | `https://flux-02.greentest.skybert` |
-| aks-green-prod-03 | `https://flux.green-03.sky.fhi.no` | `https://flux-02.green.skybert` |
-| aks-yellow-test-03 | `https://flux.yellow-03.skytest.fhi.no` | `https://flux-03.yellowtest.skybert` |
-| aks-yellow-prod-02 | `https://flux.yellow-02.sky.fhi.no` | `https://flux-03.yellow.skybert` |
-| aks-norsyss-prod-02 | `https://flux.norsyss-02.sky.fhi.no` | `https://flux-norsyss-02.yellow.skybert` |
-| aks-red-test-02 | `https://flux.red-02.skytest.fhi.no` | `https://flux-02.redtest.skybert` |
-| aks-red-prod-02 | `https://flux.red-02.sky.fhi.no` (kun nåbar fra secure zone) | `https://flux-02.red.skybert` |
+| Kluster | URL |
+|---|---|
+| aks-sandbox-02 | `https://flux-02.sandbox.skybert` |
+| aks-ops-test-02 | `https://flux-ops-02.sandbox.skybert` |
+| aks-green-test-02 | `https://flux-02.greentest.skybert` |
+| aks-green-prod-03 | `https://flux-02.green.skybert` |
+| aks-yellow-test-03 | `https://flux-03.yellowtest.skybert` |
+| aks-yellow-prod-02 | `https://flux-03.yellow.skybert` |
+| aks-norsyss-prod-02 | `https://flux-norsyss-02.yellow.skybert` |
+| aks-red-test-02 | `https://flux-02.redtest.skybert` (kun nåbar fra secure zone) |
+| aks-red-prod-02 | `https://flux-02.red.skybert` (kun nåbar fra secure zone) |
 
-Innloggingen sender deg tilbake til `baseURL`. Hvilken URL som gir fungerende pålogging fra din maskin, er ikke verifisert; svarer ikke `.skybert`-navnet, spør på `#ext-fhi-skybert`.
+Docs viser adresser på formen `flux.<color>-<instance>.<domain>`; infra har ingen Ingress for Flux Web UI, så tabellen følger infra. Svarer ikke `.skybert`-navnet, spør på `#ext-fhi-skybert`.
 
 > Kilde: https://docs.sky.fhi.no/build/flux-dashboard/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/flux-operator/
 

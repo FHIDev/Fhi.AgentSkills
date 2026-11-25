@@ -37,7 +37,9 @@ spec:
               gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-deployment
               gotemplating.fn.crossplane.io/ready: "True"
           spec:
-            replicas: {{ if $spec.autoscaling }}{{ $spec.autoscaling.minReplicas | default 1 }}{{ else }}{{ $spec.replicas | default 1 }}{{ end }}
+            {{- if not $spec.autoscaling }}
+            replicas: {{ if hasKey $spec "replicas" }}{{ $spec.replicas }}{{ else }}1{{ end }}
+            {{- end }}
             selector:
               matchLabels:
                 skybert-beta.fhi.no/skybertapp: {{ $name }}
@@ -155,7 +157,7 @@ spec:
                     readOnlyRootFilesystem: true
                     {{- end }}
 
-                {{- if $spec.initContainers }}
+                {{- if or $spec.initContainers $spec.sidecarContainers }}
                 initContainers:
                 {{- range $spec.initContainers }}
                 - name: {{ .name }}
@@ -221,9 +223,6 @@ spec:
                     readOnlyRootFilesystem: true
                     {{- end }}
                 {{- end }}
-                {{- end }}
-
-                {{- if $spec.sidecarContainers }}
                 {{- range $spec.sidecarContainers }}
                 - name: {{ .name }}
                   image: {{ .image.repository }}:{{ .image.tag }}
@@ -489,10 +488,10 @@ spec:
               gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-pdb
               gotemplating.fn.crossplane.io/ready: "True"
           spec:
-            {{- if ($spec.podDisruptionBudget).maxUnavailable }}
-            maxUnavailable: {{ $spec.podDisruptionBudget.maxUnavailable | quote }}
+            {{- if hasKey ($spec.podDisruptionBudget | default dict) "maxUnavailable" }}
+            maxUnavailable: {{ $spec.podDisruptionBudget.maxUnavailable | toJson }}
             {{- else }}
-            minAvailable: {{ ($spec.podDisruptionBudget).minAvailable | default "33%" | quote }}
+            minAvailable: {{ ($spec.podDisruptionBudget).minAvailable | default "33%" | toJson }}
             {{- end }}
             selector:
               matchLabels:
@@ -580,7 +579,7 @@ spec:
           {{- $depName := printf "%s-deployment" $name }}
           {{- $replicas := 0 }}
           {{- with getComposedResource . $depName }}
-            {{- $replicas = dig "status" "readyReplicas" 0 . }}
+            {{- $replicas = dig "status" "replicas" 0 . }}
           {{- end }}
           ---
           apiVersion: skybert-beta.fhi.no/v1beta1

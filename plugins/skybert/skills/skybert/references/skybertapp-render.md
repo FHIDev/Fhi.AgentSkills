@@ -33,7 +33,7 @@ Rendering skjer lokalt via `crossplane render`, uten kluster-tilgang.
 | `skybertapp/xrd.yaml` | CompositeResourceDefinition for `SkybertApp`, kopi av `infra/crossplane/base/xrds/skybertapp-beta.yaml` |
 | `skybertapp/functions.yaml` | Function-pakker fra `infra/crossplane/base/functions.yaml`, **omskrevet til public xpkg.crossplane.io** slik at render fungerer uten ACR-login |
 
-Kopiene gjelder beta (`skybert-beta.fhi.no/v1beta1`); alpha-compositionen er ikke kopiert.
+Kopiene gjelder `skybert-beta.fhi.no/v1beta1`.
 
 Kopiene vedlikeholdes av `oppdater-skybert`-skillen. Vedlikeholdere finner kildecommit i
 `maintenance/skybert/.oppdater-state.json` (`github.infra.commit`) i kilderepoet
@@ -68,7 +68,7 @@ rendres heller ikke uten `replicas > 1`, `autoscaling.minReplicas > 1` eller eks
 `podDisruptionBudget.enabled: true`. Legg til feltene i XR-et for å se disse grenene; `hostname: myapp.sandbox.skybert` gir `Service`, `ListenerSet` og `HTTPRoute`.
 
 `status.replicas` på composite-echoen blir **alltid `0`** i render: compositionen leser
-`readyReplicas` fra den komponerte Deployment-en via `getComposedResource`, og i render finnes
+`status.replicas` fra den komponerte Deployment-en via `getComposedResource`, og i render finnes
 ingen levende Deployment. Det er ikke en feil.
 
 Er manifestet en Helm-template, render templaten til vanlig YAML først

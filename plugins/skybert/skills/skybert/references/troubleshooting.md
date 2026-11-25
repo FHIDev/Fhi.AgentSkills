@@ -55,8 +55,22 @@ har lesetilgang på vaulten — det er tenanten som gir den. Se [Secrets-mønstr
 3. Trigg rekonsiliering manuelt i dashboardet, eller suspend/resume med
    `sk8 suspend`/`sk8 resume --tenant <tenant>`. Tenant-RBAC gir `reconcile`, `suspend` og
    `resume` på egne Kustomizations og OCIRepositories.
+4. `OCIRepository` med `SourceVerified=False` og `failed to verify the signature using provider 'cosign'`:
+   Flux henter ikke den nye digesten, og siste godkjente artefakt blir stående. En ny digest kan derfor
+   ligge i ACR mens klusteret kjører en eldre. Skill mellom to feilsteder:
+   - **Signeringen i workflowen feilet.** Malens `oci-push.yaml` pusher alle tre artefaktene først og
+     signerer digestene med `cosign sign` til slutt. Feiler `cosign sign` (f.eks. når Fulcio i Sigstore
+     ikke svarer), er artefaktene pushet, men usignert. Se i workflowloggen om `cosign sign` fullførte, og
+     kjør workflowen på nytt når feilen er rettet.
+   - **Verifiseringen i Flux feilet.** Signeringen fullførte, men verifiseringen feilet. Det kan være at
+     signaturen ikke matcher identitetsregelen (f.eks. etter at GitOps-repoet er omdøpt), eller at
+     klusteret ikke når Rekor i Sigstore. Sammenlign digesten i workflowloggen med den i
+     `kubectl describe ocirepository -n tn-<tenant>`, og les hele condition-meldingen.
+   Meld fra på `#ext-fhi-skybert` når feilen ligger i verifiseringen.
+5. Manifest med `apiVersion: skybert.fhi.no/v1alpha1` eller `kind: WebApp`: API-et finnes ikke, og
+   manifestet må konverteres — se [Legacy](legacy-webapp-csi.md).
 
-> Kilde: https://docs.sky.fhi.no/build/flux-dashboard/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/sk8/README.md
+> Kilde: https://docs.sky.fhi.no/build/flux-dashboard/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/utils/sk8/README.md · https://docs.sky.fhi.no/internal/oci-signing/
 
 ### Nettverkstilkobling feiler i rød sone
 

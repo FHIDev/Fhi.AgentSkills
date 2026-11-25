@@ -145,13 +145,15 @@ Go-CLI i infra-repoet (`utils/sk8/`), publisert som GitHub-release (`sk8/v*`-tag
 `connectedk8s`-extension, `kubectl`, `gh`. Klusterregisteret hentes fra
 `https://docs.sky.fhi.no/sk8/clusters.json` (lokal cache, deretter publisert register, deretter innebygd kopi; `--refresh` tvinger ny henting og feiler i stedet for å falle tilbake til cache eller innebygd kopi). Den innebygde kopien brukes bare når URL-en ikke svarer og ingen cache finnes. En utdatert cache kan mangle klustere; kjør `sk8 cluster list --refresh`, og start proxyen manuelt med verdiene i [Tilgjengelige klustere](#tilgjengelige-klustere) hvis klusteret fortsatt mangler.
 
-- **`sk8 cluster [navn]`** — interaktiv picker eller fuzzy-match på delnavn, PIM-aktivering ved
-  behov (`--justification`, `--duration-hours`, `--skip-pim`), og `az connectedk8s proxy` i
+- **`sk8 cluster [navn]`** — interaktiv picker eller fuzzy-match på delnavn, og `az connectedk8s proxy` i
   bakgrunnen. Kjøres den på nytt mens proxyen lever, kan den bytte kubectl-context i stedet.
-  `sk8 cluster list` viser registeret. For tenant-brukere virker ikke automatisk PIM-aktivering
-  (eligibility gis via Entra-grupper): aktiver PIM i Azure Portal og kjør deretter
-  `sk8 cluster <kluster> --skip-pim`. `--skip-pim` hopper bare over aktiveringsforespørselen og
-  gir ikke tilgang.
+  `sk8 cluster list` viser registeret. På PIM-klustere venter `sk8` til du har aktivert rollen i
+  Azure Portal og bekrefter; det er veien for tenant-brukere, som får eligibility via Entra-grupper.
+  Bekreftelsen krever en interaktiv terminal (TTY). Uten TTY krever et PIM-kluster `--pim`, så en
+  tenant-bruker må kjøre `sk8 cluster` i sin egen terminal, ikke fra en agent eller et skript uten TTY.
+  `--pim`/`-p` aktiverer i stedet Owner på klusterets subscription (med `--justification` og
+  `--duration-hours`) og gjelder ikke tenant-brukere. Docs beskriver `--skip-pim`; flagget finnes
+  ikke i release `sk8/v0.3.1`.
 - **`sk8 status --tenant <tenant>`** — sammenligner siste commit i GitOps-repoet
   (`FHIDev/Fhi.<Tenant>.GitOps`, eller repoet i OCI-artefaktets `org.opencontainers.image.source` når den finnes; via `gh`) med det Flux har deployet på gjeldende context
   (`Kustomization.status.lastAppliedOriginRevision` + readiness), og skanner `tn-<tenant>` for
@@ -187,9 +189,14 @@ docker pull crfhiskybert.azurecr.io/<tenant>/<app>:<tag>
 docker run -p 8080:8080 crfhiskybert.azurecr.io/<tenant>/<app>:<tag>
 ```
 
-Det krever AcrPull for din bruker på `crfhiskybert.azurecr.io`, som ikke følger av tilgangspakken —
-be om det på `#ext-fhi-skybert` (oppgi bruker og `<tenant>/<app>`). Feiler `docker pull` med
-«pull access denied» eller «repository does not exist» selv om `az acr login` lyktes, mangler
-tilgangen; ACR skjuler om repoet finnes.
+Plattformens bootstrap gir tenantens Entra-gruppe (den tilgangspakken melder deg inn i)
+`Container Registry Repository Contributor` på registeret, med en betingelse som tillater lesing og
+sletting, ikke skriving, av repositories under `<tenant>/`. Tildelingen gjøres når tenanten
+bootstrappes med Entra-gruppe; om eldre tenanter har fått den, er ikke verifisert. Feiler
+`docker pull` med «pull access denied» eller «repository does not exist» selv om `az acr login`
+lyktes, mangler tilgangen — be om den på `#ext-fhi-skybert` (oppgi tenant); ACR skjuler om repoet
+finnes.
 
-> **Operasjonell antakelse:** Lokal pull fra Skybert-registeret er ikke beskrevet i docs eller infra; imagenavnet følger docs' konvensjon, tilgangsmodellen er observert i bruk.
+> **Operasjonell antakelse:** Lokal pull fra Skybert-registeret er ikke beskrevet i docs; imagenavnet følger docs' konvensjon, og feilbildet er observert i bruk.
+
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/scripts/tenant--bootstrap--azure.sh

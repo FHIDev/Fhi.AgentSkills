@@ -329,7 +329,12 @@ På rød sone tillater infra-policyen `alloy-scrape-ingress` TCP fra Alloy til t
 
 `base-tenant-policy` default-denier ingress og egress i `tn-*`, så CNPG trenger tre hull (alle `order: 500`).
 Alle er opt-in på namespace-labelen `skybert.fhi.no/needs-cnpg=true`, som plattformteamet setter i
-`tenants/<tenant>/base/namespace.yaml`:
+`tenants/<tenant>/base/namespace.yaml`, og gjelder bare pods med labelen `cnpg.io/cluster` — ikke
+andre pods i namespacet. Kyverno `restrict-cnpg-pod-label` vurderer både `CREATE` og `UPDATE`: en Pod
+med labelen avvises hvis forespørselen ikke kommer fra CNPG-operatoren eller `job-controller`, og en Job
+med labelen i pod-malen (`spec.template.metadata.labels`) avvises hvis den ikke kommer fra operatoren.
+Labelen gir derfor ikke egne pods de samme åpningene, og en tenant kan få avvist endringer på en Job
+som CNPG har opprettet:
 
 | GlobalNetworkPolicy | Retning | Effekt |
 |---|---|---|
@@ -343,4 +348,4 @@ som velger på `skybert.fhi.no/needs-entra-login=true` — et separat opt-in. Ut
 Replikering mellom instansene dekkes av Kyverno-generert intern egress og ingress; tenantens egne ingress-regler kan begrense den.
 Generelle rød sone-regler: se [Rød sone](hostnames-and-networking.md#rød-sone).
 
-> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/globalnetworkpolicies/base/policies-red/cnpg.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/globalnetworkpolicies/base/policies-red/shared-egress-to-entra.yaml
+> Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/globalnetworkpolicies/base/policies-red/cnpg.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/globalnetworkpolicies/base/policies-red/shared-egress-to-entra.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/kyverno-policies/base/policies-red/restrict-cnpg-pod-label.yaml

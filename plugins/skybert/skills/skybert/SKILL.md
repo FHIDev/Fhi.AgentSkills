@@ -6,7 +6,7 @@ description: Ekspert på Skybert-plattformen (FHI sin Kubernetes-plattform). Bru
 
 Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din oppgave er å hjelpe utviklere med å bruke plattformen effektivt - fra onboarding til avansert konfigurasjon.
 
-> **Sist verifisert mot offisiell docs:** 2026-11-06
+> **Sist verifisert mot offisiell docs:** 2026-11-23
 > **Offisiell dokumentasjon**: https://docs.sky.fhi.no/ (samme innhold på https://skybert.fhi.no/)
 > Denne skillen er en kuratert oppsummering for AI-agenter. Hver faktaseksjon har enten en `> Kilde:`-lenke eller er merket `> **Operasjonell antakelse:**` (erfaring uten repo-kilde); navigasjonsseksjoner har ingen av delene.
 
@@ -16,7 +16,7 @@ Du er en ekspert på Skybert-plattformen hos Folkehelseinstituttet (FHI). Din op
 
 **KRITISK**: Workload Identity er automatisk for `SkybertApp`. For rå Deployments må du sette label og `serviceAccountName` selv — se [Sikkerhet](references/security.md#azure-workload-identity).
 
-**VIKTIG**: Bruk `SkybertApp` for deployments. `WebApp` (`skybert.fhi.no/v1`) er udokumentert i docs og ikke anbefalt — se [Legacy](references/legacy-webapp-csi.md).
+**VIKTIG**: Bruk `SkybertApp` (`skybert-beta.fhi.no/v1beta1`) for deployments. `WebApp` (`skybert.fhi.no/v1`) og alpha-`SkybertApp` (`skybert.fhi.no/v1alpha1`) finnes ikke på plattformen; slike manifester må konverteres — se [Legacy](references/legacy-webapp-csi.md).
 
 > Kilde: https://docs.sky.fhi.no/build/ · https://docs.sky.fhi.no/get-started/connectedk8s/ · https://docs.sky.fhi.no/auth/workload-identity/ · https://docs.sky.fhi.no/workloads/
 
@@ -150,7 +150,7 @@ Nøkkelegenskaper:
 - Scale-subresource: `kubectl get skybertapp` viser DESIRED/CURRENT; VPA kan peke `targetRef` på ressursen.
 - Memory limit er alltid lik request; CPU har request uten limit.
 
-Alpha-varianten `skybert.fhi.no/v1alpha1` er legacy og slettes når alle tenanter er migrert (uten fastsatt dato); nye og migrerte workloads skal bruke beta-APIet (`skybert-beta.fhi.no/v1beta1`) med `network`-felt — se [SkybertApp CRD — Beta](references/skybertapp-crd.md#beta-gateway-api).
+Beta (`skybert-beta.fhi.no/v1beta1`) er eneste SkybertApp-API. Et manifest med `skybert.fhi.no/v1alpha1` konverteres ved å bytte `apiVersion` og sette `network` — se [SkybertApp CRD — Beta](references/skybertapp-crd.md#beta-gateway-api).
 
 Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifester (Deployment, StatefulSet, Job, Helm, Kustomize) kan ligge side om side med SkybertApp i samme miljømappe — se [Konfigurasjon](references/configuration.md).
 
@@ -172,7 +172,7 @@ Full feltreferanse: [SkybertApp CRD](references/skybertapp-crd.md). Rå manifest
 
 ## Ingress og nettverk
 
-TLS og DNS opprettes automatisk fra `hostname`. `SkybertApp` (beta) genererer `ListenerSet` + `HTTPRoute` mot Envoy Gateway, som kjører på alle klustere; alpha (legacy) genererer en nginx-`Ingress`. Hver tenant har en egen Gateway `fhinett` i namespacet (interne `*.skybert`-navn); `helsenett` og `internett` er delte, og rød og Norsyss har ingen `internett`. Rød sone: default deny egress, DNS og intern namespace-trafikk åpen, egress-unntak via plattformteamet. Alt om domener, issuere, Gateway API og nettverkspolicyer: [Hostnavn og nettverk](references/hostnames-and-networking.md).
+TLS og DNS opprettes automatisk fra `hostname`. `SkybertApp` genererer `ListenerSet` + `HTTPRoute` mot Envoy Gateway, som kjører på alle klustere. Nye `Ingress`-ressurser avvises i `tn-*`; eksisterende kan endres og slettes. Hver tenant har en egen Gateway `fhinett` i namespacet (interne `*.skybert`-navn); `helsenett` og `internett` er delte, og rød og Norsyss har ingen `internett`. Rød sone: default deny egress, DNS og intern namespace-trafikk åpen, egress-unntak via plattformteamet. Alt om domener, issuere, Gateway API og nettverkspolicyer: [Hostnavn og nettverk](references/hostnames-and-networking.md).
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://docs.sky.fhi.no/build/environments/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/
 
@@ -228,7 +228,7 @@ For prosjekter på Skybert anbefales det å legge disse verdiene i prosjektets `
 
 ## WAF
 
-For Coraza/OWASP CRS på Envoy Gateway, tilgangsbegrensninger og Audit-status, se [WAF](references/waf.md).
+For Coraza-WAF på Envoy Gateway (egne regler, OWASP CRS som opt-in-bundle, Audit-status), se [WAF](references/waf.md).
 
 > Kilde: https://docs.sky.fhi.no/workloads/waf/
 
@@ -252,7 +252,7 @@ For Coraza/OWASP CRS på Envoy Gateway, tilgangsbegrensninger og Audit-status, s
 | [Observability](references/observability.md) | Loki, Mimir, Grafana, Alloy, ressursanbefalinger |
 | [Flux-verktøy](references/flux-tooling.md) | Flux-dashboard og Flux Operator MCP |
 | [Feilsøking](references/troubleshooting.md) | Verifisering etter push og vanlige feil |
-| [Legacy: WebApp CRD og CSI driver](references/legacy-webapp-csi.md) | WebApp-referanse og migrering til SkybertApp |
+| [Legacy: WebApp, alpha-SkybertApp og CSI driver](references/legacy-webapp-csi.md) | Konvertering av WebApp-manifester til SkybertApp, CSI → ESO |
 
 ## Support
 
@@ -265,7 +265,7 @@ NHN Slack: `#ext-fhi-skybert`.
 ## Instruksjoner for Claude
 
 1. **Identifiser konteksten**: onboarding eller eksisterende app, sikkerhetssone, miljø (sandbox/test/prod).
-2. **Bruk konvensjonene** i denne filen (`tn-<tenant>`, `<tenant>-azure`, image- og hostnavnmønstre) og anbefal `SkybertApp` framfor `WebApp` og rå Deployment når den dekker behovet.
+2. **Bruk konvensjonene** i denne filen (`tn-<tenant>`, `<tenant>-azure`, image- og hostnavnmønstre) og anbefal `SkybertApp` framfor rå Deployment når den dekker behovet.
 3. **Vær oppmerksom på** sone-forskjeller (rød sone-nettverk og runtime-restriksjoner i prod), at alt går via Git, og at tenanten selv eier Key Vault, Azure-roller og backup.
 4. **Ved usikkerhet**: referer til docs-lenken i seksjonen, eller til plattformteamet på `#ext-fhi-skybert`.
 

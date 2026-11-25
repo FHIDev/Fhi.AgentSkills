@@ -1,6 +1,6 @@
 # SkybertApp CRD-spesifikasjon
 
-Kanonisk feltreferanse for `SkybertApp`, med genererte ressurser og navnekonvensjoner. Gjeldende API er beta (`skybert-beta.fhi.no/v1beta1`, Gateway API og `network`-felt); alpha (`skybert.fhi.no/v1alpha1`) er legacy. Feltene er verifisert mot XRD-en og compositionen i infra-repoet; docs-siden er sekundær der de avviker.
+Kanonisk feltreferanse for `SkybertApp`, med genererte ressurser og navnekonvensjoner. API-et er beta (`skybert-beta.fhi.no/v1beta1`, Gateway API og `network`-felt), eneste SkybertApp-XRD på plattformen. Feltene er verifisert mot XRD-en og compositionen i infra-repoet; docs-siden er sekundær der de avviker.
 
 > Kilde: https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/crossplane/base/
 
@@ -11,7 +11,6 @@ Kanonisk feltreferanse for `SkybertApp`, med genererte ressurser og navnekonvens
 - [Spec Reference](#spec-reference)
 - [Generated Resources](#generated-resources)
 - [Beta (Gateway API)](#beta-gateway-api)
-- [Legacy / alpha](#legacy--alpha)
 
 ---
 
@@ -22,7 +21,7 @@ apiVersion: skybert-beta.fhi.no/v1beta1
 kind: SkybertApp
 ```
 
-Namespaced Crossplane XRD (`skybertapps.skybert-beta.fhi.no`), servert på alle klustere. Alpha (`skybertapps.skybert.fhi.no`, `skybert.fhi.no/v1alpha1`) finnes fortsatt, men er legacy: den slettes når alle tenanter er migrert, uten fastsatt dato. WebApp (`skybert.fhi.no/v1`) er udokumentert i docs; bruk SkybertApp for nye workloads — se [Legacy: WebApp CRD og CSI driver](legacy-webapp-csi.md).
+Namespaced Crossplane XRD (`skybertapps.skybert-beta.fhi.no`), servert på alle klustere og eneste XRD i `infra/crossplane/base/xrds/`. Alpha (`skybert.fhi.no/v1alpha1`) og WebApp (`skybert.fhi.no/v1`) har ingen XRD; konvertering står i [Beta (Gateway API)](#beta-gateway-api) og [Legacy](legacy-webapp-csi.md).
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/crossplane/base/xrds/
 
@@ -77,8 +76,9 @@ på alle containere, og `runAsNonRoot: true`, `runAsUser`/`runAsGroup`/`fsGroup:
 | `autoscaling.targetCPU` | integer | `80` | Mål-CPU-utnyttelse % |
 | `autoscaling.targetMemory` | integer | `80` | Mål-minneutnyttelse % |
 
-Å spesifisere `autoscaling` aktiverer HPA. Da settes Deployment-ens `replicas` til
-`autoscaling.minReplicas`, ikke `spec.replicas`.
+Å spesifisere `autoscaling` aktiverer HPA. Da utelater compositionen `replicas` fra Deployment-en,
+slik at HPA-en eier replikatallet og `spec.replicas` ignoreres. Uten `autoscaling` brukes
+`spec.replicas` som den står, også `0`.
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml
 
@@ -88,7 +88,7 @@ XRD-en eksponerer `/scale` og et `status`-objekt:
 
 | Felt | Type | Beskrivelse |
 |------|------|-------------|
-| `status.replicas` | integer | Observert `readyReplicas` fra den genererte Deployment-en |
+| `status.replicas` | integer | Observert `status.replicas` fra den genererte Deployment-en (alle replikaer, ikke bare Ready) |
 | `status.labelSelector` | string | `skybert-beta.fhi.no/skybertapp=<navn>` — selector som matcher app-podene |
 
 `kubectl get skybertapp` viser kolonnene **DESIRED** (`.spec.replicas`) og **CURRENT** (`.status.replicas`).
@@ -143,18 +143,16 @@ For docs' .NET Health Checks-mønster, se [Health probes i .NET-apper](configura
 | Felt | Type | Standard | Beskrivelse |
 |------|------|----------|-------------|
 | `podDisruptionBudget.enabled` | boolean | auto | Eksplisitt aktiver/deaktiver PDB |
-| `podDisruptionBudget.minAvailable` | int eller "X%" (bruk "X%", se under) | `"33%"` | Minimum tilgjengelige pods under voluntary disruptions |
-| `podDisruptionBudget.maxUnavailable` | int eller "X%" (bruk "X%", se under) | — | Maksimum utilgjengelige pods |
+| `podDisruptionBudget.minAvailable` | int eller "X%" | `"33%"` | Minimum tilgjengelige pods under voluntary disruptions |
+| `podDisruptionBudget.maxUnavailable` | int eller "X%" | — | Maksimum utilgjengelige pods |
 
 PDB opprettes automatisk når `replicas > 1` eller `autoscaling.minReplicas > 1`, med mindre
 `enabled` er satt eksplisitt. Sett bare ett av `minAvailable` og `maxUnavailable`: schemaet stopper ikke
 begge, men da bruker compositionen `maxUnavailable` og ignorerer `minAvailable`. `maxUnavailable: 0`
-tolkes som «ikke satt» og gir `minAvailable: "33%"`.
+rendres som satt og tillater ingen frivillige avbrudd; `minAvailable: 0` tolkes som «ikke satt» og gir `"33%"`.
 
-Bruk prosent. Schemaet godtar heltall, men compositionen quoter verdien (`| quote`), så
-`minAvailable: 2` rendres som strengen `"2"`. Kubernetes godtar en streng i en PDB bare som prosent
-(`ValidatePositiveIntOrPercent`), så PDB-en avvises av API-serveren. Docs sier at heltall virker;
-compositionen er autoritativ. Kjeden er lest ut av compositionen og Kubernetes' validering, ikke prøvd i kluster.
+Heltall og prosent rendres begge riktig: compositionen skriver verdien med `toJson`, så
+`minAvailable: 2` blir tallet `2` og `"50%"` en streng.
 
 ```yaml
 replicas: 3
@@ -285,7 +283,7 @@ Refererer andre ressurser til secreten, sett `secrets[].name` eksplisitt. Se [Se
 | `sidecarContainers[].readOnlyRootFilesystem` | boolean | `false` | Read-only root filesystem |
 | `sidecarContainers[].writableDirs` | string[] | — | Skrivbare emptyDir-monteringer |
 
-Sidecars rendres under `initContainers` med `restartPolicy: Always` når `initContainers` er angitt. Uten `initContainers` skriver compositionen dem under `containers`, fortsatt med `restartPolicy: Always`. Denne varianten er ikke runtime-verifisert; avklar med plattformteamet før bruk.
+Sidecars rendres alltid under `initContainers` med `restartPolicy: Always` (native sidecar), etter eventuelle `initContainers[]` — også når `initContainers` ikke er angitt.
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/references/skybertapp/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml
 
@@ -317,23 +315,18 @@ For å se manifestene en konkret SkybertApp rendrer til, uten kluster-tilgang, s
 
 ## Beta (Gateway API)
 
-Beta rendrer `ListenerSet` + `HTTPRoute` i stedet for nginx-`Ingress`. Feltene er de samme som i alpha, pluss `network` (se [Networking](#networking)). Forskjeller fra alpha:
+SkybertApp rendrer `ListenerSet` + `HTTPRoute` mot Gateway API. ListenerSet-en har én listener, `https` (HTTPS/443, TLS Terminate, `allowedRoutes: Same`), og HTTPRoute-en matcher `PathPrefix /` på hostnavnet; bruk `sectionName: https` når en policy skal treffe listeneren. Gatewayen er tenantens egen i `tn-<tenant>` for `fhinett` og delt i `envoy-gateway-system` for `helsenett`/`internett`. Rød får aldri `internett`-Gateway, og Norsyss trenger den ikke — se [Gateway API](hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway). Docs anbefaler klusterets `.skybert`-ending for `fhinett` (se [Fhinett-hostnavn](hostnames-and-networking.md#fhinett-hostnavn-beta)), `*.skytest.fhi.no`/`*.sky.fhi.no` for `helsenett` og `internett`, og WAF i hvert fall for `internett` og `helsenett` ([WAF](waf.md)). Goldilocks har lesetilgang til SkybertApps slik at VPA kan peke på dem.
 
-| | Alpha | Beta |
+**Konvertere et alpha-manifest.** Kjører appen fortsatt fra alpha-manifestet, oppretter byttet nye ressurser og ny front-end-adresse. Docs ber teamet regne med nedetid: legg byttet til et tidspunkt der kort nedetid er akseptabelt, og følg DNS og trafikk til det er ferdig. `skybert.fhi.no/v1alpha1` har ingen XRD; et slikt manifest konverteres ved å endre `apiVersion` til `skybert-beta.fhi.no/v1beta1`, sette `spec.network` og beholde `metadata.name`. Øvrige felt er de samme. Ressursene får nye navn og ny front-end:
+
+| | Alpha-manifest | Beta |
 |---|---|---|
 | Eksponering | Ingress `<name>-ingress` (nginx, TLS-secret `<name>-tls`) | ListenerSet `listenerset-gw-<name>-<network>` (TLS-secret `gw-<name>-<network>-tls`) + HTTPRoute `<name>-httproute-gw-<network>` |
-| Gateway | — | `fhinett`: tenantens egen i `tn-<tenant>`; `helsenett`/`internett`: delt i `envoy-gateway-system` |
 | Issuer etter hostnavn | `skytest.fhi.no`, `fhi-k8s.com`, `sky.fhi.no` | `.skybert` → `local-issuer`, `.skytest.fhi.no`, `sky.fhi.no`; andre feiler |
 | Selector-label | `skybert.fhi.no/webapp: <name>` | `skybert-beta.fhi.no/skybertapp: <name>` |
 
-Pod-labelen `app: <name>` og scale-subresourcen er som for alpha, og Goldilocks har lesetilgang til beta-SkybertApps slik at VPA kan peke på dem. Docs anbefaler klusterets `.skybert`-ending for `fhinett` (se [Fhinett-hostnavn](hostnames-and-networking.md#fhinett-hostnavn-beta)) og `*.skytest.fhi.no`/`*.sky.fhi.no` for `helsenett` og `internett`. ListenerSet-en har én listener, `https` (HTTPS/443, TLS Terminate, `allowedRoutes: Same`), og HTTPRoute-en matcher `PathPrefix /` på hostnavnet; bruk `sectionName: https` når en policy skal treffe listeneren. Rød får aldri `internett`-Gateway, og Norsyss trenger den ikke — se [Gateway API](hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway).
+Pod-labelen `app: <name>` er uendret. Med `fhinett` er front-enden tenantens `fhinett`-Gateway (`kubectl get gateway fhinett -n tn-<tenant>`), ikke den delte ingress-VIP-en. Bruk flambert-navnet `<prefiks>-tn-<tenant>.ingress.flambert` i brannmuråpninger — se [Gateway API](hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway); ruten lages av plattformen, ikke av SkybertApp. Etter byttet: sjekk at Deployment er frisk, at hostnavnet resolver til ny adresse (kan ta flere minutter) og at trafikken når appen fra alle kilder. external-dns rydder av og til ikke bort gamle records ved IP-bytte; meld fra på `#ext-fhi-skybert` hvis DNS ikke er oppdatert etter 10–15 minutter.
 
-**Migrering fra alpha.** Docs ber tenanter migrere før alpha-spesifikasjonen slettes, og beskriver utskifting på stedet med nedetid: endre `apiVersion` til `skybert-beta.fhi.no/v1beta1`, sett `spec.network` og behold `metadata.name`. Beta er en egen API-gruppe, så Flux sletter alpha-claimet og oppretter et nytt beta-claim med nye ressurser; appen er nede til beta-podene er Ready og DNS peker på ny adresse. Med `fhinett` flytter front-enden fra delt ingress-VIP til tenantens `fhinett`-Gateway (`kubectl get gateway fhinett -n tn-<tenant>`). Bruk flambert-navnet `<prefiks>-tn-<tenant>.ingress.flambert` i brannmuråpninger — se [Gateway API](hostnames-and-networking.md#ingress-nginx-og-gateway-api-envoy-gateway); ruten lages av plattformen, ikke av beta-SkybertApp. Docs anbefaler også klusterets `.skybert`-ending for rene fhinett-tjenester og WAF i hvert fall for `internett` og `helsenett` ([WAF](waf.md)). Etter byttet: sjekk at Deployment er frisk, at hostnavnet resolver til ny adresse (kan ta flere minutter) og at trafikken når appen fra alle kilder. external-dns rydder av og til ikke bort gamle records ved IP-bytte; meld fra på `#ext-fhi-skybert` hvis DNS ikke er oppdatert etter 10–15 minutter.
+> **Operasjonell antakelse:** Alpha-kolonnen er lest fra alpha-compositionen. Den er fjernet fra `main` i [PR 1462](https://github.com/FHISkybert/Fhi.Skybert.Infra/pull/1462/files), men finnes på commit-en før: [skybertapp-alpha.yaml](https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/bbb09ff3e89d3622a80358582ae6f4f2073c902c/infra/crossplane/base/compositions/skybertapp-alpha.yaml).
 
 > Kilde: https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/xrds/skybertapp-beta.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-beta.yaml · https://github.com/FHISkybert/Fhi.Skybert.Infra/tree/main/infra/envoy/
-
-## Legacy / alpha
-
-Alpha (`skybert.fhi.no/v1alpha1`) brukes fortsatt av eksisterende workloads og slettes når alle tenanter er migrert, uten fastsatt dato. Nye workloads skal bruke beta. Alpha har en egen issuer for `*.fhi-k8s.com`; beta har ingen, og et slikt hostnavn feiler i compositionen.
-
-> Kilde: https://docs.sky.fhi.no/workloads/skybertapp/migrate-alpha-to-beta/ · https://github.com/FHISkybert/Fhi.Skybert.Infra/blob/main/infra/crossplane/base/compositions/skybertapp-alpha.yaml
